@@ -73,7 +73,17 @@
     scroll-margin-top: 20px;
     box-shadow: 0 2px 12px -6px hsla(var(--black-hsl, 316,63%,23%), 0.08);
   }
-  .pal-head { padding: 20px 22px 18px; border-left: 6px solid var(--pal-ink); position: relative; }
+  .pal-head {
+    padding: 20px 22px 18px; border-left: 6px solid var(--pal-ink); position: relative;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .pal-head .pal-badge {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px -4px rgba(0,0,0,0.3);
+  }
+  .pal-head .pal-head-text { flex: 1; min-width: 0; padding-right: 72px; }
   .pal-head h3 { margin: 0; font-size: 22px; line-height: 1.2; color: var(--pal-ink); }
   .pal-head .pal-sub { margin: 4px 0 0; color: var(--pal-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; }
   .pal-head p { margin: 12px 0 0; color: var(--pal-ink-soft); font-size: 14px; line-height: 1.55; }
@@ -96,14 +106,18 @@
   .pal-meta { font-size: 12px; color: var(--pal-muted); margin-top: 4px; }
   .pal-desc { font-size: 13.5px; color: var(--pal-ink-soft); margin-top: 8px; line-height: 1.55; }
   .pal-pill {
-    display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
     padding: 3px 9px; border-radius: 999px; color: #fff; font-weight: 700; margin-right: 8px; vertical-align: middle;
   }
+  .pal-pill-icon { display: inline-flex; align-items: center; }
   .pal-chev { color: var(--pal-border-strong); font-size: 22px; align-self: center; }
   .pal-link { color: var(--pal-accent); font-weight: 600; border-bottom: 1px solid currentColor; text-decoration: none; }
   @media (max-width: 600px) {
     .pal-map { height: 380px; }
-    .pal-head { padding: 16px 18px 14px; }
+    .pal-head { padding: 16px 18px 14px; gap: 12px; }
+    .pal-head .pal-badge { width: 40px; height: 40px; }
+    .pal-head .pal-head-text { padding-right: 56px; }
     .pal-head h3 { font-size: 19px; }
     .pal-head .pal-count { top: 18px; right: 18px; font-size: 11px; }
     .pal-events li { padding: 12px 18px; grid-template-columns: 64px 1fr; gap: 12px; }
@@ -123,13 +137,34 @@
   (function () {
     var GOOGLE_SHEET_CSV_URL = "";
 
+    var ICONS = {
+      sprout: '<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
+      network: '<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>',
+      trees: '<path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z"/><path d="M7 16v6"/><path d="M13 19h6"/><path d="M16 22V5"/><path d="M16 5a3 3 0 0 1 3 3c.4.7.7 1.5.7 2.3A3.5 3.5 0 0 1 19 14a4 4 0 0 1-4.3-3.1"/>',
+      compass: '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+      "book-open": '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+      cog: '<path d="M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>',
+      droplet: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+      recycle: '<path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.293 13.596 7.196 9.5 3.1 10.598"/><path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/><path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>',
+      bus: '<path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>',
+      zap: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+      "heart-pulse": '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>'
+    };
+    var SUBTHEME_ICONS = { Water: "droplet", Waste: "recycle", Transport: "bus", Energy: "zap", Health: "heart-pulse" };
+
+    function svgIcon(key, color, size, sw){
+      var inner = ICONS[key]; if(!inner) return "";
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="'+(sw||2)+'" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>';
+    }
+    function subthemeSvg(sub, color, size){ var k = SUBTHEME_ICONS[sub]; return k ? svgIcon(k, color, size||14, 2) : ""; }
+
     var THEMES = [
-      { id: "Rangatahi",                title: "Rangatahi",                subtitle: "Youth",                                   color: "#CF2028", description: "Intentionally include, enable and empower our rangatahi to set their own kaupapa and participate meaningfully and equitably in design, decision-making and implementation." },
-      { id: "Weaving Porirua Together", title: "Weaving Porirua Together", subtitle: "Resilient People Network",                color: "#D97706", description: "Build and sustain momentum for courageous, bold and collaborative action by establishing a sustainable network that connects, strengthens, and leverages existing community-led rōpū." },
-      { id: "Te Taiao",                 title: "Te Taiao",                 subtitle: "Our Environment",                         color: "#2E7D4F", description: "Protect and restore the mauri of our whenua, taonga and our wai — including waterways, flora and fauna, local food systems, native forests, harbour and shorelines." },
-      { id: "How We Roll",              title: "How We Roll",              subtitle: "Approach & Implementation",               color: "#60174C", description: "Develop an evidence-based, community-informed, Iwi-led action plan, ensuring present and intergenerational commitment from everyone with skin in the game in Porirua." },
-      { id: "Know More Do More",        title: "Know More Do More",        subtitle: "Action Through Education and Awareness",  color: "#0E7490", description: "Guarantee equitable access to environmental education and lifelong learning that enables people to connect with te taiao and act." },
-      { id: "How Stuff Works",          title: "How Stuff Works",          subtitle: "Resilient Infrastructure",                color: "#7E3FA0", description: "Invest in water, waste, energy, health and transport systems that reflect the needs of our people and place — driven by indigenous and local innovation and solutions." }
+      { id: "Rangatahi",                title: "Rangatahi",                subtitle: "Youth",                                   color: "#CF2028", icon: "sprout",    description: "Intentionally include, enable and empower our rangatahi to set their own kaupapa and participate meaningfully and equitably in design, decision-making and implementation." },
+      { id: "Weaving Porirua Together", title: "Weaving Porirua Together", subtitle: "Resilient People Network",                color: "#D97706", icon: "network",   description: "Build and sustain momentum for courageous, bold and collaborative action by establishing a sustainable network that connects, strengthens, and leverages existing community-led rōpū." },
+      { id: "Te Taiao",                 title: "Te Taiao",                 subtitle: "Our Environment",                         color: "#2E7D4F", icon: "trees",     description: "Protect and restore the mauri of our whenua, taonga and our wai — including waterways, flora and fauna, local food systems, native forests, harbour and shorelines." },
+      { id: "How We Roll",              title: "How We Roll",              subtitle: "Approach & Implementation",               color: "#60174C", icon: "compass",   description: "Develop an evidence-based, community-informed, Iwi-led action plan, ensuring present and intergenerational commitment from everyone with skin in the game in Porirua." },
+      { id: "Know More Do More",        title: "Know More Do More",        subtitle: "Action Through Education and Awareness",  color: "#0E7490", icon: "book-open", description: "Guarantee equitable access to environmental education and lifelong learning that enables people to connect with te taiao and act." },
+      { id: "How Stuff Works",          title: "How Stuff Works",          subtitle: "Resilient Infrastructure",                color: "#7E3FA0", icon: "cog",       description: "Invest in water, waste, energy, health and transport systems that reflect the needs of our people and place — driven by indigenous and local innovation and solutions." }
     ];
     var DEFAULT_COLOR = "#60174C";
 
@@ -141,12 +176,20 @@
     function row(r){var name=r.name||r.Name;var theme=r.theme||r.Theme;if(!name||!theme) return null;var lat=parseFloat(r.lat||r.latitude),lng=parseFloat(r.lng||r.longitude);return {name:name,theme:theme,subtheme:r.subtheme||"",date:r.date||"",time:r.time||"",venue:r.venue||"",address:r.address||"",lat:isNaN(lat)?null:lat,lng:isNaN(lng)?null:lng,url:r.url||r.website||"",description:r.description||""};}
     function ready(fn){if(window.L&&window.Papa) return fn();setTimeout(function(){ready(fn);},50);}
 
-    function icon(L,color){return L.divIcon({className:"pal-marker",html:'<div style="width:28px;height:28px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);"></div>',iconSize:[28,28],iconAnchor:[14,14]});}
+    function icon(L,color,t){
+      var ic = t && t.icon ? svgIcon(t.icon, "#fff", 18, 2.2) : "";
+      var html = '<div style="width:36px;height:36px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;">'+ic+'</div>';
+      return L.divIcon({className:"pal-marker",html:html,iconSize:[36,36],iconAnchor:[18,18]});
+    }
     function popup(ev,t){
       var color=t?t.color:"#60174C";
+      var tIcon = t && t.icon ? svgIcon(t.icon, "#fff", 11, 2.2) : "";
       var h='<div style="max-width:280px;color:#3c1b30;">';
-      h+='<span style="display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'+color+';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;">'+esc(t?t.title:ev.theme)+'</span>';
-      if(ev.subtheme) h+=' <span style="font-size:10px;color:#8a677a;text-transform:uppercase;letter-spacing:.08em;font-weight:600;">'+esc(ev.subtheme)+'</span>';
+      h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'+color+';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'+tIcon+esc(t?t.title:ev.theme)+'</span>';
+      if(ev.subtheme){
+        var sIcon = subthemeSvg(ev.subtheme, "#8a677a", 11);
+        h+=' <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#8a677a;text-transform:uppercase;letter-spacing:.08em;font-weight:600;vertical-align:middle;">'+sIcon+esc(ev.subtheme)+'</span>';
+      }
       h+='<strong style="font-size:16px;line-height:1.25;display:block;margin:4px 0;color:#60174C;">'+esc(ev.name)+'</strong>';
       var dl=[ev.date,ev.time].filter(Boolean).join(" · ");
       if(dl) h+='<div style="font-size:12px;color:#60174C;font-weight:600;">'+esc(dl)+'</div>';
@@ -171,7 +214,7 @@
       events.forEach(function(ev,i){
         if(ev.lat==null||ev.lng==null) return;
         var t=themeById[ev.theme];var color=t?t.color:DEFAULT_COLOR;
-        markers[i]=L.marker([ev.lat,ev.lng],{icon:icon(L,color)}).bindPopup(popup(ev,t),{maxWidth:300}).addTo(map);
+        markers[i]=L.marker([ev.lat,ev.lng],{icon:icon(L,color,t)}).bindPopup(popup(ev,t),{maxWidth:300}).addTo(map);
         bounds.push([ev.lat,ev.lng]);
       });
       if(bounds.length>1) map.fitBounds(bounds,{padding:[24,24],maxZoom:14});
@@ -181,7 +224,10 @@
       THEMES.forEach(function(t){
         var n=grouped[t.id].length;
         var b=document.createElement("button");b.type="button";
-        b.innerHTML='<span class="pal-swatch" style="background:'+t.color+'"></span>'+esc(t.title)+' <span style="color:var(--pal-muted);">('+n+')</span>';
+        var navIcon = t.icon
+          ? '<span class="pal-nav-icon" style="display:inline-flex;align-items:center;color:'+t.color+'">'+svgIcon(t.icon,t.color,14,2)+'</span>'
+          : '<span class="pal-swatch" style="background:'+t.color+'"></span>';
+        b.innerHTML=navIcon+esc(t.title)+' <span style="color:var(--pal-muted);">('+n+')</span>';
         b.onclick=function(){var el=document.getElementById("pal-theme-"+slug(t.id));if(el) el.scrollIntoView({behavior:"smooth",block:"start"});};
         nav.appendChild(b);
       });
@@ -190,11 +236,17 @@
       THEMES.forEach(function(t){
         var evs=grouped[t.id];
         var card=document.createElement("article");card.className="pal-card";card.id="pal-theme-"+slug(t.id);
+        var badge = t.icon
+          ? '<div class="pal-badge" style="background:'+t.color+'">'+svgIcon(t.icon,"#fff",22,2)+'</div>'
+          : '';
         var h='<div class="pal-head" style="border-left-color:'+t.color+'">'
              +'<span class="pal-count">'+evs.length+' event'+(evs.length===1?"":"s")+'</span>'
+             +badge
+             +'<div class="pal-head-text">'
              +'<h3>'+esc(t.title)+'</h3>'
              +'<div class="pal-sub">'+esc(t.subtitle||"")+'</div>'
              +(t.description?'<p>'+esc(t.description)+'</p>':"")
+             +'</div>'
              +'</div>';
         var list;
         if(!evs.length){list='<ul class="pal-events pal-empty"><li>No events yet under this recommendation.</li></ul>';}
@@ -206,7 +258,10 @@
             list+='<li data-event-index="'+ev.__idx+'">';
             list+='<div class="pal-date"><span class="pal-day">'+esc(d.day)+'</span><span class="pal-mon">'+esc(d.mon)+'</span><span class="pal-yr">'+esc(d.yr)+'</span></div>';
             list+='<div>';
-            if(ev.subtheme) list+='<span class="pal-pill" style="background:'+t.color+'">'+esc(ev.subtheme)+'</span>';
+            if(ev.subtheme){
+              var sPillIcon = subthemeSvg(ev.subtheme, "#fff", 11);
+              list+='<span class="pal-pill" style="background:'+t.color+'">'+(sPillIcon?'<span class="pal-pill-icon">'+sPillIcon+'</span>':'')+esc(ev.subtheme)+'</span>';
+            }
             list+='<span class="pal-title">'+esc(ev.name)+'</span>';
             if(meta) list+='<div class="pal-meta">'+meta+'</div>';
             if(ev.description) list+='<div class="pal-desc">'+esc(ev.description)+'</div>';

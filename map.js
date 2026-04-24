@@ -18,6 +18,23 @@
     return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
+  // Render a Lucide-style stroked SVG for the given icon key.
+  // `color` is the stroke colour; `size` is the rendered pixel dimension.
+  function svgIcon(iconKey, color, size, strokeWidth) {
+    var inner = (window.PORIRUA_ICONS || {})[iconKey];
+    if (!inner) return "";
+    var sw = strokeWidth || 2;
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size
+         + '" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="' + sw
+         + '" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+  }
+
+  function subthemeIcon(subtheme, color, size) {
+    var key = (window.PORIRUA_SUBTHEME_ICONS || {})[subtheme];
+    if (!key) return "";
+    return svgIcon(key, color, size || 14, 2);
+  }
+
   function normaliseRow(row) {
     var get = function (k) { return row[k] || row[k[0].toUpperCase() + k.slice(1)] || ""; };
     var name = get("name");
@@ -64,12 +81,16 @@
     return a.name.localeCompare(b.name);
   }
 
-  function buildIcon(L, color) {
+  function buildIcon(L, color, theme) {
+    var iconHtml = theme && theme.icon ? svgIcon(theme.icon, "#fff", 18, 2.2) : "";
+    var inner =
+      '<div style="width:36px;height:36px;border-radius:50%;background:' + color
+      + ';border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;">'
+      + iconHtml + '</div>';
     return L.divIcon({
       className: "cat-marker",
-      html: '<div style="width:28px;height:28px;border-radius:50%;background:' + color
-          + ';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);"></div>',
-      iconSize: [28, 28], iconAnchor: [14, 14],
+      html: inner,
+      iconSize: [36, 36], iconAnchor: [18, 18],
     });
   }
 
@@ -78,10 +99,15 @@
     var fontBody = '"aktiv-grotesk","Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
     var fontHead = '"Recoleta","DM Serif Display",Georgia,serif';
     var html = '<div style="max-width:280px;font-family:' + fontBody + ';color:#3c1b30;">';
-    html += '<span style="display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
-          + color + ';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;">'
-          + esc(theme ? theme.title : ev.theme) + '</span>';
-    if (ev.subtheme) html += ' <span style="font-size:10px;color:#8a677a;text-transform:uppercase;letter-spacing:.08em;font-weight:600;">' + esc(ev.subtheme) + '</span>';
+    var themeIcon = theme && theme.icon ? svgIcon(theme.icon, "#fff", 11, 2.2) : "";
+    html += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
+          + color + ';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'
+          + themeIcon + esc(theme ? theme.title : ev.theme) + '</span>';
+    if (ev.subtheme) {
+      var sIcon = subthemeIcon(ev.subtheme, "#8a677a", 11);
+      html += ' <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#8a677a;text-transform:uppercase;letter-spacing:.08em;font-weight:600;vertical-align:middle;">'
+            + sIcon + esc(ev.subtheme) + '</span>';
+    }
     html += '<strong style="font-family:' + fontHead + ';font-size:16px;line-height:1.25;display:block;margin:4px 0 4px;color:#60174C;">' + esc(ev.name) + '</strong>';
     var dateLine = [ev.date, ev.time].filter(Boolean).join(" · ");
     if (dateLine) html += '<div style="font-size:12px;color:#60174C;font-weight:600;margin-top:2px;">' + esc(dateLine) + '</div>';
@@ -109,7 +135,7 @@
       if (ev.lat == null || ev.lng == null) return;
       var theme = themeById[ev.theme];
       var color = theme ? theme.color : cfg.defaultColor;
-      var m = L.marker([ev.lat, ev.lng], { icon: buildIcon(L, color) })
+      var m = L.marker([ev.lat, ev.lng], { icon: buildIcon(L, color, theme) })
         .bindPopup(buildPopup(ev, theme), { maxWidth: 300 })
         .addTo(map);
       markers[i] = m;
@@ -129,8 +155,10 @@
       var n = (grouped[t.id] || []).length;
       var b = document.createElement("button");
       b.type = "button";
-      b.innerHTML = '<span class="swatch" style="background:' + t.color + '"></span>'
-                  + esc(t.title) + ' <span style="color:#6b7280">(' + n + ')</span>';
+      var navIcon = t.icon
+        ? '<span class="nav-icon" style="color:' + t.color + '">' + svgIcon(t.icon, t.color, 14, 2) + '</span>'
+        : '<span class="swatch" style="background:' + t.color + '"></span>';
+      b.innerHTML = navIcon + esc(t.title) + ' <span style="color:var(--muted);">(' + n + ')</span>';
       b.onclick = function () {
         var el = document.getElementById("theme-" + slug(t.id));
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -154,7 +182,10 @@
       html += '<div class="date"><span class="day">' + esc(d.day) + '</span><span class="mon">' + esc(d.mon) + '</span><span class="yr">' + esc(d.yr) + '</span></div>';
       html += '<div>';
       if (ev.subtheme) {
-        html += '<span class="pill" style="background:' + theme.color + '">' + esc(ev.subtheme) + '</span>';
+        var sIcon = subthemeIcon(ev.subtheme, "#fff", 11);
+        html += '<span class="pill" style="background:' + theme.color + '">'
+             + (sIcon ? '<span class="pill-icon">' + sIcon + '</span>' : '')
+             + esc(ev.subtheme) + '</span>';
       }
       html += '<span class="title">' + esc(ev.name) + '</span>';
       if (metaParts.length) html += '<div class="meta">' + metaParts.join(" · ") + '</div>';
@@ -177,11 +208,17 @@
       card.className = "theme-card";
       card.id = "theme-" + slug(t.id);
       card.style.setProperty("--theme", t.color);
+      var badge = t.icon
+        ? '<div class="theme-badge" style="background:' + t.color + '">' + svgIcon(t.icon, "#fff", 22, 2) + '</div>'
+        : "";
       var head = '<div class="theme-head" style="border-left-color:' + t.color + '">'
                + '<span class="count">' + events.length + ' event' + (events.length === 1 ? "" : "s") + '</span>'
+               + badge
+               + '<div class="theme-head-text">'
                + '<h2>' + esc(t.title) + '</h2>'
                + '<div class="sub">' + esc(t.subtitle || "") + '</div>'
                + (t.description ? '<p>' + esc(t.description) + '</p>' : "")
+               + '</div>'
                + '</div>';
       card.innerHTML = head + renderEventList(t, events);
       root.appendChild(card);

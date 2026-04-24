@@ -10,17 +10,22 @@ with a Leaflet map coloured by theme. Built to be copy-pasted into the
 
 From the Porirua Assembly Recommendations:
 
-| Theme id (used in the sheet)  | Heading                       | Focus                                     |
-| ----------------------------- | ----------------------------- | ----------------------------------------- |
-| `Rangatahi`                   | Rangatahi                     | Youth                                     |
-| `Weaving Porirua Together`    | Weaving Porirua Together      | Resilient People Network                  |
-| `Te Taiao`                    | Te Taiao                      | Our Environment                           |
-| `How We Roll`                 | How We Roll                   | Approach & Implementation                 |
-| `Know More Do More`           | Know More Do More             | Action Through Education and Awareness    |
-| `How Stuff Works`             | How Stuff Works               | Resilient Infrastructure                  |
+| Theme id (used in the sheet)  | Heading                       | Focus                                  | Icon         |
+| ----------------------------- | ----------------------------- | -------------------------------------- | ------------ |
+| `Rangatahi`                   | Rangatahi                     | Youth                                  | sprout       |
+| `Weaving Porirua Together`    | Weaving Porirua Together      | Resilient People Network               | network      |
+| `Te Taiao`                    | Te Taiao                      | Our Environment                        | trees        |
+| `How We Roll`                 | How We Roll                   | Approach & Implementation              | compass      |
+| `Know More Do More`           | Know More Do More             | Action Through Education and Awareness | book-open    |
+| `How Stuff Works`             | How Stuff Works               | Resilient Infrastructure               | cog          |
+
+Icons are Lucide-style stroked SVGs, inlined into both the theme card badge
+and the map markers so each theme is instantly recognisable.
 
 Events under `How Stuff Works` can optionally set a `subtheme` of `Water`,
-`Waste`, `Transport`, `Energy`, or `Health`.
+`Waste`, `Transport`, `Energy`, or `Health`. Each sub-theme has its own icon
+(droplet, recycle, bus, zap, heart-pulse) that appears inside the event row
+pill and the map popup.
 
 ## Run it locally
 

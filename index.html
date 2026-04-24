@@ -99,7 +99,19 @@
       scroll-margin-top: 20px;
       box-shadow: 0 2px 12px -6px rgba(96, 23, 76, 0.08);
     }
-    .theme-head { padding: 20px 22px 18px; border-left: 6px solid var(--theme, var(--ink)); position: relative; }
+    .theme-head {
+      padding: 20px 22px 18px;
+      border-left: 6px solid var(--theme, var(--ink));
+      position: relative;
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .theme-head .theme-badge {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px -4px rgba(0, 0, 0, 0.3);
+    }
+    .theme-head .theme-head-text { flex: 1; min-width: 0; padding-right: 72px; }
     .theme-head h2 { margin: 0; font-size: 22px; line-height: 1.2; }
     .theme-head .sub { margin: 4px 0 0; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; }
     .theme-head p { margin: 12px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
@@ -124,10 +136,13 @@
     .events .meta { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.02em; }
     .events .desc { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.55; }
     .events .pill {
-      display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
       padding: 3px 9px; border-radius: 999px; color: #fff; font-weight: 700; margin-right: 8px;
       vertical-align: middle;
     }
+    .events .pill-icon { display: inline-flex; align-items: center; }
+    .theme-nav .nav-icon { display: inline-flex; align-items: center; }
     .events .chev { color: var(--border-strong); font-size: 22px; align-self: center; font-family: var(--font-body); }
     .events a { color: var(--accent); font-weight: 500; }
 
@@ -139,7 +154,9 @@
       header.page h1 { font-size: 26px; }
       main { padding: 0 18px; }
       #map { height: 380px; }
-      .theme-head { padding: 16px 18px 14px; }
+      .theme-head { padding: 16px 18px 14px; gap: 12px; }
+      .theme-head .theme-badge { width: 40px; height: 40px; }
+      .theme-head .theme-head-text { padding-right: 56px; }
       .theme-head h2 { font-size: 19px; }
       .theme-head .count { top: 18px; right: 18px; font-size: 11px; }
       .events li { padding: 12px 18px; grid-template-columns: 64px 1fr; gap: 12px; }
