@@ -56,14 +56,18 @@
 
     var html = '<div style="max-width:300px;font-family:' + fontBody + ';color:#3c1b30;">';
 
-    // Org type pill (primary identity of the marker)
+    // Org type pill — wrapped in its own block so it always sits on its
+    // own row above the heading (inline-flex on the pill alone isn't enough
+    // to guarantee a line break when followed by a heavy heading).
     if (orgType) {
-      html += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
-            + orgType.color + ';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'
-            + svgIcon(orgType.icon, "#fff", 11, 2) + esc(orgType.title) + '</span>';
+      html += '<div style="margin:0 0 8px;">'
+            + '<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
+            + orgType.color + ';padding:3px 9px;border-radius:999px;font-weight:700;">'
+            + svgIcon(orgType.icon, "#fff", 11, 2) + esc(orgType.title) + '</span>'
+            + '</div>';
     }
 
-    html += '<strong style="font-family:' + fontHead + ';font-size:16px;line-height:1.25;display:block;margin:4px 0 6px;color:#60174C;">' + esc(org.name) + '</strong>';
+    html += '<div style="font-family:' + fontHead + ';font-size:17px;line-height:1.25;margin:0 0 8px;color:#60174C;font-weight:700;">' + esc(org.name) + '</div>';
 
     // Theme chips — one per recommendation the org contributes to.
     if (org.themes && org.themes.length) {

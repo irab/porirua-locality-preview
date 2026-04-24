@@ -272,9 +272,12 @@
       var color = orgType && orgType.color ? orgType.color : DEFAULT_COLOR;
       var h='<div style="max-width:300px;color:#3c1b30;">';
       if(orgType){
-        h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'+orgType.color+';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'+svgIcon(orgType.icon,"#fff",11,2)+esc(orgType.title)+'</span>';
+        h+='<div style="margin:0 0 8px;">'
+          +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'+orgType.color+';padding:3px 9px;border-radius:999px;font-weight:700;">'
+          +svgIcon(orgType.icon,"#fff",11,2)+esc(orgType.title)+'</span>'
+          +'</div>';
       }
-      h+='<strong style="font-size:16px;line-height:1.25;display:block;margin:4px 0 6px;color:#60174C;">'+esc(org.name)+'</strong>';
+      h+='<div style="font-size:17px;line-height:1.25;margin:0 0 8px;color:#60174C;font-weight:700;">'+esc(org.name)+'</div>';
       if(org.themes && org.themes.length){
         h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px;">';
         org.themes.forEach(function(tid){
