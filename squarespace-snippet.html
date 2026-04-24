@@ -98,16 +98,16 @@
     white-space: nowrap;
   }
   .pal-filter-chip:hover:not(.pal-active) { border-color: var(--pal-ink); background: var(--pal-hover); }
-  /* Tinted (org-type) chips: inactive state carries a muted shade of the
-     org colour so the row doubles as a legend. Inline --pal-chip-tint /
-     --pal-chip-border are set per-button by chip(). */
+  /* Tinted (org-type) chips: white fill (keeps the button affordance),
+     border picks up the marker colour so the row doubles as a legend.
+     Inline --pal-chip-border / --pal-chip-border-hover are set per-button
+     by chip(). */
   .pal-filter-chip.pal-tinted:not(.pal-active) {
-    background: var(--pal-chip-tint, var(--pal-surface));
     border-color: var(--pal-chip-border, var(--pal-border-strong));
   }
   .pal-filter-chip.pal-tinted:hover:not(.pal-active) {
-    background: var(--pal-chip-tint-hover, var(--pal-hover));
-    border-color: var(--pal-chip-border, var(--pal-ink));
+    background: var(--pal-hover);
+    border-color: var(--pal-chip-border-hover, var(--pal-ink));
   }
   .pal-filter-chip.pal-active { color: #fff; transform: translateY(-1px); box-shadow: 0 2px 8px -3px hsla(var(--black-hsl,316,63%,23%), 0.4); }
   .pal-filter-chip.pal-active:hover { filter: brightness(1.05); }
@@ -391,9 +391,8 @@
         b.className="pal-filter-chip" + (tinted ? " pal-tinted" : "");
         var active=stateSet.has(item.id);
         if(tinted){
-          b.style.setProperty("--pal-chip-tint", tint(item.color, 0.10));
-          b.style.setProperty("--pal-chip-tint-hover", tint(item.color, 0.18));
-          b.style.setProperty("--pal-chip-border", tint(item.color, 0.45));
+          b.style.setProperty("--pal-chip-border", tint(item.color, 0.55));
+          b.style.setProperty("--pal-chip-border-hover", tint(item.color, 0.9));
         }
         if(active){ b.classList.add("pal-active"); b.style.background=item.color; b.style.borderColor=item.color; }
         var iconColor = active ? "#fff" : item.color;

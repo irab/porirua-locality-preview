@@ -176,9 +176,11 @@
     b.setAttribute("data-key", item.id);
     var active = stateSet.has(item.id);
     if (tinted) {
-      b.style.setProperty("--chip-tint", tint(item.color, 0.10));
-      b.style.setProperty("--chip-tint-hover", tint(item.color, 0.18));
-      b.style.setProperty("--chip-border", tint(item.color, 0.45));
+      // Border only — no tinted fill. The coloured border matches the
+      // marker colour (legend cue) while the white fill preserves the
+      // "this is a clickable filter" affordance.
+      b.style.setProperty("--chip-border", tint(item.color, 0.55));
+      b.style.setProperty("--chip-border-hover", tint(item.color, 0.9));
     }
     if (active) {
       b.classList.add("active");
