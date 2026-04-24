@@ -26,7 +26,9 @@
 -->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-gesture-handling@1.4.3/dist/leaflet-gesture-handling.min.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-gesture-handling@1.4.3/dist/leaflet-gesture-handling.min.js"></script>
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
@@ -352,7 +354,8 @@
       allOrgs.forEach(function(o,i){o.__idx=i;});
 
       var L=window.L;
-      var map=L.map("pal-map",{scrollWheelZoom:false}).setView([-41.1350,174.8400],12);
+      if(L.GestureHandling){ L.Map.addInitHook("addHandler","gestureHandling",L.GestureHandling); }
+      var map=L.map("pal-map",{scrollWheelZoom:false,gestureHandling:true}).setView([-41.1350,174.8400],12);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors",maxZoom:19}).addTo(map);
       var layer=L.layerGroup().addTo(map);
       var markers={};
