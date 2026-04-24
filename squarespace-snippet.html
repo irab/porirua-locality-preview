@@ -1,90 +1,178 @@
 <!--
-  Drop-in Squarespace Code Block for the Porirua Locality map.
-  Paste this whole thing into a Code Block on any page.
-  - Requires the "Business" plan or higher (Code Blocks).
-  - Replace GOOGLE_SHEET_CSV_URL with your "Publish to web -> CSV" URL.
+  Drop-in Squarespace Code Block for the Porirua Locality events view,
+  grouped by Porirua Assembly Recommendation themes.
+
+  How to use:
+  1. In Squarespace, edit the target page and add a "Code" block (Business plan+).
+  2. Paste this whole snippet in.
+  3. Replace GOOGLE_SHEET_CSV_URL with your Sheet's "Publish to web -> CSV" URL.
+
+  Expected sheet columns (first row = headers):
+    name, theme, subtheme, date, time, venue, address, lat, lng, url, description
+  `theme` must match one of the theme ids below.
 -->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
-<div id="porirua-map" style="height:480px;width:100%;border:1px solid #e5e7eb;border-radius:12px;background:#eef2ee;"
-     aria-label="Map of Porirua community initiatives"></div>
+<style>
+  .pal-root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111827; }
+  .pal-map { height: 460px; width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; background: #eef2ee; }
+  .pal-status { font-size: 12px; color: #6b7280; margin-top: 8px; }
+  .pal-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 8px; }
+  .pal-nav button { background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; color: #111827; display: inline-flex; align-items: center; gap: 8px; }
+  .pal-nav .pal-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .pal-themes { display: flex; flex-direction: column; gap: 16px; margin-top: 12px; }
+  .pal-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; scroll-margin-top: 20px; }
+  .pal-head { padding: 14px 16px; border-left: 6px solid #1a3d2a; }
+  .pal-head h3 { margin: 0; font-size: 17px; color: #1a3d2a; }
+  .pal-head .pal-sub { margin: 2px 0 0; color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .pal-head p { margin: 8px 0 0; color: #374151; font-size: 13px; line-height: 1.5; }
+  .pal-head .pal-count { float: right; font-size: 12px; color: #6b7280; }
+  .pal-events { list-style: none; margin: 0; padding: 0; border-top: 1px solid #e5e7eb; }
+  .pal-events.pal-empty li { padding: 14px 16px; font-size: 13px; color: #6b7280; }
+  .pal-events li { padding: 12px 16px; border-top: 1px solid #e5e7eb; display: grid; grid-template-columns: 84px 1fr auto; gap: 12px; align-items: start; cursor: pointer; }
+  .pal-events li:first-child { border-top: none; }
+  .pal-events li:hover { background: #f9fafb; }
+  .pal-date .pal-day { display: block; font-size: 20px; line-height: 1; color: #111827; font-weight: 600; }
+  .pal-date .pal-mon { display: block; text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .pal-date .pal-yr  { display: block; font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .pal-title { font-weight: 600; font-size: 14px; color: #111827; }
+  .pal-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .pal-desc { font-size: 13px; color: #374151; margin-top: 6px; }
+  .pal-pill { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 999px; color: #fff; font-weight: 600; margin-right: 6px; }
+  .pal-chev { color: #9ca3af; font-size: 18px; align-self: center; }
+  @media (max-width: 560px) { .pal-events li { grid-template-columns: 64px 1fr; } .pal-chev { display: none; } }
+</style>
+
+<div class="pal-root">
+  <div id="pal-map" class="pal-map" aria-label="Map of Porirua community events"></div>
+  <div class="pal-status" id="pal-status">Loading events…</div>
+  <nav class="pal-nav" id="pal-nav" aria-label="Jump to theme"></nav>
+  <section class="pal-themes" id="pal-themes"></section>
+</div>
 
 <script>
   (function () {
     var GOOGLE_SHEET_CSV_URL = "";
 
-    var CATEGORY_COLORS = {
-      "Assembly": "#1a3d2a",
-      "ROCC":     "#b91c1c",
-      "Kai":      "#ca8a04",
-      "Hauora":   "#0e7490",
-      "Housing":  "#7c3aed",
-      "Climate":  "#15803d"
-    };
-    var DEFAULT_COLOR = "#1a3d2a";
+    var THEMES = [
+      { id: "Rangatahi",                title: "Rangatahi",                subtitle: "Youth",                                   color: "#b91c1c", description: "Intentionally include, enable and empower our rangatahi to set their own kaupapa and participate meaningfully and equitably in design, decision-making and implementation." },
+      { id: "Weaving Porirua Together", title: "Weaving Porirua Together", subtitle: "Resilient People Network",                color: "#ca8a04", description: "Build and sustain momentum for courageous, bold and collaborative action by establishing a sustainable network that connects, strengthens, and leverages existing community-led rōpū." },
+      { id: "Te Taiao",                 title: "Te Taiao",                 subtitle: "Our Environment",                         color: "#15803d", description: "Protect and restore the mauri of our whenua, taonga and our wai — including waterways, flora and fauna, local food systems, native forests, harbour and shorelines." },
+      { id: "How We Roll",              title: "How We Roll",              subtitle: "Approach & Implementation",               color: "#1a3d2a", description: "Develop an evidence-based, community-informed, Iwi-led action plan, ensuring present and intergenerational commitment from everyone with skin in the game in Porirua." },
+      { id: "Know More Do More",        title: "Know More Do More",        subtitle: "Action Through Education and Awareness",  color: "#0e7490", description: "Guarantee equitable access to environmental education and lifelong learning that enables people to connect with te taiao and act." },
+      { id: "How Stuff Works",          title: "How Stuff Works",          subtitle: "Resilient Infrastructure",                color: "#7c3aed", description: "Invest in water, waste, energy, health and transport systems that reflect the needs of our people and place — driven by indigenous and local innovation and solutions." }
+    ];
+    var DEFAULT_COLOR = "#6b7280";
 
-    function esc(s) {
-      return String(s == null ? "" : s)
-        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+    function slug(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
+    function parseDate(s){if(!s) return null;var d=new Date(s);return isNaN(d.getTime())?null:d;}
+    function dateParts(s){var d=parseDate(s);if(!d) return {day:"",mon:"",yr:""};return {day:String(d.getDate()),mon:d.toLocaleString("en-NZ",{month:"short"}),yr:String(d.getFullYear())};}
+    function cmp(a,b){var da=parseDate(a.date),db=parseDate(b.date);if(da&&db) return da-db;if(da) return -1;if(db) return 1;return a.name.localeCompare(b.name);}
+    function row(r){var name=r.name||r.Name;var theme=r.theme||r.Theme;if(!name||!theme) return null;var lat=parseFloat(r.lat||r.latitude),lng=parseFloat(r.lng||r.longitude);return {name:name,theme:theme,subtheme:r.subtheme||"",date:r.date||"",time:r.time||"",venue:r.venue||"",address:r.address||"",lat:isNaN(lat)?null:lat,lng:isNaN(lng)?null:lng,url:r.url||r.website||"",description:r.description||""};}
+    function ready(fn){if(window.L&&window.Papa) return fn();setTimeout(function(){ready(fn);},50);}
+
+    function icon(L,color){return L.divIcon({className:"pal-marker",html:'<div style="width:28px;height:28px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);"></div>',iconSize:[28,28],iconAnchor:[14,14]});}
+    function popup(ev,t){
+      var color=t?t.color:"#1a3d2a";
+      var h='<div style="max-width:280px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">';
+      h+='<span style="display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:'+color+';padding:2px 7px;border-radius:999px;font-weight:600;margin-bottom:6px;">'+esc(t?t.title:ev.theme)+'</span>';
+      if(ev.subtheme) h+=' <span style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">'+esc(ev.subtheme)+'</span>';
+      h+='<strong style="font-size:14px;line-height:1.3;display:block;margin-bottom:4px;">'+esc(ev.name)+'</strong>';
+      var dl=[ev.date,ev.time].filter(Boolean).join(" · ");
+      if(dl) h+='<div style="font-size:12px;color:#374151;">'+esc(dl)+'</div>';
+      var where=[ev.venue,ev.address].filter(Boolean).join(", ");
+      if(where) h+='<div style="font-size:12px;color:#6b7280;margin-top:2px;">'+esc(where)+'</div>';
+      if(ev.description) h+='<p style="font-size:13px;line-height:1.5;color:#374151;margin:8px 0;">'+esc(ev.description)+'</p>';
+      if(ev.url) h+='<a href="'+esc(ev.url)+'" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#166534;font-weight:500;">Learn more &rarr;</a>';
+      return h+"</div>";
     }
 
-    function ready(fn) {
-      if (window.L && window.Papa) return fn();
-      setTimeout(function(){ ready(fn); }, 50);
-    }
+    function render(events){
+      var themeById={};THEMES.forEach(function(t){themeById[t.id]=t;});
+      events.forEach(function(e,i){e.__idx=i;});
+      var grouped={};THEMES.forEach(function(t){grouped[t.id]=[];});
+      events.forEach(function(e){if(grouped[e.theme]) grouped[e.theme].push(e);});
+      Object.keys(grouped).forEach(function(k){grouped[k].sort(cmp);});
 
-    function row(r) {
-      var lat = parseFloat(r.lat || r.latitude);
-      var lng = parseFloat(r.lng || r.longitude);
-      if (!r.name || isNaN(lat) || isNaN(lng)) return null;
-      return { name:r.name, category:r.category||"", lat:lat, lng:lng, address:r.address||"", url:r.url||r.website||"", description:r.description||"" };
-    }
-
-    function icon(L, color) {
-      return L.divIcon({
-        className: "cat-marker",
-        html: '<div style="width:28px;height:28px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);"></div>',
-        iconSize:[28,28], iconAnchor:[14,14]
+      var L=window.L;
+      var map=L.map("pal-map",{scrollWheelZoom:false}).setView([-41.1350,174.8400],12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors",maxZoom:19}).addTo(map);
+      var markers={};var bounds=[];
+      events.forEach(function(ev,i){
+        if(ev.lat==null||ev.lng==null) return;
+        var t=themeById[ev.theme];var color=t?t.color:DEFAULT_COLOR;
+        markers[i]=L.marker([ev.lat,ev.lng],{icon:icon(L,color)}).bindPopup(popup(ev,t),{maxWidth:300}).addTo(map);
+        bounds.push([ev.lat,ev.lng]);
       });
-    }
+      if(bounds.length>1) map.fitBounds(bounds,{padding:[24,24],maxZoom:14});
+      else if(bounds.length===1) map.setView(bounds[0],14);
 
-    function popup(p) {
-      var h = '<div style="max-width:260px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">';
-      h += '<strong style="font-size:14px;">'+esc(p.name)+'</strong>';
-      if (p.category) h += '<br/><span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;font-weight:600;">'+esc(p.category)+'</span>';
-      if (p.description) h += '<p style="font-size:13px;line-height:1.5;color:#374151;margin:8px 0;">'+esc(p.description)+'</p>';
-      if (p.address)     h += '<p style="font-size:11px;color:#6b7280;margin:0 0 6px;">'+esc(p.address)+'</p>';
-      if (p.url)         h += '<a href="'+esc(p.url)+'" target="_blank" rel="noopener" style="font-size:12px;color:#166534;text-decoration:none;font-weight:500;">Learn more &rarr;</a>';
-      return h + '</div>';
-    }
-
-    function render(places) {
-      var map = L.map("porirua-map", { scrollWheelZoom:false }).setView([-41.1350, 174.8400], 12);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
-      }).addTo(map);
-      var bounds = [];
-      places.forEach(function (p) {
-        var color = CATEGORY_COLORS[p.category] || DEFAULT_COLOR;
-        L.marker([p.lat, p.lng], { icon: icon(L, color) }).bindPopup(popup(p)).addTo(map);
-        bounds.push([p.lat, p.lng]);
+      var nav=document.getElementById("pal-nav");nav.innerHTML="";
+      THEMES.forEach(function(t){
+        var n=grouped[t.id].length;
+        var b=document.createElement("button");b.type="button";
+        b.innerHTML='<span class="pal-swatch" style="background:'+t.color+'"></span>'+esc(t.title)+' <span style="color:#6b7280">('+n+')</span>';
+        b.onclick=function(){var el=document.getElementById("pal-theme-"+slug(t.id));if(el) el.scrollIntoView({behavior:"smooth",block:"start"});};
+        nav.appendChild(b);
       });
-      if (bounds.length > 1) map.fitBounds(bounds, { padding:[24,24], maxZoom:14 });
+
+      var root=document.getElementById("pal-themes");root.innerHTML="";
+      THEMES.forEach(function(t){
+        var evs=grouped[t.id];
+        var card=document.createElement("article");card.className="pal-card";card.id="pal-theme-"+slug(t.id);
+        var h='<div class="pal-head" style="border-left-color:'+t.color+'">'
+             +'<span class="pal-count">'+evs.length+' event'+(evs.length===1?"":"s")+'</span>'
+             +'<h3>'+esc(t.title)+'</h3>'
+             +'<div class="pal-sub">'+esc(t.subtitle||"")+'</div>'
+             +(t.description?'<p>'+esc(t.description)+'</p>':"")
+             +'</div>';
+        var list;
+        if(!evs.length){list='<ul class="pal-events pal-empty"><li>No events yet under this recommendation.</li></ul>';}
+        else{
+          list='<ul class="pal-events">';
+          evs.forEach(function(ev){
+            var d=dateParts(ev.date);
+            var meta=[ev.time,ev.venue,ev.address].filter(Boolean).map(esc).join(" · ");
+            list+='<li data-event-index="'+ev.__idx+'">';
+            list+='<div class="pal-date"><span class="pal-day">'+esc(d.day)+'</span><span class="pal-mon">'+esc(d.mon)+'</span><span class="pal-yr">'+esc(d.yr)+'</span></div>';
+            list+='<div>';
+            if(ev.subtheme) list+='<span class="pal-pill" style="background:'+t.color+'">'+esc(ev.subtheme)+'</span>';
+            list+='<span class="pal-title">'+esc(ev.name)+'</span>';
+            if(meta) list+='<div class="pal-meta">'+meta+'</div>';
+            if(ev.description) list+='<div class="pal-desc">'+esc(ev.description)+'</div>';
+            if(ev.url) list+='<div class="pal-meta" style="margin-top:4px;"><a href="'+esc(ev.url)+'" target="_blank" rel="noopener">Learn more &rarr;</a></div>';
+            list+='</div><div class="pal-chev">&rsaquo;</div></li>';
+          });
+          list+='</ul>';
+        }
+        card.innerHTML=h+list;
+        root.appendChild(card);
+      });
+      root.addEventListener("click",function(e){
+        var li=e.target.closest("li[data-event-index]");if(!li) return;
+        var idx=parseInt(li.getAttribute("data-event-index"),10);
+        var m=markers[idx];if(!m) return;
+        map.setView(m.getLatLng(),15,{animate:true});
+        setTimeout(function(){m.openPopup();},250);
+        document.getElementById("pal-map").scrollIntoView({behavior:"smooth",block:"start"});
+      });
+
+      document.getElementById("pal-status").textContent=
+        events.length?("Showing "+events.length+" event"+(events.length===1?"":"s")+"."):"No events to display.";
     }
 
-    ready(function () {
-      if (!GOOGLE_SHEET_CSV_URL) {
-        console.warn("[porirua-map] No Google Sheet URL set — add one in the snippet.");
+    ready(function(){
+      if(!GOOGLE_SHEET_CSV_URL){
+        document.getElementById("pal-status").textContent="Add a Google Sheet URL in the snippet to load events.";
         return render([]);
       }
-      Papa.parse(GOOGLE_SHEET_CSV_URL, {
-        download: true, header: true, skipEmptyLines: true,
-        complete: function (res) { render((res.data||[]).map(row).filter(Boolean)); },
-        error: function (err) { console.error("[porirua-map]", err); render([]); }
+      Papa.parse(GOOGLE_SHEET_CSV_URL,{download:true,header:true,skipEmptyLines:true,
+        complete:function(r){render((r.data||[]).map(row).filter(Boolean));},
+        error:function(err){console.error("[porirua-map]",err);document.getElementById("pal-status").textContent="Failed to load events.";render([]);}
       });
     });
   })();

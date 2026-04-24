@@ -3,13 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Porirua Locality — Map Preview</title>
-  <meta name="description" content="Preview of a community map for the Porirua Locality site (Te Wāhi Tiaki Tātou)." />
+  <title>Porirua Locality — Events by Assembly Recommendation</title>
+  <meta name="description" content="Community events grouped by the Porirua Assembly's overarching recommendations." />
 
-  <!-- Leaflet (mapping library) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- PapaParse (CSV parser for Google Sheets) -->
   <script defer src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
@@ -17,41 +15,89 @@
       --fg: #1a3d2a;
       --muted: #6b7280;
       --bg: #fafaf7;
+      --card: #ffffff;
       --border: #e5e7eb;
+      --ink: #111827;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: var(--bg); color: #111; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    header { max-width: 960px; margin: 32px auto 16px; padding: 0 20px; }
-    header h1 { margin: 0 0 4px; font-size: 22px; color: var(--fg); }
-    header p { margin: 0; color: var(--muted); font-size: 14px; }
-    main { max-width: 960px; margin: 0 auto 32px; padding: 0 20px; }
-    #map { height: 560px; width: 100%; border: 1px solid var(--border); border-radius: 12px; background: #eef2ee; }
-    .status { margin-top: 10px; font-size: 12px; color: var(--muted); }
-    .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 12px; font-size: 12px; color: #374151; }
-    .legend .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; border: 1px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1); }
-    footer { max-width: 960px; margin: 24px auto 48px; padding: 0 20px; color: var(--muted); font-size: 12px; }
-    footer code { background: #eef2ee; padding: 1px 4px; border-radius: 3px; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
+    a { color: #166534; }
+    a:hover { text-decoration: underline; }
+
+    header.page { max-width: 1060px; margin: 32px auto 16px; padding: 0 20px; }
+    header.page h1 { margin: 0 0 6px; font-size: 26px; color: var(--fg); letter-spacing: -0.01em; }
+    header.page p { margin: 0; color: var(--muted); font-size: 14px; max-width: 760px; }
+    header.page .pdf-link { font-size: 13px; }
+
+    main { max-width: 1060px; margin: 0 auto 32px; padding: 0 20px; }
+
+    #map { height: 460px; width: 100%; border: 1px solid var(--border); border-radius: 12px; background: #eef2ee; }
+    .status { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+    .theme-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 20px 0 8px; }
+    .theme-nav button { background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; color: var(--ink); display: inline-flex; align-items: center; gap: 8px; }
+    .theme-nav button[data-active="true"] { border-color: var(--ink); }
+    .theme-nav .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+
+    .themes { display: flex; flex-direction: column; gap: 18px; margin-top: 16px; }
+    .theme-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; scroll-margin-top: 20px; }
+    .theme-head { padding: 16px 18px; border-left: 6px solid var(--theme, var(--fg)); }
+    .theme-head h2 { margin: 0; font-size: 18px; color: var(--fg); }
+    .theme-head .sub { margin: 2px 0 0; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    .theme-head p { margin: 10px 0 0; color: #374151; font-size: 14px; }
+    .theme-head .count { float: right; font-size: 12px; color: var(--muted); }
+
+    .events { list-style: none; margin: 0; padding: 0 0 6px; border-top: 1px solid var(--border); }
+    .events.empty { padding: 14px 18px; font-size: 13px; color: var(--muted); }
+    .events li { padding: 12px 18px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 92px 1fr auto; gap: 14px; align-items: start; cursor: pointer; }
+    .events li:first-child { border-top: none; }
+    .events li:hover { background: #f9fafb; }
+    .events .date { font-size: 12px; color: var(--muted); }
+    .events .date .day { display: block; font-size: 20px; line-height: 1; color: var(--ink); font-weight: 600; }
+    .events .date .mon { display: block; text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px; margin-top: 2px; }
+    .events .date .yr  { display: block; font-size: 11px; margin-top: 2px; }
+    .events .title { font-weight: 600; font-size: 14px; color: var(--ink); }
+    .events .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .events .desc { font-size: 13px; color: #374151; margin-top: 6px; }
+    .events .pill { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 999px; color: #fff; font-weight: 600; margin-right: 6px; }
+    .events .chev { color: var(--muted); font-size: 18px; align-self: center; }
+
+    footer { max-width: 1060px; margin: 24px auto 48px; padding: 0 20px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 560px) {
+      .events li { grid-template-columns: 68px 1fr; }
+      .events .chev { display: none; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Porirua Locality — Map Preview</h1>
-    <p>Pins load from a Google Sheet (or fall back to sample data). Edit <code>config.js</code> to point at your sheet.</p>
+  <header class="page">
+    <h1>Porirua Locality — Events by Assembly Recommendation</h1>
+    <p>
+      Community events grouped under the six overarching recommendations of the
+      <a class="pdf-link" id="recs-pdf-link" href="#" target="_blank" rel="noopener">Porirua Assembly</a>.
+      Map markers are coloured by theme. Click an event to zoom the map.
+    </p>
   </header>
 
   <main>
-    <div id="map" aria-label="Map of Porirua community initiatives"></div>
-    <div class="status" id="status">Loading map…</div>
-    <div class="legend" id="legend"></div>
+    <div id="map" aria-label="Map of Porirua community events"></div>
+    <div class="status" id="status">Loading events…</div>
+
+    <nav class="theme-nav" id="theme-nav" aria-label="Jump to theme"></nav>
+
+    <section class="themes" id="themes"></section>
   </main>
 
   <footer>
     Tiles © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ·
     Built with <a href="https://leafletjs.com/">Leaflet</a> ·
-    Source of truth: Google Sheet
+    Themes from the
+    <a id="recs-pdf-link-foot" href="#" target="_blank" rel="noopener">Porirua Assembly Recommendations</a>.
   </footer>
 
   <script src="config.js"></script>
+  <script src="sample-data.js"></script>
   <script src="map.js"></script>
 </body>
 </html>
