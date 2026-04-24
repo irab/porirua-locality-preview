@@ -98,6 +98,17 @@
     white-space: nowrap;
   }
   .pal-filter-chip:hover:not(.pal-active) { border-color: var(--pal-ink); background: var(--pal-hover); }
+  /* Tinted (org-type) chips: inactive state carries a muted shade of the
+     org colour so the row doubles as a legend. Inline --pal-chip-tint /
+     --pal-chip-border are set per-button by chip(). */
+  .pal-filter-chip.pal-tinted:not(.pal-active) {
+    background: var(--pal-chip-tint, var(--pal-surface));
+    border-color: var(--pal-chip-border, var(--pal-border-strong));
+  }
+  .pal-filter-chip.pal-tinted:hover:not(.pal-active) {
+    background: var(--pal-chip-tint-hover, var(--pal-hover));
+    border-color: var(--pal-chip-border, var(--pal-ink));
+  }
   .pal-filter-chip.pal-active { color: #fff; transform: translateY(-1px); box-shadow: 0 2px 8px -3px hsla(var(--black-hsl,316,63%,23%), 0.4); }
   .pal-filter-chip.pal-active:hover { filter: brightness(1.05); }
   .pal-filter-chip-icon { display: inline-flex; align-items: center; }
@@ -260,6 +271,9 @@
     // ---------- Helpers ----------
     function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
     function slug(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
+    // hex -> rgba; used to tint the org-type filter chips so the row
+    // doubles as a legend of the marker colours.
+    function tint(hex, a){ var h=String(hex||"").replace("#",""); if(h.length!==6) return "rgba(96,23,76,"+a+")"; return "rgba("+parseInt(h.slice(0,2),16)+","+parseInt(h.slice(2,4),16)+","+parseInt(h.slice(4,6),16)+","+a+")"; }
     // `|`, `;` or newline -- same convention as initiatives/labels
     function splitList(s){ if(s==null) return []; if(Array.isArray(s)) return s.filter(Boolean); return String(s).split(/\s*[\n;|]+\s*/).map(function(t){return t.trim();}).filter(Boolean); }
     // Comma only (themes never contain commas internally)
@@ -371,10 +385,16 @@
         else map.setView([-41.1350,174.8400],12);
       }
 
-      function chip(item, stateSet){
+      function chip(item, stateSet, opts){
+        var tinted = !!(opts && opts.tinted);
         var b=document.createElement("button"); b.type="button";
-        b.className="pal-filter-chip";
+        b.className="pal-filter-chip" + (tinted ? " pal-tinted" : "");
         var active=stateSet.has(item.id);
+        if(tinted){
+          b.style.setProperty("--pal-chip-tint", tint(item.color, 0.10));
+          b.style.setProperty("--pal-chip-tint-hover", tint(item.color, 0.18));
+          b.style.setProperty("--pal-chip-border", tint(item.color, 0.45));
+        }
         if(active){ b.classList.add("pal-active"); b.style.background=item.color; b.style.borderColor=item.color; }
         var iconColor = active ? "#fff" : item.color;
         b.innerHTML='<span class="pal-filter-chip-icon">'+svgIcon(item.icon, iconColor, 14, 2)+'</span><span>'+esc(item.title)+'</span>';
@@ -384,15 +404,15 @@
 
       function renderFilters(){
         var root=document.getElementById("pal-filters"); root.innerHTML="";
-        function bar(label, items, stateSet){
+        function bar(label, items, stateSet, opts){
           var wrap=document.createElement("div"); wrap.className="pal-filter-bar";
           var lb=document.createElement("span"); lb.className="pal-filter-label"; lb.textContent=label; wrap.appendChild(lb);
           var chips=document.createElement("div"); chips.className="pal-filter-chips";
-          items.forEach(function(it){ chips.appendChild(chip(it, stateSet)); });
+          items.forEach(function(it){ chips.appendChild(chip(it, stateSet, opts)); });
           wrap.appendChild(chips); return wrap;
         }
         root.appendChild(bar("Filter by recommendation", THEMES, state.themes));
-        root.appendChild(bar("Filter by organisation", ORG_TYPES, state.orgs));
+        root.appendChild(bar("Filter by organisation", ORG_TYPES, state.orgs, { tinted: true }));
         if(state.themes.size + state.orgs.size > 0){
           var clr=document.createElement("button"); clr.type="button"; clr.className="pal-filter-clear";
           clr.textContent="Clear all filters";

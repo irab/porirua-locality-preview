@@ -120,6 +120,17 @@
       white-space: nowrap;
     }
     .filter-chip:hover:not(.active) { border-color: var(--ink); background: #fff5f4; }
+    /* Tinted chips (org-types): muted shade of the org colour even when
+       inactive, so the row doubles as a legend. --chip-tint / --chip-border
+       are set inline by renderChip() based on the org's palette entry. */
+    .filter-chip.tinted:not(.active) {
+      background: var(--chip-tint, #fff);
+      border-color: var(--chip-border, var(--border-strong));
+    }
+    .filter-chip.tinted:hover:not(.active) {
+      background: var(--chip-tint-hover, #fff5f4);
+      border-color: var(--chip-border, var(--ink));
+    }
     .filter-chip.active { color: #fff; transform: translateY(-1px); box-shadow: 0 2px 8px -3px rgba(96,23,76,0.4); }
     .filter-chip.active:hover { filter: brightness(1.05); }
     .filter-chip-icon { display: inline-flex; align-items: center; }

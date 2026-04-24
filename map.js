@@ -21,6 +21,17 @@
     return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
+  // hex ("#rrggbb") -> "rgba(r,g,b,a)". Used to tint filter chips with a
+  // muted shade of the org-type colour so the legend reads at a glance.
+  function tint(hex, alpha) {
+    var h = String(hex || "").replace("#", "");
+    if (h.length !== 6) return "rgba(96,23,76," + alpha + ")";
+    var r = parseInt(h.slice(0, 2), 16);
+    var g = parseInt(h.slice(2, 4), 16);
+    var b = parseInt(h.slice(4, 6), 16);
+    return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+  }
+
   function svgIcon(iconKey, color, size, strokeWidth) {
     var inner = (window.PORIRUA_ICONS || {})[iconKey];
     if (!inner) return "";
@@ -157,12 +168,18 @@
     else mapCtx.map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom || 12);
   }
 
-  function renderChip(item, stateSet, onChange) {
+  function renderChip(item, stateSet, onChange, opts) {
+    var tinted = !!(opts && opts.tinted);
     var b = document.createElement("button");
     b.type = "button";
-    b.className = "filter-chip";
+    b.className = "filter-chip" + (tinted ? " tinted" : "");
     b.setAttribute("data-key", item.id);
     var active = stateSet.has(item.id);
+    if (tinted) {
+      b.style.setProperty("--chip-tint", tint(item.color, 0.10));
+      b.style.setProperty("--chip-tint-hover", tint(item.color, 0.18));
+      b.style.setProperty("--chip-border", tint(item.color, 0.45));
+    }
     if (active) {
       b.classList.add("active");
       b.style.background = item.color;
@@ -184,7 +201,7 @@
     if (!root) return;
     root.innerHTML = "";
 
-    function bar(labelText, items, stateSet) {
+    function bar(labelText, items, stateSet, opts) {
       var wrap = document.createElement("div");
       wrap.className = "filter-bar";
       var label = document.createElement("span");
@@ -193,14 +210,14 @@
       wrap.appendChild(label);
       var chips = document.createElement("div");
       chips.className = "filter-chips";
-      items.forEach(function (it) { chips.appendChild(renderChip(it, stateSet, onChange)); });
+      items.forEach(function (it) { chips.appendChild(renderChip(it, stateSet, onChange, opts)); });
       wrap.appendChild(chips);
       return wrap;
     }
 
     root.appendChild(bar("Filter by recommendation", cfg.themes || [], state.themes));
     var orgTypes = window.PORIRUA_ORG_TYPES || [];
-    if (orgTypes.length) root.appendChild(bar("Filter by organisation", orgTypes, state.orgs));
+    if (orgTypes.length) root.appendChild(bar("Filter by organisation", orgTypes, state.orgs, { tinted: true }));
 
     if (state.themes.size + state.orgs.size > 0) {
       var clear = document.createElement("button");
