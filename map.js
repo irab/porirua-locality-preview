@@ -424,8 +424,7 @@
       bootstrap(result.orgs, result.note);
     }).catch(function (err) {
       console.error("[porirua-preview] data loader failed:", err);
-      var fallback = (window.PORIRUA_SAMPLE_ORGS || []).map(window.PORIRUA_DATA.normaliseRow).filter(Boolean);
-      bootstrap(fallback, "sample data — loader crashed");
+      bootstrap([], "data loader crashed — check the console");
     });
   });
 })();

@@ -84,10 +84,12 @@ inventory in this order:
    Used when the sheet is unreachable (Google outage, offline, private).
    Also the fallback for `squarespace-snippet.html` if the hosted CSV
    becomes unavailable.
-3. **Embedded sample** — `window.PORIRUA_SAMPLE_ORGS` in `sample-data.js`.
-   Deep fallback for the `file://` case (e.g. double-clicking `index.html`)
-   or if both URLs above fail. The status line under the map tells you
-   which source rendered.
+
+If both fail, the map renders an empty state and the status line under
+the map tells you which source was tried. **Always serve the page over
+http(s)** (`python3 -m http.server`, GitHub Pages, Squarespace, etc.) —
+opening `index.html` via `file://` will block both fetches and show the
+empty state.
 
 ### CSV columns
 
@@ -196,8 +198,7 @@ For a staging preview inside Squarespace itself, create an **unlinked page**
 | `index.html` | Local preview shell. |
 | `config.js` | Data-source URLs, map center, theme + org-type definitions. Edit me. |
 | `data/organisations.csv` | **Canonical inventory.** 23 Porirua organisations + labels. Single source of truth. |
-| `data-loader.js` | Data-source module: resolves Google Sheet → local CSV → embedded sample. Exposes `window.PORIRUA_DATA.load(cfg)`. |
-| `sample-data.js` | Deep fallback (mirrors the CSV). Only used when fetches fail (e.g. `file://`). |
+| `data-loader.js` | Data-source module: resolves Google Sheet → local CSV. Exposes `window.PORIRUA_DATA.load(cfg)`. |
 | `map.js` | Rendering logic (map, filter bars, org cards, popups). |
 | `squarespace-snippet.html` | Self-contained version to paste into Squarespace. Reads from any CSV URL. |
 | `README.md` | This file. |

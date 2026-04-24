@@ -128,7 +128,9 @@ window.PORIRUA_MAP_CONFIG = {
   // The inventory is loaded in this order of preference:
   //   1. googleSheetCsvUrl   (if set) — live from a Google Sheet
   //   2. dataCsvUrl          (default) — bundled local CSV
-  //   3. window.PORIRUA_SAMPLE_ORGS (deep fallback — never fetched)
+  //
+  // If both fail the map renders an empty state and the status line under
+  // the map says what went wrong.
   //
   // Two ways to wire up a Google Sheet URL:
   //

@@ -1,24 +1,24 @@
 // Porirua Locality data loader.
 // -----------------------------------------------------------------------------
-// Single entry point for resolving the organisation inventory, regardless of
-// whether it lives in a local CSV file, a published Google Sheet, or the
-// embedded `window.PORIRUA_SAMPLE_ORGS` fallback.
+// Single entry point for resolving the organisation inventory. The data lives
+// in a Google Sheet (primary) with the bundled CSV as a fallback.
 //
 // Usage (see map.js):
 //
 //   window.PORIRUA_DATA.load(cfg)
 //     .then(function (result) {
-//        // result.orgs  -> Array<Organisation>
-//        // result.source -> "sheet" | "csv" | "sample"
+//        // result.orgs  -> Array<Organisation>   ([] if nothing loaded)
+//        // result.source -> "sheet" | "csv" | "none"
 //        // result.note  -> human-readable status suffix (or "")
 //     });
 //
 // Resolution order:
 //   1. If cfg.googleSheetCsvUrl is set, fetch that (Google Sheets CSV export).
-//   2. Else fetch cfg.dataCsvUrl (default: "./data/organisations.csv").
-//   3. If either of the above fails or returns 0 rows, fall back to the
-//      embedded sample (window.PORIRUA_SAMPLE_ORGS). A note is surfaced on
-//      the status line so editors know which source rendered.
+//   2. Fall back to cfg.dataCsvUrl (default: "./data/organisations.csv").
+//   3. If both fail, resolve with an empty list + an error note. The map
+//      renders an empty state and the status line tells editors what went
+//      wrong (see setStatus in map.js). Requires serving over http(s) —
+//      opening index.html via file:// will not work.
 //
 // CSV conventions for array cells (see data/organisations.csv):
 //   - `themes`      -> comma-separated   ("Te Taiao, Rangatahi")
@@ -112,12 +112,6 @@
     });
   }
 
-  // ---- fallback ------------------------------------------------------------
-
-  function sampleRows() {
-    return (window.PORIRUA_SAMPLE_ORGS || []).slice();
-  }
-
   // ---- main entry ----------------------------------------------------------
 
   function load(cfg) {
@@ -129,13 +123,14 @@
     if (sheetUrl) attempts.push({ kind: "sheet", url: sheetUrl });
     if (csvUrl) attempts.push({ kind: "csv", url: csvUrl });
 
-    function fallback(note) {
-      var orgs = normaliseAll(sampleRows());
-      return { orgs: orgs, source: "sample", note: note || "using embedded sample data" };
+    function empty(note) {
+      return { orgs: [], source: "none", note: note || "no data source configured" };
     }
 
     function tryNext(i, lastErrorNote) {
-      if (i >= attempts.length) return Promise.resolve(fallback(lastErrorNote || ""));
+      if (i >= attempts.length) {
+        return Promise.resolve(empty(lastErrorNote || "could not load organisations"));
+      }
       var step = attempts[i];
       return parseCsv(step.url)
         .then(function (rows) {
@@ -152,11 +147,7 @@
         });
     }
 
-    if (!attempts.length) {
-      // No URLs configured at all — shouldn't happen given the default, but
-      // we still honour explicit empty config by rendering the sample.
-      return Promise.resolve(fallback("no data source configured"));
-    }
+    if (!attempts.length) return Promise.resolve(empty());
     return tryNext(0, "");
   }
 
