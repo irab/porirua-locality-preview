@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Porirua Locality — Events by Assembly Recommendation</title>
-  <meta name="description" content="Community events grouped by the Porirua Assembly's overarching recommendations." />
+  <title>Porirua Locality — Organisations by Assembly Recommendation</title>
+  <meta name="description" content="Inventory of Porirua organisations grouped by the Porirua Assembly's overarching recommendations." />
 
   <!-- Brand fonts from the Porirua Locality Squarespace site -->
   <link rel="stylesheet" href="https://use.typekit.net/xcy1epi.css" />
@@ -140,35 +140,43 @@
     .theme-head p { margin: 12px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
     .theme-head .count { position: absolute; top: 22px; right: 22px; font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0.03em; }
 
-    .events { list-style: none; margin: 0; padding: 0 0 4px; border-top: 1px solid var(--border); }
-    .events.empty li { padding: 18px 22px; font-size: 13px; color: var(--muted); font-style: italic; }
-    .events li {
-      padding: 14px 22px;
+    /* Organisation list inside each theme card */
+    .orgs { list-style: none; margin: 0; padding: 0 0 4px; border-top: 1px solid var(--border); }
+    .orgs.empty li { padding: 18px 22px; font-size: 13px; color: var(--muted); font-style: italic; }
+    .orgs li {
+      padding: 16px 22px;
       border-top: 1px solid var(--border);
-      display: grid; grid-template-columns: 88px 1fr auto; gap: 16px; align-items: start;
+      display: grid; grid-template-columns: 56px 1fr auto; gap: 16px; align-items: start;
       cursor: pointer;
       transition: background 120ms;
     }
-    .events li:first-child { border-top: none; }
-    .events li:hover { background: #fff9f8; }
-    .events .date { color: var(--muted); }
-    .events .date .day { display: block; font-family: var(--font-heading); font-size: 26px; line-height: 1; color: var(--ink); font-weight: 700; }
-    .events .date .mon { display: block; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; margin-top: 4px; font-weight: 600; }
-    .events .date .yr  { display: block; font-size: 11px; margin-top: 2px; }
-    .events .title { font-family: var(--font-heading); font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.3; }
-    .events .meta { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.02em; }
-    .events .desc { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.55; }
-    .events .pill {
+    .orgs li:first-child { border-top: none; }
+    .orgs li:hover { background: #fff9f8; }
+    .orgs .org-badge {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px -3px rgba(0, 0, 0, 0.3);
+      flex-shrink: 0;
+    }
+    .orgs .org-body { min-width: 0; }
+    .orgs .pills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+    .orgs .title { font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.25; display: block; }
+    .orgs .meta { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.02em; }
+    .orgs .desc { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.55; }
+    .orgs .initiatives-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-top: 10px; margin-bottom: 4px; }
+    .orgs .initiatives { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--text); }
+    .orgs .initiatives li { padding: 0; border: none; display: list-item; cursor: default; background: transparent !important; margin: 0; }
+    .orgs .initiatives li:hover { background: transparent; }
+    .orgs .pill {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
-      padding: 3px 9px; border-radius: 999px; color: #fff; font-weight: 700; margin-right: 8px;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 3px 9px; border-radius: 999px; color: #fff; font-weight: 700;
       vertical-align: middle;
     }
-    .events .pill-icon { display: inline-flex; align-items: center; }
-    .events .pill.org { background: var(--muted); }
-    .events .meta.org-name { margin-top: 4px; color: var(--ink-soft); font-weight: 600; font-size: 12.5px; }
-    .events .chev { color: var(--border-strong); font-size: 22px; align-self: center; font-family: var(--font-body); }
-    .events a { color: var(--accent); font-weight: 500; }
+    .orgs .pill.theme { font-size: 9.5px; padding: 2px 7px; }
+    .orgs .pill-icon { display: inline-flex; align-items: center; }
+    .orgs .chev { color: var(--border-strong); font-size: 22px; align-self: center; font-family: var(--font-body); }
+    .orgs a { color: var(--accent); font-weight: 500; }
 
     footer { max-width: 1060px; margin: 28px auto 56px; padding: 0 24px; color: var(--muted); font-size: 12px; }
     footer a { color: var(--ink-soft); }
@@ -188,28 +196,31 @@
       .theme-head .theme-head-text { padding-right: 56px; }
       .theme-head h2 { font-size: 19px; }
       .theme-head .count { top: 18px; right: 18px; font-size: 11px; }
-      .events li { padding: 12px 18px; grid-template-columns: 64px 1fr; gap: 12px; }
-      .events .chev { display: none; }
-      .events .date .day { font-size: 22px; }
+      .orgs li { padding: 14px 18px; grid-template-columns: 44px 1fr; gap: 12px; }
+      .orgs .chev { display: none; }
+      .orgs .org-badge { width: 36px; height: 36px; }
+      .orgs .title { font-size: 16px; }
     }
   </style>
 </head>
 <body>
   <header class="page">
-    <span class="kicker">Porirua Locality · Events</span>
-    <h1>What’s on, grouped under the Porirua Assembly recommendations</h1>
+    <span class="kicker">Porirua Locality · Who's who</span>
+    <h1>Organisations working across the Porirua Assembly recommendations</h1>
     <p>
-      Community events organised under the six overarching recommendations of the
+      An inventory of the iwi, community groups, kaupapa groups, kura, councils, social
+      enterprises and advocates working on the six overarching recommendations of the
       <a class="pdf-link" id="recs-pdf-link" href="#" target="_blank" rel="noopener">Porirua Assembly</a>.
-      Markers are coloured by theme. Filter by recommendation or organisation, or select an event to zoom the map.
+      Markers are coloured by the organisation's primary recommendation. Filter by recommendation or
+      organisation type, or select an organisation to zoom the map.
     </p>
   </header>
 
   <main>
-    <div id="map" aria-label="Map of Porirua community events"></div>
-    <div class="status" id="status">Loading events…</div>
+    <div id="map" aria-label="Map of Porirua organisations"></div>
+    <div class="status" id="status">Loading organisations…</div>
 
-    <div class="filters" id="filters" aria-label="Filter events"></div>
+    <div class="filters" id="filters" aria-label="Filter organisations"></div>
 
     <section class="themes" id="themes"></section>
   </main>

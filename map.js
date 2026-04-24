@@ -1,6 +1,7 @@
-// Renders the Porirua Locality events-by-recommendation preview.
+// Renders the Porirua Locality organisation inventory, grouped by Porirua
+// Assembly recommendation with two filter bars (recommendation + org type).
 // Reads config from window.PORIRUA_MAP_CONFIG (see config.js).
-// Data: published Google Sheet CSV or window.PORIRUA_SAMPLE_EVENTS.
+// Data: published Google Sheet CSV or window.PORIRUA_SAMPLE_ORGS.
 
 (function () {
   function ready(fn) {
@@ -18,7 +19,6 @@
     return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
-  // Render a Lucide-style stroked SVG for the given icon key.
   function svgIcon(iconKey, color, size, strokeWidth) {
     var inner = (window.PORIRUA_ICONS || {})[iconKey];
     if (!inner) return "";
@@ -28,148 +28,150 @@
          + '" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
   }
 
-  function subthemeIcon(subtheme, color, size) {
-    var key = (window.PORIRUA_SUBTHEME_ICONS || {})[subtheme];
-    if (!key) return "";
-    return svgIcon(key, color, size || 14, 2);
+  // Parse a "a; b | c" style list into trimmed array.
+  function splitList(s) {
+    if (s == null) return [];
+    if (Array.isArray(s)) return s.filter(Boolean);
+    return String(s).split(/\s*[\n;|]+\s*/).map(function (t) { return t.trim(); }).filter(Boolean);
+  }
+
+  function splitThemeList(s) {
+    if (s == null) return [];
+    if (Array.isArray(s)) return s.filter(Boolean);
+    // Themes are comma-separated (they may contain spaces but no commas themselves).
+    return String(s).split(/\s*,\s*/).map(function (t) { return t.trim(); }).filter(Boolean);
   }
 
   function normaliseRow(row) {
     var get = function (k) { return row[k] || row[k[0].toUpperCase() + k.slice(1)] || ""; };
     var name = get("name");
-    var theme = get("theme");
-    if (!name || !theme) return null;
+    var primary = get("theme");
+    if (!name || !primary) return null;
+    var extra = splitThemeList(get("themes") || row.themes);
+    var themes = extra.slice();
+    if (themes.indexOf(primary) < 0) themes.unshift(primary);
     var lat = parseFloat(get("lat") || get("latitude"));
     var lng = parseFloat(get("lng") || get("longitude"));
     return {
       name: name,
-      theme: theme,
-      subtheme: get("subtheme"),
+      theme: primary,
+      themes: themes,
       orgType: get("orgType") || get("organisationType") || get("orgtype") || "",
-      orgName: get("orgName") || get("organisation") || get("organization") || "",
-      date: get("date"),
-      time: get("time"),
       venue: get("venue"),
       address: get("address"),
       lat: isNaN(lat) ? null : lat,
       lng: isNaN(lng) ? null : lng,
       url: get("url") || get("website"),
       description: get("description"),
+      initiatives: splitList(get("initiatives") || row.initiatives),
     };
   }
 
-  function parseDate(s) {
-    if (!s) return null;
-    var d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  function formatDateParts(dateStr) {
-    var d = parseDate(dateStr);
-    if (!d) return { day: "", mon: "", yr: "" };
-    return {
-      day: String(d.getDate()),
-      mon: d.toLocaleString("en-NZ", { month: "short" }),
-      yr: String(d.getFullYear()),
-    };
-  }
-
-  function compareEvents(a, b) {
-    var da = parseDate(a.date), db = parseDate(b.date);
-    if (da && db) return da - db;
-    if (da) return -1;
-    if (db) return 1;
-    return a.name.localeCompare(b.name);
-  }
-
-  function buildIcon(L, color, theme) {
-    var iconHtml = theme && theme.icon ? svgIcon(theme.icon, "#fff", 18, 2.2) : "";
-    var inner =
+  // Marker: theme-coloured circle with the org-type icon in white.
+  // Falls back to a filled dot if orgType icon is missing.
+  function buildIcon(L, theme, orgType) {
+    var color = theme ? theme.color : "#60174C";
+    var inner = orgType && orgType.icon ? svgIcon(orgType.icon, "#fff", 18, 2.2) : "";
+    var html =
       '<div style="width:36px;height:36px;border-radius:50%;background:' + color
       + ';border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;">'
-      + iconHtml + '</div>';
+      + inner + '</div>';
     return L.divIcon({
-      className: "cat-marker",
-      html: inner,
+      className: "org-marker",
+      html: html,
       iconSize: [36, 36], iconAnchor: [18, 18],
     });
   }
 
-  function buildPopup(ev, theme, orgType) {
-    var color = theme ? theme.color : "#60174C";
+  function buildPopup(org, themeById, orgType) {
+    var primaryTheme = themeById[org.theme];
+    var color = primaryTheme ? primaryTheme.color : "#60174C";
     var fontBody = '"aktiv-grotesk","Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
     var fontHead = '"Recoleta","DM Serif Display",Georgia,serif';
-    var html = '<div style="max-width:290px;font-family:' + fontBody + ';color:#3c1b30;">';
-    var themeIcon = theme && theme.icon ? svgIcon(theme.icon, "#fff", 11, 2.2) : "";
-    html += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
-          + color + ';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'
-          + themeIcon + esc(theme ? theme.title : ev.theme) + '</span>';
-    if (ev.subtheme) {
-      var sIcon = subthemeIcon(ev.subtheme, "#8a677a", 11);
-      html += ' <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#8a677a;text-transform:uppercase;letter-spacing:.08em;font-weight:600;vertical-align:middle;">'
-            + sIcon + esc(ev.subtheme) + '</span>';
+
+    var html = '<div style="max-width:300px;font-family:' + fontBody + ';color:#3c1b30;">';
+
+    // Org type pill (primary identity of the marker)
+    if (orgType) {
+      html += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
+            + orgType.color + ';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'
+            + svgIcon(orgType.icon, "#fff", 11, 2) + esc(orgType.title) + '</span>';
     }
-    html += '<strong style="font-family:' + fontHead + ';font-size:16px;line-height:1.25;display:block;margin:4px 0 4px;color:#60174C;">' + esc(ev.name) + '</strong>';
-    if (orgType || ev.orgName) {
-      var oIcon = orgType && orgType.icon ? svgIcon(orgType.icon, orgType.color, 11, 2) : "";
-      var parts = [];
-      if (orgType) parts.push(esc(orgType.title));
-      if (ev.orgName) parts.push(esc(ev.orgName));
-      html += '<div style="font-size:11px;color:#8a677a;margin-top:2px;display:flex;align-items:center;gap:5px;">'
-            + oIcon + '<span>' + parts.join(" · ") + '</span></div>';
+
+    html += '<strong style="font-family:' + fontHead + ';font-size:16px;line-height:1.25;display:block;margin:4px 0 6px;color:#60174C;">' + esc(org.name) + '</strong>';
+
+    // Theme chips — one per recommendation the org contributes to.
+    if (org.themes && org.themes.length) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px;">';
+      org.themes.forEach(function (tid) {
+        var t = themeById[tid];
+        if (!t) return;
+        html += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:#fff;background:'
+              + t.color + ';padding:2px 7px;border-radius:999px;font-weight:700;">'
+              + svgIcon(t.icon, "#fff", 10, 2.2) + esc(t.title) + '</span>';
+      });
+      html += '</div>';
     }
-    var dateLine = [ev.date, ev.time].filter(Boolean).join(" · ");
-    if (dateLine) html += '<div style="font-size:12px;color:#60174C;font-weight:600;margin-top:6px;">' + esc(dateLine) + '</div>';
-    if (ev.venue || ev.address) {
-      html += '<div style="font-size:12px;color:#8a677a;margin-top:2px;">' + esc([ev.venue, ev.address].filter(Boolean).join(", ")) + '</div>';
+
+    if (org.venue || org.address) {
+      html += '<div style="font-size:12px;color:#8a677a;margin-top:2px;">' + esc([org.venue, org.address].filter(Boolean).join(", ")) + '</div>';
     }
-    if (ev.description) html += '<p style="font-size:13px;line-height:1.5;color:#3c1b30;margin:10px 0 8px;">' + esc(ev.description) + '</p>';
-    if (ev.url) html += '<a href="' + esc(ev.url) + '" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#cf2028;font-weight:600;text-decoration:none;border-bottom:1px solid currentColor;">Learn more &rarr;</a>';
+
+    if (org.description) {
+      html += '<p style="font-size:13px;line-height:1.5;color:#3c1b30;margin:10px 0 6px;">' + esc(org.description) + '</p>';
+    }
+
+    if (org.initiatives && org.initiatives.length) {
+      html += '<div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:' + color + ';font-weight:700;margin-top:8px;margin-bottom:3px;">Key initiatives</div>';
+      html += '<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.45;color:#3c1b30;">';
+      org.initiatives.forEach(function (it) { html += '<li>' + esc(it) + '</li>'; });
+      html += '</ul>';
+    }
+
+    if (org.url) {
+      html += '<a href="' + esc(org.url) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:10px;font-size:12px;color:#cf2028;font-weight:600;text-decoration:none;border-bottom:1px solid currentColor;">Visit website &rarr;</a>';
+    }
+
     html += "</div>";
     return html;
   }
 
-  // Initialise the map once; return helpers that let us re-populate markers.
   function initMap(L, cfg) {
     var map = L.map("map", { scrollWheelZoom: false })
       .setView([cfg.center.lat, cfg.center.lng], cfg.zoom || 12);
-
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map);
-
     var layer = L.layerGroup().addTo(map);
-    return { map: map, layer: layer };
+    return { map: map, layer: layer, markersByIdx: {} };
   }
 
-  function populateMap(L, cfg, mapCtx, events, themeById, orgTypeById) {
+  function populateMap(L, cfg, mapCtx, orgs, themeById, orgTypeById) {
     mapCtx.layer.clearLayers();
     mapCtx.markersByIdx = {};
     var bounds = [];
-    events.forEach(function (ev) {
-      if (ev.lat == null || ev.lng == null) return;
-      var theme = themeById[ev.theme];
-      var orgType = orgTypeById[ev.orgType];
-      var color = theme ? theme.color : cfg.defaultColor;
-      var m = L.marker([ev.lat, ev.lng], { icon: buildIcon(L, color, theme) })
-        .bindPopup(buildPopup(ev, theme, orgType), { maxWidth: 310 });
+    orgs.forEach(function (org) {
+      if (org.lat == null || org.lng == null) return;
+      var theme = themeById[org.theme];
+      var orgType = orgTypeById[org.orgType];
+      var m = L.marker([org.lat, org.lng], { icon: buildIcon(L, theme, orgType) })
+        .bindPopup(buildPopup(org, themeById, orgType), { maxWidth: 320 });
       mapCtx.layer.addLayer(m);
-      mapCtx.markersByIdx[ev.__idx] = m;
-      bounds.push([ev.lat, ev.lng]);
+      mapCtx.markersByIdx[org.__idx] = m;
+      bounds.push([org.lat, org.lng]);
     });
     if (bounds.length > 1) mapCtx.map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
     else if (bounds.length === 1) mapCtx.map.setView(bounds[0], 14);
     else mapCtx.map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom || 12);
   }
 
-  // Render a filter chip. `item` needs {id,title,icon,color}. Toggles `state` on click.
-  function renderChip(item, state, onChange) {
+  function renderChip(item, stateSet, onChange) {
     var b = document.createElement("button");
     b.type = "button";
     b.className = "filter-chip";
     b.setAttribute("data-key", item.id);
-    var active = state.has(item.id);
+    var active = stateSet.has(item.id);
     if (active) {
       b.classList.add("active");
       b.style.background = item.color;
@@ -179,8 +181,8 @@
     b.innerHTML = '<span class="filter-chip-icon">' + svgIcon(item.icon, iconColor, 14, 2) + '</span>'
                 + '<span class="filter-chip-label">' + esc(item.title) + '</span>';
     b.onclick = function () {
-      if (state.has(item.id)) state.delete(item.id);
-      else state.add(item.id);
+      if (stateSet.has(item.id)) stateSet.delete(item.id);
+      else stateSet.add(item.id);
       onChange();
     };
     return b;
@@ -209,9 +211,7 @@
     var orgTypes = window.PORIRUA_ORG_TYPES || [];
     if (orgTypes.length) root.appendChild(bar("Filter by organisation", orgTypes, state.orgs));
 
-    // Clear-filters bar: only shown if any filter is active.
-    var hasFilters = state.themes.size + state.orgs.size > 0;
-    if (hasFilters) {
+    if (state.themes.size + state.orgs.size > 0) {
       var clear = document.createElement("button");
       clear.type = "button";
       clear.className = "filter-clear";
@@ -221,39 +221,78 @@
     }
   }
 
-  function renderEventList(theme, events, orgTypeById) {
-    if (!events.length) {
-      return '<ul class="events empty"><li style="padding:14px 18px;">No events match the current filters.</li></ul>';
+  // Build a {themeId: [orgs]} map.
+  // - If `activeThemes` is empty, each org is placed under its primary theme.
+  // - Otherwise, each active theme section lists every org whose `themes`
+  //   array contains that theme (orgs can appear in multiple sections when
+  //   they cross-cut the selected filters).
+  function groupOrgs(cfg, orgs, activeThemes) {
+    var grouped = {};
+    cfg.themes.forEach(function (t) { grouped[t.id] = []; });
+    if (activeThemes && activeThemes.size) {
+      orgs.forEach(function (org) {
+        org.themes.forEach(function (tid) {
+          if (activeThemes.has(tid) && grouped[tid]) grouped[tid].push(org);
+        });
+      });
+    } else {
+      orgs.forEach(function (org) {
+        if (grouped[org.theme]) grouped[org.theme].push(org);
+      });
     }
-    var html = '<ul class="events">';
-    events.forEach(function (ev) {
-      var d = formatDateParts(ev.date);
-      var metaParts = [];
-      if (ev.time) metaParts.push(esc(ev.time));
-      if (ev.venue) metaParts.push(esc(ev.venue));
-      if (ev.address) metaParts.push(esc(ev.address));
-      var orgType = orgTypeById[ev.orgType];
-      html += '<li data-event-index="' + ev.__idx + '">';
-      html += '<div class="date"><span class="day">' + esc(d.day) + '</span><span class="mon">' + esc(d.mon) + '</span><span class="yr">' + esc(d.yr) + '</span></div>';
-      html += '<div>';
+    Object.keys(grouped).forEach(function (k) {
+      grouped[k].sort(function (a, b) { return a.name.localeCompare(b.name); });
+    });
+    return grouped;
+  }
+
+  function renderOrgList(theme, orgs, themeById, orgTypeById) {
+    if (!orgs.length) {
+      return '<ul class="orgs empty"><li>No organisations match the current filters.</li></ul>';
+    }
+    var html = '<ul class="orgs">';
+    orgs.forEach(function (org) {
+      var orgType = orgTypeById[org.orgType];
+      var orgColor = orgType ? orgType.color : "#8a677a";
+      html += '<li data-org-index="' + org.__idx + '">';
+      html += '<div class="org-badge" style="background:' + orgColor + '">'
+           + (orgType ? svgIcon(orgType.icon, "#fff", 22, 2) : "")
+           + '</div>';
+      html += '<div class="org-body">';
+
+      // Top row: org-type pill + cross-cutting theme chips
       var pills = "";
-      if (ev.subtheme) {
-        var sIcon = subthemeIcon(ev.subtheme, "#fff", 11);
-        pills += '<span class="pill" style="background:' + theme.color + '">'
-               + (sIcon ? '<span class="pill-icon">' + sIcon + '</span>' : '')
-               + esc(ev.subtheme) + '</span>';
-      }
       if (orgType) {
         pills += '<span class="pill org" style="background:' + orgType.color + '">'
                + '<span class="pill-icon">' + svgIcon(orgType.icon, "#fff", 11, 2) + '</span>'
                + esc(orgType.title) + '</span>';
       }
-      if (pills) html += pills;
-      html += '<span class="title">' + esc(ev.name) + '</span>';
-      if (ev.orgName) html += '<div class="meta org-name">' + esc(ev.orgName) + '</div>';
-      if (metaParts.length) html += '<div class="meta">' + metaParts.join(" · ") + '</div>';
-      if (ev.description) html += '<div class="desc">' + esc(ev.description) + '</div>';
-      if (ev.url) html += '<div class="meta" style="margin-top:4px;"><a href="' + esc(ev.url) + '" target="_blank" rel="noopener">Learn more &rarr;</a></div>';
+      (org.themes || []).forEach(function (tid) {
+        var t = themeById[tid];
+        if (!t) return;
+        pills += '<span class="pill theme" style="background:' + t.color + '">'
+               + '<span class="pill-icon">' + svgIcon(t.icon, "#fff", 10, 2.2) + '</span>'
+               + esc(t.title) + '</span>';
+      });
+      if (pills) html += '<div class="pills">' + pills + '</div>';
+
+      html += '<div class="title">' + esc(org.name) + '</div>';
+
+      var loc = [org.venue, org.address].filter(Boolean).join(" · ");
+      if (loc) html += '<div class="meta">' + esc(loc) + '</div>';
+      if (org.description) html += '<div class="desc">' + esc(org.description) + '</div>';
+
+      if (org.initiatives && org.initiatives.length) {
+        html += '<div class="initiatives-label" style="color:' + (theme ? theme.color : "#60174C") + '">Key initiatives</div>';
+        html += '<ul class="initiatives">';
+        org.initiatives.forEach(function (it) { html += '<li>' + esc(it) + '</li>'; });
+        html += '</ul>';
+      }
+
+      if (org.url) {
+        html += '<div class="meta" style="margin-top:6px;"><a href="' + esc(org.url) + '" target="_blank" rel="noopener">Visit website &rarr;</a></div>';
+      }
+
       html += '</div>';
       html += '<div class="chev">&rsaquo;</div>';
       html += '</li>';
@@ -262,12 +301,12 @@
     return html;
   }
 
-  function renderThemes(cfg, grouped, orgTypeById, onClickEvent, hiddenThemes) {
+  function renderThemes(cfg, grouped, themeById, orgTypeById, onClickOrg, hiddenThemes) {
     var root = document.getElementById("themes");
     root.innerHTML = "";
     cfg.themes.forEach(function (t) {
       if (hiddenThemes && hiddenThemes.has(t.id)) return;
-      var events = grouped[t.id] || [];
+      var orgs = grouped[t.id] || [];
       var card = document.createElement("article");
       card.className = "theme-card";
       card.id = "theme-" + slug(t.id);
@@ -276,7 +315,7 @@
         ? '<div class="theme-badge" style="background:' + t.color + '">' + svgIcon(t.icon, "#fff", 22, 2) + '</div>'
         : "";
       var head = '<div class="theme-head" style="border-left-color:' + t.color + '">'
-               + '<span class="count">' + events.length + ' event' + (events.length === 1 ? "" : "s") + '</span>'
+               + '<span class="count">' + orgs.length + ' organisation' + (orgs.length === 1 ? "" : "s") + '</span>'
                + badge
                + '<div class="theme-head-text">'
                + '<h2>' + esc(t.title) + '</h2>'
@@ -284,30 +323,16 @@
                + (t.description ? '<p>' + esc(t.description) + '</p>' : "")
                + '</div>'
                + '</div>';
-      card.innerHTML = head + renderEventList(t, events, orgTypeById);
+      card.innerHTML = head + renderOrgList(t, orgs, themeById, orgTypeById);
       root.appendChild(card);
     });
 
     root.onclick = function (e) {
-      var li = e.target.closest("li[data-event-index]");
+      var li = e.target.closest("li[data-org-index]");
       if (!li) return;
-      var idx = parseInt(li.getAttribute("data-event-index"), 10);
-      if (!isNaN(idx)) onClickEvent(idx);
+      var idx = parseInt(li.getAttribute("data-org-index"), 10);
+      if (!isNaN(idx)) onClickOrg(idx);
     };
-  }
-
-  function groupEvents(cfg, events) {
-    var grouped = {};
-    cfg.themes.forEach(function (t) { grouped[t.id] = []; });
-    events.forEach(function (ev) {
-      if (grouped[ev.theme]) grouped[ev.theme].push(ev);
-      else {
-        if (!grouped.__other) grouped.__other = [];
-        grouped.__other.push(ev);
-      }
-    });
-    Object.keys(grouped).forEach(function (k) { grouped[k].sort(compareEvents); });
-    return grouped;
   }
 
   function wirePdfLinks(cfg) {
@@ -339,25 +364,32 @@
     wirePdfLinks(cfg);
 
     var state = { themes: new Set(), orgs: new Set(), note: "" };
-    var allEvents = [];
+    var allOrgs = [];
     var mapCtx = null;
 
-    function matchesFilters(ev) {
-      if (state.themes.size && !state.themes.has(ev.theme)) return false;
-      if (state.orgs.size && !state.orgs.has(ev.orgType)) return false;
+    function matchesFilters(org) {
+      if (state.themes.size) {
+        var hit = false;
+        var ts = org.themes || [];
+        for (var i = 0; i < ts.length; i++) {
+          if (state.themes.has(ts[i])) { hit = true; break; }
+        }
+        if (!hit) return false;
+      }
+      if (state.orgs.size && !state.orgs.has(org.orgType)) return false;
       return true;
     }
 
     function setStatus(visibleCount, totalCount) {
-      var parts = [];
       if (!totalCount) {
-        status.textContent = "No events to display" + (state.note ? " (" + state.note + ")" : "") + ".";
+        status.textContent = "No organisations to display" + (state.note ? " (" + state.note + ")" : "") + ".";
         return;
       }
+      var parts = [];
       if (visibleCount === totalCount) {
-        parts.push("Showing all " + totalCount + " event" + (totalCount === 1 ? "" : "s"));
+        parts.push("Showing all " + totalCount + " organisation" + (totalCount === 1 ? "" : "s"));
       } else {
-        parts.push("Showing " + visibleCount + " of " + totalCount + " events");
+        parts.push("Showing " + visibleCount + " of " + totalCount + " organisations");
       }
       var filters = [];
       if (state.themes.size) filters.push(state.themes.size + " recommendation" + (state.themes.size === 1 ? "" : "s"));
@@ -368,19 +400,16 @@
     }
 
     function refresh() {
-      var visible = allEvents.filter(matchesFilters);
-      var grouped = groupEvents(cfg, visible);
-
-      // If a theme filter is active, hide non-selected theme cards entirely.
+      var visible = allOrgs.filter(matchesFilters);
+      var grouped = groupOrgs(cfg, visible, state.themes);
       var hiddenThemes = null;
       if (state.themes.size) {
         hiddenThemes = new Set();
         cfg.themes.forEach(function (t) { if (!state.themes.has(t.id)) hiddenThemes.add(t.id); });
       }
-
       populateMap(window.L, cfg, mapCtx, visible, themeById, orgTypeById);
       renderFilters(cfg, state, refresh);
-      renderThemes(cfg, grouped, orgTypeById, function (idx) {
+      renderThemes(cfg, grouped, themeById, orgTypeById, function (idx) {
         var m = mapCtx.markersByIdx[idx];
         if (m) {
           mapCtx.map.setView(m.getLatLng(), 15, { animate: true });
@@ -389,24 +418,24 @@
           if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }, hiddenThemes);
-      setStatus(visible.length, allEvents.length);
+      setStatus(visible.length, allOrgs.length);
     }
 
-    function bootstrap(events, note) {
+    function bootstrap(orgs, note) {
       state.note = note || "";
-      allEvents = events.map(function (ev, i) { ev.__idx = i; return ev; });
+      allOrgs = orgs.map(function (o, i) { o.__idx = i; return o; });
       mapCtx = initMap(window.L, cfg);
       refresh();
     }
 
-    var fallback = (window.PORIRUA_SAMPLE_EVENTS || []).map(normaliseRow).filter(Boolean);
+    var fallback = (window.PORIRUA_SAMPLE_ORGS || []).map(normaliseRow).filter(Boolean);
 
     if (cfg.googleSheetCsvUrl) {
-      status.textContent = "Loading events from Google Sheet…";
+      status.textContent = "Loading organisations from Google Sheet…";
       loadFromSheet(cfg.googleSheetCsvUrl)
-        .then(function (events) {
-          if (!events.length) return bootstrap(fallback, "sample data — no valid rows in sheet");
-          bootstrap(events);
+        .then(function (orgs) {
+          if (!orgs.length) return bootstrap(fallback, "sample data — no valid rows in sheet");
+          bootstrap(orgs);
         })
         .catch(function (err) {
           console.error("[porirua-preview] Failed to load sheet:", err);

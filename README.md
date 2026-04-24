@@ -1,10 +1,17 @@
-# Porirua Locality — Events by Assembly Recommendation
+# Porirua Locality — Organisations by Assembly Recommendation
 
-A tiny, zero-backend preview site that renders community events grouped under
-the six overarching recommendations of the
+A tiny, zero-backend preview site that renders an **inventory of Porirua
+organisations** (iwi, marae, community groups, kaupapa groups, kura, councils,
+social enterprises, advocates) grouped under the six overarching
+recommendations of the
 [Porirua Assembly](https://static1.squarespace.com/static/61a403b442b8840d9ed2143a/t/68355b24fb37801191c0ad0a/1748327214881/Porirua+Assembly+Recommendations-compressed.pdf),
-with a Leaflet map coloured by theme. Built to be copy-pasted into the
-[Porirua Locality](https://reindeer-avocado-974t.squarespace.com/) Squarespace site.
+with a Leaflet map coloured by recommendation. Built to be copy-pasted into
+the [Porirua Locality](https://reindeer-avocado-974t.squarespace.com/)
+Squarespace site.
+
+One marker per organisation. Each organisation declares a **primary**
+recommendation (for grouping) plus optional **cross-cutting** recommendations
+it also contributes to (shown as chips, and used for filtering).
 
 ## The six themes
 
@@ -19,36 +26,40 @@ From the Porirua Assembly Recommendations:
 | `Know More Do More`           | Know More Do More             | Action Through Education and Awareness | book-open    |
 | `How Stuff Works`             | How Stuff Works               | Resilient Infrastructure               | cog          |
 
-Icons are Lucide-style stroked SVGs, inlined into both the theme card badge
-and the map markers so each theme is instantly recognisable.
-
-Events under `How Stuff Works` can optionally set a `subtheme` of `Water`,
-`Waste`, `Transport`, `Energy`, or `Health`. Each sub-theme has its own icon
-(droplet, recycle, bus, zap, heart-pulse) that appears inside the event row
-pill and the map popup.
+Icons are Lucide-style stroked SVGs, used in the theme card badges, the theme
+chips on each organisation, and the filter bar.
 
 ## Organisation types
 
-Each event is also tagged with the **type of organisation** running it, so
-users can filter the map by who's leading the mahi:
+Every organisation is tagged with its **type**, which powers the second filter
+and the org-type pill + marker icon:
 
-| Org type id (used in the sheet) | Typical examples                                               | Icon          |
-| ------------------------------- | -------------------------------------------------------------- | ------------- |
-| `Iwi & Marae`                   | Ngāti Toa Rangatira, Takapūwāhia Marae, Hongoeka Marae         | landmark      |
-| `Community Group`               | Te Wāhi Tiaki Tātou, Pātaka Kai, Wesley Community Action, R.O.C.C., Porirua Assembly, Ngahere Korowai, Para Kore, Autism NZ | users       |
-| `Kaupapa Group`                 | Kai Kaupapa Group, Housing Kaupapa Group (PCLF)                | users-round   |
-| `School / Kura`                 | Porirua College, Aotea College, Enviroschools cluster           | graduation-cap |
-| `Council / Government`          | Porirua City Council, Kāinga Ora, Metlink / Greater Wellington | building-2    |
-| `Social Enterprise`             | Te Umu ki Rangituhi (Porirua's Social Supermarket)              | store         |
-| `Advocacy / Research`           | Sustainability Trust, Porirua Harbour Trust, The People Speak  | megaphone     |
+| Org type id (used in the sheet) | Typical examples                                                                                                            | Icon           |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| `Iwi & Marae`                   | Ngāti Toa Rangatira (Takapūwāhia + Hongoeka)                                                                                 | landmark       |
+| `Community Group`               | Te Wāhi Tiaki Tātou, PCLF, Porirua Assembly, R.O.C.C., Wesley Community Action, Pātaka Kai, Ngahere Korowai, Para Kore, Autism NZ | users          |
+| `Kaupapa Group`                 | Kai Kaupapa Group, Housing Kaupapa Group (PCLF)                                                                              | users-round    |
+| `School / Kura`                 | Porirua College, Aotea College, Enviroschools Porirua cluster                                                                | graduation-cap |
+| `Council / Government`          | Porirua City Council, Kāinga Ora Porirua, Metlink / Greater Wellington                                                        | building-2     |
+| `Social Enterprise`             | Te Umu ki Rangituhi (Porirua's Social Supermarket), Te Āhuru Mōwai                                                            | store          |
+| `Advocacy / Research`           | Porirua Harbour Trust, Sustainability Trust, Te Reo o Ngā Tāngata / The People Speak                                         | megaphone      |
+
+## Map markers
+
+- **Colour** = the organisation's **primary** recommendation colour.
+- **Icon** inside the circle = the organisation's **type** icon.
+
+So scanning the map tells you both *which recommendation* each org anchors to
+and *what kind of organisation* it is.
 
 ## Filtering
 
 Two filter bars sit between the map and the theme cards:
 
-1. **Filter by recommendation** — toggles the six Assembly themes. Selecting
-   one or more theme chips hides the other theme cards entirely and limits
-   markers to the selected themes.
+1. **Filter by recommendation** — toggles the six Assembly themes. Any org
+   whose primary **or** cross-cutting themes include a selected recommendation
+   is shown, and orgs appear under **every** selected theme section they
+   contribute to (so you can see cross-cutting kaupapa in context).
 2. **Filter by organisation** — toggles the organisation-type chips above.
 
 Filters combine (logical AND) and are multi-select. A **Clear all filters**
@@ -68,21 +79,32 @@ Then open <http://localhost:5173>.
 
 ## Hook it up to a Google Sheet
 
-1. Create a Google Sheet with these columns (first row = headers):
+1. Create a Google Sheet with one row per organisation and these columns
+   (first row = headers):
 
    ```
-   name | theme | subtheme | orgType | orgName | date | time | venue | address | lat | lng | url | description
+   name | orgType | theme | themes | venue | address | lat | lng | url | description | initiatives
    ```
 
-   - `theme` must be one of the theme ids (exact match).
-   - `orgType` must be one of the organisation-type ids (exact match) to be
-     filterable. Events without an `orgType` still render but won't appear
-     under any org filter.
-   - `orgName` is free text — the specific rōpū or provider (e.g.
-     "Ngāti Toa Rangatira", "Wesley Community Action").
-   - `date` works with any format `new Date()` can parse, e.g. `2026-05-10`.
-   - `subtheme` is only used for `How Stuff Works` events (Water/Waste/…).
-   - `lat`/`lng` are optional but needed to pin an event on the map.
+   - `name` is the organisation's name (e.g. "Ngāti Toa Rangatira").
+   - `orgType` must be one of the organisation-type ids in the table above
+     (exact match, e.g. `Iwi & Marae`).
+   - `theme` is the **primary** recommendation this organisation anchors to
+     (exact match to a theme id). Drives the section the org appears under
+     when no theme filter is active, plus the marker colour.
+   - `themes` is optional — a **comma-separated list** of additional
+     recommendation ids the organisation contributes to
+     (e.g. `Te Taiao, Rangatahi`). Used for cross-cutting chips + filter
+     matching. The primary theme is added automatically; you don't need to
+     repeat it here.
+   - `venue` + `address` describe where the org is based or where it
+     predominantly operates.
+   - `lat`/`lng` are optional but needed to pin the org on the map.
+   - `url` is the organisation's website.
+   - `description` is 1-3 sentences about what they do.
+   - `initiatives` is optional — a list of flagship programmes, **separated
+     by `|` or `;`** (e.g. `Reimagining Hui | Monthly e-Pānui | PCLF`).
+     Renders as a bullet list under each org.
 
 2. In Google Sheets: **File → Share → Publish to web → CSV → Publish**, then
    copy the URL (ends with `output=csv`).
@@ -104,7 +126,7 @@ Once the preview looks right, use `squarespace-snippet.html`:
    (requires the Business plan or higher).
 2. Paste the contents of `squarespace-snippet.html` in.
 3. Edit the `GOOGLE_SHEET_CSV_URL` constant at the top to match your sheet.
-4. Save. The events + map render in the live page with the same data.
+4. Save. The organisations + map render in the live page with the same data.
 
 For a staging preview inside Squarespace itself, create an **unlinked page**
 (Pages → Not Linked) and embed the snippet there first.
@@ -115,8 +137,8 @@ For a staging preview inside Squarespace itself, create an **unlinked page**
 |------|---------|
 | `index.html` | Local preview shell. |
 | `config.js` | Google Sheet URL, map center, theme + org-type definitions. Edit me. |
-| `sample-data.js` | Fallback events (real Porirua initiatives), used when no sheet URL is set. |
-| `map.js` | Rendering logic (map, filter bars, event cards, popups). |
+| `sample-data.js` | Fallback organisation inventory (23 real Porirua organisations), used when no sheet URL is set. |
+| `map.js` | Rendering logic (map, filter bars, org cards, popups). |
 | `squarespace-snippet.html` | Self-contained version to paste into Squarespace. |
 | `README.md` | This file. |
 

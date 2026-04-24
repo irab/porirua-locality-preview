@@ -1,12 +1,11 @@
 <!--
-  Drop-in Squarespace Code Block for the Porirua Locality events view,
-  grouped by Porirua Assembly Recommendation themes, with filters for
+  Drop-in Squarespace Code Block for the Porirua Locality organisation
+  inventory, grouped by Porirua Assembly recommendation, with filters for
   recommendation and organisation type.
 
-  This snippet is designed to inherit the site's own palette + fonts
-  (via the site's `:root` CSS variables like --black-hsl and --accent-hsl,
-  plus the site's body/heading font-families). It therefore looks native
-  on the Porirua Locality Squarespace site without any further styling.
+  Inherits the site's own palette + fonts via the :root CSS variables
+  (--black-hsl, --darkAccent-hsl, --lightAccent-hsl, --accent-hsl) so it
+  looks native on the Porirua Locality Squarespace site without further styling.
 
   How to use:
   1. In Squarespace, edit the target page and add a "Code" block (Business plan+).
@@ -14,10 +13,14 @@
   3. Replace GOOGLE_SHEET_CSV_URL with your Sheet's "Publish to web -> CSV" URL.
 
   Expected sheet columns (first row = headers):
-    name, theme, subtheme, orgType, orgName, date, time, venue, address, lat, lng, url, description
+    name, orgType, theme, themes, venue, address, lat, lng, url, description, initiatives
 
-  `theme`   must match one of the theme ids (e.g. "Rangatahi").
-  `orgType` must match one of the organisation type ids (e.g. "Iwi & Marae").
+  `theme`   = primary recommendation this org anchors to
+              (must match a theme id, e.g. "Rangatahi").
+  `themes`  = optional comma-separated list of additional recommendations the org
+              contributes to (for filtering & cross-cutting chips).
+  `orgType` = must match an organisation-type id (e.g. "Iwi & Marae").
+  `initiatives` = optional, separate items with `|` or `;`.
 -->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -25,10 +28,6 @@
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
-  /* The Porirua Locality site already defines --black-hsl (plum),
-     --darkAccent-hsl (crimson), --lightAccent-hsl (dusty blush) and
-     --accent-hsl (cream) on :root. We reuse those so this snippet
-     re-skins automatically if the site's palette is ever changed. */
   .pal-root {
     --pal-ink: hsla(var(--black-hsl, 316,63%,23%), 1);
     --pal-ink-soft: hsla(var(--black-hsl, 316,63%,23%), 0.82);
@@ -39,10 +38,8 @@
     --pal-hover: hsla(var(--accent-hsl, 5,75%,97%), 1);
     --pal-accent: hsla(var(--darkAccent-hsl, 358,73%,47%), 1);
     color: var(--pal-ink);
-    /* Inherit the site's body font automatically. */
   }
-  .pal-root h2, .pal-root h3, .pal-root .pal-title, .pal-root .pal-day {
-    /* Inherits the site's Recoleta heading font. */
+  .pal-root h2, .pal-root h3, .pal-root .pal-title {
     font-family: inherit;
     color: var(--pal-ink);
   }
@@ -108,34 +105,45 @@
     flex-shrink: 0;
     box-shadow: 0 3px 10px -4px rgba(0,0,0,0.3);
   }
-  .pal-head .pal-head-text { flex: 1; min-width: 0; padding-right: 72px; }
+  .pal-head .pal-head-text { flex: 1; min-width: 0; padding-right: 88px; }
   .pal-head h3 { margin: 0; font-size: 22px; line-height: 1.2; color: var(--pal-ink); }
   .pal-head .pal-sub { margin: 4px 0 0; color: var(--pal-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; }
   .pal-head p { margin: 12px 0 0; color: var(--pal-ink-soft); font-size: 14px; line-height: 1.55; }
   .pal-head .pal-count { position: absolute; top: 22px; right: 22px; font-size: 12px; color: var(--pal-muted); font-weight: 500; }
 
-  .pal-events { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--pal-border); }
-  .pal-events.pal-empty li { padding: 18px 22px; font-size: 13px; color: var(--pal-muted); font-style: italic; }
-  .pal-events li {
-    padding: 14px 22px;
+  /* Organisation list inside each theme card */
+  .pal-orgs { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--pal-border); }
+  .pal-orgs.pal-empty li { padding: 18px 22px; font-size: 13px; color: var(--pal-muted); font-style: italic; }
+  .pal-orgs li {
+    padding: 16px 22px;
     border-top: 1px solid var(--pal-border);
-    display: grid; grid-template-columns: 88px 1fr auto; gap: 16px; align-items: start;
+    display: grid; grid-template-columns: 56px 1fr auto; gap: 16px; align-items: start;
     cursor: pointer; transition: background 120ms;
   }
-  .pal-events li:first-child { border-top: none; }
-  .pal-events li:hover { background: var(--pal-hover); }
-  .pal-date .pal-day { display: block; font-size: 26px; line-height: 1; color: var(--pal-ink); font-weight: 700; font-family: inherit; }
-  .pal-date .pal-mon { display: block; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; color: var(--pal-muted); margin-top: 4px; font-weight: 600; }
-  .pal-date .pal-yr  { display: block; font-size: 11px; color: var(--pal-muted); margin-top: 2px; }
-  .pal-title { font-size: 17px; font-weight: 700; color: var(--pal-ink); line-height: 1.3; }
-  .pal-meta { font-size: 12px; color: var(--pal-muted); margin-top: 4px; }
-  .pal-meta.pal-org-name { color: var(--pal-ink-soft); font-weight: 600; font-size: 12.5px; }
-  .pal-desc { font-size: 13.5px; color: var(--pal-ink-soft); margin-top: 8px; line-height: 1.55; }
+  .pal-orgs li:first-child { border-top: none; }
+  .pal-orgs li:hover { background: var(--pal-hover); }
+  .pal-orgs .pal-org-badge {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px -3px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+  }
+  .pal-orgs .pal-org-body { min-width: 0; }
+  .pal-orgs .pal-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+  .pal-orgs .pal-title { font-size: 18px; font-weight: 700; color: var(--pal-ink); line-height: 1.25; display: block; }
+  .pal-orgs .pal-meta { font-size: 12px; color: var(--pal-muted); margin-top: 4px; }
+  .pal-orgs .pal-desc { font-size: 13.5px; color: var(--pal-ink-soft); margin-top: 8px; line-height: 1.55; }
+  .pal-orgs .pal-initiatives-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-top: 10px; margin-bottom: 4px; }
+  .pal-orgs .pal-initiatives { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--pal-ink-soft); }
+  .pal-orgs .pal-initiatives li { padding: 0; border: none; display: list-item; cursor: default; background: transparent !important; margin: 0; grid-template-columns: none; }
+  .pal-orgs .pal-initiatives li:hover { background: transparent; }
   .pal-pill {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
-    padding: 3px 9px; border-radius: 999px; color: #fff; font-weight: 700; margin-right: 8px; vertical-align: middle;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 3px 9px; border-radius: 999px; color: #fff; font-weight: 700;
+    vertical-align: middle;
   }
+  .pal-pill.pal-theme { font-size: 9.5px; padding: 2px 7px; }
   .pal-pill-icon { display: inline-flex; align-items: center; }
   .pal-chev { color: var(--pal-border-strong); font-size: 22px; align-self: center; }
   .pal-link { color: var(--pal-accent); font-weight: 600; border-bottom: 1px solid currentColor; text-decoration: none; }
@@ -151,16 +159,17 @@
     .pal-head .pal-head-text { padding-right: 56px; }
     .pal-head h3 { font-size: 19px; }
     .pal-head .pal-count { top: 18px; right: 18px; font-size: 11px; }
-    .pal-events li { padding: 12px 18px; grid-template-columns: 64px 1fr; gap: 12px; }
+    .pal-orgs li { padding: 14px 18px; grid-template-columns: 44px 1fr; gap: 12px; }
+    .pal-orgs .pal-org-badge { width: 36px; height: 36px; }
+    .pal-orgs .pal-title { font-size: 16px; }
     .pal-chev { display: none; }
-    .pal-date .pal-day { font-size: 22px; }
   }
 </style>
 
 <div class="pal-root">
-  <div id="pal-map" class="pal-map" aria-label="Map of Porirua community events"></div>
-  <div class="pal-status" id="pal-status">Loading events…</div>
-  <div class="pal-filters" id="pal-filters" aria-label="Filter events"></div>
+  <div id="pal-map" class="pal-map" aria-label="Map of Porirua organisations"></div>
+  <div class="pal-status" id="pal-status">Loading organisations…</div>
+  <div class="pal-filters" id="pal-filters" aria-label="Filter organisations"></div>
   <section class="pal-themes" id="pal-themes"></section>
 </div>
 
@@ -177,12 +186,6 @@
       compass: '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
       "book-open": '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
       cog: '<path d="M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>',
-      // Sub-theme icons
-      droplet: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
-      recycle: '<path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.293 13.596 7.196 9.5 3.1 10.598"/><path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/><path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>',
-      bus: '<path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>',
-      zap: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
-      "heart-pulse": '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
       // Organisation-type icons
       landmark: '<line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
       users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -192,15 +195,13 @@
       store: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>',
       megaphone: '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'
     };
-    var SUBTHEME_ICONS = { Water: "droplet", Waste: "recycle", Transport: "bus", Energy: "zap", Health: "heart-pulse" };
 
     function svgIcon(key, color, size, sw){
       var inner = ICONS[key]; if(!inner) return "";
       return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="'+(sw||2)+'" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>';
     }
-    function subthemeSvg(sub, color, size){ var k = SUBTHEME_ICONS[sub]; return k ? svgIcon(k, color, size||14, 2) : ""; }
 
-    // ---------- Themes and organisation types ----------
+    // ---------- Themes + org types ----------
     var THEMES = [
       { id: "Rangatahi",                title: "Rangatahi",                subtitle: "Youth",                                   color: "#CF2028", icon: "sprout",    description: "Intentionally include, enable and empower our rangatahi to set their own kaupapa and participate meaningfully and equitably in design, decision-making and implementation." },
       { id: "Weaving Porirua Together", title: "Weaving Porirua Together", subtitle: "Resilient People Network",                color: "#D97706", icon: "network",   description: "Build and sustain momentum for courageous, bold and collaborative action by establishing a sustainable network that connects, strengthens, and leverages existing community-led rōpū." },
@@ -223,63 +224,68 @@
     // ---------- Helpers ----------
     function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
     function slug(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
-    function parseDate(s){if(!s) return null;var d=new Date(s);return isNaN(d.getTime())?null:d;}
-    function dateParts(s){var d=parseDate(s);if(!d) return {day:"",mon:"",yr:""};return {day:String(d.getDate()),mon:d.toLocaleString("en-NZ",{month:"short"}),yr:String(d.getFullYear())};}
-    function cmp(a,b){var da=parseDate(a.date),db=parseDate(b.date);if(da&&db) return da-db;if(da) return -1;if(db) return 1;return a.name.localeCompare(b.name);}
+    function splitList(s){ if(s==null) return []; if(Array.isArray(s)) return s.filter(Boolean); return String(s).split(/\s*[\n;|]+\s*/).map(function(t){return t.trim();}).filter(Boolean); }
+    function splitThemes(s){ if(s==null) return []; if(Array.isArray(s)) return s.filter(Boolean); return String(s).split(/\s*,\s*/).map(function(t){return t.trim();}).filter(Boolean); }
     function row(r){
-      var name=r.name||r.Name;var theme=r.theme||r.Theme;
-      if(!name||!theme) return null;
+      var name=r.name||r.Name;
+      var primary=r.theme||r.Theme;
+      if(!name||!primary) return null;
+      var extra=splitThemes(r.themes||r.Themes);
+      var themes=extra.slice();
+      if(themes.indexOf(primary)<0) themes.unshift(primary);
       var lat=parseFloat(r.lat||r.latitude),lng=parseFloat(r.lng||r.longitude);
       return {
-        name:name, theme:theme,
-        subtheme:r.subtheme||"",
+        name:name, theme:primary, themes:themes,
         orgType:r.orgType||r.organisationType||r.orgtype||"",
-        orgName:r.orgName||r.organisation||r.organization||"",
-        date:r.date||"", time:r.time||"",
         venue:r.venue||"", address:r.address||"",
         lat:isNaN(lat)?null:lat, lng:isNaN(lng)?null:lng,
-        url:r.url||r.website||"", description:r.description||""
+        url:r.url||r.website||"", description:r.description||"",
+        initiatives:splitList(r.initiatives||r.Initiatives)
       };
     }
     function ready(fn){if(window.L&&window.Papa) return fn();setTimeout(function(){ready(fn);},50);}
 
     // ---------- Map + popup ----------
-    function icon(L,color,t){
-      var ic = t && t.icon ? svgIcon(t.icon, "#fff", 18, 2.2) : "";
+    function icon(L, theme, orgType){
+      var color = theme ? theme.color : DEFAULT_COLOR;
+      var ic = orgType && orgType.icon ? svgIcon(orgType.icon, "#fff", 18, 2.2) : "";
       var html = '<div style="width:36px;height:36px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;">'+ic+'</div>';
       return L.divIcon({className:"pal-marker",html:html,iconSize:[36,36],iconAnchor:[18,18]});
     }
-    function popup(ev,t,org){
-      var color=t?t.color:DEFAULT_COLOR;
-      var tIcon = t && t.icon ? svgIcon(t.icon, "#fff", 11, 2.2) : "";
-      var h='<div style="max-width:290px;color:#3c1b30;">';
-      h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'+color+';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'+tIcon+esc(t?t.title:ev.theme)+'</span>';
-      if(ev.subtheme){
-        var sIcon = subthemeSvg(ev.subtheme, "#8a677a", 11);
-        h+=' <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#8a677a;text-transform:uppercase;letter-spacing:.08em;font-weight:600;vertical-align:middle;">'+sIcon+esc(ev.subtheme)+'</span>';
+    function popup(org, themeById, orgType){
+      var t = themeById[org.theme];
+      var color = t ? t.color : DEFAULT_COLOR;
+      var h='<div style="max-width:300px;color:#3c1b30;">';
+      if(orgType){
+        h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'+orgType.color+';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'+svgIcon(orgType.icon,"#fff",11,2)+esc(orgType.title)+'</span>';
       }
-      h+='<strong style="font-size:16px;line-height:1.25;display:block;margin:4px 0;color:#60174C;">'+esc(ev.name)+'</strong>';
-      if(org || ev.orgName){
-        var oIcon = org && org.icon ? svgIcon(org.icon, org.color, 11, 2) : "";
-        var parts = [];
-        if(org) parts.push(esc(org.title));
-        if(ev.orgName) parts.push(esc(ev.orgName));
-        h+='<div style="font-size:11px;color:#8a677a;margin-top:2px;display:flex;align-items:center;gap:5px;">'+oIcon+'<span>'+parts.join(" · ")+'</span></div>';
+      h+='<strong style="font-size:16px;line-height:1.25;display:block;margin:4px 0 6px;color:#60174C;">'+esc(org.name)+'</strong>';
+      if(org.themes && org.themes.length){
+        h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px;">';
+        org.themes.forEach(function(tid){
+          var th=themeById[tid]; if(!th) return;
+          h+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:#fff;background:'+th.color+';padding:2px 7px;border-radius:999px;font-weight:700;">'+svgIcon(th.icon,"#fff",10,2.2)+esc(th.title)+'</span>';
+        });
+        h+='</div>';
       }
-      var dl=[ev.date,ev.time].filter(Boolean).join(" · ");
-      if(dl) h+='<div style="font-size:12px;color:#60174C;font-weight:600;margin-top:6px;">'+esc(dl)+'</div>';
-      var where=[ev.venue,ev.address].filter(Boolean).join(", ");
+      var where=[org.venue,org.address].filter(Boolean).join(", ");
       if(where) h+='<div style="font-size:12px;color:#8a677a;margin-top:2px;">'+esc(where)+'</div>';
-      if(ev.description) h+='<p style="font-size:13px;line-height:1.5;color:#3c1b30;margin:10px 0 8px;">'+esc(ev.description)+'</p>';
-      if(ev.url) h+='<a href="'+esc(ev.url)+'" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#cf2028;font-weight:600;text-decoration:none;border-bottom:1px solid currentColor;">Learn more &rarr;</a>';
+      if(org.description) h+='<p style="font-size:13px;line-height:1.5;color:#3c1b30;margin:10px 0 6px;">'+esc(org.description)+'</p>';
+      if(org.initiatives && org.initiatives.length){
+        h+='<div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:'+color+';font-weight:700;margin-top:8px;margin-bottom:3px;">Key initiatives</div>';
+        h+='<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.45;color:#3c1b30;">';
+        org.initiatives.forEach(function(it){ h+='<li>'+esc(it)+'</li>'; });
+        h+='</ul>';
+      }
+      if(org.url) h+='<a href="'+esc(org.url)+'" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:10px;font-size:12px;color:#cf2028;font-weight:600;text-decoration:none;border-bottom:1px solid currentColor;">Visit website &rarr;</a>';
       return h+"</div>";
     }
 
     // ---------- Bootstrap ----------
-    function boot(allEvents){
+    function boot(allOrgs){
       var themeById={};THEMES.forEach(function(t){themeById[t.id]=t;});
       var orgById={};ORG_TYPES.forEach(function(o){orgById[o.id]=o;});
-      allEvents.forEach(function(e,i){e.__idx=i;});
+      allOrgs.forEach(function(o,i){o.__idx=i;});
 
       var L=window.L;
       var map=L.map("pal-map",{scrollWheelZoom:false}).setView([-41.1350,174.8400],12);
@@ -288,21 +294,24 @@
       var markers={};
       var state={themes:new Set(),orgs:new Set()};
 
-      function matches(ev){
-        if(state.themes.size && !state.themes.has(ev.theme)) return false;
-        if(state.orgs.size && !state.orgs.has(ev.orgType)) return false;
+      function matches(org){
+        if(state.themes.size){
+          var hit=false;
+          (org.themes||[]).forEach(function(t){ if(state.themes.has(t)) hit=true; });
+          if(!hit) return false;
+        }
+        if(state.orgs.size && !state.orgs.has(org.orgType)) return false;
         return true;
       }
 
-      function populateMap(evs){
+      function populateMap(orgs){
         layer.clearLayers(); markers={};
         var bounds=[];
-        evs.forEach(function(ev){
-          if(ev.lat==null||ev.lng==null) return;
-          var t=themeById[ev.theme],org=orgById[ev.orgType];
-          var color=t?t.color:DEFAULT_COLOR;
-          var m=L.marker([ev.lat,ev.lng],{icon:icon(L,color,t)}).bindPopup(popup(ev,t,org),{maxWidth:310});
-          layer.addLayer(m); markers[ev.__idx]=m; bounds.push([ev.lat,ev.lng]);
+        orgs.forEach(function(org){
+          if(org.lat==null||org.lng==null) return;
+          var t=themeById[org.theme],org2=orgById[org.orgType];
+          var m=L.marker([org.lat,org.lng],{icon:icon(L,t,org2)}).bindPopup(popup(org,themeById,org2),{maxWidth:320});
+          layer.addLayer(m); markers[org.__idx]=m; bounds.push([org.lat,org.lng]);
         });
         if(bounds.length>1) map.fitBounds(bounds,{padding:[24,24],maxZoom:14});
         else if(bounds.length===1) map.setView(bounds[0],14);
@@ -343,11 +352,11 @@
         var root=document.getElementById("pal-themes"); root.innerHTML="";
         THEMES.forEach(function(t){
           if(hiddenThemes && hiddenThemes.has(t.id)) return;
-          var evs=grouped[t.id]||[];
+          var orgs=grouped[t.id]||[];
           var card=document.createElement("article"); card.className="pal-card"; card.id="pal-theme-"+slug(t.id);
           var badge = t.icon ? '<div class="pal-badge" style="background:'+t.color+'">'+svgIcon(t.icon,"#fff",22,2)+'</div>' : '';
           var head='<div class="pal-head" style="border-left-color:'+t.color+'">'
-               +'<span class="pal-count">'+evs.length+' event'+(evs.length===1?"":"s")+'</span>'
+               +'<span class="pal-count">'+orgs.length+' organisation'+(orgs.length===1?"":"s")+'</span>'
                +badge
                +'<div class="pal-head-text">'
                +'<h3>'+esc(t.title)+'</h3>'
@@ -355,28 +364,35 @@
                +(t.description?'<p>'+esc(t.description)+'</p>':"")
                +'</div></div>';
           var list;
-          if(!evs.length){ list='<ul class="pal-events pal-empty"><li>No events match the current filters.</li></ul>'; }
+          if(!orgs.length){ list='<ul class="pal-orgs pal-empty"><li>No organisations match the current filters.</li></ul>'; }
           else{
-            list='<ul class="pal-events">';
-            evs.forEach(function(ev){
-              var d=dateParts(ev.date);
-              var meta=[ev.time,ev.venue,ev.address].filter(Boolean).map(esc).join(" · ");
-              var org=orgById[ev.orgType];
-              list+='<li data-event-index="'+ev.__idx+'">';
-              list+='<div class="pal-date"><span class="pal-day">'+esc(d.day)+'</span><span class="pal-mon">'+esc(d.mon)+'</span><span class="pal-yr">'+esc(d.yr)+'</span></div>';
-              list+='<div>';
-              if(ev.subtheme){
-                var sp = subthemeSvg(ev.subtheme, "#fff", 11);
-                list+='<span class="pal-pill" style="background:'+t.color+'">'+(sp?'<span class="pal-pill-icon">'+sp+'</span>':'')+esc(ev.subtheme)+'</span>';
+            list='<ul class="pal-orgs">';
+            orgs.forEach(function(org){
+              var orgType=orgById[org.orgType];
+              var orgColor=orgType?orgType.color:"#8a677a";
+              list+='<li data-org-index="'+org.__idx+'">';
+              list+='<div class="pal-org-badge" style="background:'+orgColor+'">'+(orgType?svgIcon(orgType.icon,"#fff",22,2):"")+'</div>';
+              list+='<div class="pal-org-body">';
+              var pills="";
+              if(orgType){
+                pills+='<span class="pal-pill" style="background:'+orgType.color+'"><span class="pal-pill-icon">'+svgIcon(orgType.icon,"#fff",11,2)+'</span>'+esc(orgType.title)+'</span>';
               }
-              if(org){
-                list+='<span class="pal-pill" style="background:'+org.color+'"><span class="pal-pill-icon">'+svgIcon(org.icon,"#fff",11,2)+'</span>'+esc(org.title)+'</span>';
+              (org.themes||[]).forEach(function(tid){
+                var th=themeById[tid]; if(!th) return;
+                pills+='<span class="pal-pill pal-theme" style="background:'+th.color+'"><span class="pal-pill-icon">'+svgIcon(th.icon,"#fff",10,2.2)+'</span>'+esc(th.title)+'</span>';
+              });
+              if(pills) list+='<div class="pal-pills">'+pills+'</div>';
+              list+='<span class="pal-title">'+esc(org.name)+'</span>';
+              var loc=[org.venue,org.address].filter(Boolean).join(" · ");
+              if(loc) list+='<div class="pal-meta">'+esc(loc)+'</div>';
+              if(org.description) list+='<div class="pal-desc">'+esc(org.description)+'</div>';
+              if(org.initiatives && org.initiatives.length){
+                list+='<div class="pal-initiatives-label" style="color:'+t.color+'">Key initiatives</div>';
+                list+='<ul class="pal-initiatives">';
+                org.initiatives.forEach(function(it){ list+='<li>'+esc(it)+'</li>'; });
+                list+='</ul>';
               }
-              list+='<span class="pal-title">'+esc(ev.name)+'</span>';
-              if(ev.orgName) list+='<div class="pal-meta pal-org-name">'+esc(ev.orgName)+'</div>';
-              if(meta) list+='<div class="pal-meta">'+meta+'</div>';
-              if(ev.description) list+='<div class="pal-desc">'+esc(ev.description)+'</div>';
-              if(ev.url) list+='<div class="pal-meta" style="margin-top:4px;"><a class="pal-link" href="'+esc(ev.url)+'" target="_blank" rel="noopener">Learn more &rarr;</a></div>';
+              if(org.url) list+='<div class="pal-meta" style="margin-top:6px;"><a class="pal-link" href="'+esc(org.url)+'" target="_blank" rel="noopener">Visit website &rarr;</a></div>';
               list+='</div><div class="pal-chev">&rsaquo;</div></li>';
             });
             list+='</ul>';
@@ -385,8 +401,8 @@
           root.appendChild(card);
         });
         root.onclick=function(e){
-          var li=e.target.closest("li[data-event-index]"); if(!li) return;
-          var idx=parseInt(li.getAttribute("data-event-index"),10);
+          var li=e.target.closest("li[data-org-index]"); if(!li) return;
+          var idx=parseInt(li.getAttribute("data-org-index"),10);
           var m=markers[idx]; if(!m) return;
           map.setView(m.getLatLng(),15,{animate:true});
           setTimeout(function(){m.openPopup();},250);
@@ -394,12 +410,27 @@
         };
       }
 
+      function groupOrgs(orgs){
+        var grouped={};THEMES.forEach(function(t){grouped[t.id]=[];});
+        if(state.themes.size){
+          orgs.forEach(function(org){
+            (org.themes||[]).forEach(function(tid){
+              if(state.themes.has(tid) && grouped[tid]) grouped[tid].push(org);
+            });
+          });
+        } else {
+          orgs.forEach(function(org){ if(grouped[org.theme]) grouped[org.theme].push(org); });
+        }
+        Object.keys(grouped).forEach(function(k){ grouped[k].sort(function(a,b){return a.name.localeCompare(b.name);}); });
+        return grouped;
+      }
+
       function setStatus(visible,total){
         var el=document.getElementById("pal-status");
-        if(!total){ el.textContent="No events to display."; return; }
+        if(!total){ el.textContent="No organisations to display."; return; }
         var parts=[];
-        if(visible===total) parts.push("Showing all "+total+" event"+(total===1?"":"s"));
-        else parts.push("Showing "+visible+" of "+total+" events");
+        if(visible===total) parts.push("Showing all "+total+" organisation"+(total===1?"":"s"));
+        else parts.push("Showing "+visible+" of "+total+" organisations");
         var filters=[];
         if(state.themes.size) filters.push(state.themes.size+" recommendation"+(state.themes.size===1?"":"s"));
         if(state.orgs.size) filters.push(state.orgs.size+" organisation type"+(state.orgs.size===1?"":"s"));
@@ -408,16 +439,14 @@
       }
 
       function refresh(){
-        var visible=allEvents.filter(matches);
-        var grouped={};THEMES.forEach(function(t){grouped[t.id]=[];});
-        visible.forEach(function(e){ if(grouped[e.theme]) grouped[e.theme].push(e); });
-        Object.keys(grouped).forEach(function(k){grouped[k].sort(cmp);});
+        var visible=allOrgs.filter(matches);
+        var grouped=groupOrgs(visible);
         var hidden=null;
         if(state.themes.size){ hidden=new Set(); THEMES.forEach(function(t){ if(!state.themes.has(t.id)) hidden.add(t.id); }); }
         populateMap(visible);
         renderFilters();
         renderThemes(grouped, hidden);
-        setStatus(visible.length, allEvents.length);
+        setStatus(visible.length, allOrgs.length);
       }
 
       refresh();
@@ -425,12 +454,12 @@
 
     ready(function(){
       if(!GOOGLE_SHEET_CSV_URL){
-        document.getElementById("pal-status").textContent="Add a Google Sheet URL in the snippet to load events.";
+        document.getElementById("pal-status").textContent="Add a Google Sheet URL in the snippet to load organisations.";
         return boot([]);
       }
       Papa.parse(GOOGLE_SHEET_CSV_URL,{download:true,header:true,skipEmptyLines:true,
         complete:function(r){boot((r.data||[]).map(row).filter(Boolean));},
-        error:function(err){console.error("[porirua-map]",err);document.getElementById("pal-status").textContent="Failed to load events.";boot([]);}
+        error:function(err){console.error("[porirua-map]",err);document.getElementById("pal-status").textContent="Failed to load organisations.";boot([]);}
       });
     });
   })();

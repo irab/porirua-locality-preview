@@ -1,334 +1,456 @@
-// Fallback sample events, used when no Google Sheet URL is configured.
+// Fallback organisation inventory, used when no Google Sheet URL is configured.
 // Shape mirrors the expected Google Sheet columns:
-//   name, theme, subtheme, orgType, orgName, date, time, venue, address, lat, lng, url, description
+//   name, orgType, theme, themes, venue, address, lat, lng, url, description, initiatives
 //
-// `theme` MUST match a theme id in config.js (e.g. "Te Taiao").
-// `subtheme` is optional; used by themes that declare subthemes (e.g. How Stuff Works).
-// `orgType` MUST match an id in PORIRUA_ORG_TYPES (e.g. "Iwi & Marae").
-// `orgName` is the hosting organisation / kaupapa lead (free text).
-window.PORIRUA_SAMPLE_EVENTS = [
-  // ================= Rangatahi =================
+// `theme`   = primary Porirua Assembly recommendation this org anchors to
+//             (MUST match a theme id in config.js).
+// `themes`  = optional additional themes this org contributes to. In the
+//             fallback data below it's given as an array. In the Google Sheet
+//             it is a comma-separated string (e.g. "Te Taiao, Rangatahi").
+// `orgType` = MUST match an id in PORIRUA_ORG_TYPES (e.g. "Iwi & Marae").
+// `initiatives` = optional list of flagship programmes / kaupapa for this org.
+//             In the Sheet, separate items with `|` or `;`.
+window.PORIRUA_SAMPLE_ORGS = [
+  // ================= Iwi & Marae =================
   {
-    name: "Takapūwāhia Marae rangatahi climate wānanga",
-    theme: "Rangatahi",
+    name: "Ngāti Toa Rangatira",
     orgType: "Iwi & Marae",
-    orgName: "Ngāti Toa Rangatira",
-    date: "2026-05-10", time: "10:00",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together", "How We Roll", "Te Taiao", "Rangatahi"],
     venue: "Takapūwāhia Marae",
     address: "Takapūwāhia, Porirua",
     lat: -41.1363, lng: 174.8405,
-    url: "",
+    url: "https://www.ngatitoa.iwi.nz/",
     description:
-      "Rangatahi-led wānanga at Takapūwāhia exploring mātauranga Māori responses to " +
-      "climate change and how 12–24 year olds can set their own kaupapa.",
-  },
-  {
-    name: "Mātiti Tamariki wānanga",
-    theme: "Rangatahi",
-    orgType: "School / Kura",
-    orgName: "Aotea College + Ngāti Toa",
-    date: "2026-06-01", time: "09:00",
-    venue: "Aotea College",
-    address: "Aotea, Porirua",
-    lat: -41.1290, lng: 174.8538,
-    url: "",
-    description:
-      "Tamariki and rangatahi wānanga focused on sustainable practices — reinstated " +
-      "and expanded across a range of ages, with a taiao and resilience focus.",
-  },
-  {
-    name: "Youth Council co-design hui",
-    theme: "Rangatahi",
-    orgType: "Council / Government",
-    orgName: "Porirua City Council",
-    date: "2026-07-15", time: "16:30",
-    venue: "Porirua City Council",
-    address: "16 Cobham Court, Porirua",
-    lat: -41.1371, lng: 174.8398,
-    url: "",
-    description:
-      "Co-design workshop with rangatahi to shape a reinstated Youth Council and how " +
-      "they are represented in local and regional decision-making.",
+      "Mana whenua of Porirua. Iwi-led kaitiakitanga of Te Awarua-o-Porirua, hosting " +
+      "the Porirua Assembly and Te Wāhi Tiaki Tātou kaupapa. Marae at Takapūwāhia and " +
+      "Hongoeka (Plimmerton).",
+    initiatives: [
+      "Te Wāhi Tiaki Tātou / Porirua Assembly auspice",
+      "Marae Resilience Support programme",
+      "Rangatahi wānanga across Takapūwāhia and Hongoeka",
+    ],
   },
 
-  // ================= Weaving Porirua Together =================
+  // ================= Community Groups =================
   {
-    name: "Porirua Community Leaders' Forum",
-    theme: "Weaving Porirua Together",
+    name: "Te Wāhi Tiaki Tātou",
     orgType: "Community Group",
-    orgName: "Te Wāhi Tiaki Tātou",
-    date: "2026-05-20", time: "17:30",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together", "How We Roll", "Know More Do More"],
+    venue: "Porirua",
+    address: "Porirua",
+    lat: -41.1355, lng: 174.8423,
+    url: "https://reindeer-avocado-974t.squarespace.com/",
+    description:
+      "Iwi-led community rōpū convening leaders across Porirua, running the Reimagining " +
+      "Hui, the Porirua Community Leaders' Forum and the Porirua Assembly. Coordinates " +
+      "shared priorities for collective impact.",
+    initiatives: [
+      "Reimagining Hui (mental health, diabetes, dental, tāngata whaikaha)",
+      "Monthly e-Pānui",
+      "Porirua Community Leaders' Forum",
+    ],
+  },
+  {
+    name: "Porirua Community Leaders' Forum (PCLF)",
+    orgType: "Community Group",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together", "How We Roll"],
     venue: "Te Rauparaha Arena",
     address: "17 Parumoana Street, Porirua",
     lat: -41.1367, lng: 174.8409,
     url: "https://reindeer-avocado-974t.squarespace.com/porirua-community-leaders-forum",
     description:
-      "Monthly gathering of Porirua's iwi, Pacific, community, migrant, business and " +
-      "education leaders — identifying shared priorities and coordinating collective impact.",
+      "Forum of Porirua's iwi, Pacific, community, migrant, business and education " +
+      "leaders. Hosts kaupapa groups that turn shared priorities into practical action " +
+      "on kai, housing and wider systems.",
+    initiatives: [
+      "Kaupapa Groups (Kai, Housing)",
+      "PCLF Operating Model",
+      "Collective impact coordination",
+    ],
   },
   {
-    name: "Kai Kaupapa Group hui",
-    theme: "Weaving Porirua Together",
-    orgType: "Kaupapa Group",
-    orgName: "Kai Kaupapa Group (PCLF)",
-    date: "2026-05-06", time: "10:00",
+    name: "Porirua Assembly",
+    orgType: "Community Group",
+    theme: "How We Roll",
+    themes: ["How We Roll", "Te Taiao", "Weaving Porirua Together"],
     venue: "Te Rauparaha Arena",
     address: "17 Parumoana Street, Porirua",
-    lat: -41.1367, lng: 174.8409,
-    url: "https://reindeer-avocado-974t.squarespace.com/kai",
+    lat: -41.1366, lng: 174.8411,
+    url: "https://reindeer-avocado-974t.squarespace.com/porirua-assembly",
     description:
-      "Kai Kaupapa Group — providers, iwi and community leaders collaborating on kai " +
-      "access, aligning with Goal 2 of the Regional Food System Plan.",
+      "Aotearoa's first iwi-led citizens' assembly on climate. Produced six overarching " +
+      "recommendations after 40+ community members deliberated with mana whenua, " +
+      "experts and each other.",
+    initiatives: [
+      "Porirua Assembly Recommendations (2025)",
+      "A Place of Firsts — public reflections",
+      "Deliberative democracy model for climate action",
+    ],
   },
   {
-    name: "Pātaka Kai weekly distribution",
-    theme: "Weaving Porirua Together",
+    name: "R.O.C.C. — Resilience to Organised Crime in Communities",
     orgType: "Community Group",
-    orgName: "Pātaka Kai",
-    date: "2026-04-30", time: "14:00",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together", "Rangatahi"],
+    venue: "Porirua",
+    address: "Porirua",
+    lat: -41.1392, lng: 174.8436,
+    url: "https://reindeer-avocado-974t.squarespace.com/rocc",
+    description:
+      "Locally-led, socially-grounded response to the harms of methamphetamine and " +
+      "organised crime in Porirua. Supports rangatahi and vulnerable whānau, informed " +
+      "by Reimagining Hui kōrero.",
+    initiatives: [
+      "Harm minimisation education",
+      "Wānanga with rangatahi at risk",
+      "Data-informed Op-Eds (National Drug Intelligence Bureau)",
+    ],
+  },
+  {
+    name: "Wesley Community Action",
+    orgType: "Community Group",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together"],
+    venue: "Wesley Community Action",
+    address: "Porirua",
+    lat: -41.1395, lng: 174.8432,
+    url: "https://wesleyca.org.nz/",
+    description:
+      "Long-standing Porirua-based community action agency partnering on R.O.C.C. and " +
+      "wider whānau support. Runs financial mentoring, food support and community-led " +
+      "responses to harm.",
+    initiatives: [
+      "R.O.C.C. delivery partner",
+      "Financial mentoring",
+      "Community food programmes",
+    ],
+  },
+  {
+    name: "Pātaka Kai",
+    orgType: "Community Group",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together"],
     venue: "Cannons Creek",
     address: "Cannons Creek, Porirua",
     lat: -41.1478, lng: 174.8515,
     url: "",
     description:
-      "Pātaka Kai distributed over 1,400 kai packs in the last six months of 2025. " +
-      "Weekly drop-in for whānau needing kai support.",
+      "Community kai distribution — 1,428 kai packs delivered to Porirua whānau in " +
+      "the last half of 2025. Operates at the short-term relief end of the Community " +
+      "Food Security Continuum.",
+    initiatives: [
+      "Weekly kai packs for whānau in need",
+      "Coordination with kai providers across Porirua",
+    ],
   },
   {
-    name: "Te Umu ki Rangituhi — Porirua's Social Supermarket",
-    theme: "Weaving Porirua Together",
-    orgType: "Social Enterprise",
-    orgName: "Te Umu ki Rangituhi",
-    date: "2026-04-28", time: "09:00",
-    venue: "Te Umu ki Rangituhi",
-    address: "Porirua",
-    lat: -41.1402, lng: 174.8448,
-    url: "https://reindeer-avocado-974t.squarespace.com/kai",
-    description:
-      "Porirua's social supermarket — restoring choice and dignity for whānau needing " +
-      "kai support. 1,017 tangata served in the last half of 2025.",
-  },
-  {
-    name: "R.O.C.C. community workshop",
-    theme: "Weaving Porirua Together",
+    name: "Ngahere Korowai",
     orgType: "Community Group",
-    orgName: "Wesley Community Action + R.O.C.C.",
-    date: "2026-06-11", time: "18:30",
-    venue: "Wesley Community Action",
-    address: "Porirua",
-    lat: -41.1392, lng: 174.8436,
-    url: "https://reindeer-avocado-974t.squarespace.com/rocc",
-    description:
-      "Resilience to Organised Crime in Communities — a locally-led, socially-grounded " +
-      "response to the harms of methamphetamine and organised crime in Porirua.",
-  },
-
-  // ================= Te Taiao =================
-  {
-    name: "Ngahere Korowai planting day",
     theme: "Te Taiao",
-    orgType: "Community Group",
-    orgName: "Ngahere Korowai",
-    date: "2026-05-24", time: "09:30",
+    themes: ["Te Taiao", "Know More Do More"],
     venue: "Te Awarua-o-Porirua catchment",
     address: "Porirua",
     lat: -41.1200, lng: 174.8650,
     url: "",
     description:
-      "Native afforestation working bee — community, schools, kura and Ngāti Toa " +
-      "planting together to restore biodiversity and build climate resilience.",
+      "Native afforestation kaupapa restoring ngahere across the Te Awarua-o-Porirua " +
+      "catchment. Works alongside schools, kura, Ngāti Toa and environmental " +
+      "organisations on biodiversity and climate resilience.",
+    initiatives: [
+      "Community planting days",
+      "Catchment-scale native restoration",
+      "Schools + iwi collaboration",
+    ],
   },
   {
-    name: "Porirua Harbour restoration hui",
-    theme: "Te Taiao",
-    orgType: "Advocacy / Research",
-    orgName: "Porirua Harbour Trust",
-    date: "2026-07-05", time: "10:00",
-    venue: "Porirua Stream",
-    address: "Porirua",
-    lat: -41.1420, lng: 174.8380,
-    url: "",
-    description:
-      "Hands-on waterways restoration with an integrated, nature-based approach to " +
-      "stormwater and harbour health.",
-  },
-  {
-    name: "Collective Action: Move Communities Closer to the Tree",
-    theme: "Te Taiao",
+    name: "Para Kore",
     orgType: "Community Group",
-    orgName: "Te Wāhi Tiaki Tātou",
-    date: "2026-04-10", time: "10:00",
-    venue: "Porirua",
-    address: "Porirua",
-    lat: -41.1340, lng: 174.8420,
-    url: "https://reindeer-avocado-974t.squarespace.com/news",
-    description:
-      "Community-led kaupapa to bring the ngahere closer to where whānau live — more " +
-      "urban green space, shade, and manaakitanga for tamariki.",
-  },
-
-  // ================= How We Roll =================
-  {
-    name: "Porirua Assembly — A Place of Firsts panel",
-    theme: "How We Roll",
-    orgType: "Community Group",
-    orgName: "Porirua Assembly",
-    date: "2025-12-04", time: "17:30",
-    venue: "Te Rauparaha Arena",
-    address: "17 Parumoana Street, Porirua",
-    lat: -41.1367, lng: 174.8409,
-    url: "https://reindeer-avocado-974t.squarespace.com/",
-    description:
-      "Panel reflecting on the Porirua Assembly — what enabled so many 'firsts' in " +
-      "deliberative democracy for climate action, and how they played out in practice.",
-  },
-  {
-    name: "Te Tiriti governance model workshop",
-    theme: "How We Roll",
-    orgType: "Advocacy / Research",
-    orgName: "Te Reo o Ngā Tāngata / The People Speak",
-    date: "2026-08-10", time: "14:00",
+    theme: "How Stuff Works",
+    themes: ["How Stuff Works", "Know More Do More"],
     venue: "Pātaka Art + Museum",
     address: "17 Parumoana Street, Porirua",
     lat: -41.1363, lng: 174.8418,
-    url: "",
+    url: "https://parakore.maori.nz/",
     description:
-      "Exploring a Te Tiriti o Waitangi model of governance for Porirua beyond the " +
-      "Harbour Accord — community-informed planning and decision-making.",
+      "Kaupapa Māori zero-waste organisation running the 5 Rs (Refuse, Reduce, Reuse, " +
+      "Recycle, Responsibility) with marae, kura and communities across Aotearoa, " +
+      "including Porirua.",
+    initiatives: [
+      "Marae and kura zero-waste audits",
+      "Community repair cafés",
+      "Mana whenua-led waste reduction education",
+    ],
   },
   {
-    name: "Housing Kaupapa Group hui",
-    theme: "How We Roll",
+    name: "Autism NZ (Wellington region)",
+    orgType: "Community Group",
+    theme: "How Stuff Works",
+    themes: ["How Stuff Works", "Rangatahi"],
+    venue: "Porirua",
+    address: "Porirua (community venues)",
+    lat: -41.1380, lng: 174.8420,
+    url: "https://www.autismnz.org.nz/",
+    description:
+      "Information, advocacy and support for autistic tamariki, rangatahi and whānau. " +
+      "Partners with Te Wāhi Tiaki Tātou on Takiwatanga Tamariki presentations.",
+    initiatives: [
+      "Takiwatanga Tamariki Q&A",
+      "Whānau support groups",
+      "Educator and provider training",
+    ],
+  },
+
+  // ================= Kaupapa Groups (PCLF) =================
+  {
+    name: "Kai Kaupapa Group",
     orgType: "Kaupapa Group",
-    orgName: "Housing Kaupapa Group (PCLF)",
-    date: "2026-05-13", time: "10:00",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together", "Te Taiao"],
+    venue: "Te Rauparaha Arena",
+    address: "17 Parumoana Street, Porirua",
+    lat: -41.1369, lng: 174.8411,
+    url: "https://reindeer-avocado-974t.squarespace.com/kai",
+    description:
+      "PCLF kaupapa group bringing providers, iwi and community leaders together to " +
+      "shape Porirua's kai system. Aligned with Goal 2 of the Regional Food System Plan.",
+    initiatives: [
+      "Aligning Pātaka Kai, Te Umu ki Rangituhi and kai providers",
+      "Contribution to the Regional Food System Plan",
+      "Food Security Continuum work",
+    ],
+  },
+  {
+    name: "Housing Kaupapa Group",
+    orgType: "Kaupapa Group",
+    theme: "How We Roll",
+    themes: ["How We Roll", "Weaving Porirua Together"],
+    venue: "Te Āhuru Mōwai",
+    address: "Porirua",
+    lat: -41.1384, lng: 174.8414,
+    url: "https://reindeer-avocado-974t.squarespace.com/housing",
+    description:
+      "PCLF kaupapa group working across the Housing Continuum with iwi, Te Āhuru " +
+      "Mōwai, Kāinga Ora and community housing providers on access, coordination and " +
+      "wrap-around supports.",
+    initiatives: [
+      "Coordination across housing providers",
+      "Shared visibility of housing stock",
+      "Responses to severe housing deprivation in Porirua",
+    ],
+  },
+
+  // ================= Social Enterprise =================
+  {
+    name: "Te Umu ki Rangituhi — Porirua's Social Supermarket",
+    orgType: "Social Enterprise",
+    theme: "Weaving Porirua Together",
+    themes: ["Weaving Porirua Together"],
+    venue: "Te Umu ki Rangituhi",
+    address: "Porirua",
+    lat: -41.1402, lng: 174.8448,
+    url: "https://reindeer-avocado-974t.squarespace.com/kai",
+    description:
+      "Porirua's social supermarket. Restores choice and dignity for whānau needing " +
+      "kai support — 1,017 tangata supported in the second half of 2025.",
+    initiatives: [
+      "Affordable, dignified kai access",
+      "Reducing stigma in food support",
+      "Supporting wider kai system coordination",
+    ],
+  },
+  {
+    name: "Te Āhuru Mōwai",
+    orgType: "Social Enterprise",
+    theme: "How We Roll",
+    themes: ["How We Roll", "Weaving Porirua Together"],
     venue: "Te Āhuru Mōwai",
     address: "Porirua",
     lat: -41.1382, lng: 174.8412,
-    url: "https://reindeer-avocado-974t.squarespace.com/housing",
+    url: "https://teahurumowai.co.nz/",
     description:
-      "Providers, iwi and community leaders tackling barriers to housing access — " +
-      "coordinating wrap-around support across Te Āhuru Mōwai, Kāinga Ora, community housing.",
+      "Ngāti Toa-connected community housing provider delivering public housing with " +
+      "wrap-around, locally grounded support across Porirua.",
+    initiatives: [
+      "Public and community housing tenancies",
+      "Wrap-around whānau support",
+      "Housing Kaupapa Group partner",
+    ],
   },
 
-  // ================= Know More Do More =================
+  // ================= Council / Government =================
   {
-    name: "Porirua Schools Step Up on Climate",
-    theme: "Know More Do More",
-    orgType: "School / Kura",
-    orgName: "Porirua Schools (Enviroschools cluster)",
-    date: "2026-03-28", time: "09:00",
-    venue: "Porirua College",
-    address: "Porirua",
-    lat: -41.1395, lng: 174.8440,
-    url: "https://reindeer-avocado-974t.squarespace.com/news",
-    description:
-      "Porirua schools cluster launched a tamariki-led climate programme — embedding " +
-      "sustainability into the curriculum alongside Enviroschools.",
-  },
-  {
-    name: "Kura reo: taiao & climate change",
-    theme: "Know More Do More",
-    orgType: "School / Kura",
-    orgName: "Porirua College",
-    date: "2026-07-20", time: "09:00",
-    venue: "Porirua College",
-    address: "Porirua",
-    lat: -41.1395, lng: 174.8440,
-    url: "",
-    description:
-      "Te reo Māori immersion focused on environmental themes and climate change for " +
-      "tamariki and rangatahi.",
-  },
-  {
-    name: "Climate kōrero with mana whenua",
-    theme: "Know More Do More",
-    orgType: "Iwi & Marae",
-    orgName: "Ngāti Toa Rangatira",
-    date: "2026-05-18", time: "18:00",
-    venue: "Hongoeka Marae",
-    address: "Plimmerton",
-    lat: -41.0850, lng: 174.8600,
-    url: "",
-    description:
-      "Wānanga at Hongoeka with whānau and wider community to raise awareness, " +
-      "build capability and understand our part in responding to climate change.",
-  },
-
-  // ================= How Stuff Works =================
-  {
-    name: "Community solar + battery info night",
-    theme: "How Stuff Works",
-    subtheme: "Energy",
-    orgType: "Advocacy / Research",
-    orgName: "Sustainability Trust",
-    date: "2026-06-08", time: "19:00",
-    venue: "Cannons Creek Community Hall",
-    address: "Cannons Creek, Porirua",
-    lat: -41.1485, lng: 174.8500,
-    url: "",
-    description:
-      "Shared solar and battery storage for neighbourhood-level resilience, with a " +
-      "focus on equitable access for renters and social housing tenants.",
-  },
-  {
-    name: "Water tank install demo",
-    theme: "How Stuff Works",
-    subtheme: "Water",
+    name: "Porirua City Council",
     orgType: "Council / Government",
-    orgName: "Porirua City Council",
-    date: "2026-06-22", time: "11:00",
-    venue: "Titahi Bay",
-    address: "Titahi Bay, Porirua",
-    lat: -41.1100, lng: 174.8300,
-    url: "",
+    theme: "How We Roll",
+    themes: ["How We Roll", "How Stuff Works", "Rangatahi"],
+    venue: "Porirua City Council",
+    address: "16 Cobham Court, Porirua",
+    lat: -41.1371, lng: 174.8398,
+    url: "https://poriruacity.govt.nz/",
     description:
-      "Hyper-local water capture demo as part of investigating distributed water " +
-      "supply and resilience across Porirua.",
+      "Local authority for Porirua. Partner on place-based initiatives, infrastructure " +
+      "investment, youth voice (Youth Council co-design) and the Te Awarua-o-Porirua " +
+      "Harbour Accord.",
+    initiatives: [
+      "Youth Council co-design",
+      "Climate action plan",
+      "Water / stormwater resilience investment",
+    ],
   },
   {
-    name: "Para Kore waste reduction & repair café",
-    theme: "How Stuff Works",
-    subtheme: "Waste",
-    orgType: "Community Group",
-    orgName: "Para Kore",
-    date: "2026-07-12", time: "13:00",
-    venue: "Pātaka Art + Museum",
-    address: "17 Parumoana Street, Porirua",
-    lat: -41.1363, lng: 174.8418,
-    url: "",
-    description:
-      "Follow the 5 Rs with a Para Kore-led kaupapa Māori waste reduction session " +
-      "and community repair café.",
-  },
-  {
-    name: "On-demand bus trial feedback hui",
-    theme: "How Stuff Works",
-    subtheme: "Transport",
+    name: "Kāinga Ora — Porirua",
     orgType: "Council / Government",
-    orgName: "Metlink / Greater Wellington",
-    date: "2026-08-02", time: "18:00",
+    theme: "How We Roll",
+    themes: ["How We Roll"],
+    venue: "Kāinga Ora Porirua",
+    address: "Porirua",
+    lat: -41.1390, lng: 174.8410,
+    url: "https://kaingaora.govt.nz/",
+    description:
+      "Central government public housing provider. Significant landlord in Porirua, " +
+      "contributing to the housing continuum alongside Te Āhuru Mōwai and community " +
+      "housing providers.",
+    initiatives: [
+      "Public housing tenancies",
+      "Healthy Homes upgrades",
+      "Regeneration projects",
+    ],
+  },
+  {
+    name: "Metlink / Greater Wellington Regional Council",
+    orgType: "Council / Government",
+    theme: "How Stuff Works",
+    themes: ["How Stuff Works", "Te Taiao"],
     venue: "Porirua Train Station",
     address: "Porirua",
     lat: -41.1380, lng: 174.8402,
-    url: "",
+    url: "https://www.metlink.org.nz/",
     description:
-      "Share what you need from public transport — last-mile connectivity, on-demand " +
-      "buses, carpooling, and accessibility across Porirua.",
+      "Regional government body responsible for public transport (Metlink), harbour " +
+      "health and flood protection. Partners on last-mile connectivity and on-demand " +
+      "bus trials across Porirua.",
+    initiatives: [
+      "On-demand bus trials",
+      "Te Awarua-o-Porirua Harbour Accord",
+      "Regional climate & flood response",
+    ],
+  },
+
+  // ================= School / Kura =================
+  {
+    name: "Porirua College",
+    orgType: "School / Kura",
+    theme: "Know More Do More",
+    themes: ["Know More Do More", "Rangatahi"],
+    venue: "Porirua College",
+    address: "Porirua",
+    lat: -41.1395, lng: 174.8440,
+    url: "https://www.poriruacollege.school.nz/",
+    description:
+      "Secondary school with a strong te ao Māori foundation. Hosts kura reo and " +
+      "climate mahi with rangatahi, part of the Porirua schools climate cluster.",
+    initiatives: [
+      "Kura reo: taiao & climate",
+      "Rangatahi leadership programmes",
+      "Schools climate cluster participation",
+    ],
   },
   {
-    name: "Takiwatanga in Tamariki presentation",
-    theme: "How Stuff Works",
-    subtheme: "Health",
-    orgType: "Community Group",
-    orgName: "Autism NZ + Te Wāhi Tiaki Tātou",
-    date: "2025-09-15", time: "18:30",
-    venue: "Porirua",
-    address: "Porirua",
-    lat: -41.1380, lng: 174.8420,
-    url: "https://reindeer-avocado-974t.squarespace.com/news",
+    name: "Aotea College",
+    orgType: "School / Kura",
+    theme: "Rangatahi",
+    themes: ["Rangatahi", "Know More Do More"],
+    venue: "Aotea College",
+    address: "Aotea, Porirua",
+    lat: -41.1290, lng: 174.8538,
+    url: "https://www.aotea.school.nz/",
     description:
-      "Presentation and Q&A on Takiwatanga / Autism in tamariki — integrating health, " +
-      "whānau and kura supports.",
+      "Secondary school serving northern Porirua. Partner for Mātiti Tamariki " +
+      "wānanga — sustainable practices reinstated and expanded across age ranges.",
+    initiatives: [
+      "Mātiti Tamariki wānanga",
+      "Enviroschools participation",
+      "Cross-generational sustainability kaupapa",
+    ],
+  },
+  {
+    name: "Enviroschools Porirua cluster",
+    orgType: "School / Kura",
+    theme: "Know More Do More",
+    themes: ["Know More Do More", "Te Taiao", "Rangatahi"],
+    venue: "Porirua schools cluster",
+    address: "Porirua",
+    lat: -41.1410, lng: 174.8460,
+    url: "https://www.enviroschools.org.nz/",
+    description:
+      "Local cluster of the national Enviroschools programme — tamariki-led climate " +
+      "and sustainability learning embedded in the curriculum across Porirua schools.",
+    initiatives: [
+      "'Porirua Schools Step Up on Climate' campaign",
+      "Native planting with Ngahere Korowai",
+      "Curriculum-embedded sustainability",
+    ],
+  },
+
+  // ================= Advocacy / Research =================
+  {
+    name: "Porirua Harbour Trust",
+    orgType: "Advocacy / Research",
+    theme: "Te Taiao",
+    themes: ["Te Taiao", "How Stuff Works"],
+    venue: "Te Awarua-o-Porirua Harbour",
+    address: "Porirua",
+    lat: -41.1280, lng: 174.8470,
+    url: "https://www.poriruaharbourtrust.org.nz/",
+    description:
+      "Community-led advocacy and restoration for Te Awarua-o-Porirua. Working bees, " +
+      "monitoring and education focused on stormwater, stream health and the wider " +
+      "harbour ecosystem.",
+    initiatives: [
+      "Waterways restoration working bees",
+      "Porirua Stream water-quality monitoring",
+      "Schools education programmes",
+    ],
+  },
+  {
+    name: "Te Reo o Ngā Tāngata / The People Speak",
+    orgType: "Advocacy / Research",
+    theme: "How We Roll",
+    themes: ["How We Roll", "Rangatahi"],
+    venue: "Pātaka Art + Museum",
+    address: "17 Parumoana Street, Porirua",
+    lat: -41.1363, lng: 174.8418,
+    url: "https://thepeoplespeak.nz/",
+    description:
+      "Deliberative democracy specialists who partnered on the Porirua Assembly. " +
+      "Designs Te Tiriti-based citizens' assemblies and community-informed governance " +
+      "models.",
+    initiatives: [
+      "Porirua Assembly co-design",
+      "Te Tiriti governance model workshops",
+      "Deliberative democracy research",
+    ],
+  },
+  {
+    name: "Sustainability Trust",
+    orgType: "Advocacy / Research",
+    theme: "How Stuff Works",
+    themes: ["How Stuff Works", "Know More Do More"],
+    venue: "Cannons Creek Community Hall",
+    address: "Cannons Creek, Porirua (programme venue)",
+    lat: -41.1485, lng: 174.8500,
+    url: "https://sustaintrust.org.nz/",
+    description:
+      "Wellington-region sustainability charity delivering Healthy Homes assessments, " +
+      "energy advice, tenant education and community solar + battery programmes " +
+      "across Porirua neighbourhoods.",
+    initiatives: [
+      "Healthy Homes assessments",
+      "Community solar + battery info nights",
+      "Tenant energy advocacy",
+    ],
   },
 ];
