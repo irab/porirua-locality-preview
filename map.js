@@ -163,8 +163,12 @@
       mapCtx.markersByIdx[org.__idx] = m;
       bounds.push([org.lat, org.lng]);
     });
-    if (bounds.length > 1) mapCtx.map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
-    else if (bounds.length === 1) mapCtx.map.setView(bounds[0], 14);
+    // maxZoom 16 lets tightly-clustered orgs (e.g. the three council venues
+    // all in central Porirua) actually separate on screen when filtered.
+    // Leaflet still picks a lower zoom when markers are genuinely spread
+    // out, so this only bites the clustered case.
+    if (bounds.length > 1) mapCtx.map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 });
+    else if (bounds.length === 1) mapCtx.map.setView(bounds[0], 15);
     else mapCtx.map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom || 12);
   }
 

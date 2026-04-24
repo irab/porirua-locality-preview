@@ -380,8 +380,8 @@
             .bindTooltip(tip,{direction:"top",offset:[0,-18],opacity:1,className:"pal-tooltip"});
           layer.addLayer(m); markers[org.__idx]=m; bounds.push([org.lat,org.lng]);
         });
-        if(bounds.length>1) map.fitBounds(bounds,{padding:[24,24],maxZoom:14});
-        else if(bounds.length===1) map.setView(bounds[0],14);
+        if(bounds.length>1) map.fitBounds(bounds,{padding:[24,24],maxZoom:16});
+        else if(bounds.length===1) map.setView(bounds[0],15);
         else map.setView([-41.1350,174.8400],12);
       }
 
