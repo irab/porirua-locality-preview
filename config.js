@@ -64,6 +64,42 @@ window.PORIRUA_ICONS = {
   "heart-pulse":
     '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>' +
     '<path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
+
+  // Organisation-type icons (Lucide)
+  landmark:
+    '<line x1="3" x2="21" y1="22" y2="22"/>' +
+    '<line x1="6" x2="6" y1="18" y2="11"/>' +
+    '<line x1="10" x2="10" y1="18" y2="11"/>' +
+    '<line x1="14" x2="14" y1="18" y2="11"/>' +
+    '<line x1="18" x2="18" y1="18" y2="11"/>' +
+    '<polygon points="12 2 20 7 4 7"/>',
+  users:
+    '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>' +
+    '<circle cx="9" cy="7" r="4"/>' +
+    '<path d="M22 21v-2a4 4 0 0 0-3-3.87"/>' +
+    '<path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  "users-round":
+    '<path d="M18 21a8 8 0 0 0-16 0"/>' +
+    '<circle cx="10" cy="8" r="5"/>' +
+    '<path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/>',
+  "graduation-cap":
+    '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/>' +
+    '<path d="M22 10v6"/>' +
+    '<path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+  "building-2":
+    '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>' +
+    '<path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>' +
+    '<path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>' +
+    '<path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
+  store:
+    '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/>' +
+    '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>' +
+    '<path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/>' +
+    '<path d="M2 7h20"/>' +
+    '<path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>',
+  megaphone:
+    '<path d="m3 11 18-5v12L3 14v-3z"/>' +
+    '<path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
 };
 
 // Map sub-theme string -> icon key. Used for the "How Stuff Works" pills.
@@ -74,6 +110,18 @@ window.PORIRUA_SUBTHEME_ICONS = {
   Energy: "zap",
   Health: "heart-pulse",
 };
+
+// Organisation types — used for the second filter bar.
+// `id` is the exact string editors put in the `orgType` column.
+window.PORIRUA_ORG_TYPES = [
+  { id: "Iwi & Marae",          title: "Iwi & Marae",          icon: "landmark",        color: "#6b2a3d" },
+  { id: "Community Group",      title: "Community Group",      icon: "users",           color: "#a04a1f" },
+  { id: "Kaupapa Group",        title: "Kaupapa Group",        icon: "users-round",     color: "#7a4a1f" },
+  { id: "School / Kura",        title: "School / Kura",        icon: "graduation-cap",  color: "#335577" },
+  { id: "Council / Government", title: "Council / Government", icon: "building-2",      color: "#4a4a5a" },
+  { id: "Social Enterprise",    title: "Social Enterprise",    icon: "store",           color: "#5a6a3a" },
+  { id: "Advocacy / Research",  title: "Advocacy / Research",  icon: "megaphone",       color: "#583e74" },
+];
 
 window.PORIRUA_MAP_CONFIG = {
   // Paste the "Publish to web -> CSV" URL from Google Sheets here.

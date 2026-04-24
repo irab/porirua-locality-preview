@@ -27,6 +27,33 @@ Events under `How Stuff Works` can optionally set a `subtheme` of `Water`,
 (droplet, recycle, bus, zap, heart-pulse) that appears inside the event row
 pill and the map popup.
 
+## Organisation types
+
+Each event is also tagged with the **type of organisation** running it, so
+users can filter the map by who's leading the mahi:
+
+| Org type id (used in the sheet) | Typical examples                                               | Icon          |
+| ------------------------------- | -------------------------------------------------------------- | ------------- |
+| `Iwi & Marae`                   | Ngāti Toa Rangatira, Takapūwāhia Marae, Hongoeka Marae         | landmark      |
+| `Community Group`               | Te Wāhi Tiaki Tātou, Pātaka Kai, Wesley Community Action, R.O.C.C., Porirua Assembly, Ngahere Korowai, Para Kore, Autism NZ | users       |
+| `Kaupapa Group`                 | Kai Kaupapa Group, Housing Kaupapa Group (PCLF)                | users-round   |
+| `School / Kura`                 | Porirua College, Aotea College, Enviroschools cluster           | graduation-cap |
+| `Council / Government`          | Porirua City Council, Kāinga Ora, Metlink / Greater Wellington | building-2    |
+| `Social Enterprise`             | Te Umu ki Rangituhi (Porirua's Social Supermarket)              | store         |
+| `Advocacy / Research`           | Sustainability Trust, Porirua Harbour Trust, The People Speak  | megaphone     |
+
+## Filtering
+
+Two filter bars sit between the map and the theme cards:
+
+1. **Filter by recommendation** — toggles the six Assembly themes. Selecting
+   one or more theme chips hides the other theme cards entirely and limits
+   markers to the selected themes.
+2. **Filter by organisation** — toggles the organisation-type chips above.
+
+Filters combine (logical AND) and are multi-select. A **Clear all filters**
+button appears when any chip is active.
+
 ## Run it locally
 
 No build step. Serve the folder (so browsers allow the CSV fetch):
@@ -44,10 +71,15 @@ Then open <http://localhost:5173>.
 1. Create a Google Sheet with these columns (first row = headers):
 
    ```
-   name | theme | subtheme | date | time | venue | address | lat | lng | url | description
+   name | theme | subtheme | orgType | orgName | date | time | venue | address | lat | lng | url | description
    ```
 
-   - `theme` must be one of the ids in the table above (exact match).
+   - `theme` must be one of the theme ids (exact match).
+   - `orgType` must be one of the organisation-type ids (exact match) to be
+     filterable. Events without an `orgType` still render but won't appear
+     under any org filter.
+   - `orgName` is free text — the specific rōpū or provider (e.g.
+     "Ngāti Toa Rangatira", "Wesley Community Action").
    - `date` works with any format `new Date()` can parse, e.g. `2026-05-10`.
    - `subtheme` is only used for `How Stuff Works` events (Water/Waste/…).
    - `lat`/`lng` are optional but needed to pin an event on the map.
@@ -82,9 +114,9 @@ For a staging preview inside Squarespace itself, create an **unlinked page**
 | File | Purpose |
 |------|---------|
 | `index.html` | Local preview shell. |
-| `config.js` | Google Sheet URL, map center, theme definitions. Edit me. |
-| `sample-data.js` | Fallback events, used when no sheet URL is set. |
-| `map.js` | Rendering logic (map, theme nav, event cards, popups). |
+| `config.js` | Google Sheet URL, map center, theme + org-type definitions. Edit me. |
+| `sample-data.js` | Fallback events (real Porirua initiatives), used when no sheet URL is set. |
+| `map.js` | Rendering logic (map, filter bars, event cards, popups). |
 | `squarespace-snippet.html` | Self-contained version to paste into Squarespace. |
 | `README.md` | This file. |
 

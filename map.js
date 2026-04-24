@@ -19,7 +19,6 @@
   }
 
   // Render a Lucide-style stroked SVG for the given icon key.
-  // `color` is the stroke colour; `size` is the rendered pixel dimension.
   function svgIcon(iconKey, color, size, strokeWidth) {
     var inner = (window.PORIRUA_ICONS || {})[iconKey];
     if (!inner) return "";
@@ -46,6 +45,8 @@
       name: name,
       theme: theme,
       subtheme: get("subtheme"),
+      orgType: get("orgType") || get("organisationType") || get("orgtype") || "",
+      orgName: get("orgName") || get("organisation") || get("organization") || "",
       date: get("date"),
       time: get("time"),
       venue: get("venue"),
@@ -94,11 +95,11 @@
     });
   }
 
-  function buildPopup(ev, theme) {
+  function buildPopup(ev, theme, orgType) {
     var color = theme ? theme.color : "#60174C";
     var fontBody = '"aktiv-grotesk","Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
     var fontHead = '"Recoleta","DM Serif Display",Georgia,serif';
-    var html = '<div style="max-width:280px;font-family:' + fontBody + ';color:#3c1b30;">';
+    var html = '<div style="max-width:290px;font-family:' + fontBody + ';color:#3c1b30;">';
     var themeIcon = theme && theme.icon ? svgIcon(theme.icon, "#fff", 11, 2.2) : "";
     html += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
           + color + ';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;vertical-align:middle;">'
@@ -109,8 +110,16 @@
             + sIcon + esc(ev.subtheme) + '</span>';
     }
     html += '<strong style="font-family:' + fontHead + ';font-size:16px;line-height:1.25;display:block;margin:4px 0 4px;color:#60174C;">' + esc(ev.name) + '</strong>';
+    if (orgType || ev.orgName) {
+      var oIcon = orgType && orgType.icon ? svgIcon(orgType.icon, orgType.color, 11, 2) : "";
+      var parts = [];
+      if (orgType) parts.push(esc(orgType.title));
+      if (ev.orgName) parts.push(esc(ev.orgName));
+      html += '<div style="font-size:11px;color:#8a677a;margin-top:2px;display:flex;align-items:center;gap:5px;">'
+            + oIcon + '<span>' + parts.join(" · ") + '</span></div>';
+    }
     var dateLine = [ev.date, ev.time].filter(Boolean).join(" · ");
-    if (dateLine) html += '<div style="font-size:12px;color:#60174C;font-weight:600;margin-top:2px;">' + esc(dateLine) + '</div>';
+    if (dateLine) html += '<div style="font-size:12px;color:#60174C;font-weight:600;margin-top:6px;">' + esc(dateLine) + '</div>';
     if (ev.venue || ev.address) {
       html += '<div style="font-size:12px;color:#8a677a;margin-top:2px;">' + esc([ev.venue, ev.address].filter(Boolean).join(", ")) + '</div>';
     }
@@ -120,7 +129,8 @@
     return html;
   }
 
-  function renderMap(L, cfg, events, themeById) {
+  // Initialise the map once; return helpers that let us re-populate markers.
+  function initMap(L, cfg) {
     var map = L.map("map", { scrollWheelZoom: false })
       .setView([cfg.center.lat, cfg.center.lng], cfg.zoom || 12);
 
@@ -129,65 +139,118 @@
       maxZoom: 19,
     }).addTo(map);
 
-    var markers = {};
+    var layer = L.layerGroup().addTo(map);
+    return { map: map, layer: layer };
+  }
+
+  function populateMap(L, cfg, mapCtx, events, themeById, orgTypeById) {
+    mapCtx.layer.clearLayers();
+    mapCtx.markersByIdx = {};
     var bounds = [];
-    events.forEach(function (ev, i) {
+    events.forEach(function (ev) {
       if (ev.lat == null || ev.lng == null) return;
       var theme = themeById[ev.theme];
+      var orgType = orgTypeById[ev.orgType];
       var color = theme ? theme.color : cfg.defaultColor;
       var m = L.marker([ev.lat, ev.lng], { icon: buildIcon(L, color, theme) })
-        .bindPopup(buildPopup(ev, theme), { maxWidth: 300 })
-        .addTo(map);
-      markers[i] = m;
+        .bindPopup(buildPopup(ev, theme, orgType), { maxWidth: 310 });
+      mapCtx.layer.addLayer(m);
+      mapCtx.markersByIdx[ev.__idx] = m;
       bounds.push([ev.lat, ev.lng]);
     });
-
-    if (bounds.length > 1) map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
-    else if (bounds.length === 1) map.setView(bounds[0], 14);
-
-    return { map: map, markers: markers };
+    if (bounds.length > 1) mapCtx.map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+    else if (bounds.length === 1) mapCtx.map.setView(bounds[0], 14);
+    else mapCtx.map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom || 12);
   }
 
-  function renderThemeNav(cfg, grouped) {
-    var nav = document.getElementById("theme-nav");
-    nav.innerHTML = "";
-    cfg.themes.forEach(function (t) {
-      var n = (grouped[t.id] || []).length;
-      var b = document.createElement("button");
-      b.type = "button";
-      var navIcon = t.icon
-        ? '<span class="nav-icon" style="color:' + t.color + '">' + svgIcon(t.icon, t.color, 14, 2) + '</span>'
-        : '<span class="swatch" style="background:' + t.color + '"></span>';
-      b.innerHTML = navIcon + esc(t.title) + ' <span style="color:var(--muted);">(' + n + ')</span>';
-      b.onclick = function () {
-        var el = document.getElementById("theme-" + slug(t.id));
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      };
-      nav.appendChild(b);
-    });
+  // Render a filter chip. `item` needs {id,title,icon,color}. Toggles `state` on click.
+  function renderChip(item, state, onChange) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "filter-chip";
+    b.setAttribute("data-key", item.id);
+    var active = state.has(item.id);
+    if (active) {
+      b.classList.add("active");
+      b.style.background = item.color;
+      b.style.borderColor = item.color;
+    }
+    var iconColor = active ? "#fff" : item.color;
+    b.innerHTML = '<span class="filter-chip-icon">' + svgIcon(item.icon, iconColor, 14, 2) + '</span>'
+                + '<span class="filter-chip-label">' + esc(item.title) + '</span>';
+    b.onclick = function () {
+      if (state.has(item.id)) state.delete(item.id);
+      else state.add(item.id);
+      onChange();
+    };
+    return b;
   }
 
-  function renderEventList(theme, events, onClickEvent) {
+  function renderFilters(cfg, state, onChange) {
+    var root = document.getElementById("filters");
+    if (!root) return;
+    root.innerHTML = "";
+
+    function bar(labelText, items, stateSet) {
+      var wrap = document.createElement("div");
+      wrap.className = "filter-bar";
+      var label = document.createElement("span");
+      label.className = "filter-label";
+      label.textContent = labelText;
+      wrap.appendChild(label);
+      var chips = document.createElement("div");
+      chips.className = "filter-chips";
+      items.forEach(function (it) { chips.appendChild(renderChip(it, stateSet, onChange)); });
+      wrap.appendChild(chips);
+      return wrap;
+    }
+
+    root.appendChild(bar("Filter by recommendation", cfg.themes || [], state.themes));
+    var orgTypes = window.PORIRUA_ORG_TYPES || [];
+    if (orgTypes.length) root.appendChild(bar("Filter by organisation", orgTypes, state.orgs));
+
+    // Clear-filters bar: only shown if any filter is active.
+    var hasFilters = state.themes.size + state.orgs.size > 0;
+    if (hasFilters) {
+      var clear = document.createElement("button");
+      clear.type = "button";
+      clear.className = "filter-clear";
+      clear.textContent = "Clear all filters";
+      clear.onclick = function () { state.themes.clear(); state.orgs.clear(); onChange(); };
+      root.appendChild(clear);
+    }
+  }
+
+  function renderEventList(theme, events, orgTypeById) {
     if (!events.length) {
-      return '<ul class="events empty"><li style="padding:14px 18px;">No events yet under this recommendation.</li></ul>';
+      return '<ul class="events empty"><li style="padding:14px 18px;">No events match the current filters.</li></ul>';
     }
     var html = '<ul class="events">';
-    events.forEach(function (ev, idx) {
+    events.forEach(function (ev) {
       var d = formatDateParts(ev.date);
       var metaParts = [];
       if (ev.time) metaParts.push(esc(ev.time));
       if (ev.venue) metaParts.push(esc(ev.venue));
       if (ev.address) metaParts.push(esc(ev.address));
+      var orgType = orgTypeById[ev.orgType];
       html += '<li data-event-index="' + ev.__idx + '">';
       html += '<div class="date"><span class="day">' + esc(d.day) + '</span><span class="mon">' + esc(d.mon) + '</span><span class="yr">' + esc(d.yr) + '</span></div>';
       html += '<div>';
+      var pills = "";
       if (ev.subtheme) {
         var sIcon = subthemeIcon(ev.subtheme, "#fff", 11);
-        html += '<span class="pill" style="background:' + theme.color + '">'
-             + (sIcon ? '<span class="pill-icon">' + sIcon + '</span>' : '')
-             + esc(ev.subtheme) + '</span>';
+        pills += '<span class="pill" style="background:' + theme.color + '">'
+               + (sIcon ? '<span class="pill-icon">' + sIcon + '</span>' : '')
+               + esc(ev.subtheme) + '</span>';
       }
+      if (orgType) {
+        pills += '<span class="pill org" style="background:' + orgType.color + '">'
+               + '<span class="pill-icon">' + svgIcon(orgType.icon, "#fff", 11, 2) + '</span>'
+               + esc(orgType.title) + '</span>';
+      }
+      if (pills) html += pills;
       html += '<span class="title">' + esc(ev.name) + '</span>';
+      if (ev.orgName) html += '<div class="meta org-name">' + esc(ev.orgName) + '</div>';
       if (metaParts.length) html += '<div class="meta">' + metaParts.join(" · ") + '</div>';
       if (ev.description) html += '<div class="desc">' + esc(ev.description) + '</div>';
       if (ev.url) html += '<div class="meta" style="margin-top:4px;"><a href="' + esc(ev.url) + '" target="_blank" rel="noopener">Learn more &rarr;</a></div>';
@@ -199,10 +262,11 @@
     return html;
   }
 
-  function renderThemes(cfg, grouped, onClickEvent) {
+  function renderThemes(cfg, grouped, orgTypeById, onClickEvent, hiddenThemes) {
     var root = document.getElementById("themes");
     root.innerHTML = "";
     cfg.themes.forEach(function (t) {
+      if (hiddenThemes && hiddenThemes.has(t.id)) return;
       var events = grouped[t.id] || [];
       var card = document.createElement("article");
       card.className = "theme-card";
@@ -220,24 +284,22 @@
                + (t.description ? '<p>' + esc(t.description) + '</p>' : "")
                + '</div>'
                + '</div>';
-      card.innerHTML = head + renderEventList(t, events);
+      card.innerHTML = head + renderEventList(t, events, orgTypeById);
       root.appendChild(card);
     });
 
-    root.addEventListener("click", function (e) {
+    root.onclick = function (e) {
       var li = e.target.closest("li[data-event-index]");
       if (!li) return;
       var idx = parseInt(li.getAttribute("data-event-index"), 10);
       if (!isNaN(idx)) onClickEvent(idx);
-    });
+    };
   }
 
   function groupEvents(cfg, events) {
     var grouped = {};
     cfg.themes.forEach(function (t) { grouped[t.id] = []; });
-    // Put events under their theme; drop events with an unrecognised theme into a catch-all.
-    events.forEach(function (ev, i) {
-      ev.__idx = i;
+    events.forEach(function (ev) {
       if (grouped[ev.theme]) grouped[ev.theme].push(ev);
       else {
         if (!grouped.__other) grouped.__other = [];
@@ -272,27 +334,69 @@
     var status = document.getElementById("status");
     var themeById = {};
     (cfg.themes || []).forEach(function (t) { themeById[t.id] = t; });
+    var orgTypeById = {};
+    (window.PORIRUA_ORG_TYPES || []).forEach(function (o) { orgTypeById[o.id] = o; });
     wirePdfLinks(cfg);
 
-    function run(events, note) {
-      if (!events.length) {
-        status.textContent = "No events to display" + (note ? " (" + note + ")" : "") + ".";
-      } else {
-        status.textContent = "Showing " + events.length + " event" + (events.length === 1 ? "" : "s")
-                             + (note ? " (" + note + ")" : "") + ".";
+    var state = { themes: new Set(), orgs: new Set(), note: "" };
+    var allEvents = [];
+    var mapCtx = null;
+
+    function matchesFilters(ev) {
+      if (state.themes.size && !state.themes.has(ev.theme)) return false;
+      if (state.orgs.size && !state.orgs.has(ev.orgType)) return false;
+      return true;
+    }
+
+    function setStatus(visibleCount, totalCount) {
+      var parts = [];
+      if (!totalCount) {
+        status.textContent = "No events to display" + (state.note ? " (" + state.note + ")" : "") + ".";
+        return;
       }
-      var grouped = groupEvents(cfg, events);
-      var rendered = renderMap(window.L, cfg, events, themeById);
-      renderThemeNav(cfg, grouped);
-      renderThemes(cfg, grouped, function (idx) {
-        var ev = events[idx];
-        var m = rendered.markers[idx];
+      if (visibleCount === totalCount) {
+        parts.push("Showing all " + totalCount + " event" + (totalCount === 1 ? "" : "s"));
+      } else {
+        parts.push("Showing " + visibleCount + " of " + totalCount + " events");
+      }
+      var filters = [];
+      if (state.themes.size) filters.push(state.themes.size + " recommendation" + (state.themes.size === 1 ? "" : "s"));
+      if (state.orgs.size) filters.push(state.orgs.size + " organisation type" + (state.orgs.size === 1 ? "" : "s"));
+      if (filters.length) parts.push("filtered by " + filters.join(" and "));
+      if (state.note) parts.push("(" + state.note + ")");
+      status.textContent = parts.join(" — ") + ".";
+    }
+
+    function refresh() {
+      var visible = allEvents.filter(matchesFilters);
+      var grouped = groupEvents(cfg, visible);
+
+      // If a theme filter is active, hide non-selected theme cards entirely.
+      var hiddenThemes = null;
+      if (state.themes.size) {
+        hiddenThemes = new Set();
+        cfg.themes.forEach(function (t) { if (!state.themes.has(t.id)) hiddenThemes.add(t.id); });
+      }
+
+      populateMap(window.L, cfg, mapCtx, visible, themeById, orgTypeById);
+      renderFilters(cfg, state, refresh);
+      renderThemes(cfg, grouped, orgTypeById, function (idx) {
+        var m = mapCtx.markersByIdx[idx];
         if (m) {
-          rendered.map.setView(m.getLatLng(), 15, { animate: true });
+          mapCtx.map.setView(m.getLatLng(), 15, { animate: true });
           setTimeout(function () { m.openPopup(); }, 250);
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          var mapEl = document.getElementById("map");
+          if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-      });
+      }, hiddenThemes);
+      setStatus(visible.length, allEvents.length);
+    }
+
+    function bootstrap(events, note) {
+      state.note = note || "";
+      allEvents = events.map(function (ev, i) { ev.__idx = i; return ev; });
+      mapCtx = initMap(window.L, cfg);
+      refresh();
     }
 
     var fallback = (window.PORIRUA_SAMPLE_EVENTS || []).map(normaliseRow).filter(Boolean);
@@ -301,15 +405,15 @@
       status.textContent = "Loading events from Google Sheet…";
       loadFromSheet(cfg.googleSheetCsvUrl)
         .then(function (events) {
-          if (!events.length) return run(fallback, "sample data — no valid rows in sheet");
-          run(events);
+          if (!events.length) return bootstrap(fallback, "sample data — no valid rows in sheet");
+          bootstrap(events);
         })
         .catch(function (err) {
           console.error("[porirua-preview] Failed to load sheet:", err);
-          run(fallback, "sample data — sheet failed to load");
+          bootstrap(fallback, "sample data — sheet failed to load");
         });
     } else {
-      run(fallback, "sample data — no sheet URL set");
+      bootstrap(fallback, "sample data — no sheet URL set");
     }
   });
 })();
