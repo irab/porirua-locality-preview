@@ -1,0 +1,91 @@
+<!--
+  Drop-in Squarespace Code Block for the Porirua Locality map.
+  Paste this whole thing into a Code Block on any page.
+  - Requires the "Business" plan or higher (Code Blocks).
+  - Replace GOOGLE_SHEET_CSV_URL with your "Publish to web -> CSV" URL.
+-->
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+
+<div id="porirua-map" style="height:480px;width:100%;border:1px solid #e5e7eb;border-radius:12px;background:#eef2ee;"
+     aria-label="Map of Porirua community initiatives"></div>
+
+<script>
+  (function () {
+    var GOOGLE_SHEET_CSV_URL = "";
+
+    var CATEGORY_COLORS = {
+      "Assembly": "#1a3d2a",
+      "ROCC":     "#b91c1c",
+      "Kai":      "#ca8a04",
+      "Hauora":   "#0e7490",
+      "Housing":  "#7c3aed",
+      "Climate":  "#15803d"
+    };
+    var DEFAULT_COLOR = "#1a3d2a";
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    }
+
+    function ready(fn) {
+      if (window.L && window.Papa) return fn();
+      setTimeout(function(){ ready(fn); }, 50);
+    }
+
+    function row(r) {
+      var lat = parseFloat(r.lat || r.latitude);
+      var lng = parseFloat(r.lng || r.longitude);
+      if (!r.name || isNaN(lat) || isNaN(lng)) return null;
+      return { name:r.name, category:r.category||"", lat:lat, lng:lng, address:r.address||"", url:r.url||r.website||"", description:r.description||"" };
+    }
+
+    function icon(L, color) {
+      return L.divIcon({
+        className: "cat-marker",
+        html: '<div style="width:28px;height:28px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);"></div>',
+        iconSize:[28,28], iconAnchor:[14,14]
+      });
+    }
+
+    function popup(p) {
+      var h = '<div style="max-width:260px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">';
+      h += '<strong style="font-size:14px;">'+esc(p.name)+'</strong>';
+      if (p.category) h += '<br/><span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;font-weight:600;">'+esc(p.category)+'</span>';
+      if (p.description) h += '<p style="font-size:13px;line-height:1.5;color:#374151;margin:8px 0;">'+esc(p.description)+'</p>';
+      if (p.address)     h += '<p style="font-size:11px;color:#6b7280;margin:0 0 6px;">'+esc(p.address)+'</p>';
+      if (p.url)         h += '<a href="'+esc(p.url)+'" target="_blank" rel="noopener" style="font-size:12px;color:#166534;text-decoration:none;font-weight:500;">Learn more &rarr;</a>';
+      return h + '</div>';
+    }
+
+    function render(places) {
+      var map = L.map("porirua-map", { scrollWheelZoom:false }).setView([-41.1350, 174.8400], 12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
+      }).addTo(map);
+      var bounds = [];
+      places.forEach(function (p) {
+        var color = CATEGORY_COLORS[p.category] || DEFAULT_COLOR;
+        L.marker([p.lat, p.lng], { icon: icon(L, color) }).bindPopup(popup(p)).addTo(map);
+        bounds.push([p.lat, p.lng]);
+      });
+      if (bounds.length > 1) map.fitBounds(bounds, { padding:[24,24], maxZoom:14 });
+    }
+
+    ready(function () {
+      if (!GOOGLE_SHEET_CSV_URL) {
+        console.warn("[porirua-map] No Google Sheet URL set — add one in the snippet.");
+        return render([]);
+      }
+      Papa.parse(GOOGLE_SHEET_CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function (res) { render((res.data||[]).map(row).filter(Boolean)); },
+        error: function (err) { console.error("[porirua-map]", err); render([]); }
+      });
+    });
+  })();
+</script>
