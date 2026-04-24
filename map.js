@@ -74,20 +74,22 @@
   }
 
   function buildPopup(ev, theme) {
-    var color = theme ? theme.color : "#1a3d2a";
-    var html = '<div style="max-width:280px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">';
-    html += '<span style="display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:'
-          + color + ';padding:2px 7px;border-radius:999px;font-weight:600;margin-bottom:6px;">'
+    var color = theme ? theme.color : "#60174C";
+    var fontBody = '"aktiv-grotesk","Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+    var fontHead = '"Recoleta","DM Serif Display",Georgia,serif';
+    var html = '<div style="max-width:280px;font-family:' + fontBody + ';color:#3c1b30;">';
+    html += '<span style="display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:'
+          + color + ';padding:3px 9px;border-radius:999px;font-weight:700;margin-bottom:8px;">'
           + esc(theme ? theme.title : ev.theme) + '</span>';
-    if (ev.subtheme) html += ' <span style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">' + esc(ev.subtheme) + '</span>';
-    html += '<strong style="font-size:14px;line-height:1.3;display:block;margin-bottom:4px;">' + esc(ev.name) + '</strong>';
+    if (ev.subtheme) html += ' <span style="font-size:10px;color:#8a677a;text-transform:uppercase;letter-spacing:.08em;font-weight:600;">' + esc(ev.subtheme) + '</span>';
+    html += '<strong style="font-family:' + fontHead + ';font-size:16px;line-height:1.25;display:block;margin:4px 0 4px;color:#60174C;">' + esc(ev.name) + '</strong>';
     var dateLine = [ev.date, ev.time].filter(Boolean).join(" · ");
-    if (dateLine) html += '<div style="font-size:12px;color:#374151;">' + esc(dateLine) + '</div>';
+    if (dateLine) html += '<div style="font-size:12px;color:#60174C;font-weight:600;margin-top:2px;">' + esc(dateLine) + '</div>';
     if (ev.venue || ev.address) {
-      html += '<div style="font-size:12px;color:#6b7280;margin-top:2px;">' + esc([ev.venue, ev.address].filter(Boolean).join(", ")) + '</div>';
+      html += '<div style="font-size:12px;color:#8a677a;margin-top:2px;">' + esc([ev.venue, ev.address].filter(Boolean).join(", ")) + '</div>';
     }
-    if (ev.description) html += '<p style="font-size:13px;line-height:1.5;color:#374151;margin:8px 0;">' + esc(ev.description) + '</p>';
-    if (ev.url) html += '<a href="' + esc(ev.url) + '" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#166534;font-weight:500;">Learn more &rarr;</a>';
+    if (ev.description) html += '<p style="font-size:13px;line-height:1.5;color:#3c1b30;margin:10px 0 8px;">' + esc(ev.description) + '</p>';
+    if (ev.url) html += '<a href="' + esc(ev.url) + '" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#cf2028;font-weight:600;text-decoration:none;border-bottom:1px solid currentColor;">Learn more &rarr;</a>';
     html += "</div>";
     return html;
   }

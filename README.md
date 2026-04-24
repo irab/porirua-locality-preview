@@ -83,9 +83,29 @@ For a staging preview inside Squarespace itself, create an **unlinked page**
 | `squarespace-snippet.html` | Self-contained version to paste into Squarespace. |
 | `README.md` | This file. |
 
+## Design
+
+The preview is styled to match the Porirua Locality Squarespace site:
+
+- **Headings** — Recoleta (bold serif), loaded from the Squarespace site's own
+  font URL.
+- **Body** — Aktiv Grotesk (sans-serif), loaded from Typekit.
+- **Palette** — plum `#60174C` (ink), crimson `#CF2028` (accent), cream blush
+  `#FDEEEE` (background), dusty blush `#F5BFB8` (borders), extracted from the
+  live site's `--black-hsl` / `--darkAccent-hsl` / `--lightAccent-hsl` /
+  `--accent-hsl` CSS variables.
+
+`squarespace-snippet.html` goes one step further: it uses those CSS variables
+directly (with hardcoded fallbacks), so when pasted into a Code Block on the
+Porirua Locality site it *inherits* whatever palette and fonts the site is
+currently using. If you rebrand the site, the embed reflows automatically.
+
 ## Attribution
 
 Map tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
 Mapping library: [Leaflet](https://leafletjs.com/).
 CSV parser: [PapaParse](https://www.papaparse.com/).
 Theme content derived from the Porirua Assembly Recommendations.
+Fonts (Recoleta, Aktiv Grotesk) are the property of their respective
+licensors and are loaded from the Porirua Locality Squarespace site /
+Adobe Typekit kit in use by that site.
