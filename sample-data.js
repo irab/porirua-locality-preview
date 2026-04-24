@@ -1,15 +1,21 @@
-// Fallback organisation inventory, used when no Google Sheet URL is configured.
-// Shape mirrors the expected Google Sheet columns:
-//   name, orgType, theme, themes, venue, address, lat, lng, url, description, initiatives
+// Fallback organisation inventory. Only used when BOTH
+// cfg.googleSheetCsvUrl AND cfg.dataCsvUrl fail (or return zero rows).
+// Canonical data lives in data/organisations.csv.
 //
-// `theme`   = primary Porirua Assembly recommendation this org anchors to
-//             (MUST match a theme id in config.js).
-// `themes`  = optional additional themes this org contributes to. In the
-//             fallback data below it's given as an array. In the Google Sheet
-//             it is a comma-separated string (e.g. "Te Taiao, Rangatahi").
-// `orgType` = MUST match an id in PORIRUA_ORG_TYPES (e.g. "Iwi & Marae").
-// `initiatives` = optional list of flagship programmes / kaupapa for this org.
-//             In the Sheet, separate items with `|` or `;`.
+// Shape mirrors the CSV columns:
+//   name, orgType, theme, themes, venue, address, lat, lng, url,
+//   description, initiatives, labels
+//
+// `theme`       = primary Porirua Assembly recommendation (exact theme id
+//                 from config.js, e.g. "Te Taiao").
+// `themes`      = additional cross-cutting themes (array here; comma-
+//                 separated string in the CSV / Sheet).
+// `orgType`     = id from PORIRUA_ORG_TYPES (e.g. "Iwi & Marae").
+// `initiatives` = flagship programmes / kaupapa; `|` or `;` separated
+//                 in the CSV / Sheet.
+// `labels`      = free-form descriptor tags for this org, rendered as
+//                 small chips and useful for future search / filtering.
+//                 `|` or `;` separated in the CSV / Sheet.
 window.PORIRUA_SAMPLE_ORGS = [
   // ================= Iwi & Marae =================
   {
@@ -30,6 +36,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Marae Resilience Support programme",
       "Rangatahi wānanga across Takapūwāhia and Hongoeka",
     ],
+    labels: ["mana whenua", "kaitiakitanga", "marae", "Te Tiriti"],
   },
 
   // ================= Community Groups =================
@@ -51,6 +58,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Monthly e-Pānui",
       "Porirua Community Leaders' Forum",
     ],
+    labels: ["iwi-led", "convening", "deliberative", "e-pānui"],
   },
   {
     name: "Porirua Community Leaders' Forum (PCLF)",
@@ -70,6 +78,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "PCLF Operating Model",
       "Collective impact coordination",
     ],
+    labels: ["leaders forum", "convening", "collective impact"],
   },
   {
     name: "Porirua Assembly",
@@ -89,6 +98,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "A Place of Firsts — public reflections",
       "Deliberative democracy model for climate action",
     ],
+    labels: ["citizens' assembly", "climate", "deliberative democracy", "Aotearoa first"],
   },
   {
     name: "R.O.C.C. — Resilience to Organised Crime in Communities",
@@ -108,6 +118,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Wānanga with rangatahi at risk",
       "Data-informed Op-Eds (National Drug Intelligence Bureau)",
     ],
+    labels: ["meth", "organised crime", "harm minimisation", "whānau safety"],
   },
   {
     name: "Wesley Community Action",
@@ -127,6 +138,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Financial mentoring",
       "Community food programmes",
     ],
+    labels: ["community action", "financial mentoring", "food support"],
   },
   {
     name: "Pātaka Kai",
@@ -145,6 +157,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Weekly kai packs for whānau in need",
       "Coordination with kai providers across Porirua",
     ],
+    labels: ["kai", "food relief", "Cannons Creek"],
   },
   {
     name: "Ngahere Korowai",
@@ -164,6 +177,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Catchment-scale native restoration",
       "Schools + iwi collaboration",
     ],
+    labels: ["ngahere", "native planting", "catchment restoration"],
   },
   {
     name: "Para Kore",
@@ -183,6 +197,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Community repair cafés",
       "Mana whenua-led waste reduction education",
     ],
+    labels: ["zero waste", "kaupapa Māori", "5 Rs"],
   },
   {
     name: "Autism NZ (Wellington region)",
@@ -201,6 +216,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Whānau support groups",
       "Educator and provider training",
     ],
+    labels: ["takiwatanga", "neurodivergence", "whānau support"],
   },
 
   // ================= Kaupapa Groups (PCLF) =================
@@ -221,6 +237,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Contribution to the Regional Food System Plan",
       "Food Security Continuum work",
     ],
+    labels: ["kai system", "PCLF", "Food System Plan"],
   },
   {
     name: "Housing Kaupapa Group",
@@ -240,6 +257,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Shared visibility of housing stock",
       "Responses to severe housing deprivation in Porirua",
     ],
+    labels: ["housing continuum", "PCLF", "coordination"],
   },
 
   // ================= Social Enterprise =================
@@ -260,6 +278,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Reducing stigma in food support",
       "Supporting wider kai system coordination",
     ],
+    labels: ["social supermarket", "kai", "dignity"],
   },
   {
     name: "Te Āhuru Mōwai",
@@ -278,6 +297,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Wrap-around whānau support",
       "Housing Kaupapa Group partner",
     ],
+    labels: ["community housing", "iwi-connected", "whānau support"],
   },
 
   // ================= Council / Government =================
@@ -299,6 +319,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Climate action plan",
       "Water / stormwater resilience investment",
     ],
+    labels: ["local government", "harbour accord", "youth council"],
   },
   {
     name: "Kāinga Ora — Porirua",
@@ -318,6 +339,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Healthy Homes upgrades",
       "Regeneration projects",
     ],
+    labels: ["public housing", "Healthy Homes"],
   },
   {
     name: "Metlink / Greater Wellington Regional Council",
@@ -337,6 +359,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Te Awarua-o-Porirua Harbour Accord",
       "Regional climate & flood response",
     ],
+    labels: ["public transport", "harbour accord", "regional"],
   },
 
   // ================= School / Kura =================
@@ -357,6 +380,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Rangatahi leadership programmes",
       "Schools climate cluster participation",
     ],
+    labels: ["kura", "rangatahi", "taiao"],
   },
   {
     name: "Aotea College",
@@ -375,6 +399,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Enviroschools participation",
       "Cross-generational sustainability kaupapa",
     ],
+    labels: ["kura", "rangatahi", "enviroschools"],
   },
   {
     name: "Enviroschools Porirua cluster",
@@ -393,6 +418,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Native planting with Ngahere Korowai",
       "Curriculum-embedded sustainability",
     ],
+    labels: ["schools network", "tamariki-led", "curriculum"],
   },
 
   // ================= Advocacy / Research =================
@@ -414,6 +440,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Porirua Stream water-quality monitoring",
       "Schools education programmes",
     ],
+    labels: ["harbour", "water quality", "restoration"],
   },
   {
     name: "Te Reo o Ngā Tāngata / The People Speak",
@@ -433,6 +460,7 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Te Tiriti governance model workshops",
       "Deliberative democracy research",
     ],
+    labels: ["deliberative", "Te Tiriti", "governance"],
   },
   {
     name: "Sustainability Trust",
@@ -452,5 +480,6 @@ window.PORIRUA_SAMPLE_ORGS = [
       "Community solar + battery info nights",
       "Tenant energy advocacy",
     ],
+    labels: ["Healthy Homes", "energy", "solar"],
   },
 ];

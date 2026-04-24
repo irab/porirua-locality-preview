@@ -1,11 +1,12 @@
 // Renders the Porirua Locality organisation inventory, grouped by Porirua
 // Assembly recommendation with two filter bars (recommendation + org type).
 // Reads config from window.PORIRUA_MAP_CONFIG (see config.js).
-// Data: published Google Sheet CSV or window.PORIRUA_SAMPLE_ORGS.
+// Data resolution is delegated to window.PORIRUA_DATA.load (see data-loader.js):
+//   Google Sheet CSV  >  local ./data/organisations.csv  >  sample fallback.
 
 (function () {
   function ready(fn) {
-    if (window.L && window.Papa) return fn();
+    if (window.L && window.Papa && window.PORIRUA_DATA) return fn();
     setTimeout(function () { ready(fn); }, 50);
   }
 
@@ -26,45 +27,6 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size
          + '" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="' + sw
          + '" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
-  }
-
-  // Parse a "a; b | c" style list into trimmed array.
-  function splitList(s) {
-    if (s == null) return [];
-    if (Array.isArray(s)) return s.filter(Boolean);
-    return String(s).split(/\s*[\n;|]+\s*/).map(function (t) { return t.trim(); }).filter(Boolean);
-  }
-
-  function splitThemeList(s) {
-    if (s == null) return [];
-    if (Array.isArray(s)) return s.filter(Boolean);
-    // Themes are comma-separated (they may contain spaces but no commas themselves).
-    return String(s).split(/\s*,\s*/).map(function (t) { return t.trim(); }).filter(Boolean);
-  }
-
-  function normaliseRow(row) {
-    var get = function (k) { return row[k] || row[k[0].toUpperCase() + k.slice(1)] || ""; };
-    var name = get("name");
-    var primary = get("theme");
-    if (!name || !primary) return null;
-    var extra = splitThemeList(get("themes") || row.themes);
-    var themes = extra.slice();
-    if (themes.indexOf(primary) < 0) themes.unshift(primary);
-    var lat = parseFloat(get("lat") || get("latitude"));
-    var lng = parseFloat(get("lng") || get("longitude"));
-    return {
-      name: name,
-      theme: primary,
-      themes: themes,
-      orgType: get("orgType") || get("organisationType") || get("orgtype") || "",
-      venue: get("venue"),
-      address: get("address"),
-      lat: isNaN(lat) ? null : lat,
-      lng: isNaN(lng) ? null : lng,
-      url: get("url") || get("website"),
-      description: get("description"),
-      initiatives: splitList(get("initiatives") || row.initiatives),
-    };
   }
 
   // Marker: theme-coloured circle with the org-type icon in white.
@@ -126,6 +88,15 @@
       html += '<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.45;color:#3c1b30;">';
       org.initiatives.forEach(function (it) { html += '<li>' + esc(it) + '</li>'; });
       html += '</ul>';
+    }
+
+    if (org.labels && org.labels.length) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;">';
+      org.labels.forEach(function (label) {
+        html += '<span style="font-size:10px;color:#60174C;background:#f3d7d3;padding:2px 8px;border-radius:999px;font-weight:600;letter-spacing:.02em;">'
+              + esc(label) + '</span>';
+      });
+      html += '</div>';
     }
 
     if (org.url) {
@@ -289,6 +260,14 @@
         html += '</ul>';
       }
 
+      if (org.labels && org.labels.length) {
+        html += '<div class="labels">';
+        org.labels.forEach(function (label) {
+          html += '<span class="label-chip">' + esc(label) + '</span>';
+        });
+        html += '</div>';
+      }
+
       if (org.url) {
         html += '<div class="meta" style="margin-top:6px;"><a href="' + esc(org.url) + '" target="_blank" rel="noopener">Visit website &rarr;</a></div>';
       }
@@ -341,16 +320,6 @@
     ["recs-pdf-link", "recs-pdf-link-foot"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.href = url;
-    });
-  }
-
-  function loadFromSheet(csvUrl) {
-    return new Promise(function (resolve, reject) {
-      window.Papa.parse(csvUrl, {
-        download: true, header: true, skipEmptyLines: true,
-        complete: function (r) { resolve((r.data || []).map(normaliseRow).filter(Boolean)); },
-        error: reject,
-      });
     });
   }
 
@@ -428,21 +397,16 @@
       refresh();
     }
 
-    var fallback = (window.PORIRUA_SAMPLE_ORGS || []).map(normaliseRow).filter(Boolean);
+    status.textContent = cfg.googleSheetCsvUrl
+      ? "Loading organisations from Google Sheet…"
+      : "Loading organisations…";
 
-    if (cfg.googleSheetCsvUrl) {
-      status.textContent = "Loading organisations from Google Sheet…";
-      loadFromSheet(cfg.googleSheetCsvUrl)
-        .then(function (orgs) {
-          if (!orgs.length) return bootstrap(fallback, "sample data — no valid rows in sheet");
-          bootstrap(orgs);
-        })
-        .catch(function (err) {
-          console.error("[porirua-preview] Failed to load sheet:", err);
-          bootstrap(fallback, "sample data — sheet failed to load");
-        });
-    } else {
-      bootstrap(fallback, "sample data — no sheet URL set");
-    }
+    window.PORIRUA_DATA.load(cfg).then(function (result) {
+      bootstrap(result.orgs, result.note);
+    }).catch(function (err) {
+      console.error("[porirua-preview] data loader failed:", err);
+      var fallback = (window.PORIRUA_SAMPLE_ORGS || []).map(window.PORIRUA_DATA.normaliseRow).filter(Boolean);
+      bootstrap(fallback, "sample data — loader crashed");
+    });
   });
 })();

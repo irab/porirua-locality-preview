@@ -167,6 +167,12 @@
     .orgs .initiatives { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--text); }
     .orgs .initiatives li { padding: 0; border: none; display: list-item; cursor: default; background: transparent !important; margin: 0; }
     .orgs .initiatives li:hover { background: transparent; }
+    .orgs .labels { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+    .orgs .label-chip {
+      font-size: 10.5px; color: var(--ink); background: var(--border);
+      padding: 2px 9px; border-radius: 999px; font-weight: 600; letter-spacing: 0.02em;
+      cursor: default;
+    }
     .orgs .pill {
       display: inline-flex; align-items: center; gap: 5px;
       font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
@@ -234,6 +240,7 @@
 
   <script src="config.js"></script>
   <script src="sample-data.js"></script>
+  <script src="data-loader.js"></script>
   <script src="map.js"></script>
 </body>
 </html>

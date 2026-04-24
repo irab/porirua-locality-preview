@@ -10,17 +10,19 @@
   How to use:
   1. In Squarespace, edit the target page and add a "Code" block (Business plan+).
   2. Paste this whole snippet in.
-  3. Replace GOOGLE_SHEET_CSV_URL with your Sheet's "Publish to web -> CSV" URL.
+  3. Set DATA_URL below. It can be EITHER:
+       - a published Google Sheet CSV URL (File → Share → Publish to web → CSV), OR
+       - a raw CSV URL, e.g. the raw GitHub URL to data/organisations.csv.
+     Leave it blank to render nothing (useful while you prepare the sheet).
 
-  Expected sheet columns (first row = headers):
-    name, orgType, theme, themes, venue, address, lat, lng, url, description, initiatives
+  Expected CSV columns (first row = headers):
+    name, orgType, theme, themes, venue, address, lat, lng, url, description, initiatives, labels
 
-  `theme`   = primary recommendation this org anchors to
-              (must match a theme id, e.g. "Rangatahi").
-  `themes`  = optional comma-separated list of additional recommendations the org
-              contributes to (for filtering & cross-cutting chips).
-  `orgType` = must match an organisation-type id (e.g. "Iwi & Marae").
-  `initiatives` = optional, separate items with `|` or `;`.
+  `theme`       = primary recommendation (must match a theme id, e.g. "Rangatahi").
+  `themes`      = optional comma-separated additional recommendations.
+  `orgType`     = must match an organisation-type id (e.g. "Iwi & Marae").
+  `initiatives` = optional; separate items with `|` or `;`.
+  `labels`      = optional free-form descriptor tags; separate with `|` or `;`.
 -->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -137,6 +139,13 @@
   .pal-orgs .pal-initiatives { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--pal-ink-soft); }
   .pal-orgs .pal-initiatives li { padding: 0; border: none; display: list-item; cursor: default; background: transparent !important; margin: 0; grid-template-columns: none; }
   .pal-orgs .pal-initiatives li:hover { background: transparent; }
+  .pal-orgs .pal-labels { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+  .pal-orgs .pal-label-chip {
+    font-size: 10.5px; color: var(--pal-ink);
+    background: var(--pal-border-strong);
+    padding: 2px 9px; border-radius: 999px; font-weight: 600; letter-spacing: 0.02em;
+    cursor: default;
+  }
   .pal-pill {
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
@@ -175,7 +184,9 @@
 
 <script>
   (function () {
-    var GOOGLE_SHEET_CSV_URL = "";
+    // Paste EITHER a published Google Sheet CSV URL OR a raw CSV URL.
+    // (e.g. https://raw.githubusercontent.com/<user>/<repo>/main/data/organisations.csv)
+    var DATA_URL = "";
 
     // ---------- Icons (Lucide-style) ----------
     var ICONS = {
@@ -224,7 +235,9 @@
     // ---------- Helpers ----------
     function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
     function slug(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
+    // `|`, `;` or newline -- same convention as initiatives/labels
     function splitList(s){ if(s==null) return []; if(Array.isArray(s)) return s.filter(Boolean); return String(s).split(/\s*[\n;|]+\s*/).map(function(t){return t.trim();}).filter(Boolean); }
+    // Comma only (themes never contain commas internally)
     function splitThemes(s){ if(s==null) return []; if(Array.isArray(s)) return s.filter(Boolean); return String(s).split(/\s*,\s*/).map(function(t){return t.trim();}).filter(Boolean); }
     function row(r){
       var name=r.name||r.Name;
@@ -240,7 +253,8 @@
         venue:r.venue||"", address:r.address||"",
         lat:isNaN(lat)?null:lat, lng:isNaN(lng)?null:lng,
         url:r.url||r.website||"", description:r.description||"",
-        initiatives:splitList(r.initiatives||r.Initiatives)
+        initiatives:splitList(r.initiatives||r.Initiatives),
+        labels:splitList(r.labels||r.Labels)
       };
     }
     function ready(fn){if(window.L&&window.Papa) return fn();setTimeout(function(){ready(fn);},50);}
@@ -276,6 +290,13 @@
         h+='<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.45;color:#3c1b30;">';
         org.initiatives.forEach(function(it){ h+='<li>'+esc(it)+'</li>'; });
         h+='</ul>';
+      }
+      if(org.labels && org.labels.length){
+        h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;">';
+        org.labels.forEach(function(label){
+          h+='<span style="font-size:10px;color:#60174C;background:#f3d7d3;padding:2px 8px;border-radius:999px;font-weight:600;letter-spacing:.02em;">'+esc(label)+'</span>';
+        });
+        h+='</div>';
       }
       if(org.url) h+='<a href="'+esc(org.url)+'" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:10px;font-size:12px;color:#cf2028;font-weight:600;text-decoration:none;border-bottom:1px solid currentColor;">Visit website &rarr;</a>';
       return h+"</div>";
@@ -392,6 +413,11 @@
                 org.initiatives.forEach(function(it){ list+='<li>'+esc(it)+'</li>'; });
                 list+='</ul>';
               }
+              if(org.labels && org.labels.length){
+                list+='<div class="pal-labels">';
+                org.labels.forEach(function(label){ list+='<span class="pal-label-chip">'+esc(label)+'</span>'; });
+                list+='</div>';
+              }
               if(org.url) list+='<div class="pal-meta" style="margin-top:6px;"><a class="pal-link" href="'+esc(org.url)+'" target="_blank" rel="noopener">Visit website &rarr;</a></div>';
               list+='</div><div class="pal-chev">&rsaquo;</div></li>';
             });
@@ -453,13 +479,17 @@
     }
 
     ready(function(){
-      if(!GOOGLE_SHEET_CSV_URL){
-        document.getElementById("pal-status").textContent="Add a Google Sheet URL in the snippet to load organisations.";
+      if(!DATA_URL){
+        document.getElementById("pal-status").textContent="Set DATA_URL at the top of the snippet to load organisations.";
         return boot([]);
       }
-      Papa.parse(GOOGLE_SHEET_CSV_URL,{download:true,header:true,skipEmptyLines:true,
-        complete:function(r){boot((r.data||[]).map(row).filter(Boolean));},
-        error:function(err){console.error("[porirua-map]",err);document.getElementById("pal-status").textContent="Failed to load organisations.";boot([]);}
+      Papa.parse(DATA_URL,{download:true,header:true,skipEmptyLines:true,
+        complete:function(r){
+          var orgs=(r.data||[]).map(row).filter(Boolean);
+          if(!orgs.length){ document.getElementById("pal-status").textContent="Data source returned no rows. Check column headers and publish status."; }
+          boot(orgs);
+        },
+        error:function(err){console.error("[porirua-map]",err);document.getElementById("pal-status").textContent="Failed to load organisations from DATA_URL.";boot([]);}
       });
     });
   })();

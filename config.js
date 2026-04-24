@@ -124,8 +124,20 @@ window.PORIRUA_ORG_TYPES = [
 ];
 
 window.PORIRUA_MAP_CONFIG = {
-  // Paste the "Publish to web -> CSV" URL from Google Sheets here.
+  // ---------------- Data source ----------------
+  // The inventory is loaded in this order of preference:
+  //   1. googleSheetCsvUrl   (if set) — live from a published Google Sheet
+  //   2. dataCsvUrl          (default) — bundled local CSV
+  //   3. window.PORIRUA_SAMPLE_ORGS (deep fallback — never fetched)
+  //
+  // To wire up a Google Sheet: File → Share → Publish to web → CSV → Publish,
+  // then paste the resulting URL here (ends with `output=csv`).
   googleSheetCsvUrl: "",
+
+  // Relative/absolute URL to the canonical CSV. Requires the page to be
+  // served over http(s) (not opened via file://). Leave as-is for local
+  // preview via `python3 -m http.server`.
+  dataCsvUrl: "./data/organisations.csv",
 
   // Map initial view (Porirua city centre).
   center: { lat: -41.1350, lng: 174.8400 },
