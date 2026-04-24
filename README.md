@@ -70,19 +70,24 @@ button appears when any chip is active.
 
 ## Data model
 
-The canonical data source is a single CSV at [`data/organisations.csv`](data/organisations.csv).
+The **live** data source is a Google Sheet maintained by the Porirua
+Locality team:
+[Porirua Climate Assembly Map](https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/edit).
+
 `map.js` delegates all loading to `data-loader.js`, which resolves the
 inventory in this order:
 
-1. **Google Sheet** — `cfg.googleSheetCsvUrl` (if set). Good for non-technical
-   editors: they update the sheet, the site reflects it within minutes.
-2. **Local CSV** — `cfg.dataCsvUrl`, default `./data/organisations.csv`. Used
-   whenever the repo is served directly (local preview, GitHub Pages, static
-   hosting). Edit the CSV via PR.
+1. **Google Sheet** — `cfg.googleSheetCsvUrl` (default: the sheet above).
+   Editors update the sheet, the site reflects it on next load (~5 min
+   Google cache). Non-technical contributors never need to touch the repo.
+2. **Local CSV** — `cfg.dataCsvUrl`, default `./data/organisations.csv`.
+   Used when the sheet is unreachable (Google outage, offline, private).
+   Also the fallback for `squarespace-snippet.html` if the hosted CSV
+   becomes unavailable.
 3. **Embedded sample** — `window.PORIRUA_SAMPLE_ORGS` in `sample-data.js`.
    Deep fallback for the `file://` case (e.g. double-clicking `index.html`)
-   or if both URLs above fail. The status line tells you which source
-   rendered.
+   or if both URLs above fail. The status line under the map tells you
+   which source rendered.
 
 ### CSV columns
 
@@ -134,21 +139,39 @@ PR):
 3. Commit + push. Every consumer (local preview, anywhere `dataCsvUrl`
    points) picks up the change on next load.
 
-**Option B — connect a Google Sheet** (for editors who want a GUI, no PRs):
+**Option B — edit the Google Sheet** (no PRs, live updates):
 
-1. Create a Google Sheet with the exact header row listed under
-   *CSV columns* above (first row = headers).
-2. **File → Share → Publish to web → CSV → Publish**, then copy the URL
-   (ends with `output=csv`).
-3. Paste into `config.js`:
+The sheet is already wired up in `config.js` and
+`squarespace-snippet.html`:
 
-   ```js
-   googleSheetCsvUrl: "https://docs.google.com/spreadsheets/d/e/XXXXX/pub?output=csv",
+- Sheet: <https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/edit>
+- CSV endpoint:
+  `https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/export?format=csv&gid=0`
+
+Header row must match the CSV columns above. Editors can add/remove rows
+live — the site picks changes up within a few minutes (Google caches the
+export).
+
+To swap to a different sheet:
+
+1. Make sure link-sharing is **Anyone with the link → Viewer** (required
+   for the browser to fetch it without auth).
+2. Grab the sheet id from its URL
+   (`.../d/<SHEET_ID>/edit?gid=<TAB_ID>`).
+3. Replace the URL in `config.js` (and optionally in
+   `squarespace-snippet.html`) with:
+
+   ```
+   https://docs.google.com/spreadsheets/d/<SHEET_ID>/export?format=csv&gid=<TAB_ID>
    ```
 
-   When set, the sheet **overrides** the local CSV on every load. Remove
-   the URL (or leave it empty) to fall back to the local file. Google
-   caches published CSVs for ~5 min.
+   Alternatively, **File → Share → Publish to web → CSV → Publish**
+   produces a stable `…pub?output=csv` URL that also works here — pick
+   whichever workflow fits.
+
+If the sheet ever 404s or goes private, the site quietly falls back to
+`data/organisations.csv` and then to the embedded sample, and the status
+line under the map tells you which source rendered.
 
 ## Publishing to Squarespace
 

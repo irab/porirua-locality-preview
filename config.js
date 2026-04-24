@@ -126,17 +126,26 @@ window.PORIRUA_ORG_TYPES = [
 window.PORIRUA_MAP_CONFIG = {
   // ---------------- Data source ----------------
   // The inventory is loaded in this order of preference:
-  //   1. googleSheetCsvUrl   (if set) — live from a published Google Sheet
+  //   1. googleSheetCsvUrl   (if set) — live from a Google Sheet
   //   2. dataCsvUrl          (default) — bundled local CSV
   //   3. window.PORIRUA_SAMPLE_ORGS (deep fallback — never fetched)
   //
-  // To wire up a Google Sheet: File → Share → Publish to web → CSV → Publish,
-  // then paste the resulting URL here (ends with `output=csv`).
-  googleSheetCsvUrl: "",
+  // Two ways to wire up a Google Sheet URL:
+  //
+  //  A) Direct export (what we're using — no publish step required).
+  //     Requires the sheet's link-sharing to be "Anyone with the link → Viewer".
+  //     Pattern:  https://docs.google.com/spreadsheets/d/<SHEET_ID>/export?format=csv&gid=<TAB_ID>
+  //
+  //  B) Publish-to-web (for wider distribution / a stable permalink).
+  //     File → Share → Publish to web → CSV → Publish, then use the resulting URL
+  //     (ends with `/pub?output=csv`).
+  //
+  // Live sheet: https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/edit
+  googleSheetCsvUrl:
+    "https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/export?format=csv&gid=0",
 
-  // Relative/absolute URL to the canonical CSV. Requires the page to be
-  // served over http(s) (not opened via file://). Leave as-is for local
-  // preview via `python3 -m http.server`.
+  // Fallback CSV (shipped in the repo). Used whenever googleSheetCsvUrl is
+  // empty or fails to load. Requires the page to be served over http(s).
   dataCsvUrl: "./data/organisations.csv",
 
   // Map initial view (Porirua city centre).
