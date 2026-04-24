@@ -125,6 +125,13 @@
     return { map: map, layer: layer, markersByIdx: {} };
   }
 
+  function buildTooltip(org) {
+    return '<div class="org-tooltip-inner">'
+         + '<div class="org-tooltip-name">' + esc(org.name) + '</div>'
+         + '<div class="org-tooltip-hint">Click to see more</div>'
+         + '</div>';
+  }
+
   function populateMap(L, cfg, mapCtx, orgs, themeById, orgTypeById) {
     mapCtx.layer.clearLayers();
     mapCtx.markersByIdx = {};
@@ -133,7 +140,13 @@
       if (org.lat == null || org.lng == null) return;
       var orgType = orgTypeById[org.orgType];
       var m = L.marker([org.lat, org.lng], { icon: buildIcon(L, orgType) })
-        .bindPopup(buildPopup(org, themeById, orgType), { maxWidth: 320 });
+        .bindPopup(buildPopup(org, themeById, orgType), { maxWidth: 320 })
+        .bindTooltip(buildTooltip(org), {
+          direction: "top",
+          offset: [0, -18],
+          opacity: 1,
+          className: "org-tooltip",
+        });
       mapCtx.layer.addLayer(m);
       mapCtx.markersByIdx[org.__idx] = m;
       bounds.push([org.lat, org.lng]);
