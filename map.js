@@ -2,7 +2,8 @@
 // Assembly recommendation with two filter bars (recommendation + org type).
 // Reads config from window.PORIRUA_MAP_CONFIG (see config.js).
 // Data resolution is delegated to window.PORIRUA_DATA.load (see data-loader.js):
-//   Google Sheet CSV  >  local ./data/organisations.csv  >  sample fallback.
+//   Google Sheet CSV  >  local ./data/organisations.csv.
+// If both fail the page renders an empty state with an explanatory status line.
 
 (function () {
   function ready(fn) {

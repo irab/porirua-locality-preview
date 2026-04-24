@@ -172,8 +172,8 @@ To swap to a different sheet:
    whichever workflow fits.
 
 If the sheet ever 404s or goes private, the site quietly falls back to
-`data/organisations.csv` and then to the embedded sample, and the status
-line under the map tells you which source rendered.
+`data/organisations.csv`. If that fails too, the page renders an empty
+state and the status line under the map says which source(s) it tried.
 
 ## Publishing to Squarespace
 

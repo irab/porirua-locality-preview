@@ -25,8 +25,8 @@
 //   - `initiatives` -> pipe / semicolon  ("Hui A | Hui B | Hui C")
 //   - `labels`      -> pipe / semicolon  ("kai | dignity | Cannons Creek")
 //
-// This file is a self-contained module. It attaches one object to window:
-//   window.PORIRUA_DATA = { load, normaliseRow, splitList, splitThemes, splitLabels }
+// Public API:
+//   window.PORIRUA_DATA = { load(cfg) }
 (function () {
   // ---- split helpers -------------------------------------------------------
 
@@ -151,11 +151,5 @@
     return tryNext(0, "");
   }
 
-  window.PORIRUA_DATA = {
-    load: load,
-    normaliseRow: normaliseRow,
-    splitList: splitList,
-    splitThemes: splitThemes,
-    splitLabels: splitLabels,
-  };
+  window.PORIRUA_DATA = { load: load };
 })();

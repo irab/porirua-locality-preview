@@ -1,9 +1,9 @@
-// Configuration for the Porirua Locality events + map preview.
+// Configuration for the Porirua Locality organisation inventory map.
 // Themes are derived from the Porirua Assembly Recommendations:
 // https://static1.squarespace.com/static/61a403b442b8840d9ed2143a/t/68355b24fb37801191c0ad0a/1748327214881/Porirua+Assembly+Recommendations-compressed.pdf
 
 // Lucide-style stroked SVG icon paths (24x24, inner markup only).
-// Rendered by map.js into theme badges, map markers, and sub-theme pills.
+// Rendered by map.js into theme badges, map markers and org-type pills.
 window.PORIRUA_ICONS = {
   // Rangatahi — sprout: youth, growth, connection to te taiao
   sprout:
@@ -42,29 +42,6 @@ window.PORIRUA_ICONS = {
     '<path d="M2 12h2"/><path d="M20 12h2"/>' +
     '<path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>',
 
-  // Sub-theme icons (How Stuff Works)
-  droplet:
-    '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
-  recycle:
-    '<path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>' +
-    '<path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>' +
-    '<path d="m14 16-3 3 3 3"/>' +
-    '<path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>' +
-    '<path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>' +
-    '<path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>',
-  bus:
-    '<path d="M8 6v6"/><path d="M15 6v6"/>' +
-    '<path d="M2 12h19.6"/>' +
-    '<path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/>' +
-    '<circle cx="7" cy="18" r="2"/>' +
-    '<path d="M9 18h5"/>' +
-    '<circle cx="16" cy="18" r="2"/>',
-  zap:
-    '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
-  "heart-pulse":
-    '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>' +
-    '<path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
-
   // Organisation-type icons (Lucide)
   landmark:
     '<line x1="3" x2="21" y1="22" y2="22"/>' +
@@ -100,15 +77,6 @@ window.PORIRUA_ICONS = {
   megaphone:
     '<path d="m3 11 18-5v12L3 14v-3z"/>' +
     '<path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
-};
-
-// Map sub-theme string -> icon key. Used for the "How Stuff Works" pills.
-window.PORIRUA_SUBTHEME_ICONS = {
-  Water: "droplet",
-  Waste: "recycle",
-  Transport: "bus",
-  Energy: "zap",
-  Health: "heart-pulse",
 };
 
 // Organisation types — used for the second filter bar.
@@ -221,11 +189,8 @@ window.PORIRUA_MAP_CONFIG = {
         "Invest in water, waste, energy, health and transport systems that reflect " +
         "the needs of our people and place — driven by indigenous and local innovation " +
         "and solutions.",
-      subthemes: ["Water", "Waste", "Transport", "Energy", "Health"],
     },
   ],
-
-  defaultColor: "#60174C",
 
   recommendationsPdfUrl:
     "https://static1.squarespace.com/static/61a403b442b8840d9ed2143a/t/68355b24fb37801191c0ad0a/1748327214881/Porirua+Assembly+Recommendations-compressed.pdf",
