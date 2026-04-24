@@ -46,11 +46,14 @@ and the org-type pill + marker icon:
 
 ## Map markers
 
-- **Colour** = the organisation's **primary** recommendation colour.
-- **Icon** inside the circle = the organisation's **type** icon.
+- **Colour** and **icon** are both driven by the organisation's **type**.
+  Every school shares one marker, every iwi shares another, etc. Same for
+  the round badge next to each organisation in the list.
+- The **recommendation mix** for each org is shown separately as chips on
+  the card + popup (one chip per primary / cross-cutting recommendation).
 
-So scanning the map tells you both *which recommendation* each org anchors to
-and *what kind of organisation* it is.
+So scanning the map tells you *what kind of organisation* is where; clicking
+through reveals which recommendations each one contributes to.
 
 ## Filtering
 

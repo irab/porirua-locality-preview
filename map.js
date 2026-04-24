@@ -29,10 +29,12 @@
          + '" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
   }
 
-  // Marker: theme-coloured circle with the org-type icon in white.
-  // Falls back to a filled dot if orgType icon is missing.
-  function buildIcon(L, theme, orgType) {
-    var color = theme ? theme.color : "#60174C";
+  // Marker: one colour + one icon per organisation TYPE, so the same kind
+  // of organisation (e.g. all schools) shares a single marker style on the
+  // map. The recommendation mix shows up through the theme chips in the
+  // card + popup, not the marker.
+  function buildIcon(L, orgType) {
+    var color = orgType && orgType.color ? orgType.color : "#60174C";
     var inner = orgType && orgType.icon ? svgIcon(orgType.icon, "#fff", 18, 2.2) : "";
     var html =
       '<div style="width:36px;height:36px;border-radius:50%;background:' + color
@@ -46,8 +48,9 @@
   }
 
   function buildPopup(org, themeById, orgType) {
-    var primaryTheme = themeById[org.theme];
-    var color = primaryTheme ? primaryTheme.color : "#60174C";
+    // Accent colour follows the organisation TYPE so the whole popup reads
+    // as a coherent unit with the marker + card badge.
+    var color = orgType && orgType.color ? orgType.color : "#60174C";
     var fontBody = '"aktiv-grotesk","Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
     var fontHead = '"Recoleta","DM Serif Display",Georgia,serif';
 
@@ -124,9 +127,8 @@
     var bounds = [];
     orgs.forEach(function (org) {
       if (org.lat == null || org.lng == null) return;
-      var theme = themeById[org.theme];
       var orgType = orgTypeById[org.orgType];
-      var m = L.marker([org.lat, org.lng], { icon: buildIcon(L, theme, orgType) })
+      var m = L.marker([org.lat, org.lng], { icon: buildIcon(L, orgType) })
         .bindPopup(buildPopup(org, themeById, orgType), { maxWidth: 320 });
       mapCtx.layer.addLayer(m);
       mapCtx.markersByIdx[org.__idx] = m;
@@ -217,7 +219,7 @@
     return grouped;
   }
 
-  function renderOrgList(theme, orgs, themeById, orgTypeById) {
+  function renderOrgList(orgs, themeById, orgTypeById) {
     if (!orgs.length) {
       return '<ul class="orgs empty"><li>No organisations match the current filters.</li></ul>';
     }
@@ -254,7 +256,7 @@
       if (org.description) html += '<div class="desc">' + esc(org.description) + '</div>';
 
       if (org.initiatives && org.initiatives.length) {
-        html += '<div class="initiatives-label" style="color:' + (theme ? theme.color : "#60174C") + '">Key initiatives</div>';
+        html += '<div class="initiatives-label" style="color:' + orgColor + '">Key initiatives</div>';
         html += '<ul class="initiatives">';
         org.initiatives.forEach(function (it) { html += '<li>' + esc(it) + '</li>'; });
         html += '</ul>';
@@ -302,7 +304,7 @@
                + (t.description ? '<p>' + esc(t.description) + '</p>' : "")
                + '</div>'
                + '</div>';
-      card.innerHTML = head + renderOrgList(t, orgs, themeById, orgTypeById);
+      card.innerHTML = head + renderOrgList(orgs, themeById, orgTypeById);
       root.appendChild(card);
     });
 
