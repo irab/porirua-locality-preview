@@ -1,0 +1,32 @@
+---
+description: porirua_directory data pipeline, tests, and publish artifacts
+globs: porirua_directory/**/*
+alwaysApply: false
+---
+
+# porirua_directory — data & publish
+
+## Pipeline commands
+
+- `npm run import:fsd` — downloads FSD; writes **`data/fsd-porirua.raw.json`** (gitignored, re-fetchable).
+- `npm run merge:services` / **`npm run build:data`** — merge Connections Map + FSD + overrides → **`data/services.json`**.
+
+## When you change import, merge, or FSD rules
+
+1. Update **`tests/`** (and **`e2e/`** if public behavior changes).
+2. Update **`docs/porirua-directory-phase1-spec.md`** if filter rules, schema, dedupe, or override semantics change.
+3. Run **`npm test`**; run **`npm run build:data`** if scripts or inputs changed.
+
+## What to commit
+
+| File | Commit? |
+|------|---------|
+| `data/services.json` | **Yes** when publishing or refreshing the deployable dataset |
+| `data/fsd-porirua.raw.json` | **No** — gitignored |
+| `data/overrides.json` | **Yes** — intentional manual curation (hide/patch FSD rows at merge) |
+
+If override **workflow** changes (who edits what, when to re-merge vs full rebuild), document in **`docs/MVP-RUNBOOK.md`**.
+
+## Deploy context
+
+Published dataset is served at **https://directory.bsky.nz** — see `docs/MVP-RUNBOOK.md` and `porirua_directory/README.md`.

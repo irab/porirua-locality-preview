@@ -1,0 +1,20 @@
+{
+  "name": "porirua-directory",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/**/*.test.mjs",
+    "import:fsd": "node scripts/fsd-import.mjs",
+    "merge:services": "node scripts/merge-services.mjs",
+    "build:data": "npm run import:fsd && npm run merge:services",
+    "test:e2e": "playwright test",
+    "serve": "python3 -m http.server 5173"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "csv-parse": "^5.6.0"
+  }
+}

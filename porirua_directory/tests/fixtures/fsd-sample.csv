@@ -1,0 +1,4 @@
+"FSD_ID","PROVIDER_NAME","PROVIDER_WEBSITE_1","PUBLISHED_PHONE_1","PHYSICAL_REGION","PHYSICAL_DISTRICT","PHYSICAL_ADDRESS","POSTAL_ADDRESS","LEVEL_1_CATEGORY","LEVEL_2_CATEGORY","SERVICE_NAME","SERVICE_DETAIL","LATITUDE","LONGITUDE"
+"9001","Test Provider","https://example.org","04 123 4567","Wellington","Porirua","1 Main St, Porirua","","Food","Emergency food","Food bank","Help with food","-41.13","174.84"
+"9002","Wellington Only Service","","04 999 0000","Wellington","","100 Lambton Quay, Wellington","","Support","","Counselling","Region-wide","-41.28","174.77"
+"9003","Titahi Bay Community","","","Wellington","","5 Beach Road, Titahi Bay","","Health","","Clinic","Free nurse","-41.10","174.82"

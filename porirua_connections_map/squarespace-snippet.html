@@ -12,7 +12,7 @@
   2. Paste this whole snippet in.
   3. Set DATA_URL below. It can be EITHER:
        - a published Google Sheet CSV URL (File → Share → Publish to web → CSV), OR
-       - a raw CSV URL, e.g. the raw GitHub URL to data/organisations.csv.
+       - a raw CSV URL, e.g. the raw GitHub URL to porirua_connections_map/data/organisations.csv.
      Leave it blank to render nothing (useful while you prepare the sheet).
 
   Expected CSV columns (first row = headers):
@@ -222,7 +222,7 @@
   (function () {
     // Data source. Accepts EITHER:
     //   - a Google Sheet CSV URL (export?format=csv&gid=<tab> or pub?output=csv), OR
-    //   - a raw CSV URL (e.g. https://raw.githubusercontent.com/<user>/<repo>/main/data/organisations.csv).
+    //   - a raw CSV URL (e.g. https://raw.githubusercontent.com/<user>/<repo>/main/porirua_connections_map/data/organisations.csv).
     // The sheet below is the live Porirua Locality inventory (edit-in-place).
     var DATA_URL = "https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/export?format=csv&gid=0";
 

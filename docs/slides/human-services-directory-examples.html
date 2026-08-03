@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Human Services Directory Examples — Porirua Locality</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Source+Sans+3:wght@400;600;700&display=swap");
+
+    :root {
+      --plum: #60174c;
+      --crimson: #cf2028;
+      --cream: #fdeeee;
+      --blush: #f5bfb8;
+      --text: #3c1b30;
+      --muted: #6b5563;
+    }
+
+    .reveal {
+      font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    .reveal h1, .reveal h2, .reveal h3 {
+      font-family: "DM Serif Display", Georgia, serif;
+      color: var(--plum);
+      text-transform: none;
+      letter-spacing: -0.02em;
+    }
+
+    .reveal h1 { font-size: 2.2em; margin-bottom: 0.4em; }
+    .reveal h2 { font-size: 1.55em; margin-bottom: 0.5em; }
+    .reveal h3 { font-size: 1.05em; color: var(--crimson); font-family: "Source Sans 3", sans-serif; font-weight: 700; margin-top: 0.8em; }
+
+    .reveal .slides { text-align: left; }
+    .reveal .slides section { padding: 20px 40px; }
+    .reveal .title-slide { text-align: center !important; }
+    .reveal .title-slide .subtitle { color: var(--muted); font-size: 0.95em; margin-top: 1.5em; }
+    .reveal .title-slide .meta { font-size: 0.75em; color: var(--muted); margin-top: 2em; }
+
+    .reveal ul { display: block; margin-left: 0; }
+    .reveal li { margin-bottom: 0.45em; line-height: 1.35; }
+    .reveal li::marker { color: var(--crimson); }
+    .reveal p { line-height: 1.4; margin-bottom: 0.6em; }
+    .reveal a { color: var(--crimson); }
+
+    .reveal .tag {
+      display: inline-block;
+      background: var(--cream);
+      color: var(--plum);
+      font-size: 0.55em;
+      font-weight: 700;
+      padding: 0.25em 0.7em;
+      border-radius: 999px;
+      margin-bottom: 0.8em;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .reveal .links { font-size: 0.72em; color: var(--muted); margin-bottom: 1em; }
+    .reveal .links a { word-break: break-all; }
+
+    .reveal table {
+      font-size: 0.62em;
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.6em 0;
+    }
+
+    .reveal table th {
+      background: var(--plum);
+      color: #fff;
+      font-weight: 600;
+      padding: 0.5em 0.65em;
+      text-align: left;
+    }
+
+    .reveal table td {
+      padding: 0.45em 0.65em;
+      border-bottom: 1px solid var(--blush);
+      vertical-align: top;
+    }
+
+    .reveal table tr:nth-child(even) td { background: #fffafa; }
+
+    .reveal .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2em;
+      align-items: start;
+    }
+
+    .reveal .callout {
+      background: var(--cream);
+      border-left: 4px solid var(--crimson);
+      padding: 0.7em 1em;
+      font-size: 0.78em;
+      margin-top: 0.8em;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .reveal .callout strong { color: var(--plum); }
+
+    .reveal .path-list {
+      font-size: 0.78em;
+      background: var(--cream);
+      border-radius: 8px;
+      padding: 0.9em 1.1em;
+      margin: 0.6em 0;
+    }
+
+    .reveal .path-list p { margin: 0.5em 0; }
+    .reveal .path-list strong { color: var(--plum); }
+
+    .reveal .summary-slide ul { font-size: 0.85em; }
+    .reveal .compact { font-size: 0.78em; }
+    .reveal .tiny { font-size: 0.58em; }
+
+    .reveal .progress span { background: var(--crimson); }
+    .reveal .slide-number { color: var(--muted); font-size: 14px; }
+
+    .reveal .footer-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--plum), var(--crimson));
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+  <div class="footer-bar" aria-hidden="true"></div>
+
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- Title -->
+      <section class="title-slide" data-background-color="#fdeeee">
+        <span class="tag">Porirua Locality</span>
+        <h1>Human Services Directory Examples</h1>
+        <p class="subtitle">What works elsewhere — and what Porirua can learn</p>
+        <p class="meta">Reference deck for stakeholders &amp; project team · July 2026</p>
+      </section>
+
+      <!-- Slide 1 -->
+      <section>
+        <h2>Why look at other directories?</h2>
+        <p>Before building the Porirua Services Directory, it helps to see what already works elsewhere.</p>
+        <p><strong>Good directories share common traits:</strong></p>
+        <ul>
+          <li><strong>Plain language</strong> — “I need food”, not bureaucratic codes</li>
+          <li><strong>Location-first</strong> — show what is near the person</li>
+          <li><strong>Trust</strong> — accurate phone numbers, reviewed listings</li>
+          <li><strong>Mobile-friendly</strong> — most people search on a phone</li>
+          <li><strong>Two audiences</strong> — people seeking help, and staff who connect others to services</li>
+        </ul>
+        <div class="callout">This deck covers <strong>six examples</strong> — live directories, community maps, and one ready-made toolkit.</div>
+      </section>
+
+      <!-- Slide 2: Ask Izzy -->
+      <section>
+        <span class="tag">Australia · Live directory</span>
+        <h2>Ask Izzy</h2>
+        <p class="links">askizzy.org.au · about.askizzy.org.au</p>
+        <p>Free, anonymous mobile website connecting people with health and welfare services across Australia.</p>
+        <table>
+          <tr><th>Coverage</th><td>National — ~450,000 services</td></tr>
+          <tr><th>How people start</th><td>“What do you need help with?” — simple categories</td></tr>
+          <tr><th>Who updates it</th><td>Dedicated team of 15+ staff keeping listings current</td></tr>
+          <tr><th>Special feature</th><td>Free to use on mobile without eating into data allowance (some networks)</td></tr>
+        </table>
+        <div class="two-col compact">
+          <div>
+            <h3>What works well</h3>
+            <ul>
+              <li>Categories for people in crisis</li>
+              <li>Separate provider resources site</li>
+              <li>Co-designed with lived experience</li>
+            </ul>
+          </div>
+          <div>
+            <h3>For Porirua</h3>
+            <div class="callout"><strong>Best layout to copy</strong> — simple categories and easy to use on a phone. We cannot match their national budget or staffing.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 3: 211 -->
+      <section>
+        <span class="tag">US &amp; Canada · Helpline + directory</span>
+        <h2>211</h2>
+        <p class="links">211.org (US) · 211.ca (Canada)</p>
+        <p>Free, confidential helpline and web directory for local community services.</p>
+        <table>
+          <tr><th>Coverage</th><td>~1.7M programs (US); nationwide in Canada</td></tr>
+          <tr><th>How people start</th><td>Dial 2-1-1, chat, text, or website</td></tr>
+          <tr><th>How many people use it</th><td>19 million+ connections to help per year (US, 2025)</td></tr>
+        </table>
+        <div class="two-col compact">
+          <div>
+            <h3>What works well</h3>
+            <ul>
+              <li>Human + digital — talk to a navigator</li>
+              <li>More than one need at a time — e.g. food and housing together</li>
+              <li>180+ languages (US)</li>
+            </ul>
+          </div>
+          <div>
+            <h3>For Porirua</h3>
+            <div class="callout">Shows how powerful it is when someone can talk to a trained person — and why our directory still needs clear categories and Porirua-focused results.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 4: FSD -->
+      <section>
+        <span class="tag">Aotearoa · Government directory</span>
+        <h2>Family Services Directory</h2>
+        <p class="links">familyservices.govt.nz/directory</p>
+        <p>The government’s official online list of social service providers across New Zealand.</p>
+        <table>
+          <tr><th>Coverage</th><td>National — several thousand organisations</td></tr>
+          <tr><th>How people use it</th><td>Search by keyword, type of help, and region</td></tr>
+          <tr><th>Who keeps it current</th><td>Ministry of Social Development</td></tr>
+          <tr><th>Can others reuse it?</th><td>Yes — the government publishes the list for community projects to use</td></tr>
+        </table>
+        <div class="callout"><strong>For Porirua:</strong> Our main <strong>source of service listings</strong> — updated automatically each week. We still need to filter to Porirua and check entries locally. The website design is not what we are copying.</div>
+      </section>
+
+      <!-- Slide 5: Sorted -->
+      <section>
+        <span class="tag">United Kingdom · Local router</span>
+        <h2>Sorted Local Help</h2>
+        <p class="links">sorteduk.uk/local-help</p>
+        <p>Enter a postcode → unlock local council funds, food banks, warm hubs, legal aid.</p>
+        <table>
+          <tr><th>Coverage</th><td>317 councils, 2,800+ food banks</td></tr>
+          <tr><th>Data</th><td>Aggregates council, Trussell Trust, Turn2us sources</td></tr>
+        </table>
+        <div class="callout"><strong>For Porirua:</strong> “One lookup, many local results” — adapted as suburb search or “near me”.</div>
+      </section>
+
+      <!-- Slide 7: Kore Hiakai -->
+      <section>
+        <span class="tag">Aotearoa · Community map</span>
+        <h2>Kore Hiakai — Community Food Map</h2>
+        <p class="links">zerohunger.org.nz/find-a-community-food-organisation</p>
+        <p>National map of food banks, social supermarkets, community meals, and free stores.</p>
+        <div class="two-col compact">
+          <div>
+            <h3>What works well</h3>
+            <ul>
+              <li>Community-owned narrative</li>
+              <li>Dignity-focused language (social supermarkets vs food banks)</li>
+              <li>Honest: “comprehensive, not exhaustive”</li>
+            </ul>
+          </div>
+          <div>
+            <h3>For Porirua</h3>
+            <div class="callout">Local trust model. Te Umu ki Rangituhi &amp; Pātaka Kai fit this ecosystem. Works alongside the government directory — does not replace it.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 8: Homeless England -->
+      <section>
+        <span class="tag">England · Specialist directory</span>
+        <h2>Homeless England</h2>
+        <p class="links">homeless.org.uk/homeless-england</p>
+        <p>~1,500 homelessness projects — hostels, outreach, day centres, Housing First.</p>
+        <div class="two-col compact">
+          <div>
+            <h3>What works well</h3>
+            <ul>
+              <li>Detailed search options focused on housing only</li>
+              <li>Sector-maintained — practitioners trust it</li>
+            </ul>
+          </div>
+          <div>
+            <h3>For Porirua</h3>
+            <div class="callout">Specialist directory done well — useful if Porirua later adds housing-focused views.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 9: ORServices -->
+      <section>
+        <span class="tag">Free toolkit · Not a live website</span>
+        <h2>ORServices</h2>
+        <p class="links">sarapis.org/human-services/orservices</p>
+        <p>A <strong>free, ready-made directory package</strong> — public search website and editing tools in one. Built for communities that want their own directory without buying expensive software.</p>
+        <table>
+          <tr><th>What it is</th><td>A toolkit you install and run — not an existing national directory</td></tr>
+          <tr><th>Who it suits</th><td>Councils, nonprofits, and community groups overseas (especially North America)</td></tr>
+          <tr><th>Cost</th><td>Free software — you pay for hosting and setup</td></tr>
+        </table>
+      </section>
+
+      <!-- Slide 10b: ORServices features -->
+      <section>
+        <h2>ORServices — what it offers Porirua</h2>
+        <div class="two-col compact">
+          <div>
+            <h3>Strengths</h3>
+            <ul>
+              <li>Public search website and map — works on phones</li>
+              <li>Built-in editing area for staff to update listings</li>
+              <li>Import and export lists (spreadsheet-friendly)</li>
+              <li>Different staff can edit different organisations</li>
+              <li>Custom colours, logo, and printable lists</li>
+            </ul>
+            <h3>Trade-offs</h3>
+            <ul>
+              <li>Needs ongoing web hosting and technical upkeep</li>
+              <li>Still needs custom work to connect NZ government data and local lists</li>
+              <li>Smaller user community than mainstream website builders</li>
+            </ul>
+          </div>
+          <div>
+            <h3>For Porirua</h3>
+            <div class="callout">
+              <strong>Alternative approach</strong> if we want one off-the-shelf product instead of building separate public site and admin tools.<br><br>
+              Best when we have technical support for hosting and are happy to adapt an overseas-designed tool.<br><br>
+              Our current plan may be simpler for the budget and local team.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 11: Comparison -->
+      <section>
+        <h2>Side-by-side comparison</h2>
+        <table class="tiny">
+          <thead>
+            <tr>
+              <th>Example</th>
+              <th>What it is</th>
+              <th>Where</th>
+              <th>Public website?</th>
+              <th>Staff editing tools?</th>
+              <th>Lesson for Porirua</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Ask Izzy</strong></td><td>Live directory</td><td>Australia</td><td>Yes</td><td>Separate provider site</td><td>Simple categories, phone-friendly</td></tr>
+            <tr><td><strong>211</strong></td><td>Phone line + directory</td><td>US/Canada</td><td>Yes</td><td>Trained staff</td><td>Human help + many needs at once</td></tr>
+            <tr><td><strong>Family Services Directory</strong></td><td>Government list</td><td>NZ</td><td>Yes</td><td>Government</td><td><strong>Our listing source</strong></td></tr>
+            <tr><td><strong>Sorted UK</strong></td><td>Local lookup</td><td>UK</td><td>Yes</td><td>—</td><td>One search → local results</td></tr>
+            <tr><td><strong>Kore Hiakai</strong></td><td>Community food map</td><td>NZ</td><td>Yes</td><td>Organisations apply to join</td><td>Local trust, dignity language</td></tr>
+            <tr><td><strong>Homeless England</strong></td><td>Housing specialist</td><td>England</td><td>Yes</td><td>Sector organisations</td><td>Deep filters for one topic</td></tr>
+            <tr><td><strong>ORServices</strong></td><td>Free toolkit</td><td>Install anywhere</td><td>Yes*</td><td>Built-in editing area</td><td>All-in-one alternative</td></tr>
+          </tbody>
+        </table>
+        <p class="tiny" style="margin-top:0.5em;">* after setup and hosting</p>
+      </section>
+
+      <!-- Slide 13: Paths -->
+      <section>
+        <h2>Three ways we could build Porirua’s directory</h2>
+        <div class="path-list">
+          <p><strong>Option A — Current plan</strong><br>
+          Combine government list + Connections Map in one database. Staff use an editing website to review and publish. Public get a simple search site and map.</p>
+          <p><strong>Option B — Use ORServices toolkit</strong><br>
+          Import our data into the free ORServices package — public site and editing tools come together. Needs technical hosting support.</p>
+          <p><strong>Option C — Mix and match</strong><br>
+          Use a ready-made system for data and editing, but build a custom Porirua-branded public website for the best user experience.</p>
+        </div>
+        <div class="callout"><strong>We are planning Option A</strong> — best fit for budget, long-term stability, and how the Porirua Locality team will work. <strong>Option B (ORServices)</strong> stays on the table if we prefer one off-the-shelf product.</div>
+      </section>
+
+      <!-- Slide 14: What Porirua takes -->
+      <section>
+        <h2>What Porirua is taking from each</h2>
+        <table class="compact">
+          <tr><th>From</th><th>Porirua adopts</th></tr>
+          <tr><td>Ask Izzy</td><td>Plain-language categories, “find help now and nearby”</td></tr>
+          <tr><td>211</td><td>Crisis numbers visible; help with more than one need at a time</td></tr>
+          <tr><td>Family Services Directory</td><td>Automatic weekly refresh from the government list</td></tr>
+          <tr><td>Kore Hiakai / Connections Map</td><td>Local organisations, kaupapa, community trust</td></tr>
+          <tr><td>ORServices</td><td>Optional all-in-one toolkit (public site + editing tools together)</td></tr>
+          <tr><td>Sorted UK</td><td>One local search → many results</td></tr>
+        </table>
+        <p class="compact"><strong>Not copying:</strong> National scale, phone helplines with trained staff, special mobile network deals, or large dedicated data teams.</p>
+      </section>
+
+      <!-- Slide 15: Links -->
+      <section>
+        <h2>Further reading</h2>
+        <div class="two-col tiny">
+          <ul>
+            <li><a href="https://www.askizzy.org.au/" target="_blank">Ask Izzy</a></li>
+            <li><a href="https://www.211.org/" target="_blank">211 United States</a></li>
+            <li><a href="https://211.ca/" target="_blank">211 Canada</a></li>
+            <li><a href="https://www.familyservices.govt.nz/directory/" target="_blank">NZ Family Services Directory</a></li>
+            <li><a href="https://catalogue.data.govt.nz/dataset/family-services-directory" target="_blank">Family Services Directory (government data)</a></li>
+            <li><a href="https://sorteduk.uk/local-help" target="_blank">Sorted Local Help</a></li>
+          </ul>
+          <ul>
+            <li><a href="https://www.zerohunger.org.nz/find-a-community-food-organisation" target="_blank">Kore Hiakai food map</a></li>
+            <li><a href="https://homeless.org.uk/homeless-england/" target="_blank">Homeless England</a></li>
+            <li><a href="https://sarapis.org/human-services/orservices/" target="_blank">ORServices (free toolkit)</a></li>
+            <li><a href="https://www.porirualocality.co.nz/poriruacommunityconnectionsmap" target="_blank">Porirua Connections Map</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Slide 16: Summary -->
+      <section class="summary-slide" data-background-color="#fdeeee">
+        <h2>Summary</h2>
+        <ul>
+          <li><strong>Big directories</strong> (Ask Izzy, 211, Family Services Directory) — show how to design for the public and keep listings accurate</li>
+          <li><strong>Community maps</strong> (Kore Hiakai, Connections Map) — local trust matters more than generic lists</li>
+          <li><strong>ORServices</strong> — main free toolkit if we want public site + editing tools in one package</li>
+          <li><strong>Porirua’s directory</strong> combines the best of these — simple categories, government data, and local community knowledge</li>
+        </ul>
+        <p class="meta" style="text-align:center;margin-top:2em;color:var(--muted);font-size:0.7em;">Porirua Locality · July 2026</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: "c/t",
+      width: 1280,
+      height: 720,
+      margin: 0.08,
+      transition: "slide",
+      transitionSpeed: "fast",
+      controls: true,
+      progress: true,
+      center: false,
+      keyboard: true,
+      touch: true,
+      help: true,
+    });
+  </script>
+</body>
+</html>

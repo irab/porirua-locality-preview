@@ -1,0 +1,50 @@
+---
+description: AI-assisted workflow — docs, commits, verification, scope
+alwaysApply: true
+---
+
+# AI workflow (Porirua Locality monorepo)
+
+## Repository layout
+
+| Path | Role |
+|------|------|
+| `porirua_directory/` | Services directory MVP (data pipeline, static UI, tests) |
+| `porirua_connections_map/` | Community Connections Map (Squarespace embed, sheet/CSV) |
+| `docs/` | Requirements, architecture, runbook, phase specs, plans |
+
+See root `AGENTS.md` and `docs/README.md` for indexes.
+
+## Documentation (keep in sync)
+
+When you change **behavior**, **data rules**, **deploy**, or **editor workflow**, update the matching doc in the **same change set** (same commit when the user asks to commit):
+
+| Change type | Update |
+|-------------|--------|
+| System / hosting / data flow | `docs/architecture/porirua-directory-architecture.md` |
+| FSD filter, merge, schema, overrides | `docs/porirua-directory-phase1-spec.md` |
+| Rebuild, deploy, manual steps | `docs/MVP-RUNBOOK.md` |
+| Product scope / budget / phases | `docs/porirua-services-directory-requirements.md` (+ changelog/version there) |
+| App-specific usage | `porirua_directory/README.md` or `porirua_connections_map/README.md` |
+
+Do not leave docs stale after code or pipeline changes.
+
+## Commits
+
+- **Only commit when the user explicitly asks.** If unclear, ask first.
+- Follow the user’s git safety rules: no `--no-verify`, no secrets (`.env`, credentials), no force-push to main unless requested.
+- Messages: **complete sentences**, focus on **why**; group logically related changes; include doc updates with related code.
+- If a feature or large change was materially **agent-assisted**, note that in the commit body or PR description.
+
+## Verification before “done”
+
+- **Directory data/scripts:** `cd porirua_directory && npm test` (and `npm run build:data` when touching merge/import).
+- **Directory E2E:** `npm run test:e2e` when UI or critical flows change.
+- **Static UI:** no automated suite in map app — state what was checked manually (local serve, key filters/search).
+
+Do not claim work is complete without running relevant checks and confirming output.
+
+## Scope
+
+- Minimal diffs; match existing style; no drive-by refactors.
+- One concern per commit when the user asks for multiple commits; otherwise one logical commit is fine.
