@@ -521,21 +521,24 @@ test("org grouping — need chip highlights matching category pills on all servi
   page,
 }) => {
   await page.goto("/index.html#support");
-  await expect(page.locator("#directory-results .card").first()).toBeVisible();
-  await page.getByRole("button", { name: "Food / kai" }).click();
+  await page.getByRole("button", { name: "Support and counselling" }).click();
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
 
-  const saCard = page
+  const fwCard = page
     .locator("#directory-results .card--org")
-    .filter({ hasText: /Salvation Army/i })
+    .filter({ hasText: /Family Works Central/i })
     .first();
-  await expect(saCard).toBeVisible();
-  const rows = saCard.locator(".service-row");
+  await expect(fwCard).toBeVisible();
+  const rows = fwCard.locator(".service-row");
   await expect(rows.first()).toBeVisible();
-  expect(await rows.count()).toBeGreaterThanOrEqual(2);
+  expect(await rows.count()).toBeGreaterThanOrEqual(3);
 
-  await expect(saCard.locator(".service-row--dim")).toHaveCount(0);
-  await expect(saCard.locator(".badge--need-match").first()).toBeVisible();
+  await expect(fwCard.locator(".service-row--dim")).toHaveCount(0);
+  const matchBadge = fwCard.locator(".badge--need-match").first();
+  await expect(matchBadge).toBeVisible();
+  await expect(matchBadge).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(matchBadge).toHaveCSS("background-color", "rgb(96, 22, 76)");
 });
 
 test("org grouping — map popup View in list focuses org card", async ({ page }) => {

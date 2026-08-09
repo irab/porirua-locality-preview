@@ -1236,13 +1236,6 @@ body[data-view="browse"] .results {
   font-size: 0.72rem;
 }
 
-.badge--need-match {
-  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
-  border-color: var(--accent);
-  color: var(--text);
-  font-weight: 600;
-}
-
 .card--focus-ring {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
@@ -1420,6 +1413,13 @@ body[data-view="browse"] .results {
 
 .badge--type {
   background: #efe6ec;
+}
+
+/* After .badge so active-need pills win cascade (same look as .chip.is-on). */
+.badge.badge--need-match {
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  color: #fff;
 }
 
 .card__desc {
