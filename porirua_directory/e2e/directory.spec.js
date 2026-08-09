@@ -161,6 +161,22 @@ test("search filters results on support path", async ({ page }) => {
   await expect(page.locator("#directory-results")).toContainText(/Wesley/i);
 });
 
+test("browse search toggle stays in viewport on narrow screens", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html");
+  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  const toggle = page.locator("#search-toggle");
+  await expect(toggle).toBeVisible();
+  const box = await toggle.boundingBox();
+  expect(box).not.toBeNull();
+  const { width: vw } = page.viewportSize();
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(vw + 0.5);
+  await toggle.click();
+  const openBox = await toggle.boundingBox();
+  expect(openBox.x + openBox.width).toBeLessThanOrEqual(vw + 0.5);
+});
+
 test("back control returns to landing", async ({ page }) => {
   await page.goto("/index.html");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
