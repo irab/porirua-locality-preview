@@ -2,7 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parse } from "csv-parse/sync";
-import { FSD_EXCLUDED_JSON, FSD_RAW_JSON } from "./config.mjs";
+import {
+  FSD_EXCLUDED_JSON,
+  FSD_GEOCODE_FLAGS_JSON,
+  FSD_RAW_JSON,
+} from "./config.mjs";
+import { collectFsdGeocodeFlags } from "./fsd-geocode-qa.mjs";
 import {
   isPoriruaRelevant,
   mapFsdRowToService,
@@ -49,13 +54,16 @@ export function importFsdFromCsv(csvText) {
 export function buildFsdImportReport(csvText, meta = {}) {
   const rows = parseFsdCsvRows(csvText);
   const { includedRows, excluded } = partitionFsdPoriruaRows(rows);
+  const geocodeFlags = collectFsdGeocodeFlags(includedRows);
   return {
     generatedAt: new Date().toISOString(),
     fsdCsvUrl: meta.fsdCsvUrl ?? null,
     totalCsvRows: rows.length,
     includedCount: includedRows.length,
     excludedCount: excluded.length,
+    geocodeFlagCount: geocodeFlags.length,
     excluded,
+    geocodeFlags,
     services: includedRows.map(mapFsdRowToService),
   };
 }
@@ -69,6 +77,18 @@ export async function writeFsdExcludedAudit(outPath, report) {
     includedCount: report.includedCount,
     excludedCount: report.excludedCount,
     excluded: report.excluded,
+  };
+  await fs.writeFile(outPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+/** @param {string} outPath @param {ReturnType<typeof buildFsdImportReport>} report */
+export async function writeFsdGeocodeFlagsAudit(outPath, report) {
+  const payload = {
+    generatedAt: report.generatedAt,
+    fsdCsvUrl: report.fsdCsvUrl,
+    includedCount: report.includedCount,
+    geocodeFlagCount: report.geocodeFlagCount,
+    geocodeFlags: report.geocodeFlags,
   };
   await fs.writeFile(outPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
@@ -87,9 +107,13 @@ async function main() {
     "utf8"
   );
   await writeFsdExcludedAudit(FSD_EXCLUDED_JSON, report);
+  await writeFsdGeocodeFlagsAudit(FSD_GEOCODE_FLAGS_JSON, report);
   console.log(`Wrote ${report.includedCount} Porirua-relevant services to ${FSD_RAW_JSON}`);
   console.log(
     `Wrote ${report.excludedCount} excluded FSD rows (audit) to ${FSD_EXCLUDED_JSON}`
+  );
+  console.log(
+    `Wrote ${report.geocodeFlagCount} geocode QA flag(s) to ${FSD_GEOCODE_FLAGS_JSON}`
   );
 }
 

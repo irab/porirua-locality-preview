@@ -30,5 +30,6 @@ Each issue should include:
 |-------|--------|---------|
 | [fixed-fsd-aranui-christchurch-filter.md](./fixed-fsd-aranui-christchurch-filter.md) | Fixed | FSD Porirua locality regex falsely matched Christchurch **Aranui** via **Rānui** token |
 | [fixed-fsd-locality-address-context-filter.md](./fixed-fsd-locality-address-context-filter.md) | Fixed | Suburb tokens matched Whitby/Rānui street names, Auckland Ranui, or wrong FSD Porirua district |
+| [fixed-fsd-ora-toa-respiratory-sea-marker.md](./fixed-fsd-ora-toa-respiratory-sea-marker.md) | Fixed | FSD row 4690 had empty address and offshore lat/lng; override to Ora Toa Health Unit, Takapūwāhia |
 
 When you add or close an issue, update this table and link from [docs/README.md](../README.md) if the index changes materially.

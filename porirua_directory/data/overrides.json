@@ -1,4 +1,10 @@
 {
   "hiddenIds": [],
-  "patches": {}
+  "patches": {
+    "fsd-porirua-respiritory-support-group-ora-toa": {
+      "address": "22 Ngāti Toa Street, Takapūwāhia, Porirua",
+      "lat": -41.1248,
+      "lng": 174.835605
+    }
+  }
 }

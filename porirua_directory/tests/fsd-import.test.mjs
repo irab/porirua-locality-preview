@@ -14,7 +14,9 @@ import {
   buildFsdImportReport,
   importFsdFromCsv,
   writeFsdExcludedAudit,
+  writeFsdGeocodeFlagsAudit,
 } from "../scripts/fsd-import.mjs";
+import { GEOCODE_QA_REASON } from "../scripts/fsd-geocode-qa.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fsdFixture = path.join(__dirname, "fixtures/fsd-sample.csv");
@@ -211,5 +213,29 @@ test("writeFsdExcludedAudit writes JSON with expected top-level shape", async ()
   assert.equal(typeof data.includedCount, "number");
   assert.equal(typeof data.excludedCount, "number");
   assert.ok(Array.isArray(data.excluded));
+  await fs.unlink(outPath);
+});
+
+test("buildFsdImportReport includes geocodeFlags array", async () => {
+  const csv = await fs.readFile(fsdFixture, "utf8");
+  const report = buildFsdImportReport(csv);
+  assert.ok(Array.isArray(report.geocodeFlags));
+  assert.equal(typeof report.geocodeFlagCount, "number");
+  assert.equal(report.geocodeFlagCount, report.geocodeFlags.length);
+});
+
+test("writeFsdGeocodeFlagsAudit writes JSON with expected top-level shape", async () => {
+  const csv = await fs.readFile(fsdFixture, "utf8");
+  const report = buildFsdImportReport(csv);
+  const outPath = path.join(__dirname, ".tmp-fsd-geocode-flags-test.json");
+  await writeFsdGeocodeFlagsAudit(outPath, report);
+  const data = JSON.parse(await fs.readFile(outPath, "utf8"));
+  assert.equal(typeof data.generatedAt, "string");
+  assert.equal(typeof data.includedCount, "number");
+  assert.equal(typeof data.geocodeFlagCount, "number");
+  assert.ok(Array.isArray(data.geocodeFlags));
+  for (const row of data.geocodeFlags) {
+    assert.ok(Object.values(GEOCODE_QA_REASON).includes(row.reasonCode));
+  }
   await fs.unlink(outPath);
 });

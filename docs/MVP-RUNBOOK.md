@@ -17,7 +17,7 @@ npm run build:data
 
 This runs:
 
-1. `import:fsd` — downloads FSD CSV → `data/fsd-porirua.raw.json` and **`data/fsd-porirua-excluded.json`** (geo filter audit)
+1. `import:fsd` — downloads FSD CSV → `data/fsd-porirua.raw.json`, **`data/fsd-porirua-excluded.json`** (geo filter audit), and **`data/fsd-porirua-geocode-flags.json`** (suspicious coordinates on included rows)
 2. `merge:services` — Connections Map + FSD + overrides → `data/services.json`
 
 **Editors (community orgs):** update the [Connections Map Google Sheet](https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/edit) (same as `porirua_connections_map`).
@@ -64,6 +64,25 @@ Full rule rationale: [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rati
 5. **If rules change:** edit `scripts/fsd-porirua-rules.mjs`, add cases to `tests/fsd-import.test.mjs`, update [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) changelog, run `npm test` and `npm run build:data`. For bug-driven fixes, add `docs/issues/fixed-*.md` and index in [issues/README.md](./issues/README.md).
 
 Both `fsd-porirua.raw.json` and `fsd-porirua-excluded.json` are **gitignored** (regenerated each import). Archive copies when comparing two DIA releases (e.g. attach to a PR or ticket).
+
+---
+
+## FSD geocode QA (included rows)
+
+Rationale and reason codes: [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) § Geocode QA.
+
+Lat/lng on FSD services come from DIA **`LATITUDE` / `LONGITUDE`** columns (passed through in import; no geocoder in-repo). Geo **inclusion** rules do not validate coordinates.
+
+1. After `npm run import:fsd` or `npm run build:data`, check console output for **`geocodeFlagCount`**.
+2. Open **`data/fsd-porirua-geocode-flags.json`** — each entry is an **included** row that still publishes unless you override or hide it.
+3. **Review** (data editor; stakeholder sign-off for corrected public pins):
+   - `GEOCODE_IN_MARINE_BBOX` — often bad FSD geocode in Cook Strait / Kapiti offshore box (example: Ora Toa respiratory group, `FSD_ID` 4690).
+   - `GEOCODE_OUTSIDE_PORIRUA_BOUNDS` — pin outside the Porirua map slice box (Wellington CBD, Hutt, etc.) — confirm whether the service is truly Porirua-relevant before moving coords.
+4. **Fix in repo:** add `patches` in `data/overrides.json` with corrected `lat`, `lng`, and optional `address`, then `npm run merge:services` (or full `build:data`). Re-check the pin in local preview (`npm run serve`).
+5. **Fix upstream:** report bad coordinates to DIA FSD when address metadata is also wrong.
+6. **Developer:** if bounds are too tight/loose, edit `scripts/fsd-geocode-qa.mjs` and extend `tests/fsd-geocode-qa.test.mjs`.
+
+`fsd-porirua-geocode-flags.json` is **gitignored** like the other import audits.
 
 ---
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-09T13:34:18.181Z",
+  "generatedAt": "2026-08-09T13:48:11.548Z",
   "counts": {
     "community": 52,
     "fsd": 382,
@@ -2288,9 +2288,9 @@
       "description": "See the website for more information:\nhttps://asthma.org.nz/find-community-support/#wellington",
       "phone": "04 237 4520",
       "url": "https://asthma.org.nz/find-community-support/#wellington",
-      "address": "",
-      "lat": -41.080194,
-      "lng": 174.760239,
+      "address": "22 Ngāti Toa Street, Takapūwāhia, Porirua",
+      "lat": -41.1248,
+      "lng": 174.835605,
       "categories": [
         "support",
         "health"

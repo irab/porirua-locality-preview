@@ -2,7 +2,7 @@
 
 **Audience:** Developers and data editors refreshing the NZ Family Services Directory (FSD) slice  
 **Implementation:** `porirua_directory/scripts/fsd-porirua-rules.mjs`  
-**Pipeline:** `npm run import:fsd` → `data/fsd-porirua.raw.json` + **`data/fsd-porirua-excluded.json`** (audit)  
+**Pipeline:** `npm run import:fsd` → `data/fsd-porirua.raw.json` + **`data/fsd-porirua-excluded.json`** (geo filter audit) + **`data/fsd-porirua-geocode-flags.json`** (coordinate QA on included rows)  
 **Summary spec:** [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) § FSD inclusion rules  
 **Operational steps:** [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) § FSD import audit
 
@@ -60,6 +60,8 @@ flowchart TD
 
 **Categories** (`mapCategoriesFromFsd`) run **after** geo filter; they do not affect inclusion.
 
+**Coordinates** — DIA supplies `LATITUDE` / `LONGITUDE` on each CSV row. Import copies them via `mapFsdRowToService` (no geocoder in this repo). **Geocode QA** runs on **included** rows only; see [Geocode QA (included rows)](#geocode-qa-included-rows).
+
 **Public/private or quality** — not filtered in code; use `data/overrides.json` at merge time.
 
 ---
@@ -107,6 +109,44 @@ Regression tests: `porirua_directory/tests/fsd-import.test.mjs`.
 
 ---
 
+## Geocode QA (included rows)
+
+Geo **inclusion** (suburb tokens, district cross-check) does **not** validate map coordinates. Bad DIA geocodes can pass the filter and still plot offshore — e.g. **Porirua Respiratory Support group – Ora Toa** (`FSD_ID` 4690): Porirua district, empty address, lat/lng **−41.080194, 174.760239** in Cook Strait. See [fixed-fsd-ora-toa-respiratory-sea-marker.md](./issues/fixed-fsd-ora-toa-respiratory-sea-marker.md).
+
+**Implementation:** `porirua_directory/scripts/fsd-geocode-qa.mjs`, invoked from `buildFsdImportReport` in `fsd-import.mjs`.
+
+**Artifact:** `data/fsd-porirua-geocode-flags.json` (gitignored, regenerated each `import:fsd`). Rows stay in `fsd-porirua.raw.json` unless you hide them via overrides — flags are for **human review**, not auto-drop.
+
+| Field | Meaning |
+|-------|---------|
+| `geocodeFlagCount` | Number of included rows with at least one flag |
+| `geocodeFlags[]` | One entry per flagged row |
+| `reasonCode` | See table below |
+| `reasonDetail` | Short explanation |
+| `serviceId` | Slug used in `services.json` after merge |
+| `lat`, `lng` | Values from FSD CSV at import time |
+| `FSD_ID`, names, address fields | Spot-check labels |
+
+| Code | When used |
+|------|-----------|
+| `GEOCODE_IN_MARINE_BBOX` | Pin inside the Kapiti/Cook Strait offshore check box (`KAPITI_OFFSHORE_MARINE_BBOX`) |
+| `GEOCODE_OUTSIDE_PORIRUA_BOUNDS` | Pin outside the generous Porirua map box (`PORIRUA_GEO_BOUNDS`) and not already caught as marine |
+
+**Review workflow (who / what):**
+
+| Step | Owner | Action |
+|------|--------|--------|
+| After each FSD CSV drop | Developer or data editor running `npm run build:data` | Read console `geocodeFlagCount`; open `fsd-porirua-geocode-flags.json` |
+| For each flag | Data editor + stakeholder if public-facing | Confirm on map (local `npm run serve`) or against known site address; check community map / provider website |
+| Fix | Data editor | Add **`patches`** in `data/overrides.json` (`lat`, `lng`, optional `address`) → `npm run merge:services`; or `hiddenIds` if not mappable; or report upstream to DIA FSD |
+| Policy change | Developer | Adjust bounds in `fsd-geocode-qa.mjs`, add tests in `fsd-geocode-qa.test.mjs`, update this section |
+
+**Manual checks (still useful):** Scan `services.json` FSD pins on the map after merge; search for empty `address` with non-null coords; compare flagged `serviceId` list to overrides.
+
+Operational checklist: [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) § FSD geocode QA.
+
+---
+
 ## Token maintenance
 
 ### `PORIRUA_LOCALITY_PATTERN`
@@ -134,6 +174,7 @@ Named cities/towns used to veto suburb-token matches on the **same line**. Exten
 
 | Date | Change | Issue write-up |
 |------|--------|----------------|
+| **2026-08-10** | Geocode QA flags on import (`fsd-porirua-geocode-flags.json`, marine + bounds reason codes) | [fixed-fsd-ora-toa-respiratory-sea-marker.md](./issues/fixed-fsd-ora-toa-respiratory-sea-marker.md) |
 | **2026-08-10** | Rānui regex: `(?<![a-z])r[āa]nui\b` — stop matching Christchurch **Aranui** | [fixed-fsd-aranui-christchurch-filter.md](./issues/fixed-fsd-aranui-christchurch-filter.md) |
 | **2026-08** | `NON_PORIRUA_ADDRESS_LOCALITY_PATTERN` + `isPoriruaAddressContext` — Whitby Street / Ranui Auckland / Kerikeri Ranui Ave | [fixed-fsd-locality-address-context-filter.md](./issues/fixed-fsd-locality-address-context-filter.md) |
 | **2026-08** | `physicalAddressContradictsPoriruaDistrict` — district Porirua vs physical Palmerston North (Tautoko) | Same issue doc |
