@@ -24,6 +24,7 @@ Plain language up front; technical detail in subsections where helpful.
 - **No admin UI** — Connections Map still edited in Google Sheet; FSD refreshed by re-running `npm run build:data`.
 - **FSD is service-grain; the UI is flat** — large NGOs appear as many similar cards (see next section).
 - **Dedupe is community-vs-FSD only** — not FSD-vs-FSD and not org grouping.
+- **Accessibility not yet a first-class deliverable** — the public UI includes intentional basics (skip link, landmarks, plain language, crisis footer), but there has been **no formal WCAG audit, remediation pass, or assistive-technology test programme**. See [Accessibility (target)](#accessibility-target) below.
 - **Phase 2 items deferred** — weekly FSD automation, Directus, Squarespace embed, formal duplicate workflow (see [requirements](./porirua-services-directory-requirements.md)).
 
 Recent pipeline work fixed **wrong geography** (Christchurch **Aranui** no longer matches Porirua **Rānui**). That reduced noise in the dataset but did **not** fix duplicate org cards from multi-service FSD providers.
@@ -63,6 +64,33 @@ After the Aranui/Rānui geo fix and rebuild: **461** published listings (~52 com
 **Stakeholder takeaway:** The directory is trustworthy for “something exists in Porirua” but can feel **repetitive or confusing** for NGOs with many FSD service lines. Fixing that needs a deliberate product choice (many service cards vs one org card), not only a bug fix.
 
 Detailed analysis and options: [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md).
+
+---
+
+## Accessibility (target)
+
+**Why this matters:** The directory is for people under stress — including users with **significant disabilities** who rely on **screen readers**, **keyboard-only** navigation, **voice control**, **high contrast**, or **large touch targets**. Porirua Locality should aim for an **extremely high accessibility rating** in practice (trusted by disabled users and advocates), not merely “we tried.”
+
+**Phase 1 status (gap, not a claim):** MVP shipped with some helpful patterns (e.g. skip link, labelled nav groups, `aria-live` on results, descriptive favourite buttons, sticky crisis numbers, print-friendly My list). Phase 1 did **not** include a signed accessibility acceptance criterion, automated axe/Playwright a11y gates, or structured testing with assistive technology. **We do not claim WCAG 2.2 Level AA (or any legal “compliance”) today.**
+
+**Suggested target (product + engineering):**
+
+| Horizon | Goal |
+|--------|------|
+| **Phase 1.5** | **WCAG 2.2 Level AA as baseline** for all public pages (`index.html`, `about.html`): fix critical/serious issues from audit; add lightweight regression smokes (landmarks, skip link, focusable controls); document known map limitations. |
+| **Phase 2** | **AA everywhere users transact**; **AAA where feasible** (contrast, plain language, touch targets, motion); optional **map alternative** (list-first, “open in maps” links per pin); periodic **manual AT passes** (NVDA/VoiceOver, keyboard-only). |
+| **Ongoing** | Accessibility notes in requirements/changelog when behaviour changes; no release that regresses focus order or screen reader names for core flows (landing → browse → card → My list → print). |
+
+**Scope priorities (align with MVP flows):**
+
+1. **Landing / browse / My list** — correct headings, view announcements, filter and search state for screen readers, no duplicate or stale `aria-current`.
+2. **Crisis footer** — always reachable, readable, and operable (including when content is fixed to the viewport).
+3. **Map (Leaflet)** — treat as **enhancement**: never the only way to get location; document keyboard and AT gaps; consider list-first or external map links in Phase 2.
+4. **Print My list** — keep a usable printed record (contact details visible; chrome hidden).
+
+**Stakeholder framing:** Accessibility is a **quality bar for a public community resource**, comparable in importance to accurate data. Budget Phase 1.5/2 work explicitly — not as polish after launch.
+
+*First structured code audit: August 2026 (agent-assisted review of `porirua_directory` public UI). Findings live in team notes / PR discussion until a dedicated a11y doc is added.*
 
 ---
 
@@ -138,6 +166,7 @@ These came from MVP feedback, data review, and requirements iterations (see requ
 | Full **editor guide** and production runbooks | 2 | MVP runbook covers rebuild/deploy |
 | **Phase 1.5** (`SERVICE_ID` ids, service titles) | 1.5 | **Proposed; not implemented** in import yet |
 | **Phase 2 org grouping** | 2 | Proposed schema + UI |
+| **Formal WCAG 2.2 AA pass + AT testing** | 1.5–2 | Baseline target; see [Accessibility (target)](#accessibility-target) |
 | Te Reo category labels, PWA, analytics, provider self-service | Out of scope | See requirements §9–10 |
 
 Building a **second admin UI** only for overrides (duplicate of Phase 2 Directus) is intentionally avoided — overrides stay file-based until admin exists.

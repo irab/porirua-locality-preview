@@ -3,6 +3,19 @@ import { test, expect } from "@playwright/test";
 const LOGO_ALT = "Te Wāhi Tiaki Tātou — Porirua Locality";
 const PRODUCT_TITLE = "Your Porirua Directory";
 
+test("accessibility smoke — skip link targets main landmark", async ({ page }) => {
+  await page.goto("/index.html");
+  const skip = page.getByRole("link", { name: "Skip to content" });
+  await expect(skip).toHaveAttribute("href", "#main");
+  await expect(page.locator("main#main")).toBeVisible();
+});
+
+test("accessibility smoke — about page main landmark and single h1", async ({ page }) => {
+  await page.goto("/about.html");
+  await expect(page.locator("main#main")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+});
+
 test("landing — path buttons in subnav, crisis footer, no map", async ({ page }) => {
   await page.goto("/index.html");
   await expect(page.getByRole("link", { name: LOGO_ALT })).toBeVisible();
