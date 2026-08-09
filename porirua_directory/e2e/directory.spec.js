@@ -156,7 +156,7 @@ test("search filters results on support path", async ({ page }) => {
   await page.goto("/index.html");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
   await page.getByRole("button", { name: "Search", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Search", exact: true })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "true");
   await page.locator("#search-input").fill("Wesley");
   await expect(page.locator("#directory-results")).toContainText(/Wesley/i);
 });
@@ -173,8 +173,50 @@ test("browse search toggle stays in viewport on narrow screens", async ({ page }
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(vw + 0.5);
   await toggle.click();
-  const openBox = await toggle.boundingBox();
+  const search = page.locator("#browse-search");
+  await expect(search).toHaveAttribute("aria-expanded", "true");
+  const openBox = await search.boundingBox();
+  expect(openBox).not.toBeNull();
   expect(openBox.x + openBox.width).toBeLessThanOrEqual(vw + 0.5);
+});
+
+test("browse search — expanded field fits placeholder on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html#support");
+  const toggle = page.getByRole("button", { name: "Search", exact: true });
+  await toggle.click();
+  await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "true");
+  const input = page.locator("#search-input");
+  await expect(input).toBeVisible();
+  await expect(input).toHaveAttribute("placeholder", "Search listings");
+
+  const layout = await page.evaluate(() => {
+    const inputEl = document.getElementById("search-input");
+    const fieldEl = document.getElementById("browse-search-field");
+    const toggleEl = document.getElementById("search-toggle");
+    const prefixEl = fieldEl?.querySelector(".browse-search__prefix");
+    if (!inputEl || !fieldEl || !toggleEl || !prefixEl) return null;
+    const style = window.getComputedStyle(inputEl);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.font = `${style.fontSize} ${style.fontFamily}`;
+    const placeholderWidth = ctx.measureText(inputEl.placeholder).width;
+    const fieldRect = fieldEl.getBoundingClientRect();
+    const prefixRect = prefixEl.getBoundingClientRect();
+    return {
+      inputWidth: inputEl.clientWidth,
+      placeholderWidth,
+      toggleHidden: toggleEl.hidden,
+      prefixInsideField:
+        prefixRect.left >= fieldRect.left - 1 &&
+        prefixRect.right <= fieldRect.right + 1,
+    };
+  });
+  expect(layout).not.toBeNull();
+  expect(layout.inputWidth).toBeGreaterThanOrEqual(layout.placeholderWidth);
+  expect(layout.toggleHidden).toBe(true);
+  expect(layout.prefixInsideField).toBe(true);
 });
 
 test("back control returns to landing", async ({ page }) => {

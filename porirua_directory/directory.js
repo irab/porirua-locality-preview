@@ -405,7 +405,10 @@ async function main() {
   function setSearchOpen(open) {
     if (!browseSearch || !searchToggle || !browseSearchField) return;
     browseSearch.classList.toggle("is-open", open);
+    browseSearch.setAttribute("aria-expanded", open ? "true" : "false");
     searchToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    searchToggle.hidden = open;
+    browseSearchField.hidden = !open;
     browseSearchField.setAttribute("aria-hidden", open ? "false" : "true");
     if (searchInput) {
       searchInput.tabIndex = open ? 0 : -1;
@@ -413,6 +416,7 @@ async function main() {
     if (open && searchInput) {
       window.requestAnimationFrame(() => searchInput.focus());
     } else if (!open) {
+      searchToggle.hidden = false;
       searchToggle.focus();
     }
   }

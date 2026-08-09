@@ -81,33 +81,46 @@
         <div class="browse-sticky-panel">
           <div class="browse-toolbar">
             <button type="button" id="back-to-landing" class="back-link">← Back</button>
-            <div class="browse-search" id="browse-search">
-              <div class="browse-search__field" id="browse-search-field" aria-hidden="true">
-                <label class="visually-hidden" for="search-input">Search by name or keyword</label>
-                <input
-                  id="search-input"
-                  type="search"
-                  placeholder="Search by name or keyword"
-                  autocomplete="off"
-                  enterkeyhint="search"
-                />
-                <button type="button" id="search-close" class="browse-search__close" aria-label="Close search">
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
+            <div class="browse-search" id="browse-search" aria-expanded="false">
               <button
                 type="button"
                 id="search-toggle"
                 class="browse-search__toggle"
                 aria-label="Search"
                 aria-expanded="false"
-                aria-controls="search-input"
+                aria-controls="browse-search-field"
               >
                 <svg class="browse-search__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
                   <path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                 </svg>
               </button>
+              <div
+                class="browse-search__field"
+                id="browse-search-field"
+                role="search"
+                aria-hidden="true"
+                hidden
+              >
+                <span class="browse-search__prefix" aria-hidden="true">
+                  <svg class="browse-search__icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+                    <path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <label class="visually-hidden" for="search-input">Search listings</label>
+                <input
+                  id="search-input"
+                  type="search"
+                  placeholder="Search listings"
+                  autocomplete="off"
+                  enterkeyhint="search"
+                  tabindex="-1"
+                />
+                <button type="button" id="search-close" class="browse-search__close" aria-label="Close search">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
             </div>
           </div>
 
