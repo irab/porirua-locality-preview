@@ -1,6 +1,6 @@
 # Porirua Services Directory (MVP)
 
-Self-contained app: public **find help in Porirua** directory (need categories, search, map, crisis numbers).
+Self-contained app: public **Your Porirua Directory** (need categories, search, optional map, sticky crisis footer on every page). User-facing copy is plain language for a wide audience.
 
 **Data sources:**
 
@@ -23,7 +23,8 @@ npm run test:e2e      # Playwright
 
 ```
 porirua_directory/
-  directory.html          # public MVP page
+  index.html              # public MVP landing + browse
+  about.html              # about this directory (shareable)
   config-directory.js     # crisis numbers + need categories
   directory-data.js       # loads data/services.json
   directory.js            # UI logic
@@ -44,7 +45,15 @@ After `npm run build:data`, typical counts: ~50 community orgs from the live she
 
 ## Public UI (Milestone B)
 
-Dual browse: **I need help** (need categories + search, FSD-heavy) and **Connect with community** (`orgType` filter chips; schools off unless selected). Compact crisis strip; Leaflet map + result cards.
+**Site chrome:** Top nav with Porirua Locality logo (links to [porirualocality.co.nz](https://www.porirualocality.co.nz/)), prominent **Your Porirua Directory** title, **My list**, and **About** (`about.html`). On **landing only**, a subnav row shows “I would like to…” plus **Find support** / **Connect with community**; that subnav is hidden in browse and My list (use **← Back** to switch paths).
+
+**My list:** Session-only favorites (`sessionStorage`, key `porirua-directory-favorites`) — each result card has **Add to your list** or **Remove** (with a trash icon; the button’s accessible name still includes the organisation or service name). Open **My list** in the top nav or `#mylist` to review saved places and organisations. **Print list** uses the browser print dialog with a simplified layout (nav and crisis footer hidden). The UI states that nothing is stored on a server and the list clears when the tab closes.
+
+**Landing:** Path choice lives in the subnav; main content stays minimal until a path is chosen. No search, filters, or map on landing. A compact **crisis numbers** bar is fixed to the bottom of the viewport on every page (including About).
+
+**Browse:** **← Back** returns to landing. On **Find support**, the full support listing shows by default with **no need chips selected**; tap one chip to filter to that category only (tap again to show all; tap another to switch). **Show map** (checkbox beside search) reveals the map when the filtered list includes at least one service with coordinates; Leaflet loads on first show. Filters and search in a left sidebar. Listing **descriptions** keep FSD line breaks where present; `format-description.mjs` turns `-` bullet lines and inline `such as: - item - item` text into HTML lists.
+
+Internal browse mode is `support` (not `help`); optional URL hash `#support`, `#community`, or `#mylist`.
 
 ## Deploy
 
@@ -55,3 +64,13 @@ Commit **`data/services.json`** when publishing; **`data/fsd-porirua.raw.json`**
 ## Connections Map data
 
 Editors update community orgs in the [Connections Map Google Sheet](https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/edit) (same as `porirua_connections_map`). Re-run `npm run build:data` after sheet changes.
+
+## Design (Porirua Locality brand)
+
+Typography and colours match [porirualocality.co.nz](https://www.porirualocality.co.nz/) and [`../porirua_connections_map/`](../porirua_connections_map/):
+
+- **Headings** — Recoleta Bold (hosted on the Squarespace site CDN; `@font-face` in `index.html`).
+- **Body** — Aktiv Grotesk via Adobe Typekit kit `xcy1epi.css` (same kit as the main site).
+- **Palette** — CSS custom properties in `directory.css` (`--ink`, `--accent`, `--bg`, etc.), derived from the live site’s `--black-hsl`, `--darkAccent-hsl`, `--lightAccent-hsl`, and `--accent-hsl` theme variables.
+
+Recoleta and Aktiv Grotesk are licensed fonts; the directory loads them from the same public URLs the Squarespace site uses. If those URLs change or block hotlinking, headings fall back to DM Serif Display / Georgia and body to Poppins / system sans-serif.

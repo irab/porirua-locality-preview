@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About Your Porirua Directory — Porirua Locality</title>
+  <meta name="description" content="What Your Porirua Directory is for and where its listings come from." />
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin />
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin />
+  <link rel="stylesheet" href="https://use.typekit.net/xcy1epi.css" />
+  <style>
+    @font-face {
+      font-family: "Recoleta";
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+      src: url("https://static1.squarespace.com/static/64d9585e944b8f367e746a03/t/67ec59adee84111b10946195/1743542702859/Recoleta-Bold.otf") format("opentype");
+    }
+  </style>
+  <link rel="stylesheet" href="directory.css" />
+</head>
+<body data-view="about">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-topnav">
+    <div class="site-topnav__inner">
+      <a class="site-logo" href="https://www.porirualocality.co.nz/" rel="noopener noreferrer">
+        <img
+          class="site-logo__img"
+          src="https://images.squarespace-cdn.com/content/v1/64d9585e944b8f367e746a03/ad2abb52-c652-4ba7-a01f-6c0bd17320ea/Te+Wa%CC%84hi+Tiaki+Ta%CC%84tou+RGB.png?format=500w"
+          alt="Te Wāhi Tiaki Tātou — Porirua Locality"
+          width="220"
+          height="48"
+          decoding="async"
+        />
+      </a>
+      <div class="site-topnav__cluster">
+        <a class="site-product-title" href="index.html">Your Porirua Directory</a>
+        <nav class="site-nav" aria-label="Site">
+          <a class="site-nav__link" href="index.html#mylist">My list</a>
+          <a class="site-nav__link site-nav__link--current" href="about.html" aria-current="page">About</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="main main--about">
+    <article class="about-content">
+      <h1>About Your Porirua Directory</h1>
+      <p>
+        Your Porirua Directory helps people in Porirua find support and connect with local community organisations.
+        Choose <strong>Find support</strong> to look by topic (for example food, housing, or wellbeing) or search by name.
+        Choose <strong>Connect with community</strong> to find marae, groups, and other local organisations.
+      </p>
+      <p>
+        Community listings come from the
+        <a href="https://www.porirualocality.co.nz/">Porirua Locality</a>
+        Community Connections Map. Other listings come from the NZ Family Services Directory for the Porirua area.
+      </p>
+      <p>
+        <a href="index.html">← Back to Your Porirua Directory</a>
+      </p>
+    </article>
+  </main>
+
+  <div class="page-foot">
+    <footer id="crisis-strip" class="crisis" role="contentinfo" aria-label="Crisis and emergency numbers"></footer>
+    <footer class="site-footer">
+      <p>
+        Part of
+        <a href="https://www.porirualocality.co.nz/">Te Wāhi Tiaki Tātou / Porirua Locality</a>.
+      </p>
+    </footer>
+  </div>
+  <script type="module">
+    import { crisisLinks } from "./config-directory.js";
+    function esc(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    const el = document.getElementById("crisis-strip");
+    const links = crisisLinks
+      .map(
+        (c) =>
+          `<a class="crisis__link" href="${esc(c.href)}" title="${esc(c.description)}">${esc(c.label)}</a>`
+      )
+      .join("");
+    el.innerHTML = `<div class="crisis__inner"><span class="crisis__label">Crisis:</span>${links}</div>`;
+  </script>
+</body>
+</html>

@@ -3,57 +3,126 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Find help in Porirua — Porirua Locality</title>
-  <meta name="description" content="Find help, connect with community groups, and discover local organisations in Porirua." />
+  <title>Your Porirua Directory — Porirua Locality</title>
+  <meta name="description" content="Your Porirua Directory — find support, connect with community groups, and discover local organisations in Porirua." />
+  <!-- Brand fonts: same kit + Recoleta URL as porirualocality.co.nz / porirua_connections_map -->
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin />
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin />
   <link rel="stylesheet" href="https://use.typekit.net/xcy1epi.css" />
+  <style>
+    @font-face {
+      font-family: "Recoleta";
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+      src: url("https://static1.squarespace.com/static/64d9585e944b8f367e746a03/t/67ec59adee84111b10946195/1743542702859/Recoleta-Bold.otf") format("opentype");
+    }
+  </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="directory.css" />
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
-<body>
+<body data-view="landing">
   <a class="skip-link" href="#main">Skip to content</a>
-  <header class="site-header">
-    <p class="site-eyebrow">Porirua Locality</p>
-    <h1>Find help and community in Porirua</h1>
-    <p class="site-lede">Search services, browse by need, or connect with local groups and places.</p>
+  <header class="site-topnav">
+    <div class="site-topnav__inner">
+      <a class="site-logo" href="https://www.porirualocality.co.nz/" rel="noopener noreferrer">
+        <img
+          class="site-logo__img"
+          src="https://images.squarespace-cdn.com/content/v1/64d9585e944b8f367e746a03/ad2abb52-c652-4ba7-a01f-6c0bd17320ea/Te+Wa%CC%84hi+Tiaki+Ta%CC%84tou+RGB.png?format=500w"
+          alt="Te Wāhi Tiaki Tātou — Porirua Locality"
+          width="220"
+          height="48"
+          decoding="async"
+        />
+      </a>
+      <div class="site-topnav__cluster">
+        <a
+          class="site-product-title site-product-title--current"
+          href="index.html"
+          aria-current="page"
+        >Your Porirua Directory</a>
+        <nav class="site-nav" aria-label="Site">
+          <a class="site-nav__link" href="#mylist" id="nav-mylist">My list</a>
+          <a class="site-nav__link" href="about.html">About</a>
+        </nav>
+      </div>
+    </div>
+    <div id="site-subnav" class="site-subnav" aria-label="What would you like to do">
+      <p id="landing-prompt" class="site-subnav__prompt">I would like to…</p>
+      <div class="path-mode-switch" role="group" aria-label="Choose a path">
+        <button type="button" class="path-mode-switch__btn" data-mode="support">Find support</button>
+        <button type="button" class="path-mode-switch__btn" data-mode="community">Connect with community</button>
+      </div>
+    </div>
   </header>
 
-  <div id="crisis-strip" class="crisis" aria-label="Crisis and emergency numbers"></div>
-
   <main id="main" class="main">
-    <section class="browse-entry" aria-labelledby="browse-heading">
-      <h2 id="browse-heading" class="section-title">How would you like to browse?</h2>
-      <div class="browse-entry__buttons">
-        <button type="button" class="browse-entry__btn" data-mode="help">I need help</button>
-        <button type="button" class="browse-entry__btn" data-mode="community">Connect with community</button>
+    <section id="view-landing" class="view-landing" hidden aria-hidden="true"></section>
+
+    <section id="view-mylist" class="view-mylist" hidden aria-labelledby="mylist-heading">
+      <p class="browse-toolbar">
+        <button type="button" id="mylist-back" class="back-link">← Back to start</button>
+      </p>
+      <div class="mylist-layout">
+        <div class="mylist-heading-row">
+          <h1 id="mylist-heading" class="mylist-heading">My list</h1>
+          <button type="button" id="mylist-print" class="mylist-print" hidden disabled>Print list</button>
+        </div>
+        <p class="mylist-intro">Places and organisations you’ve saved for this visit.</p>
+        <p class="mylist-disclaimer" role="note">
+          Your saved places stay on this device while you keep this page open. We don’t store them online, and they clear when you close the tab.
+        </p>
+        <p id="mylist-status" class="status-line" role="status"></p>
+        <div id="mylist-results" class="results" aria-live="polite"></div>
       </div>
     </section>
 
-    <section id="filters-help" class="filters filters--hidden" aria-labelledby="help-filters-heading">
-      <h2 id="help-filters-heading" class="section-title">What do you need help with?</h2>
-      <div id="need-chips" class="chip-row" role="group" aria-label="Need categories"></div>
-    </section>
+    <div id="view-browse" class="view-browse" hidden>
+      <p class="browse-toolbar">
+        <button type="button" id="back-to-landing" class="back-link">← Back</button>
+      </p>
 
-    <section id="filters-community" class="filters filters--hidden" aria-labelledby="community-filters-heading">
-      <h2 id="community-filters-heading" class="section-title">Organisation type</h2>
-      <p class="filters-hint">Schools are optional — turn on the chip if you want to include kura.</p>
-      <div id="community-chips" class="chip-row" role="group" aria-label="Community filters"></div>
-    </section>
+      <div class="browse-layout">
+        <aside class="browse-sidebar" aria-label="Search and topics">
+          <section id="filters-support" class="filters filters--hidden" aria-labelledby="support-filters-heading">
+            <h2 id="support-filters-heading" class="section-title">Support with…</h2>
+            <div id="need-chips" class="chip-row" role="group" aria-label="Types of support"></div>
+          </section>
 
-    <label class="search-wrap">
-      <span class="visually-hidden">Search</span>
-      <input id="search-input" type="search" placeholder="Search by name, description, or address" autocomplete="off" />
-    </label>
+          <section id="filters-community" class="filters filters--hidden" aria-labelledby="community-filters-heading">
+            <h2 id="community-filters-heading" class="section-title">Organisation type</h2>
+            <div id="community-chips" class="chip-row" role="group" aria-label="Organisation types"></div>
+          </section>
 
-    <p id="status-line" class="status-line" role="status"></p>
+          <label class="search-wrap">
+            <span class="visually-hidden">Search</span>
+            <input id="search-input" type="search" placeholder="Search by name or keyword" autocomplete="off" />
+          </label>
+          <label class="map-show-wrap">
+            <input id="show-map" type="checkbox" />
+            Show map
+          </label>
+        </aside>
 
-    <div id="directory-map" class="map" aria-label="Map of services"></div>
-    <div id="directory-results" class="results" aria-live="polite"></div>
+        <div class="browse-main">
+          <div id="map-block" class="map-block map-block--hidden" hidden>
+            <div id="directory-map" class="map" aria-label="Map of listed places"></div>
+          </div>
+
+          <p id="status-line" class="status-line" role="status"></p>
+          <div id="directory-results" class="results" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
   </main>
 
-  <footer class="site-footer">
-    <p>Community listings from the Porirua Community Connections Map. Other services from the NZ Family Services Directory (Porirua area).</p>
-  </footer>
+  <div class="page-foot">
+    <footer id="crisis-strip" class="crisis" role="contentinfo" aria-label="Crisis and emergency numbers"></footer>
+    <footer class="site-footer">
+      <p>Community organisations from the Porirua Community Connections Map. Other listings from the NZ Family Services Directory (Porirua area).</p>
+    </footer>
+  </div>
 
   <script type="module" src="directory.js"></script>
 </body>
