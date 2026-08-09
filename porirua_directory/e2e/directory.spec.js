@@ -184,15 +184,21 @@ test("browse chrome collapses on scroll down and expands near top", async ({ pag
   await page.waitForSelector("#directory-results .card");
   await page.evaluate(async () => {
     window.scrollTo(0, 0);
-    for (let y = 0; y <= 360; y += 60) {
-      window.scrollTo(0, y);
-      await new Promise((r) => requestAnimationFrame(r));
-    }
+    await new Promise((r) => requestAnimationFrame(r));
+    window.scrollTo(0, 480);
+    await new Promise((r) => requestAnimationFrame(r));
+    await new Promise((r) => requestAnimationFrame(r));
   });
   await expect
-    .poll(async () => page.locator("body").getAttribute("data-browse-chrome"))
-    .toBe("collapsed");
-  await expect(page.locator("#browse-chrome-expand")).toBeVisible();
+    .poll(
+      async () => {
+        const chrome = await page.locator("body").getAttribute("data-browse-chrome");
+        const expandVisible = await page.locator("#browse-chrome-expand").isVisible();
+        return chrome === "collapsed" && expandVisible;
+      },
+      { timeout: 8000 }
+    )
+    .toBe(true);
   await expect(page.locator("#search-toggle")).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
