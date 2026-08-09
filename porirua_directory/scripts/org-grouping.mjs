@@ -73,10 +73,17 @@ export function buildOrganizationRecord(members, opts = {}) {
     if (ta !== tb) return ta.localeCompare(tb);
     return String(a.id).localeCompare(String(b.id));
   });
-  const shell = opts.shell ?? sorted[0];
-  const orgId = opts.id ?? orgIdForCluster(sorted);
-  const services = sorted.map((row) => flatRowToServiceLine(row));
-  const categories = [...new Set(sorted.flatMap((m) => m.categories ?? []))];
+  const uniqueMembers = [];
+  const seenIds = new Set();
+  for (const row of sorted) {
+    if (seenIds.has(row.id)) continue;
+    seenIds.add(row.id);
+    uniqueMembers.push(row);
+  }
+  const shell = opts.shell ?? uniqueMembers[0];
+  const orgId = opts.id ?? orgIdForCluster(uniqueMembers);
+  const services = uniqueMembers.map((row) => flatRowToServiceLine(row));
+  const categories = [...new Set(uniqueMembers.flatMap((m) => m.categories ?? []))];
 
   return {
     kind: "organization",
@@ -90,7 +97,7 @@ export function buildOrganizationRecord(members, opts = {}) {
     lng: shell.lng ?? null,
     orgType: shell.orgType ?? "",
     source: opts.source ?? shell.source ?? "fsd",
-    badges: [...new Set(sorted.flatMap((m) => m.badges ?? []))],
+    badges: [...new Set(uniqueMembers.flatMap((m) => m.badges ?? []))],
     communityFilters: shell.communityFilters ?? [],
     communityMeta: shell.communityMeta,
     categories,

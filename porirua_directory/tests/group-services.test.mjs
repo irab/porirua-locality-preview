@@ -77,6 +77,8 @@ test("published catalog includes multi-line Salvation Army organization", () => 
   );
   assert.ok(sa, "expected Salvation Army organization entry");
   assert.ok(sa.services.length >= 2);
+  const lineIds = new Set(sa.services.map((s) => s.lineId));
+  assert.equal(lineIds.size, sa.services.length);
 });
 
 test("groupCatalogForDisplay yields one org card for filtered org lines", () => {
@@ -92,7 +94,7 @@ test("groupCatalogForDisplay yields one org card for filtered org lines", () => 
   const items = groupCatalogForDisplay(catalog, lines);
   assert.equal(items.length, 1);
   assert.equal(items[0].type, "org");
-  assert.equal(items[0].org.services.length, lines.length);
+  assert.equal(items[0].org.services.length, sa.services.length);
 });
 
 test("groupServicesByOrg clusters legacy flat rows", () => {

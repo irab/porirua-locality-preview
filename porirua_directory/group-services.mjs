@@ -82,13 +82,19 @@ export function groupCatalogForDisplay(entries, filteredLines) {
       seen.add(line.orgId);
       const entry = entryByOrgId.get(line.orgId);
       if (!entry) continue;
-      const matchingIds = new Set(
-        filteredLines.filter((l) => l.orgId === line.orgId).map((l) => l.lineId)
-      );
-      const matching = entry.services.filter((s) => matchingIds.has(s.lineId));
+      const matching = filteredLines
+        .filter((l) => l.orgId === line.orgId)
+        .map((l) => entry.services.find((s) => s.lineId === l.lineId))
+        .filter(Boolean);
+      const seenLine = new Set();
+      const uniqueMatching = matching.filter((s) => {
+        if (seenLine.has(s.lineId)) return false;
+        seenLine.add(s.lineId);
+        return true;
+      });
       items.push({
         type: "org",
-        org: organizationEntryToDisplayOrg(entry, matching),
+        org: organizationEntryToDisplayOrg(entry, uniqueMatching),
       });
     } else {
       if (seen.has(line.id)) continue;

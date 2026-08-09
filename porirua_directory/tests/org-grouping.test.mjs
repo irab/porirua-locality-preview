@@ -115,15 +115,17 @@ test("community does not merge when name matches but site signals differ", () =>
   assert.equal(communityMatchesFsdCluster(community, [fsd]), false);
 });
 
-test("mapFsdRowToService uses stable id from FSD_ID", () => {
+test("mapFsdRowToService uses stable id from SERVICE_ID when present", () => {
   const s = mapFsdRowToService({
     FSD_ID: "9001",
+    SERVICE_ID: "9001-line-a",
     PROVIDER_NAME: "Salvation Army - Porirua",
     SERVICE_NAME: "Food bank",
     SERVICE_DETAIL: "Food help",
     PHYSICAL_DISTRICT: "Porirua",
   });
-  assert.equal(s.id, "fsd-9001");
+  assert.equal(s.id, "fsd-9001-line-a");
+  assert.equal(s.fsdServiceId, "9001");
 });
 
 test("mergeServices applies org grouping in published output", () => {

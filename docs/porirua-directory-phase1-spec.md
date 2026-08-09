@@ -42,7 +42,7 @@ Published `services.json` is a **catalog**: flat listings and/or `kind: "organiz
 
 | Field | Type | Notes |
 |-------|------|--------|
-| `id` | string | FSD: `fsd-<FSD_ID>` when present |
+| `id` | string | FSD: `fsd-<SERVICE_ID>` when present, else `fsd-<FSD_ID>` |
 | `fsdServiceId`, `serviceName` | string | Optional FSD line metadata |
 | `name` | string | Display name (provider) |
 | `description` | string | Plain language; FSD values may include `\n` line breaks and `-` lists — import preserves newlines (`normalizeDescriptionText`); public UI renders via `format-description.mjs` |
@@ -132,7 +132,7 @@ No automated public/private business filter — team curates via overrides.
 - **Key:** normalised name + rounded lat/lng (see `normalize.mjs`).
 - **On collision:** keep **community** row as published; FSD row gets `duplicateOf` pointing at community `id`.
 - **Description:** prefer community text when merging fields on the surviving row.
-- **FSD multi-service providers:** one import row per CSV line; **`merge-services.mjs`** runs **`applyOrgGrouping()`** (cluster key = name + phone + address + geo). ≥2 lines → organization; import add/remove updates lines on rebuild. Unique **`id`** per line from `FSD_ID` / `SERVICE_ID`. Community ↔ FSD: exact normalised name + geo/phone/address tie-break ([design doc](./design/org-service-grouping-options.md)).
+- **FSD multi-service providers:** one import row per CSV line; **`merge-services.mjs`** runs **`applyOrgGrouping()`** (cluster key = name + phone + address + geo). ≥2 lines → organization; import add/remove updates lines on rebuild. Unique **`id`** per line from **`SERVICE_ID`** (preferred) or **`FSD_ID`**. Community ↔ FSD: exact normalised name + geo/phone/address tie-break ([design doc](./design/org-service-grouping-options.md)).
 
 ---
 

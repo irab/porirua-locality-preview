@@ -267,10 +267,26 @@ function focusOrgInResults(orgId) {
   }
 }
 
+function resolveLegacyFavoriteId(favId, catalogEntries) {
+  if (catalogEntries.some((e) => e.id === favId)) return favId;
+  if (favId.startsWith("fsd-")) {
+    const orgCandidate = `org-${favId.slice(4)}`;
+    if (catalogEntries.some((e) => e.id === orgCandidate)) return orgCandidate;
+  }
+  for (const entry of catalogEntries) {
+    if (entry.kind !== "organization") continue;
+    if (entry.services?.some((s) => s.id === favId || s.lineId === favId)) {
+      return entry.id;
+    }
+  }
+  return favId;
+}
+
 function resolveFavoriteDisplayItems(catalogEntries, serviceLines, favoriteIds) {
   const ordered = [];
   const seen = new Set();
-  for (const favId of favoriteIds) {
+  for (let favId of favoriteIds) {
+    favId = resolveLegacyFavoriteId(favId, catalogEntries);
     const orgEntry = catalogEntries.find(
       (e) => e.kind === "organization" && e.id === favId
     );
