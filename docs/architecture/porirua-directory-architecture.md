@@ -82,7 +82,7 @@ No admin database in Phase 1.
 |-------|------------|
 | DNS / TLS edge | Cloudflare (`directory.bsky.nz`, proxied) |
 | Origin | blackbox `101.100.135.172:4443` → Traefik → Service → nginx |
-| App | Vanilla HTML/JS/CSS, Leaflet, OpenStreetMap tiles |
+| App | Vanilla HTML/JS/CSS, Leaflet, OpenStreetMap tiles; ES modules (`*.mjs`) — nginx must serve them as `application/javascript` ([`infra/nginx.conf`](../../porirua_directory/infra/nginx.conf)) |
 | Data | `GET /data/services.json` (static file) |
 
 Traffic path (see blackbox `infra/cloudflare/bsky.nz/README.md`):

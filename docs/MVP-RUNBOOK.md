@@ -114,6 +114,7 @@ CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes
 2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`).
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
+   - **Smoke:** landing **Find support** / **Connect with community** switch to browse; crisis footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
 
 **Pin a SHA:** edit `deployment.yaml` image tag to `:sha` instead of `:latest` for reproducible rollouts.
 
