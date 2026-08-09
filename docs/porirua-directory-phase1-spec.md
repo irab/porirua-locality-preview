@@ -15,6 +15,7 @@
 | Filter + category rules | `porirua_directory/scripts/fsd-porirua-rules.mjs` |
 | Connections + FSD merge | `porirua_directory/scripts/merge-services.mjs` |
 | Normalisation / dedupe | `porirua_directory/scripts/lib/normalize.mjs` |
+| Org grouping (Option B) | `porirua_directory/scripts/org-grouping.mjs` |
 | Published dataset | `porirua_directory/data/services.json` |
 | Manual curation | `porirua_directory/data/overrides.json` |
 | Public UI | `index.html`, `directory.js`, `config-directory.js`, `directory.css` |
@@ -35,12 +36,15 @@ npm run build:data   # import FSD + merge → services.json
 
 ## Service record
 
-Public listings (after merge, excluding rows with `duplicateOf` set):
+Published `services.json` is a **catalog**: flat listings and/or `kind: "organization"` entries with nested `services[]` (Option B).
+
+### Flat listing
 
 | Field | Type | Notes |
 |-------|------|--------|
-| `id` | string | Stable slug |
-| `name` | string | Display name |
+| `id` | string | FSD: `fsd-<FSD_ID>` when present |
+| `fsdServiceId`, `serviceName` | string | Optional FSD line metadata |
+| `name` | string | Display name (provider) |
 | `description` | string | Plain language; FSD values may include `\n` line breaks and `-` lists — import preserves newlines (`normalizeDescriptionText`); public UI renders via `format-description.mjs` |
 | `phone` | string | Normalised where possible |
 | `url` | string | Website |
@@ -52,9 +56,18 @@ Public listings (after merge, excluding rows with `duplicateOf` set):
 | `source` | `"community"` \| `"fsd"` | Internal; not shown as jargon on cards |
 | `badges` | string[] | Optional public labels; community rows default to `[]` (provenance is `source`, not shown as a card badge) |
 | `communityMeta` | object | Optional: theme, themes, initiatives, labels |
-| `duplicateOf` | string | If set, row is duplicate; public UI omits |
+| `duplicateOf` | string | Pre-grouping merge only; UI omits |
 
-Envelope written to `services.json`:
+### Organization (`kind: "organization"`)
+
+| Field | Notes |
+|-------|--------|
+| `id` | Org card id (favourites, map) |
+| `services[]` | Lines with `lineId`, `id`, `title`, `serviceName`, `description`, `categories`, `source` |
+
+Filters use **service-line** grain via `expandServiceLines()` in `directory-data.js`.
+
+Envelope:
 
 ```json
 {
@@ -63,11 +76,15 @@ Envelope written to `services.json`:
     "community": 0,
     "fsd": 0,
     "published": 0,
+    "serviceLines": 0,
+    "organizations": 0,
     "duplicatesHidden": 0
   },
   "services": []
 }
 ```
+
+(`published` = catalog cards, not raw FSD row count.)
 
 ---
 
@@ -115,7 +132,7 @@ No automated public/private business filter — team curates via overrides.
 - **Key:** normalised name + rounded lat/lng (see `normalize.mjs`).
 - **On collision:** keep **community** row as published; FSD row gets `duplicateOf` pointing at community `id`.
 - **Description:** prefer community text when merging fields on the surviving row.
-- **FSD multi-service providers:** import is one row per FSD **service**; `id` is currently slugged from `PROVIDER_NAME`, so many services from one provider can share an `id` and appear as duplicate cards. See `docs/plans/fsd-org-subservices-and-geo-filter.md` for org/subservice options.
+- **FSD multi-service providers:** one import row per CSV line; **`merge-services.mjs`** runs **`applyOrgGrouping()`** (cluster key = name + phone + address + geo). ≥2 lines → organization; import add/remove updates lines on rebuild. Unique **`id`** per line from `FSD_ID` / `SERVICE_ID`. Community ↔ FSD: exact normalised name + geo/phone/address tie-break ([design doc](./design/org-service-grouping-options.md)).
 
 ---
 

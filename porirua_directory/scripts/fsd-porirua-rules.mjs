@@ -232,13 +232,16 @@ export function normalizeDescriptionText(text) {
 /** @param {Record<string, string>} row */
 export function mapFsdRowToService(row) {
   const name = String(row.PROVIDER_NAME ?? row.SERVICE_NAME ?? "").trim();
-  const fsdId = String(row.FSD_ID ?? row.SERVICE_ID ?? "").trim();
-  const id = slugId(name || fsdId || "provider", "fsd-");
+  const fsdServiceId = String(row.FSD_ID ?? row.SERVICE_ID ?? "").trim();
 
   const detail = normalizeDescriptionText(row.SERVICE_DETAIL);
   const serviceName = normalizeDescriptionText(row.SERVICE_NAME);
   const description =
     detail || serviceName || normalizeDescriptionText(row.ORGANISATION_PURPOSE);
+
+  const id = fsdServiceId
+    ? slugId(fsdServiceId, "fsd-")
+    : slugId(`${name}-${serviceName}` || name || "provider", "fsd-");
 
   const url =
     normalizeUrl(row.PROVIDER_WEBSITE_1) ||
@@ -247,6 +250,8 @@ export function mapFsdRowToService(row) {
 
   return {
     id,
+    fsdServiceId: fsdServiceId || undefined,
+    serviceName: serviceName || undefined,
     name: name || serviceName || "Unknown provider",
     description,
     phone: normalizePhone(row.PUBLISHED_PHONE_1 || row.PUBLISHED_PHONE_2),

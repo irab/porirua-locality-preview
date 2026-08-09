@@ -9,19 +9,13 @@ import { fileURLToPath } from "node:url";
 import {
   dedupeKey,
   normalizeName,
-  normalizePhone,
   slugId,
 } from "./lib/normalize.mjs";
+import { expandServiceLines } from "./org-grouping.mjs";
+import { orgClusterKey } from "./lib/org-cluster.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const servicesPath = path.join(__dirname, "../data/services.json");
-
-function normalizeAddress(addr) {
-  return String(addr ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
 
 function descriptionFingerprint(desc) {
   const d = String(desc ?? "").trim();
@@ -30,16 +24,13 @@ function descriptionFingerprint(desc) {
 }
 
 function clusterKey(row) {
-  const name = normalizeName(row.name).toLowerCase();
-  const phone = normalizePhone(row.phone);
-  const addr = normalizeAddress(row.address);
-  const geo = dedupeKey(row.name, row.lat, row.lng).split("|").slice(1).join("|");
-  return `name:${name}|phone:${phone}|addr:${addr}|geo:${geo}`;
+  return orgClusterKey(row);
 }
 
 function loadServices() {
   const raw = JSON.parse(fs.readFileSync(servicesPath, "utf8"));
-  return raw.services ?? raw;
+  const entries = raw.services ?? raw;
+  return expandServiceLines(Array.isArray(entries) ? entries : []);
 }
 
 function summarizeCluster(members) {
