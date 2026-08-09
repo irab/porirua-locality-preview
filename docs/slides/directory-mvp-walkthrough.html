@@ -150,12 +150,59 @@
       margin-top: 0.35em;
     }
 
+    /* Phone layout slide: fixed ~390×700 viewport inside device chrome */
+    .reveal .phone-mock-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-width: 0;
+    }
+
+    .reveal .phone-mock {
+      --phone-w: 390px;
+      --phone-h: 700px;
+      width: var(--phone-w);
+      max-width: 100%;
+      padding: 14px 12px 16px;
+      background: linear-gradient(165deg, #2a2a2e 0%, #121214 100%);
+      border-radius: 40px;
+      box-shadow:
+        0 16px 48px rgba(60, 27, 48, 0.22),
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    }
+
+    .reveal .phone-mock-notch {
+      width: 96px;
+      height: 5px;
+      margin: 0 auto 10px;
+      background: #3a3a40;
+      border-radius: 999px;
+    }
+
+    .reveal .phone-mock .embed-frame-wrap {
+      border: none;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: none;
+      background: #fff;
+    }
+
+    .reveal .phone-mock .embed-frame-wrap iframe {
+      width: var(--phone-w);
+      height: var(--phone-h);
+      max-width: 100%;
+    }
+
     @media (max-width: 900px) {
       .reveal .embed-slide {
         grid-template-columns: 1fr;
       }
       .reveal .embed-frame-wrap iframe {
         height: 55vh;
+      }
+      .reveal .phone-mock .embed-frame-wrap iframe {
+        height: min(var(--phone-h), 52vh);
       }
     }
   </style>
@@ -239,19 +286,23 @@
             <ul>
               <li>Below 1024px: stack is <strong>filters → map (when shown) → results</strong></li>
               <li>Plain language, touch-friendly controls, crisis footer always visible</li>
-              <li>Resize this window or open the URL on a phone while presenting</li>
+              <li>Preview at left uses a <strong>~390px</strong> frame — same stack as a real phone</li>
+              <li>Open the URL on a device while presenting for full touch testing</li>
               <li>E2E tests use 1280px for desktop layout; mobile is manual smoke</li>
             </ul>
           </div>
-          <div>
-            <div class="embed-frame-wrap">
-              <iframe
-                title="Landing — mobile-friendly"
-                src="../../porirua_directory/index.html"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                loading="lazy"></iframe>
+          <div class="phone-mock-stage">
+            <div class="phone-mock" aria-label="Phone preview (~390px wide)">
+              <div class="phone-mock-notch" aria-hidden="true"></div>
+              <div class="embed-frame-wrap">
+                <iframe
+                  title="Find support browse — phone width"
+                  src="../../porirua_directory/index.html#support"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  loading="lazy"></iframe>
+              </div>
             </div>
-            <p class="embed-caption">Landing path choice · same URL works on device width</p>
+            <p class="embed-caption"><code>#support</code> · ~390×700px iframe · stacked layout &lt;1024px</p>
           </div>
         </div>
       </section>
