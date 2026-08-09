@@ -955,14 +955,6 @@ body[data-view="browse"] .results {
   margin: 0 0 0.5rem;
 }
 
-.map-popup__pills--themes {
-  margin-top: 0.15rem;
-}
-
-.map-popup__pills--labels {
-  margin-top: 0.65rem;
-}
-
 .map-popup__pill {
   font-size: 0.62rem;
   text-transform: uppercase;
@@ -979,11 +971,6 @@ body[data-view="browse"] .results {
   color: #fff;
 }
 
-.map-popup__pill--theme {
-  background: color-mix(in srgb, var(--accent) 88%, #fff);
-  color: #fff;
-}
-
 .map-popup__location {
   font-size: 0.78rem;
   color: var(--muted);
@@ -994,36 +981,6 @@ body[data-view="browse"] .results {
   font-size: 0.85rem;
   line-height: 1.5;
   margin: 0.45rem 0 0.35rem;
-}
-
-.map-popup__section-label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  color: var(--accent);
-  margin: 0.65rem 0 0.25rem;
-}
-
-.map-popup__list {
-  margin: 0;
-  padding-left: 1.15rem;
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.map-popup__list li {
-  margin-bottom: 0.15rem;
-}
-
-.map-popup__label-chip {
-  font-size: 0.68rem;
-  font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--ink);
-  letter-spacing: 0.02em;
 }
 
 .map-popup__phone {

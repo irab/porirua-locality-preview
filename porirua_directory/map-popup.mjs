@@ -15,13 +15,6 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
-function splitPipeOrSemi(value) {
-  return String(value ?? "")
-    .split(/[|;]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 function truncatePlain(text, maxLen = MAP_POPUP_DESC_MAX) {
   const t = String(text ?? "")
     .trim()
@@ -33,8 +26,8 @@ function truncatePlain(text, maxLen = MAP_POPUP_DESC_MAX) {
 }
 
 /**
- * Connections Map chrome (org type, Assembly themes, initiatives, label chips)
- * belongs on the community browse path only — not on Find support popups.
+ * Community browse path shows org-type pill (and filter/category pills in badges).
+ * Assembly themes, initiatives, and label chips stay in data only — not in popups.
  */
 export function mapPopupShowsCommunityChrome(service, browseMode) {
   if (browseMode !== "community") return false;
@@ -46,7 +39,6 @@ export function mapPopupShowsCommunityChrome(service, browseMode) {
 
 export function buildMapPopup(service, distKm, browseMode = "support") {
   const showCommunity = mapPopupShowsCommunityChrome(service, browseMode);
-  const meta = service.communityMeta;
 
   let html = '<div class="map-popup">';
 
@@ -72,20 +64,6 @@ export function buildMapPopup(service, distKm, browseMode = "support") {
     html += "</div>";
   }
 
-  if (showCommunity && meta?.themes) {
-    const themes = String(meta.themes)
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (themes.length) {
-      html += '<div class="map-popup__pills map-popup__pills--themes">';
-      themes.forEach((theme) => {
-        html += `<span class="map-popup__pill map-popup__pill--theme">${esc(theme)}</span>`;
-      });
-      html += "</div>";
-    }
-  }
-
   if (service.address) {
     html += `<div class="map-popup__location">${esc(service.address)}</div>`;
   }
@@ -93,29 +71,6 @@ export function buildMapPopup(service, distKm, browseMode = "support") {
   const desc = truncatePlain(service.description);
   if (desc) {
     html += `<p class="map-popup__desc">${esc(desc)}</p>`;
-  }
-
-  if (showCommunity && meta?.initiatives) {
-    const items = splitPipeOrSemi(meta.initiatives);
-    if (items.length) {
-      html += '<div class="map-popup__section-label">Key initiatives</div>';
-      html += '<ul class="map-popup__list">';
-      items.forEach((item) => {
-        html += `<li>${esc(item)}</li>`;
-      });
-      html += "</ul>";
-    }
-  }
-
-  if (showCommunity && meta?.labels) {
-    const labels = splitPipeOrSemi(meta.labels);
-    if (labels.length) {
-      html += '<div class="map-popup__pills map-popup__pills--labels">';
-      labels.forEach((label) => {
-        html += `<span class="map-popup__label-chip">${esc(label)}</span>`;
-      });
-      html += "</div>";
-    }
   }
 
   if (service.phone) {

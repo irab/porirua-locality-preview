@@ -36,12 +36,14 @@ test("support path popup omits Connections Map org type and theme pills", () => 
   assert.doesNotMatch(html, /map-popup__label-chip/);
 });
 
-test("community path popup keeps org type, themes, and initiatives", () => {
+test("community path popup keeps org type, omits themes and initiatives", () => {
   const html = buildMapPopup(communityListing, null, "community");
   assert.match(html, /map-popup__pill--type/);
   assert.match(html, /Social Enterprise/);
-  assert.match(html, /How We Roll/);
-  assert.match(html, /Key initiatives/);
+  assert.doesNotMatch(html, /How We Roll/);
+  assert.doesNotMatch(html, /map-popup__pill--theme/);
+  assert.doesNotMatch(html, /Key initiatives/);
+  assert.doesNotMatch(html, /map-popup__label-chip/);
 });
 
 test("FSD listing on support keeps need category pills only", () => {

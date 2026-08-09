@@ -411,17 +411,16 @@ test("support path — card click opens rich map popup", async ({ page }) => {
   await expect(popup.locator(".map-popup__pill--type")).toHaveCount(0);
 });
 
-test("community path — map popup shows org type or initiatives", async ({ page }) => {
+test("community path — map popup shows org type, not Assembly themes", async ({ page }) => {
   await page.goto("/index.html#community");
   await expect(page.locator(".leaflet-container")).toBeVisible();
   await page.locator("#directory-results .card").first().click();
   const popup = page.locator(".leaflet-popup-content .map-popup");
   await expect(popup).toBeVisible();
-  await expect(
-    popup.locator(
-      ".map-popup__pill--type, .map-popup__list li, .map-popup__pill--theme"
-    )
-  ).not.toHaveCount(0);
+  await expect(popup.locator(".map-popup__pill--type")).not.toHaveCount(0);
+  await expect(popup.locator(".map-popup__pill--theme")).toHaveCount(0);
+  await expect(popup.locator(".map-popup__list li")).toHaveCount(0);
+  await expect(popup).not.toContainText(/key initiatives/i);
 });
 
 test("demo — three-column layout smoke with show map", async ({ page }) => {

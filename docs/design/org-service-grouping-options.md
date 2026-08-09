@@ -302,7 +302,7 @@ Compare `clustering.orgsWithSameNormalizedName2Plus` and top-of-list providers a
 | Grouping | **`scripts/org-grouping.mjs`** at merge; published `services.json` includes `kind: "organization"` + `services[]`. FSD `id` = `fsd-<FSD_ID>`. |
 | UI | `directory-data.js` expands lines for filters; `groupCatalogForDisplay` renders org cards from catalog. |
 | Favourites | Org-level `id` / `orgId`. |
-| Map | One pin per org; popup **View in list** focuses org card. **Find support** popups show need categories (and FSD badges) only — no Connections Map org-type or Assembly theme pills. **Community** popups include org type, themes, initiatives, and label chips from `communityMeta`. |
+| Map | One pin per org; popup **View in list** focuses org card. **Find support** popups show need categories (and FSD badges) only — no Connections Map org-type or Assembly theme pills. **Community** popups show **org type** plus filter/category pills; Assembly **themes**, **initiatives**, and **label chips** from `communityMeta` are not shown (data retained for pipeline/filters). |
 | Need filter | Org in list if **any** line matches; card shows **all** lines; `.badge--need-match` on matching category pills (no row dim for need). |
 | Service detail | Each row is a **toggle button** (`aria-expanded`) revealing `.service-row__detail` (description, line-specific contact when different from org, categories). Org **Call** unchanged; row clicks do not open the map popup. |
 
