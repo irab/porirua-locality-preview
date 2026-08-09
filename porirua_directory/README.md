@@ -16,8 +16,18 @@ npm install
 npm run build:data    # fetch FSD + merge with Connections Map → data/services.json
 npm run serve         # http://localhost:5173/index.html
 npm test              # unit tests (import/merge)
-npm run test:e2e      # Playwright
+npm run test:e2e      # Playwright (Chromium; see Browser testing below)
 ```
+
+## Browser testing
+
+| Environment | Coverage |
+|-------------|----------|
+| **Chromium** | Automated: `npm run test:e2e` (scroll-collapse, sticky panel, layout order, filters/search). CI runs the same on every PR and on push to `main`. |
+| **Firefox / WebKit** | Not configured in `playwright.config.js` (Chromium only). Smoke-test scroll-collapse manually if you change browse chrome CSS/JS. |
+| **Android Chrome / iOS Safari** | **Manual** on a real device: open [https://directory.bsky.nz](https://directory.bsky.nz) → **Find support** → scroll the listing down/up and confirm filters/map collapse without visible tile flicker; tap **Filters** to expand. |
+
+`playwright.config.js` has no multi-browser projects; adding Firefox/WebKit is optional future work.
 
 ## Layout
 
@@ -53,11 +63,11 @@ After `npm run build:data`, typical counts: ~50 community orgs from the live she
 
 **Landing:** Path choice lives in the subnav; main content stays minimal until a path is chosen. No search, filters, or map on landing. A compact **crisis numbers** bar is fixed to the bottom of the viewport on every page (including About).
 
-**Browse:** **← Back** returns to landing. On **Find support**, the full support listing shows by default with **no need chips selected**; tap one chip to filter to that category only (tap again to show all; tap another to switch). On desktop (≥1024px), browse uses a **three-column layout**: filters left, result cards centre, **map on the right** (sticky). **Show map** is on by default for that layout; uncheck it to hide the map. The map appears when the filtered list includes at least one service with coordinates; Leaflet loads on first show. On narrower viewports the same layout **stacks** filters → results → map. To use the earlier **map above cards** pattern, open with **`?layout=top`** (or `layout=default`). Filters and search in a left sidebar from tablet width up. **Scroll chrome:** scrolling **down** into the listing collapses filter chips and the map (compact **← Back**, **Search**, and a **Filters** control stay visible); scrolling **back toward the top** or tapping **Filters** expands again (`body[data-browse-chrome="collapsed"]`). Motion respects **`prefers-reduced-motion`**. Result cards show a compact **Call** button (bottom-right; label **Call** only) when a phone number is available, including on **My list**. Listing **descriptions** keep FSD line breaks where present; `format-description.mjs` turns `-` bullet lines and inline `such as: - item - item` text into HTML lists. **Map marker popups** mirror the Connections Map detail (type, themes, truncated description, address, phone, website, initiatives for community orgs); tap a result card to pan the map and open its popup.
+**Browse:** **← Back** returns to landing. On **Find support**, the full support listing shows by default with **no need chips selected**; tap one chip to filter to that category only (tap again to show all; tap another to switch). On desktop (≥1024px), browse uses a **three-column layout**: filters left, result cards centre, **map on the right** (sticky, always visible). The map opens when the filtered list includes at least one service with coordinates (Leaflet loads on first show). On narrower viewports the same layout **stacks** filters → map → results (map shown when results are mappable). To use the earlier **map above cards** pattern, open with **`?layout=top`** (or `layout=default`). Filters and search in a left sidebar from tablet width up. **Scroll chrome:** on **stacked / one-column** browse (below the 1024px three-column breakpoint), scrolling **down** into the listing collapses filter chips and the map (compact **← Back**, **Search**, and a **Filters** control stay visible); scrolling **back toward the top**, opening search, or tapping **Filters** expands again (`body[data-browse-chrome="collapsed"]`). On **desktop three-column** (≥1024px, filters | cards | map), scroll does **not** collapse filters or the map. Collapse uses CSS **grid row** animation plus matched **opacity** on inner wrappers (not `max-height`); Leaflet **`invalidateSize`** runs after expand transitions finish (not during collapse). Map tiles stay **`visibility: hidden`** while the panel animates (`map-block--paint-suppressed`) to avoid Leaflet repaint flicker. Motion respects **`prefers-reduced-motion`**. Result cards show a compact **Call** button (bottom-right; label **Call** only) when a phone number is available, including on **My list**. Listing **descriptions** keep FSD line breaks where present; `format-description.mjs` turns `-` bullet lines and inline `such as: - item - item` text into HTML lists. **Map marker popups** mirror the Connections Map detail (type, themes, truncated description, address, phone, website, initiatives for community orgs); tap a result card to pan the map and open its popup.
 
 Internal browse mode is `support` (not `help`); optional URL hash `#support`, `#community`, or `#mylist`.
 
-**Layout demos (internal):** Add **`?demo=1`** to show a **Layout demo** section in the browse sidebar: **Find support near me** (15&nbsp;km geolocation filter; location is not saved), optional layout picker, and helper text. Production URLs need no query params for three-column. On desktop three-column the map shows by default (**Hide map** on the map panel); on narrower viewports use **Show map** under search. See [potential-changes-and-insights.md](../docs/potential-changes-and-insights.md#layout-experiments-demo).
+**Layout demos (internal):** Add **`?demo=1`** to show a **Layout demo** section in the browse sidebar: **Find support near me** (15&nbsp;km geolocation filter; location is not saved), optional layout picker, and helper text. Production URLs need no query params for three-column. See [potential-changes-and-insights.md](../docs/potential-changes-and-insights.md#layout-experiments-demo).
 
 ## Deploy
 

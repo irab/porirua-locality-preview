@@ -81,7 +81,7 @@ test("support path — all listings by default, no chip selected", async ({ page
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Hide map" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
 });
 
 test("support path — single-select need chip filters and toggles off", async ({ page }) => {
@@ -105,23 +105,34 @@ test("support path — single-select need chip filters and toggles off", async (
   await expect(page.locator("#need-chips .chip.is-on")).not.toHaveText(firstLabel ?? "");
 });
 
-test("support path — Show map reveals map when results have locations", async ({ page }) => {
+test("support path — layout=top shows map when mappable, no toolbar toggle", async ({
+  page,
+}) => {
   await page.goto("/index.html?layout=top");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
   await expect(page.getByText(/Support with…/i)).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
-  await expect(page.locator("#map-block")).toBeHidden();
-  await page.getByRole("checkbox", { name: "Show map" }).check();
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Show map" })).toHaveCount(0);
 });
 
-test("support path — three-column default can hide map via Show map", async ({ page }) => {
+test("support path — stacked mobile has no map toggle; map visible by default", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/index.html#support");
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
   await expect(page.locator("#map-block")).toBeVisible();
-  await page.getByRole("button", { name: "Hide map" }).click();
-  await expect(page.locator("#map-block")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Show map" })).toHaveCount(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("#map-block")).toBeVisible();
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Show map" })).toHaveCount(0);
 });
 
 test("support path — mobile three-column shows map between filters and results", async ({
@@ -171,15 +182,35 @@ test("browse chrome collapses on scroll down and expands near top", async ({ pag
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/index.html#support");
   await page.waitForSelector("#directory-results .card");
-  await page.evaluate(() => {
+  await page.evaluate(async () => {
     window.scrollTo(0, 0);
-    window.scrollTo(0, 320);
+    for (let y = 0; y <= 360; y += 60) {
+      window.scrollTo(0, y);
+      await new Promise((r) => requestAnimationFrame(r));
+    }
   });
-  await expect(page.locator("body")).toHaveAttribute("data-browse-chrome", "collapsed");
+  await expect
+    .poll(async () => page.locator("body").getAttribute("data-browse-chrome"))
+    .toBe("collapsed");
   await expect(page.locator("#browse-chrome-expand")).toBeVisible();
   await expect(page.locator("#search-toggle")).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
+});
+
+test("browse chrome does not collapse on three-column desktop scroll", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/index.html#support");
+  await page.waitForSelector("#directory-results .card");
+  await page.evaluate(async () => {
+    window.scrollTo(0, 0);
+    for (let y = 0; y <= 900; y += 90) {
+      window.scrollTo(0, y);
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+  });
+  await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
+  await expect(page.locator("#need-chips .chip").first()).toBeVisible();
 });
 
 test("community path — marae filter finds Ngāti Toa", async ({ page }) => {

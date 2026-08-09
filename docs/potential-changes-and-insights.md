@@ -148,7 +148,7 @@ These came from MVP feedback, data review, and requirements iterations (see requ
 
 **Why My list (product insight):** Browsing support or community listings means working through **many options at once** — different organisations, phone numbers, and types of help. It is easy to lose track of what looked promising. **Add to your list** is a lightweight **notepad for this visit**: tap to save places and organisations you might call back, compare, or walk through with someone else (e.g. working through a shortlist of groups by phone). Nothing is stored on a server — it is intentionally **session-only** so the feature stays simple and private while people are under stress or supporting whānau. **Print list** supports the same workflow on paper. Stakeholder testing should ask whether this helps front-line and help-seeking journeys, or whether a saved list across visits would ever be wanted (that would be a different, Phase 2 privacy and auth conversation).
 - **Landing vs browse** — “I would like to…” subnav on landing only; **Find support** / **Connect with community**; **Back** to change path.
-- **Find support listing** — Full list by default; single-select need chips; optional **Show map** (not auto-opened).
+- **Find support listing** — Full list by default; single-select need chips; map shown when results have coordinates; on stacked browse, map compacts via scroll chrome only (always visible on desktop three-column).
 - **Site chrome** — Porirua Locality logo, **Your Porirua Directory** title, **About** page, sticky crisis footer on all pages.
 - **Plain language** — User-facing copy aimed at stressed mobile users; no database jargon or internal ids on cards.
 
@@ -194,14 +194,14 @@ Use these in feedback sessions before committing Phase 1.5 or Phase 2 scope.
 
 ## Layout experiments (demo)
 
-**Purpose:** Document browse layout behaviour and keep **near-me** and **legacy top-map** experiments behind `?demo=1` where useful. **Production default** (no query params) is **three-column on desktop**: filters left, cards centre, sticky map right when **Show map** is on (auto-enabled for three-column).
+**Purpose:** Document browse layout behaviour and keep **near-me** and **legacy top-map** experiments behind `?demo=1` where useful. **Production default** (no query params) is **three-column on desktop**: filters left, cards centre, sticky map right when listings have coordinates (map always visible on desktop; no toggle).
 
 ### Layout names
 
 | Name | Query value | Behaviour |
 |------|-------------|-----------|
-| **Three column (default)** | omitted, or `layout=three-column` | **Show map** on by default when entering browse: **filters left**, **cards centre**, **sticky map right** on large desktops (≥1024px). Result count sits above the cards (centre only); map top aligns with the **first card**. Need chips refit the map to filtered markers (brand purple/crimson pins). |
-| **Top map (legacy)** | `layout=top` or `layout=default` | Optional **Show map** puts the map **above** the result cards in the main column (sidebar filters on the left from tablet width up). Map hidden until the user checks **Show map**. |
+| **Three column (default)** | omitted, or `layout=three-column` | Map **expanded by default** when entering browse: **filters left**, **cards centre**, **sticky map right** on large desktops (≥1024px). Result count sits above the cards (centre only); map top aligns with the **first card**. Need chips refit the map to filtered markers (brand purple/crimson pins). **No manual map toggle.** Below 1024px the layout stacks; map compacts via **scroll chrome** when scrolling into results. |
+| **Top map (legacy)** | `layout=top` or `layout=default` | Map sits **above** the result cards in the main column (sidebar filters on the left from tablet width up). Map hidden only when there are no mappable results or scroll chrome collapses it on narrow viewports. |
 
 ### How to open demos
 
@@ -214,7 +214,7 @@ Implementation lives in `porirua_directory/` (`directory.js`, `directory.css`); 
 ### Feasibility
 
 - **Production default:** Layout is CSS grid + DOM order; E2E smokes the main support path with `data-browse-layout="three-column"` at default Playwright viewport (1280px).
-- **Three-column** reuses the same Leaflet instance and **Show map** checkbox — no second map. Filter changes call **`invalidateSize`** + **`fitBounds`** on the mappable subset (except near-me mode); marker styling uses brand **`#60164c` / `#ce2026`**. E2E covers need-chip filtering on the default layout and **`?layout=top`** for optional map reveal.
+- **Three-column** reuses the same Leaflet instance on all breakpoints. Filter changes call **`fitBounds`** on the mappable subset (except near-me mode); **`invalidateSize`** runs once after expand transitions (not during scroll-collapse) to avoid map jitter. Marker styling uses brand **`#60164c` / `#ce2026`**. E2E covers need-chip filtering on the default layout, desktop three-column without scroll collapse, stacked mobile map visibility, and **`?layout=top`** without a map toggle.
 - **Near-me** filters the **already filtered** browse list to rows with coordinates within **15 km** (haversine), centres the map, and highlights nearby markers. No server round-trip. The control is a **toggle**: pressed state (`aria-pressed`, `.is-on` on the button), label **Near me: on — tap to turn off**, status line states the **15 km** radius, and a dashed circle on the map shows the search area. The map stays visible when near-me is on even if nothing is in radius (common if GPS is far from Porirua). Empty copy distinguishes **no listings in radius** from **location blocked / unavailable**. Low-accuracy GPS (&gt;5 km reported) adds a warning in the status line. Turning near-me off restores the full filtered list.
 
 ### Privacy (GPS consent)
@@ -232,7 +232,7 @@ Implementation lives in `porirua_directory/` (`directory.js`, `directory.css`); 
 
 Below the three-column desktop breakpoint (1024px), the “three column” demo behaves as a single column stack — not a side-by-side map.
 
-**Scroll chrome (shipped):** On browse, scrolling **down** into the listing sets `data-browse-chrome="collapsed"` — filter chips and the map block animate to a compact height while **← Back**, **Search**, and a **Filters** expand control stay in the sticky panel. Scrolling **up** near the top of the page (or opening search / tapping **Filters**) expands again. Hysteresis on scroll delta reduces flicker at the boundary; **`prefers-reduced-motion`** disables the transitions. Sticky panel paint/containment was tightened so scrolling cards stay visually beneath the filter column (see e2e “masks scrolling result cards”).
+**Scroll chrome (shipped):** On **stacked / one-column** browse (below the 1024px three-column breakpoint), scrolling **down** into the listing sets `data-browse-chrome="collapsed"` — filter chips and the map block animate closed while **← Back**, **Search**, and a **Filters** expand control stay in the sticky panel. On **desktop three-column** (≥1024px), scroll does **not** collapse filters or the side map; resizing into that breakpoint clears collapsed state. Scrolling **up** near the top of the page (or opening search / tapping **Filters**) expands again on mobile. Hysteresis on scroll delta reduces flicker at the boundary; motion uses **`grid-template-rows: 1fr` → `0fr`** with **opacity** on inner wrappers (not `max-height` or parallel `transform`), aligned with compositor-friendly UI motion guidance (e.g. animations.dev / web.dev). **`prefers-reduced-motion`** snaps grid rows without transitions. Leaflet **`invalidateSize`** runs after **`grid-template-rows`** transition ends on **expand** only (pending resizes are cleared on collapse) to avoid map jitter. Collapsed chrome tightens sticky-toolbar spacing and stack **gap** so the compact bar sits flush without a dead band under **Back** / **Search** / **Filters**. Sticky panel stacking uses z-index and background shadow so scrolling cards stay visually beneath the filter column (see e2e “masks scrolling result cards”).
 
 ### Phase 1.5 vs Phase 2
 
@@ -327,7 +327,7 @@ Phase 1 already aligns with Ask Izzy–style **plain need chips**, dual paths (*
 | Narrow results | Optional **need chip**; full list if none | Optional **org-type chip** (e.g. Community groups) |
 | Search | **Search icon** → field → type (live filter) | Same |
 | Map | Desktop: map often **on** (three-column); tap pin → popup → **phone link** | Same; popups richer for community rows |
-| Call | Tap **phone** on card or popup | Usually **website** first; phone when present |
+| Call | **Call** button on card (when `phone` exists) or tap phone on popup | Usually **website** first; phone when present |
 | Crisis | **Always** visible footer (`tel:`) | Same |
 
 **Gap vs “2 taps to call”:** Minimum is often **path (1) + chip or scroll (1) + phone (1) = 3+**; search adds **open search (1)** first. Duplicate **Salvation Army–style** cards increase scrolling before the right **Call**.

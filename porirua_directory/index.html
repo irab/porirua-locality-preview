@@ -81,6 +81,7 @@
         <div class="browse-sticky-panel">
           <div class="browse-toolbar">
             <button type="button" id="back-to-landing" class="back-link">← Back</button>
+            <div class="browse-toolbar__cluster">
             <div class="browse-search" id="browse-search" aria-expanded="false">
               <button
                 type="button"
@@ -122,6 +123,7 @@
                 </button>
               </div>
             </div>
+            </div>
           </div>
 
           <aside class="browse-sidebar" aria-label="Filters and topics">
@@ -135,6 +137,7 @@
             Filters
           </button>
           <div class="browse-sidebar__body">
+          <div class="browse-sidebar__inner">
           <section id="filters-support" class="filters filters--hidden" aria-labelledby="support-filters-heading">
             <h2 id="support-filters-heading" class="section-title">Support with…</h2>
             <div id="need-chips" class="chip-row" role="group" aria-label="Types of support"></div>
@@ -144,11 +147,6 @@
             <h2 id="community-filters-heading" class="section-title">Organisation type</h2>
             <div id="community-chips" class="chip-row" role="group" aria-label="Organisation types"></div>
           </section>
-
-          <label class="map-show-wrap" id="show-map-wrap">
-            <input id="show-map" type="checkbox" />
-            Show map
-          </label>
 
           <div id="demo-tools" class="demo-tools" hidden>
             <p class="demo-tools__label">Layout demo</p>
@@ -174,6 +172,7 @@
             </div>
           </div>
           </div>
+          </div>
           </aside>
         </div>
 
@@ -183,12 +182,15 @@
         </div>
 
         <div id="map-block" class="map-block map-block--hidden" hidden>
-          <div class="map-block__head">
-            <button type="button" id="hide-map-btn" class="map-block__hide" hidden>
-              Hide map
-            </button>
+          <div class="map-block__panel">
+            <div class="map-block__panel-inner">
+              <div class="map-block__map-shell">
+                <div class="map-block__map-inner">
+                  <div id="directory-map" class="map" aria-label="Map of listed places"></div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div id="directory-map" class="map" aria-label="Map of listed places"></div>
         </div>
       </div>
     </div>

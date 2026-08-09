@@ -390,19 +390,39 @@ async function main() {
   const statusLine = document.getElementById("status-line");
   const resultsEl = document.getElementById("directory-results");
   const mapEl = document.getElementById("directory-map");
-  const showMapCheckbox = document.getElementById("show-map");
-  const hideMapBtn = document.getElementById("hide-map-btn");
   const findNearMeBtn = document.getElementById("find-near-me");
   const nearMeStatus = document.getElementById("near-me-status");
   const demoTools = document.getElementById("demo-tools");
   const demoLayoutSelect = document.getElementById("demo-layout-select");
   const browseChromeExpand = document.getElementById("browse-chrome-expand");
+  const browseSidebarBody = document.querySelector(".browse-sidebar__body");
 
   const BROWSE_CHROME_EXPAND_SCROLL_Y = 56;
   const BROWSE_CHROME_SCROLL_DELTA = 10;
+  const BROWSE_CHROME_DURATION_MS = 360;
+  const threeColumnDesktopMq = window.matchMedia("(min-width: 1024px)");
+  const browseChromeMotionMq = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  );
   let browseChromeCollapsed = false;
   let browseChromeLastScrollY = 0;
   let browseChromeScrollScheduled = false;
+
+  function isThreeColumnDesktopLayout() {
+    return browseLayout === "three-column" && threeColumnDesktopMq.matches;
+  }
+
+  function isBrowseChromeScrollCollapseEnabled() {
+    return !isThreeColumnDesktopLayout();
+  }
+
+  function syncBrowseChromeForViewport() {
+    if (!isBrowseChromeScrollCollapseEnabled()) {
+      setBrowseChromeCollapsed(false, { force: true });
+    }
+  }
+  let mapResizeFrame = null;
+  let mapTransitionResizeHandler = null;
 
   const demoQuery = parseDemoQuery();
   let browseLayout = applyBrowseLayout(demoQuery.layout);
@@ -412,7 +432,6 @@ async function main() {
     activeNeeds: new Set(),
     activeCommunityFilters: new Set(),
     search: "",
-    showMap: false,
     nearMe: null,
   };
 
@@ -484,31 +503,71 @@ async function main() {
     weight: 2,
   };
 
-  function isThreeColumnDesktop() {
-    return (
-      browseLayout === "three-column" &&
-      window.matchMedia("(min-width: 1024px)").matches
-    );
+  function mapResizeAllowed() {
+    if (!map || !mapBlock || mapBlock.hidden) return false;
+    if (document.body.dataset.browseChrome === "collapsed") return false;
+    return true;
   }
 
-  function syncMapChrome() {
-    if (hideMapBtn) {
-      const mapVisible = mapBlock && !mapBlock.hidden;
-      hideMapBtn.hidden = !(isThreeColumnDesktop() && state.showMap && mapVisible);
-    }
+  function runMapResize() {
+    mapResizeFrame = null;
+    if (!mapResizeAllowed()) return;
+    map.invalidateSize();
   }
 
-  function scheduleMapResize() {
+  function clearMapResizeAfterTransition() {
+    if (!mapTransitionResizeHandler) return;
+    const { onEnd } = mapTransitionResizeHandler;
+    mapBlock?.removeEventListener("transitionend", onEnd);
+    browseSidebarBody?.removeEventListener("transitionend", onEnd);
+    window.clearTimeout(mapTransitionResizeHandler.fallbackId);
+    mapTransitionResizeHandler = null;
+  }
+
+  function isMapLayoutTransitionEnd(ev) {
+    if (ev.propertyName !== "grid-template-rows") return false;
+    const el = ev.target;
+    if (el === browseSidebarBody) return true;
+    if (!mapBlock?.contains(el)) return false;
+    return el.classList.contains("map-block__panel");
+  }
+
+  function setMapPaintSuppressed(suppressed) {
+    if (!mapBlock || mapBlock.hidden) return;
+    mapBlock.classList.toggle("map-block--paint-suppressed", suppressed);
+  }
+
+  function finishBrowseChromeExpandLayout() {
+    setMapPaintSuppressed(false);
+    runMapResize();
+  }
+
+  function scheduleMapResize({ afterTransition = false } = {}) {
     if (!map) return;
-    const run = () => {
-      if (!map) return;
-      map.invalidateSize();
-    };
-    requestAnimationFrame(() => {
-      run();
-      requestAnimationFrame(run);
-    });
-    window.setTimeout(run, 120);
+    if (afterTransition && mapBlock) {
+      clearMapResizeAfterTransition();
+      const fallbackId = window.setTimeout(
+        finishBrowseChromeExpandLayout,
+        BROWSE_CHROME_DURATION_MS + 48
+      );
+      const onEnd = (ev) => {
+        if (!isMapLayoutTransitionEnd(ev)) return;
+        clearMapResizeAfterTransition();
+        finishBrowseChromeExpandLayout();
+      };
+      mapTransitionResizeHandler = { onEnd, fallbackId };
+      mapBlock.addEventListener("transitionend", onEnd);
+      browseSidebarBody?.addEventListener("transitionend", onEnd);
+      return;
+    }
+    if (mapResizeFrame != null) cancelAnimationFrame(mapResizeFrame);
+    mapResizeFrame = requestAnimationFrame(runMapResize);
+  }
+
+  function syncMapLayoutForViewport() {
+    if (isThreeColumnDesktopLayout() && map && mapBlock && !mapBlock.hidden) {
+      scheduleMapResize({ afterTransition: true });
+    }
   }
 
   function setDemoChromeVisible() {
@@ -573,7 +632,6 @@ async function main() {
   function setMapBlockVisible(visible) {
     mapBlock.hidden = !visible;
     mapBlock.classList.toggle("map-block--hidden", !visible);
-    syncMapChrome();
   }
 
   function distanceKmToService(service) {
@@ -648,12 +706,11 @@ async function main() {
   async function syncMapForFiltered(filtered) {
     const syncGen = ++mapSyncGeneration;
     const mappable = mappableServices(filtered);
-    const showMapBlock =
-      state.showMap &&
-      (state.nearMe || (filtered.length > 0 && mappable.length > 0));
-    setMapBlockVisible(showMapBlock);
+    const hasMapData =
+      state.nearMe || (filtered.length > 0 && mappable.length > 0);
+    setMapBlockVisible(hasMapData);
 
-    if (!showMapBlock) {
+    if (!hasMapData) {
       if (markerLayer) {
         markerLayer.clearLayers();
         markersById = new Map();
@@ -685,7 +742,7 @@ async function main() {
 
     requestAnimationFrame(() => {
       if (syncGen !== mapSyncGeneration || !map) return;
-      scheduleMapResize();
+      scheduleMapResize({ afterTransition: true });
       const viewPoints = mapPointsForView(mappable);
       if (viewPoints.length > 0) {
         fitMapToPoints(viewPoints);
@@ -693,7 +750,6 @@ async function main() {
         map.setView([state.nearMe.lat, state.nearMe.lng], 12);
       }
     });
-    syncMapChrome();
   }
 
   function updateModeButtons(mode) {
@@ -711,12 +767,22 @@ async function main() {
   }
 
   function setBrowseChromeCollapsed(collapsed, { force = false } = {}) {
+    if (collapsed && !isBrowseChromeScrollCollapseEnabled()) return;
     if (!force && browseChromeCollapsed === collapsed) return;
     browseChromeCollapsed = collapsed;
     if (collapsed) {
       document.body.dataset.browseChrome = "collapsed";
+      setMapPaintSuppressed(true);
+      clearMapResizeAfterTransition();
+      if (mapResizeFrame != null) {
+        cancelAnimationFrame(mapResizeFrame);
+        mapResizeFrame = null;
+      }
     } else {
       delete document.body.dataset.browseChrome;
+      if (browseChromeMotionMq.matches || force) {
+        setMapPaintSuppressed(false);
+      }
     }
     if (browseChromeExpand) {
       browseChromeExpand.hidden = !collapsed;
@@ -725,8 +791,18 @@ async function main() {
         collapsed ? "false" : "true"
       );
     }
-    if (map && mapBlock && !mapBlock.hidden) {
-      scheduleMapResize();
+    if (
+      !collapsed &&
+      isBrowseChromeScrollCollapseEnabled() &&
+      map &&
+      mapBlock &&
+      !mapBlock.hidden
+    ) {
+      if (browseChromeMotionMq.matches || force) {
+        scheduleMapResize();
+      } else {
+        scheduleMapResize({ afterTransition: true });
+      }
     }
   }
 
@@ -738,6 +814,11 @@ async function main() {
   function updateBrowseChromeFromScroll() {
     browseChromeScrollScheduled = false;
     if (document.body.dataset.view !== "browse") return;
+    if (!isBrowseChromeScrollCollapseEnabled()) {
+      setBrowseChromeCollapsed(false);
+      browseChromeLastScrollY = window.scrollY;
+      return;
+    }
     if (browseSearch?.classList.contains("is-open")) {
       setBrowseChromeCollapsed(false);
       browseChromeLastScrollY = window.scrollY;
@@ -768,6 +849,12 @@ async function main() {
   }
 
   window.addEventListener("scroll", onBrowseWindowScroll, { passive: true });
+  threeColumnDesktopMq.addEventListener("change", () => {
+    syncBrowseChromeForViewport();
+    syncMapLayoutForViewport();
+  });
+  syncBrowseChromeForViewport();
+  syncMapLayoutForViewport();
 
   function setView(view) {
     document.body.dataset.view = view;
@@ -844,9 +931,7 @@ async function main() {
       state.activeNeeds.clear();
       state.activeCommunityFilters.clear();
       state.search = "";
-      state.showMap = false;
       clearNearMe();
-      if (showMapCheckbox) showMapCheckbox.checked = false;
       clearSearchField();
       closeSearch();
       setView("browse");
@@ -855,9 +940,7 @@ async function main() {
       state.activeNeeds.clear();
       state.activeCommunityFilters.clear();
       state.search = "";
-      state.showMap = false;
       clearNearMe();
-      if (showMapCheckbox) showMapCheckbox.checked = false;
       clearSearchField();
       closeSearch();
       setView("landing");
@@ -880,10 +963,6 @@ async function main() {
       "community"
     );
     if (!fromHash) syncHash(mode ? "browse" : "landing", mode);
-    if (mode && browseLayout === "three-column") {
-      state.showMap = true;
-      if (showMapCheckbox) showMapCheckbox.checked = true;
-    }
     if (mode) refresh();
   }
 
@@ -948,24 +1027,10 @@ async function main() {
     });
   }
 
-  if (showMapCheckbox) {
-    showMapCheckbox.addEventListener("change", () => {
-      state.showMap = showMapCheckbox.checked;
-      refresh();
-    });
-  }
-
-  if (hideMapBtn) {
-    hideMapBtn.addEventListener("click", () => {
-      state.showMap = false;
-      if (showMapCheckbox) showMapCheckbox.checked = false;
-      refresh();
-    });
-  }
-
   window.addEventListener("resize", () => {
-    syncMapChrome();
-    if (map && mapBlock && !mapBlock.hidden) scheduleMapResize();
+    syncBrowseChromeForViewport();
+    syncMapLayoutForViewport();
+    scheduleMapResize();
   });
 
   if (demoLayoutSelect) {
@@ -978,12 +1043,10 @@ async function main() {
         "",
         buildUrlWithQuery({ demo: demoQuery.demo ? "1" : null, layout: layoutParam })
       );
-      if (next === "three-column" && !state.showMap) {
-        state.showMap = true;
-        if (showMapCheckbox) showMapCheckbox.checked = true;
-      }
       refresh();
       setDemoChromeVisible();
+      syncBrowseChromeForViewport();
+      syncMapLayoutForViewport();
       scheduleMapResize();
     });
   }
@@ -1017,8 +1080,6 @@ async function main() {
             lng: pos.coords.longitude,
             accuracyM: pos.coords.accuracy,
           };
-          state.showMap = true;
-          if (showMapCheckbox) showMapCheckbox.checked = true;
           updateNearMeUi();
           if (nearMeStatus) {
             nearMeStatus.hidden = false;
@@ -1036,7 +1097,7 @@ async function main() {
           clearNearMe({ hideStatus: false });
           const msg =
             err.code === err.PERMISSION_DENIED
-              ? "Location was blocked. You can still browse all listings and use Show map."
+              ? "Location was blocked. You can still browse all listings and use the map when it is visible on screen."
               : "We couldn’t get your location. Try again or browse without near me.";
           if (nearMeStatus) {
             nearMeStatus.hidden = false;
