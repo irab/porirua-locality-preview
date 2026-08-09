@@ -17,7 +17,7 @@ npm run build:data
 
 This runs:
 
-1. `import:fsd` — downloads FSD CSV → `data/fsd-porirua.raw.json`
+1. `import:fsd` — downloads FSD CSV → `data/fsd-porirua.raw.json` and **`data/fsd-porirua-excluded.json`** (geo filter audit)
 2. `merge:services` — Connections Map + FSD + overrides → `data/services.json`
 
 **Editors (community orgs):** update the [Connections Map Google Sheet](https://docs.google.com/spreadsheets/d/1xKFgoYtjND3mfgojyddnq2zyKkxH7NXNGejDzFKQP7I/edit) (same as `porirua_connections_map`).
@@ -25,6 +25,45 @@ This runs:
 **Hide FSD rows:** add ids to `porirua_directory/data/overrides.json` → re-run `npm run merge:services`.
 
 Commit `data/services.json` when ready to deploy.
+
+---
+
+## FSD import audit (after each CSV drop)
+
+Full rule rationale: [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md)
+
+1. **Rebuild** (from `porirua_directory`):
+
+   ```bash
+   npm run build:data
+   ```
+
+   Or only re-import FSD:
+
+   ```bash
+   npm run import:fsd
+   ```
+
+2. **Inspect counts** in the console (`includedCount` / `excludedCount`) and open **`data/fsd-porirua-excluded.json`**:
+   - Top level: `generatedAt`, `fsdCsvUrl`, `totalCsvRows`, `includedCount`, `excludedCount`, `excluded[]`.
+   - Each excluded row: `reasonCode`, `reasonDetail`, optional `matchedField`, `SERVICE_ID` / `FSD_ID`, provider/service names, address fields.
+
+3. **Spot-check by reason code** (examples):
+   - `DISTRICT_CONTRADICTS_PHYSICAL` — confirm bad FSD district metadata; do **not** add to directory unless override + stakeholder sign-off.
+   - `ADDRESS_NON_PORIRUA_CITY` — expected for homonym suburbs/streets; if a **legitimate Porirua** row appears here, check whether “Porirua” is missing from the CSV line → fix in FSD upstream or adjust rules/tests.
+   - `POSTAL_TOKEN_PHYSICAL_OUTSIDE` — West Auckland / similar; verify physical vs postal columns.
+   - `NO_PORIRUA_SIGNAL` — national/Wellington rows; only revisit if you intentionally broaden Porirua scope.
+
+4. **Sanity-check included slice** in `data/fsd-porirua.raw.json` or `data/services.json` (FSD rows only):
+
+   ```bash
+   rg -i 'Christchurch|Palmerston North|Ranui, Auckland|Whitby Street' data/services.json
+   # expect no matches after Aug 2026 filter set
+   ```
+
+5. **If rules change:** edit `scripts/fsd-porirua-rules.mjs`, add cases to `tests/fsd-import.test.mjs`, update [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) changelog, run `npm test` and `npm run build:data`. For bug-driven fixes, add `docs/issues/fixed-*.md` and index in [issues/README.md](./issues/README.md).
+
+Both `fsd-porirua.raw.json` and `fsd-porirua-excluded.json` are **gitignored** (regenerated each import). Archive copies when comparing two DIA releases (e.g. attach to a PR or ticket).
 
 ---
 

@@ -2,8 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parse } from "csv-parse/sync";
-import { FSD_RAW_JSON } from "./config.mjs";
-import { isPoriruaRelevant, mapFsdRowToService } from "./fsd-porirua-rules.mjs";
+import { FSD_EXCLUDED_JSON, FSD_RAW_JSON } from "./config.mjs";
+import {
+  isPoriruaRelevant,
+  mapFsdRowToService,
+  summarizeExcludedFsdRow,
+} from "./fsd-porirua-rules.mjs";
 
 async function fetchCsvText(url) {
   const res = await fetch(url);
@@ -13,14 +17,60 @@ async function fetchCsvText(url) {
   return res.text();
 }
 
-export function importFsdFromCsv(csvText) {
-  const rows = parse(csvText, {
+function parseFsdCsvRows(csvText) {
+  return parse(csvText, {
     columns: true,
     skip_empty_lines: true,
     relax_column_count: true,
     trim: true,
   });
-  return rows.filter(isPoriruaRelevant).map(mapFsdRowToService);
+}
+
+/** @param {ReturnType<typeof parseFsdCsvRows>} rows */
+export function partitionFsdPoriruaRows(rows) {
+  const includedRows = [];
+  const excluded = [];
+  for (const row of rows) {
+    if (isPoriruaRelevant(row)) includedRows.push(row);
+    else excluded.push(summarizeExcludedFsdRow(row));
+  }
+  return { includedRows, excluded };
+}
+
+export function importFsdFromCsv(csvText) {
+  const rows = parseFsdCsvRows(csvText);
+  return partitionFsdPoriruaRows(rows).includedRows.map(mapFsdRowToService);
+}
+
+/**
+ * @param {string} csvText
+ * @param {{ fsdCsvUrl?: string }} [meta]
+ */
+export function buildFsdImportReport(csvText, meta = {}) {
+  const rows = parseFsdCsvRows(csvText);
+  const { includedRows, excluded } = partitionFsdPoriruaRows(rows);
+  return {
+    generatedAt: new Date().toISOString(),
+    fsdCsvUrl: meta.fsdCsvUrl ?? null,
+    totalCsvRows: rows.length,
+    includedCount: includedRows.length,
+    excludedCount: excluded.length,
+    excluded,
+    services: includedRows.map(mapFsdRowToService),
+  };
+}
+
+/** @param {string} outPath @param {ReturnType<typeof buildFsdImportReport>} report */
+export async function writeFsdExcludedAudit(outPath, report) {
+  const payload = {
+    generatedAt: report.generatedAt,
+    fsdCsvUrl: report.fsdCsvUrl,
+    totalCsvRows: report.totalCsvRows,
+    includedCount: report.includedCount,
+    excludedCount: report.excludedCount,
+    excluded: report.excluded,
+  };
+  await fs.writeFile(outPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
 async function main() {
@@ -28,11 +78,19 @@ async function main() {
   const url = process.env.FSD_CSV_URL || FSD_CSV_URL;
   console.log(`Fetching FSD CSV from ${url}`);
   const csvText = await fetchCsvText(url);
-  const services = importFsdFromCsv(csvText);
+  const report = buildFsdImportReport(csvText, { fsdCsvUrl: url });
   const outDir = path.dirname(FSD_RAW_JSON);
   await fs.mkdir(outDir, { recursive: true });
-  await fs.writeFile(FSD_RAW_JSON, `${JSON.stringify(services, null, 2)}\n`, "utf8");
-  console.log(`Wrote ${services.length} Porirua-relevant services to ${FSD_RAW_JSON}`);
+  await fs.writeFile(
+    FSD_RAW_JSON,
+    `${JSON.stringify(report.services, null, 2)}\n`,
+    "utf8"
+  );
+  await writeFsdExcludedAudit(FSD_EXCLUDED_JSON, report);
+  console.log(`Wrote ${report.includedCount} Porirua-relevant services to ${FSD_RAW_JSON}`);
+  console.log(
+    `Wrote ${report.excludedCount} excluded FSD rows (audit) to ${FSD_EXCLUDED_JSON}`
+  );
 }
 
 const modulePath = pathToFileURL(path.resolve(process.argv[1] ?? "")).href;

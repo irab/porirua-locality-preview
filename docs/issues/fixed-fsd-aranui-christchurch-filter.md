@@ -54,6 +54,7 @@ Unit tests in `porirua_directory/tests/fsd-import.test.mjs`:
 | `porirua_directory/scripts/fsd-import.mjs` | CSV import; applies filter before mapping |
 | `porirua_directory/tests/fsd-import.test.mjs` | Regression tests for locality matching |
 | `docs/porirua-directory-phase1-spec.md` | FSD inclusion rules (token list; no bug narrative) |
+| `docs/fsd-porirua-filter-rationale.md` | Rule rationale, reason codes, audit workflow |
 
 ## See also
 

@@ -14,7 +14,7 @@
 | Duplicate cards | e.g. 13× “The Salvation Army - Porirua” | FSD is **one CSV row per service**; import maps each row to a flat `service` but **`id` is slugged from `PROVIDER_NAME` only**, so many rows share one `id` while remaining separate array entries. UI lists each row. |
 | Org vs service | User expects one org with subservices | Phase 1 schema is **flat**; no `organizationId`, `parentId`, or nested `services[]`. |
 
-**Dataset snapshot (Aug 2026, after locality filter fixes):** 461 published rows (52 community + 409 FSD). Salvation Army - Porirua still **13 separate listings** (same `fsd-the-salvation-army-porirua` id).
+**Dataset snapshot (Aug 2026, after [address-context filter](../issues/fixed-fsd-locality-address-context-filter.md)):** 434 published rows (52 community + 382 FSD). Salvation Army - Porirua still **13 separate listings** (same `fsd-the-salvation-army-porirua` id).
 
 ---
 

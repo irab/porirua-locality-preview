@@ -2,3 +2,4 @@ node_modules/
 playwright-report/
 test-results/
 data/fsd-porirua.raw.json
+data/fsd-porirua-excluded.json

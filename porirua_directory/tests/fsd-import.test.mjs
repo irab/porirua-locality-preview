@@ -3,8 +3,18 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { isPoriruaRelevant, mapFsdRowToService, normalizeDescriptionText } from "../scripts/fsd-porirua-rules.mjs";
-import { importFsdFromCsv } from "../scripts/fsd-import.mjs";
+import {
+  getPoriruaExclusionReason,
+  isPoriruaRelevant,
+  mapFsdRowToService,
+  normalizeDescriptionText,
+  PORIRUA_EXCLUSION_REASON,
+} from "../scripts/fsd-porirua-rules.mjs";
+import {
+  buildFsdImportReport,
+  importFsdFromCsv,
+  writeFsdExcludedAudit,
+} from "../scripts/fsd-import.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fsdFixture = path.join(__dirname, "fixtures/fsd-sample.csv");
@@ -53,6 +63,86 @@ test("includes Porirua suburb Rānui in address", () => {
   );
 });
 
+test("excludes Dunedin Whitby Street (not Porirua suburb Whitby)", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Otago",
+      PHYSICAL_DISTRICT: "Dunedin City",
+      PHYSICAL_ADDRESS: "3 Whitby Street, Mornington, Dunedin, 9011",
+    }),
+    false
+  );
+});
+
+test("excludes Auckland Ranui suburb (not Porirua Rānui)", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Auckland",
+      PHYSICAL_DISTRICT: "Henderson - Massey",
+      PHYSICAL_ADDRESS: "32 Pooks Road, Ranui, Auckland, 0612",
+    }),
+    false
+  );
+});
+
+test("excludes Auckland Ranui postal when physical address is Waitakere (sKids Massey)", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Auckland",
+      PHYSICAL_DISTRICT: "Henderson - Massey",
+      PHYSICAL_ADDRESS: "326 Don Buck Road, Massey, Waitakere",
+      POSTAL_ADDRESS: "16 Platinum Rise, Ranui, 0612",
+    }),
+    false
+  );
+});
+
+test("excludes Kerikeri Ranui Avenue street name", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Auckland",
+      PHYSICAL_DISTRICT: "Upper Harbour",
+      PHYSICAL_ADDRESS: "41 Ranui Avenue, Kerikeri, 0230",
+    }),
+    false
+  );
+});
+
+test("excludes FSD district Porirua when physical address is Palmerston North", () => {
+  const row = {
+    PHYSICAL_REGION: "Wellington",
+    PHYSICAL_DISTRICT: "Porirua City",
+    PHYSICAL_ADDRESS: "31 Princess Street, Palmerston North, 4410",
+  };
+  assert.equal(isPoriruaRelevant(row), false);
+  assert.equal(
+    getPoriruaExclusionReason(row).code,
+    PORIRUA_EXCLUSION_REASON.DISTRICT_CONTRADICTS_PHYSICAL
+  );
+});
+
+test("includes Porirua suburb Whitby when address names Porirua", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Wellington",
+      PHYSICAL_DISTRICT: "",
+      PHYSICAL_ADDRESS: "4 Hikoi Way, Whitby, Porirua, 5024",
+    }),
+    true
+  );
+});
+
+test("includes Porirua Rānui suburb in address line", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Wellington",
+      PHYSICAL_DISTRICT: "",
+      PHYSICAL_ADDRESS: "10 Awatea Street, Ranui, Porirua, 5024",
+    }),
+    true
+  );
+});
+
 test("maps FSD row to service with source fsd", () => {
   const s = mapFsdRowToService({
     FSD_ID: "1",
@@ -91,4 +181,35 @@ test("importFsdFromCsv filters fixture to Porirua-relevant rows", async () => {
   const services = importFsdFromCsv(csv);
   assert.equal(services.length, 2);
   assert.ok(services.every((s) => s.source === "fsd"));
+});
+
+test("buildFsdImportReport produces excluded audit rows with reason codes", async () => {
+  const csv = await fs.readFile(fsdFixture, "utf8");
+  const report = buildFsdImportReport(csv, { fsdCsvUrl: "fixture://fsd-sample.csv" });
+  assert.equal(report.includedCount, 2);
+  assert.ok(report.excludedCount >= 1);
+  assert.equal(report.totalCsvRows, report.includedCount + report.excludedCount);
+  for (const row of report.excluded) {
+    assert.ok(row.reasonCode);
+    assert.ok(row.reasonDetail);
+    assert.ok(
+      Object.values(PORIRUA_EXCLUSION_REASON).includes(row.reasonCode),
+      row.reasonCode
+    );
+  }
+});
+
+test("writeFsdExcludedAudit writes JSON with expected top-level shape", async () => {
+  const csv = await fs.readFile(fsdFixture, "utf8");
+  const report = buildFsdImportReport(csv);
+  const outPath = path.join(__dirname, ".tmp-fsd-excluded-test.json");
+  await writeFsdExcludedAudit(outPath, report);
+  const raw = await fs.readFile(outPath, "utf8");
+  const data = JSON.parse(raw);
+  assert.equal(typeof data.generatedAt, "string");
+  assert.equal(typeof data.totalCsvRows, "number");
+  assert.equal(typeof data.includedCount, "number");
+  assert.equal(typeof data.excludedCount, "number");
+  assert.ok(Array.isArray(data.excluded));
+  await fs.unlink(outPath);
 });

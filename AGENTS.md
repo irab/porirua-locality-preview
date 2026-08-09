@@ -31,6 +31,7 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 | [`docs/issues/README.md`](docs/issues/README.md) | Fixed and recurring bugs (issues directory) |
 | [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | System context, hosting |
 | [`docs/porirua-directory-phase1-spec.md`](docs/porirua-directory-phase1-spec.md) | Data model, FSD rules, merge, overrides |
+| [`docs/fsd-porirua-filter-rationale.md`](docs/fsd-porirua-filter-rationale.md) | FSD geo filter rationale, exclusion audit |
 | [`docs/MVP-RUNBOOK.md`](docs/MVP-RUNBOOK.md) | Rebuild data, deploy, test |
 | [`porirua_directory/README.md`](porirua_directory/README.md) | Directory app layout & npm scripts |
 | [`porirua_connections_map/README.md`](porirua_connections_map/README.md) | Map embed & sheet |

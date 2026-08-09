@@ -14,6 +14,13 @@ import { normalizePhone, normalizeUrl, parseCoord, slugId } from "./lib/normaliz
 export const PORIRUA_LOCALITY_PATTERN =
   /porirua|titahi\s*bay|whitby|cannons?\s*creek|waitangirua|kenepuru|plimmerton|paek[āa]k[āa]riki|(?<![a-z])r[āa]nui\b|elsdon|pukerua|takap[ūu]w[āa]hia|hongoeka/i;
 
+/**
+ * Localities that contradict a Porirua suburb/district token in the same address line
+ * (e.g. Ranui, Auckland; Whitby Street, Dunedin; Ranui Avenue, Kerikeri).
+ */
+export const NON_PORIRUA_ADDRESS_LOCALITY_PATTERN =
+  /\b(?:Auckland|Dunedin|Christchurch|Palmerston\s*North|Kerikeri|Levin|Hamilton|Tauranga|Rotorua|Invercargill|Nelson|New\s*Plymouth|Whang(?:ā|a)rei|Gisborne|Timaru|Queenstown|Blenheim|Oamaru|Greymouth|Taup(?:ō|o)|Masterton|Feilding|Whakat(?:ā|a)ne|Cambridge|Te\s*Awamutu|Huntly|Tokoroa|Pukekohe)\b/i;
+
 const ADDRESS_FIELDS = [
   "PHYSICAL_ADDRESS",
   "POSTAL_ADDRESS",
@@ -21,14 +28,141 @@ const ADDRESS_FIELDS = [
   "SERVICE_AREA",
 ];
 
-/** @param {Record<string, string>} row */
-export function isPoriruaRelevant(row) {
+/** @param {string} text */
+export function isPoriruaAddressContext(text) {
+  const val = String(text ?? "").trim();
+  if (!val) return true;
+  if (/porirua/i.test(val)) return true;
+  if (NON_PORIRUA_ADDRESS_LOCALITY_PATTERN.test(val)) return false;
+  return true;
+}
+
+/** FSD sometimes lists Porirua City as district while the street address is elsewhere. */
+export function physicalAddressContradictsPoriruaDistrict(row) {
   const district = String(row.PHYSICAL_DISTRICT ?? "").trim();
-  if (/porirua/i.test(district)) return true;
+  if (!/porirua/i.test(district)) return false;
+  const physical = String(row.PHYSICAL_ADDRESS ?? "").trim();
+  if (!physical) return false;
+  if (/porirua/i.test(physical)) return false;
+  return NON_PORIRUA_ADDRESS_LOCALITY_PATTERN.test(physical);
+}
+
+/** FSD postal lines often omit the city; cross-check physical region/district/address. */
+export function physicalLocationOutsidePorirua(row) {
+  const region = String(row.PHYSICAL_REGION ?? "").trim();
+  if (/\bauckland\b/i.test(region)) return true;
+  const district = String(row.PHYSICAL_DISTRICT ?? "").trim();
+  if (
+    /\b(?:Waitakere|Henderson(?:\s*-\s*Massey)?|Massey|Rodney|North\s*Shore|Manukau|Papakura|Franklin|Upper\s*Harbour)\b/i.test(
+      district
+    )
+  ) {
+    return true;
+  }
+  const physical = String(row.PHYSICAL_ADDRESS ?? "").trim();
+  if (!physical) return false;
+  if (NON_PORIRUA_ADDRESS_LOCALITY_PATTERN.test(physical)) return true;
+  if (/\b(?:Waitakere|Massey|Henderson|Westgate)\b/i.test(physical)) return true;
+  return false;
+}
+
+/** Stable reason codes for audit output (`data/fsd-porirua-excluded.json`). */
+export const PORIRUA_EXCLUSION_REASON = {
+  DISTRICT_CONTRADICTS_PHYSICAL: "DISTRICT_CONTRADICTS_PHYSICAL",
+  ADDRESS_NON_PORIRUA_CITY: "ADDRESS_NON_PORIRUA_CITY",
+  POSTAL_TOKEN_PHYSICAL_OUTSIDE: "POSTAL_TOKEN_PHYSICAL_OUTSIDE",
+  NO_PORIRUA_SIGNAL: "NO_PORIRUA_SIGNAL",
+};
+
+/**
+ * When `isPoriruaRelevant` is false, returns the primary exclusion reason for audit.
+ * @param {Record<string, string>} row
+ * @returns {{ code: string, detail?: string, matchedField?: string }}
+ */
+export function getPoriruaExclusionReason(row) {
+  const district = String(row.PHYSICAL_DISTRICT ?? "").trim();
+  if (/porirua/i.test(district) && physicalAddressContradictsPoriruaDistrict(row)) {
+    return {
+      code: PORIRUA_EXCLUSION_REASON.DISTRICT_CONTRADICTS_PHYSICAL,
+      detail: "PHYSICAL_DISTRICT names Porirua but PHYSICAL_ADDRESS names another city without Porirua",
+    };
+  }
 
   for (const field of ADDRESS_FIELDS) {
     const val = String(row[field] ?? "");
-    if (PORIRUA_LOCALITY_PATTERN.test(val)) return true;
+    if (!PORIRUA_LOCALITY_PATTERN.test(val)) continue;
+    if (
+      (field === "PHYSICAL_ADDRESS" || field === "POSTAL_ADDRESS") &&
+      !isPoriruaAddressContext(val)
+    ) {
+      return {
+        code: PORIRUA_EXCLUSION_REASON.ADDRESS_NON_PORIRUA_CITY,
+        matchedField: field,
+        detail: "Suburb token matched but the same line names a non-Porirua city/town",
+      };
+    }
+    if (
+      field === "POSTAL_ADDRESS" &&
+      !/porirua/i.test(val) &&
+      physicalLocationOutsidePorirua(row)
+    ) {
+      return {
+        code: PORIRUA_EXCLUSION_REASON.POSTAL_TOKEN_PHYSICAL_OUTSIDE,
+        matchedField: field,
+        detail: "POSTAL_ADDRESS suburb token ignored because physical location is outside Porirua",
+      };
+    }
+  }
+
+  return {
+    code: PORIRUA_EXCLUSION_REASON.NO_PORIRUA_SIGNAL,
+    detail: "No Porirua district and no qualifying suburb/service-area token",
+  };
+}
+
+/** @param {Record<string, string>} row */
+export function summarizeExcludedFsdRow(row) {
+  const { code, detail, matchedField } = getPoriruaExclusionReason(row);
+  return {
+    reasonCode: code,
+    ...(detail ? { reasonDetail: detail } : {}),
+    ...(matchedField ? { matchedField } : {}),
+    SERVICE_ID: String(row.SERVICE_ID ?? "").trim() || undefined,
+    FSD_ID: String(row.FSD_ID ?? "").trim() || undefined,
+    PROVIDER_NAME: String(row.PROVIDER_NAME ?? "").trim() || undefined,
+    SERVICE_NAME: String(row.SERVICE_NAME ?? "").trim() || undefined,
+    PHYSICAL_REGION: String(row.PHYSICAL_REGION ?? "").trim() || undefined,
+    PHYSICAL_DISTRICT: String(row.PHYSICAL_DISTRICT ?? "").trim() || undefined,
+    PHYSICAL_ADDRESS: String(row.PHYSICAL_ADDRESS ?? "").trim() || undefined,
+    POSTAL_ADDRESS: String(row.POSTAL_ADDRESS ?? "").trim() || undefined,
+  };
+}
+
+/** @param {Record<string, string>} row */
+export function isPoriruaRelevant(row) {
+  const district = String(row.PHYSICAL_DISTRICT ?? "").trim();
+  if (/porirua/i.test(district)) {
+    if (physicalAddressContradictsPoriruaDistrict(row)) return false;
+    return true;
+  }
+
+  for (const field of ADDRESS_FIELDS) {
+    const val = String(row[field] ?? "");
+    if (!PORIRUA_LOCALITY_PATTERN.test(val)) continue;
+    if (
+      (field === "PHYSICAL_ADDRESS" || field === "POSTAL_ADDRESS") &&
+      !isPoriruaAddressContext(val)
+    ) {
+      continue;
+    }
+    if (
+      field === "POSTAL_ADDRESS" &&
+      !/porirua/i.test(val) &&
+      physicalLocationOutsidePorirua(row)
+    ) {
+      continue;
+    }
+    return true;
   }
 
   return false;

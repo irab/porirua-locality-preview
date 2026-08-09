@@ -8,13 +8,14 @@ alwaysApply: false
 
 ## Pipeline commands
 
-- `npm run import:fsd` — downloads FSD; writes **`data/fsd-porirua.raw.json`** (gitignored, re-fetchable).
+- `npm run import:fsd` — downloads FSD; writes **`data/fsd-porirua.raw.json`** and **`data/fsd-porirua-excluded.json`** (gitignored, re-fetchable).
 - `npm run merge:services` / **`npm run build:data`** — merge Connections Map + FSD + overrides → **`data/services.json`**.
 
 ## When you change import, merge, or FSD rules
 
 1. Update **`tests/`** (and **`e2e/`** if public behavior changes).
 2. Update **`docs/porirua-directory-phase1-spec.md`** if filter rules, schema, dedupe, or override semantics change.
+3. Update **`docs/fsd-porirua-filter-rationale.md`** when FSD **geo filter** rules or reason codes change.
 3. Run **`npm test`**; run **`npm run build:data`** if scripts or inputs changed.
 
 ## What to commit
@@ -23,6 +24,7 @@ alwaysApply: false
 |------|---------|
 | `data/services.json` | **Yes** when publishing or refreshing the deployable dataset |
 | `data/fsd-porirua.raw.json` | **No** — gitignored |
+| `data/fsd-porirua-excluded.json` | **No** — gitignored (audit log; see `docs/fsd-porirua-filter-rationale.md`) |
 | `data/overrides.json` | **Yes** — intentional manual curation (hide/patch FSD rows at merge) |
 
 If override **workflow** changes (who edits what, when to re-merge vs full rebuild), document in **`docs/MVP-RUNBOOK.md`**.

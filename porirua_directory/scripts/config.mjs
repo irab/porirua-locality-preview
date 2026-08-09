@@ -22,5 +22,7 @@ export const FSD_CSV_URL =
 
 export const DATA_DIR = path.join(REPO_ROOT, "porirua_directory", "data");
 export const FSD_RAW_JSON = path.join(DATA_DIR, "fsd-porirua.raw.json");
+/** Rows rejected by Porirua geo filter; written on `import:fsd` for audit (gitignored). */
+export const FSD_EXCLUDED_JSON = path.join(DATA_DIR, "fsd-porirua-excluded.json");
 export const SERVICES_JSON = path.join(DATA_DIR, "services.json");
 export const OVERRIDES_JSON = path.join(DATA_DIR, "overrides.json");

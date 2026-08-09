@@ -22,7 +22,7 @@ When you change **behavior**, **data rules**, **deploy**, or **editor workflow**
 | Change type | Update |
 |-------------|--------|
 | System / hosting / data flow | `docs/architecture/porirua-directory-architecture.md` |
-| FSD filter, merge, schema, overrides | `docs/porirua-directory-phase1-spec.md` |
+| FSD filter, merge, schema, overrides | `docs/porirua-directory-phase1-spec.md` + `docs/fsd-porirua-filter-rationale.md` (geo rules & audit) |
 | Rebuild, deploy, manual steps | `docs/MVP-RUNBOOK.md` |
 | Product scope / budget / phases | `docs/porirua-services-directory-requirements.md` (+ changelog/version there) |
 | App-specific usage | `porirua_directory/README.md` or `porirua_connections_map/README.md` |

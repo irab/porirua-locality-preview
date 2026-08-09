@@ -21,6 +21,7 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements (regenerate after v1.3 md changes) |
 | [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | System context, data flow, hosting at directory.bsky.nz |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Developers | Phase 1 data model, FSD rules, merge, overrides |
+| [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) | Developers, data editors | FSD geo filter rationale, reason codes, import audit |
 | [issues/README.md](./issues/README.md) | Developers | **Issues directory** (fixed & recurring bugs) |
 | [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Developers | FSD Salvation Army duplicates, org→service roadmap |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |

@@ -29,5 +29,6 @@ Each issue should include:
 | Issue | Status | Summary |
 |-------|--------|---------|
 | [fixed-fsd-aranui-christchurch-filter.md](./fixed-fsd-aranui-christchurch-filter.md) | Fixed | FSD Porirua locality regex falsely matched Christchurch **Aranui** via **Rānui** token |
+| [fixed-fsd-locality-address-context-filter.md](./fixed-fsd-locality-address-context-filter.md) | Fixed | Suburb tokens matched Whitby/Rānui street names, Auckland Ranui, or wrong FSD Porirua district |
 
 When you add or close an issue, update this table and link from [docs/README.md](../README.md) if the index changes materially.

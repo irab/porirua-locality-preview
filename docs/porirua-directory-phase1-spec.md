@@ -73,14 +73,20 @@ Envelope written to `services.json`:
 
 ## FSD inclusion rules
 
+**Authoritative rationale, examples, audit workflow:** [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md)
+
 Documented in `fsd-porirua-rules.mjs`:
 
-1. **District:** `PHYSICAL_DISTRICT` matches `/porirua/i`.
+1. **District:** `PHYSICAL_DISTRICT` matches `/porirua/i`, unless `PHYSICAL_ADDRESS` names another city/town and does not include Porirua (guards bad FSD metadata, e.g. district Porirua City with a Palmerston North street address).
 2. **Suburb / address:** `PHYSICAL_ADDRESS`, `POSTAL_ADDRESS`, or `SERVICE_AREA` (if present) match agreed locality tokens (Titahi Bay, Whitby, Cannons Creek, Waitangirua, Kenepuru, Plimmerton, Paekākāriki, Rānui, Elsdon, etc.). Token definitions live in `PORIRUA_LOCALITY_PATTERN` in `fsd-porirua-rules.mjs`.
-3. **Exclude:** Wellington-region-only rows with no Porirua signal.
-4. **Categories:** Map FSD `LEVEL_1_CATEGORY` and keywords to need `categories[]`.
+3. **Address context:** For `PHYSICAL_ADDRESS` and `POSTAL_ADDRESS`, a locality-token match is ignored when the same line also names a non-Porirua city/town (e.g. `Whitby Street, Dunedin`; `Ranui, Auckland`; `Ranui Avenue, Kerikeri`) unless the line also contains Porirua. See `NON_PORIRUA_ADDRESS_LOCALITY_PATTERN` and `isPoriruaAddressContext` in `fsd-porirua-rules.mjs`.
+4. **Postal vs physical:** A `POSTAL_ADDRESS` suburb-token match (e.g. `Ranui, 0612` without “Porirua” on that line) is ignored when `PHYSICAL_REGION`, `PHYSICAL_DISTRICT`, or `PHYSICAL_ADDRESS` indicates the provider is outside Porirua (e.g. Auckland / Waitakere / Henderson–Massey with `326 Don Buck Road, Massey, Waitakere`). See `physicalLocationOutsidePorirua` in `fsd-porirua-rules.mjs`.
+5. **Exclude:** Wellington-region-only rows with no Porirua signal.
+6. **Categories:** Map FSD `LEVEL_1_CATEGORY` and keywords to need `categories[]`.
 
 No automated public/private business filter — team curates via overrides.
+
+**Import audit:** `npm run import:fsd` writes `data/fsd-porirua-excluded.json` (gitignored) with `reasonCode` per rejected row — see filter rationale doc and MVP runbook.
 
 ---
 
