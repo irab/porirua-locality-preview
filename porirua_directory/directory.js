@@ -267,16 +267,33 @@ function focusOrgInResults(orgId) {
   }
 }
 
-function resolveFavoriteDisplayItems(allServices, favoriteIds) {
+function resolveFavoriteDisplayItems(catalogEntries, serviceLines, favoriteIds) {
   const ordered = [];
-  const seenOrgKeys = new Set();
+  const seen = new Set();
   for (const favId of favoriteIds) {
-    const rows = allServices.filter((s) => s.id === favId);
+    const orgEntry = catalogEntries.find(
+      (e) => e.kind === "organization" && e.id === favId
+    );
+    if (orgEntry && !seen.has(favId)) {
+      seen.add(favId);
+      ordered.push({
+        type: "org",
+        org: organizationEntryToDisplayOrg(orgEntry),
+      });
+      continue;
+    }
+    const flat = catalogEntries.find((e) => e.kind !== "organization" && e.id === favId);
+    if (flat && !seen.has(favId)) {
+      seen.add(favId);
+      ordered.push({ type: "card", service: flat });
+      continue;
+    }
+    const rows = serviceLines.filter((s) => s.id === favId);
     if (rows.length > 1) {
       const org = buildOrgFromMembers(rows);
-      if (!seenOrgKeys.has(org.orgId)) {
+      if (!seen.has(org.orgId)) {
         ordered.push({ type: "org", org });
-        seenOrgKeys.add(org.orgId);
+        seen.add(org.orgId);
       }
       continue;
     }
@@ -284,13 +301,20 @@ function resolveFavoriteDisplayItems(allServices, favoriteIds) {
       ordered.push({ type: "card", service: rows[0] });
       continue;
     }
-    const org = groupServicesByOrg(allServices).find((o) => o.orgId === favId);
-    if (org && !seenOrgKeys.has(org.orgId)) {
+    const org = groupServicesByOrg(serviceLines).find((o) => o.orgId === favId);
+    if (org && !seen.has(org.orgId)) {
       ordered.push({ type: "org", org });
-      seenOrgKeys.add(org.orgId);
+      seen.add(org.orgId);
     }
   }
   return ordered;
+}
+
+function displayItemsFromFiltered(catalogEntries, filteredLines) {
+  if (catalogEntries.some((e) => e.kind === "organization")) {
+    return groupCatalogForDisplay(catalogEntries, filteredLines);
+  }
+  return groupForDisplay(filteredLines);
 }
 
 const MAP_POPUP_DESC_MAX = 280;
@@ -446,8 +470,8 @@ function buildMapPopupForOrg(org, distKm, activeNeeds) {
   return html;
 }
 
-function mapTargetsFromFiltered(filtered, activeNeeds) {
-  const items = groupForDisplay(filtered);
+function mapTargetsFromFiltered(catalogEntries, filtered, activeNeeds) {
+  const items = displayItemsFromFiltered(catalogEntries, filtered);
   const targets = [];
   for (const item of items) {
     if (item.type === "org") {
@@ -700,10 +724,12 @@ async function main() {
     "community"
   );
 
-  let services = [];
+  let serviceLines = [];
+  let catalogEntries = [];
   try {
     const loaded = await loadServices();
-    services = loaded.services;
+    serviceLines = loaded.serviceLines ?? loaded.services ?? [];
+    catalogEntries = loaded.entries ?? serviceLines;
   } catch (err) {
     statusLine.textContent =
       "We couldn’t load the listings. Please refresh the page and try again.";
@@ -927,7 +953,11 @@ async function main() {
 
   async function syncMapForFiltered(filtered) {
     const syncGen = ++mapSyncGeneration;
-    const targets = mapTargetsFromFiltered(filtered, state.activeNeeds);
+    const targets = mapTargetsFromFiltered(
+      catalogEntries,
+      filtered,
+      state.activeNeeds
+    );
     const hasMapData =
       state.nearMe || (filtered.length > 0 && targets.length > 0);
     setMapBlockVisible(hasMapData);
@@ -1103,7 +1133,11 @@ async function main() {
       activeNeeds: new Set(),
       search: "",
     };
-    const items = resolveFavoriteDisplayItems(services, favoriteIds);
+    const items = resolveFavoriteDisplayItems(
+      catalogEntries,
+      serviceLines,
+      favoriteIds
+    );
     const hasItems = items.length > 0;
     if (mylistPrint) {
       mylistPrint.hidden = !hasItems;
@@ -1195,7 +1229,7 @@ async function main() {
   function refresh() {
     if (!state.mode) return;
 
-    let filtered = filterServices(services, state);
+    let filtered = filterServices(serviceLines, state);
     if (state.nearMe) {
       filtered = applyNearMeListFilter(filtered);
     }
@@ -1214,7 +1248,7 @@ async function main() {
           '<p class="empty-state">We couldn’t find anything. Try clearing your choices or using a wider search.</p>';
       }
     } else {
-      const displayItems = groupForDisplay(filtered);
+      const displayItems = displayItemsFromFiltered(catalogEntries, filtered);
       const highlight = {
         activeNeeds: state.activeNeeds,
         search: state.search,
