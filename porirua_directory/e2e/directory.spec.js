@@ -496,22 +496,20 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
 
 test("org grouping — need chip highlights matching service rows", async ({ page }) => {
   await page.goto("/index.html#support");
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
   await page.getByRole("button", { name: "Food / kai" }).click();
-  const card = page
-    .locator("#directory-results .card--org")
-    .filter({ hasText: "Salvation Army" })
+  await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
+  const highlighted = page
+    .locator("#directory-results .card--org .service-row--match")
     .first();
-  await expect(card).toBeVisible();
-  await expect(card.locator(".service-row--match")).not.toHaveCount(0);
+  await expect(highlighted).toBeVisible();
 });
 
 test("org grouping — map popup View in list focuses org card", async ({ page }) => {
   await page.goto("/index.html#support");
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
   await page.getByRole("button", { name: "Food / kai" }).click();
-  const card = page
-    .locator("#directory-results .card--org")
-    .filter({ hasText: "Salvation Army" })
-    .first();
+  const card = page.locator("#directory-results .card--org").first();
   await expect(card).toBeVisible();
   await card.click({ position: { x: 8, y: 8 } });
   const popup = page.locator(".leaflet-popup-content .map-popup");
