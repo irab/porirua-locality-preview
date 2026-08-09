@@ -2,6 +2,7 @@ import { loadServices } from "./directory-data.js";
 import { formatDescription } from "./format-description.mjs";
 import {
   buildOrgFromMembers,
+  expandNeedFilterLines,
   groupCatalogForDisplay,
   groupForDisplay,
   groupServicesByOrg,
@@ -83,9 +84,7 @@ function filterServices(services, state) {
       (s) => s.source === "fsd" || (s.categories?.length ?? 0) > 0
     );
     if (state.activeNeeds.size > 0) {
-      list = list.filter((s) =>
-        s.categories?.some((c) => state.activeNeeds.has(c))
-      );
+      list = expandNeedFilterLines(list, state.activeNeeds);
     }
   } else if (state.mode === "community") {
     list = list.filter((s) => matchesCommunity(s, state.activeCommunityFilters));
@@ -220,28 +219,31 @@ function renderServiceRowDetail(line, org) {
 function renderServiceRow(line, org, highlight) {
   const needOn = highlight.activeNeeds.size > 0;
   const searchOn = Boolean(highlight.search.trim());
-  const matchNeed = lineMatchesNeed(line, highlight.activeNeeds);
   const matchSearch = lineMatchesSearch(line, org, highlight.search);
   const orgNameMatch =
     searchOn &&
     org.name.toLowerCase().includes(highlight.search.trim().toLowerCase());
-  const match = (needOn && matchNeed) || (searchOn && (matchSearch || orgNameMatch));
-  const dim = (needOn || searchOn) && !match;
+  const matchRow = searchOn && (matchSearch || orgNameMatch);
+  const dim = searchOn && !matchRow;
 
   let rowClass = "service-row";
-  if (match) rowClass += " service-row--match is-highlighted";
-  else if (dim && (needOn || searchOn)) rowClass += " service-row--dim";
+  if (matchRow) rowClass += " service-row--match is-highlighted";
+  else if (dim) rowClass += " service-row--dim";
 
   const catBadges = (line.categories ?? [])
-    .map((id) => needLabelById[id])
-    .filter(Boolean)
-    .map((label) => `<span class="badge badge--need">${esc(label)}</span>`)
+    .map((id) => {
+      const label = needLabelById[id];
+      if (!label) return "";
+      const pillMatch =
+        needOn && highlight.activeNeeds.has(id) ? " badge--need-match" : "";
+      return `<span class="badge badge--need${pillMatch}">${esc(label)}</span>`;
+    })
     .join("");
   const extraBadges = (line.badges ?? [])
     .map((b) => `<span class="badge">${esc(b)}</span>`)
     .join("");
 
-  const ariaCurrent = match ? ' aria-current="true"' : "";
+  const ariaCurrent = matchRow ? ' aria-current="true"' : "";
   const detailId = serviceRowDetailId(line.lineId);
   const detailHtml = renderServiceRowDetail(line, org);
 
@@ -1204,8 +1206,12 @@ async function main() {
         search: state.search,
       };
       let status;
+      const matchingLineCount =
+        state.activeNeeds.size > 0
+          ? filtered.filter((s) => lineMatchesNeed(s, state.activeNeeds)).length
+          : filtered.length;
       if (displayItems.length !== filtered.length) {
-        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"} (${filtered.length} matching service lines)`;
+        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"} (${matchingLineCount} matching service lines)`;
       } else {
         status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
       }

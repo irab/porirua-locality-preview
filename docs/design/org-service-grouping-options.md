@@ -106,7 +106,7 @@ Name overlap between a community org and an FSD provider name in this snapshot: 
 | Works on mobile stack | SEO/snippet less granular per service |
 | One **Add to list** at org level is simple | Per-service call numbers hidden until expand |
 
-**Filter highlight:** On chip select, auto-**expand** orgs that have a matching subservice; non-matching lines de-emphasised (opacity) inside the org.
+**Filter highlight:** On chip select, orgs with a matching subservice stay in results; **all** service rows remain visible on the card. Matching **category pills** (`.badge--need-match`) are emphasised; non-matching rows are not dimmed. Search still uses row-level `.service-row--match` / `.service-row--dim`.
 
 ---
 
@@ -120,7 +120,7 @@ Name overlap between a community org and an FSD provider name in this snapshot: 
 | Filter chip can **glow** matching rows without hiding org | Requires **service-level titles** from FSD (`SERVICE_NAME`) in data |
 | My list can offer **org** + “add this service” on row | Layout work in **three-column** (narrow middle column) |
 
-**Filter highlight:** Active need chip adds `.service-row--match` (border/background); optional `scrollIntoView` on first match when results render. Search matches org name **or** any subservice title.
+**Filter highlight:** Active need chip adds `.badge--need-match` on matching category pills within each service row; all rows stay visible. Search matches org name **or** any subservice title and uses `.service-row--match` on rows.
 
 **My list:** Default **add org**; optional row-level control stores `{ orgId, serviceLineId }` in session storage when ids exist.
 
@@ -303,7 +303,7 @@ Compare `clustering.orgsWithSameNormalizedName2Plus` and top-of-list providers a
 | UI | `directory-data.js` expands lines for filters; `groupCatalogForDisplay` renders org cards from catalog. |
 | Favourites | Org-level `id` / `orgId`. |
 | Map | One pin per org; popup **View in list** focuses org card. **Find support** popups show need categories (and FSD badges) only — no Connections Map org-type or Assembly theme pills. **Community** popups include org type, themes, initiatives, and label chips from `communityMeta`. |
-| Need filter | `.service-row--match` on matching lines. |
+| Need filter | Org in list if **any** line matches; card shows **all** lines; `.badge--need-match` on matching category pills (no row dim for need). |
 | Service detail | Each row is a **toggle button** (`aria-expanded`) revealing `.service-row__detail` (description, line-specific contact when different from org, categories). Org **Call** unchanged; row clicks do not open the map popup. |
 
 Matching rules: see [phase1 spec](../porirua-directory-phase1-spec.md) dedupe section and table in prior design review (exact name + geo/phone/address tie-break for community↔FSD).

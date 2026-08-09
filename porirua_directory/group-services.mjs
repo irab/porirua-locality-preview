@@ -82,19 +82,9 @@ export function groupCatalogForDisplay(entries, filteredLines) {
       seen.add(line.orgId);
       const entry = entryByOrgId.get(line.orgId);
       if (!entry) continue;
-      const matching = filteredLines
-        .filter((l) => l.orgId === line.orgId)
-        .map((l) => entry.services.find((s) => s.lineId === l.lineId))
-        .filter(Boolean);
-      const seenLine = new Set();
-      const uniqueMatching = matching.filter((s) => {
-        if (seenLine.has(s.lineId)) return false;
-        seenLine.add(s.lineId);
-        return true;
-      });
       items.push({
         type: "org",
-        org: organizationEntryToDisplayOrg(entry, uniqueMatching),
+        org: organizationEntryToDisplayOrg(entry),
       });
     } else {
       if (seen.has(line.id)) continue;
@@ -158,6 +148,30 @@ export function groupServicesByOrg(services) {
 export function lineMatchesNeed(line, activeNeeds) {
   if (!activeNeeds || activeNeeds.size === 0) return false;
   return line.categories?.some((c) => activeNeeds.has(c));
+}
+
+/**
+ * Need chip filter: keep lines that match, plus all sibling lines at the same org/site
+ * so org cards can show every service with pill-only highlight (not row hiding).
+ */
+export function expandNeedFilterLines(lines, activeNeeds) {
+  if (!activeNeeds || activeNeeds.size === 0) return lines;
+  const matchesNeed = (line) => lineMatchesNeed(line, activeNeeds);
+  const matched = lines.filter(matchesNeed);
+  const orgIds = new Set(
+    matched.map((l) => l.orgId).filter(Boolean)
+  );
+  const clusterKeys = new Set(
+    matched
+      .filter((s) => !isCommunityOrgGrain(s))
+      .map(orgClusterKey)
+  );
+  return lines.filter(
+    (s) =>
+      matchesNeed(s) ||
+      (s.orgId && orgIds.has(s.orgId)) ||
+      (!isCommunityOrgGrain(s) && clusterKeys.has(orgClusterKey(s)))
+  );
 }
 
 export function lineMatchesSearch(line, org, query) {

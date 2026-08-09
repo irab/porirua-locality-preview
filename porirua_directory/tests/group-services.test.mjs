@@ -6,6 +6,7 @@ import { test } from "node:test";
 import { expandServiceLines } from "../scripts/org-grouping.mjs";
 import {
   buildOrgFromMembers,
+  expandNeedFilterLines,
   groupCatalogForDisplay,
   groupForDisplay,
   groupServicesByOrg,
@@ -97,11 +98,39 @@ test("groupCatalogForDisplay yields one org card for filtered org lines", () => 
   assert.equal(items[0].org.services.length, sa.services.length);
 });
 
+test("groupCatalogForDisplay shows all org services when only one line matches need", () => {
+  const catalog = loadCatalog();
+  const sa = catalog.find(
+    (e) =>
+      e.kind === "organization" &&
+      String(e.name ?? "").includes("Salvation Army")
+  );
+  assert.ok(sa);
+  const lines = expandServiceLines(catalog);
+  const foodOnly = lines.filter(
+    (l) =>
+      l.orgId === sa.id &&
+      l.categories?.some((c) => c === "food")
+  );
+  assert.ok(foodOnly.length >= 1);
+  const items = groupCatalogForDisplay(catalog, foodOnly);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].org.services.length, sa.services.length);
+});
+
 test("groupServicesByOrg clusters legacy flat rows", () => {
   const members = flatMemberFixture();
   const orgs = groupServicesByOrg(members);
   assert.equal(orgs.length, 1);
   assert.equal(orgs[0].services.length, 2);
+});
+
+test("expandNeedFilterLines includes org siblings when one line matches need", () => {
+  const members = flatMemberFixture();
+  const expanded = expandNeedFilterLines(members, new Set(["food"]));
+  assert.equal(expanded.length, 2);
+  assert.ok(expanded.some((s) => s.id === "fsd-a"));
+  assert.ok(expanded.some((s) => s.id === "fsd-b"));
 });
 
 test("serviceLineTitle uses first description line", () => {

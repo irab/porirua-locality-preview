@@ -517,15 +517,25 @@ test("org grouping — service row expands line detail", async ({ page }) => {
   );
 });
 
-test("org grouping — need chip highlights matching service rows", async ({ page }) => {
+test("org grouping — need chip highlights matching category pills on all service rows", async ({
+  page,
+}) => {
   await page.goto("/index.html#support");
   await expect(page.locator("#directory-results .card").first()).toBeVisible();
   await page.getByRole("button", { name: "Food / kai" }).click();
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
-  const highlighted = page
-    .locator("#directory-results .card--org .service-row--match")
+
+  const saCard = page
+    .locator("#directory-results .card--org")
+    .filter({ hasText: /Salvation Army/i })
     .first();
-  await expect(highlighted).toBeVisible();
+  await expect(saCard).toBeVisible();
+  const rows = saCard.locator(".service-row");
+  await expect(rows.first()).toBeVisible();
+  expect(await rows.count()).toBeGreaterThanOrEqual(2);
+
+  await expect(saCard.locator(".service-row--dim")).toHaveCount(0);
+  await expect(saCard.locator(".badge--need-match").first()).toBeVisible();
 });
 
 test("org grouping — map popup View in list focuses org card", async ({ page }) => {
