@@ -795,6 +795,141 @@ body[data-view="browse"] .browse-toolbar {
   overflow: hidden;
 }
 
+.leaflet-popup-content-wrapper {
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(60, 27, 48, 0.18);
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+  line-height: 1.45;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.map-popup {
+  max-width: 300px;
+}
+
+.map-popup__title {
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 0.5rem;
+}
+
+.map-popup__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+}
+
+.map-popup__pills--themes {
+  margin-top: 0.15rem;
+}
+
+.map-popup__pills--labels {
+  margin-top: 0.65rem;
+}
+
+.map-popup__pill {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.map-popup__pill--type {
+  background: var(--ink);
+  color: #fff;
+}
+
+.map-popup__pill--theme {
+  background: color-mix(in srgb, var(--accent) 88%, #fff);
+  color: #fff;
+}
+
+.map-popup__location {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 0.35rem;
+}
+
+.map-popup__desc {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0.45rem 0 0.35rem;
+}
+
+.map-popup__section-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0.65rem 0 0.25rem;
+}
+
+.map-popup__list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.map-popup__list li {
+  margin-bottom: 0.15rem;
+}
+
+.map-popup__label-chip {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.map-popup__phone {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+.map-popup__phone a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.map-popup__link {
+  display: inline-block;
+  margin-top: 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+.map-popup__link:hover,
+.map-popup__link:focus-visible {
+  color: var(--ink);
+}
+
+.map-popup__distance {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .results {
   display: flex;
   flex-direction: column;

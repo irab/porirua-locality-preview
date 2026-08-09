@@ -243,6 +243,35 @@ test("my list — print list enables print mode without error", async ({ page })
   expect(printSmoke.cleared).toBe(true);
 });
 
+test("support path — card click opens rich map popup", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+  const firstCard = page.locator("#directory-results .card").first();
+  const title = (await firstCard.locator(".card__title").textContent())?.trim();
+  await firstCard.click();
+  const popup = page.locator(".leaflet-popup-content .map-popup");
+  await expect(popup).toBeVisible();
+  await expect(popup.locator(".map-popup__title")).toHaveText(title ?? "");
+  await expect(
+    popup.locator(
+      ".map-popup__desc, .map-popup__location, .map-popup__phone, .map-popup__link, .map-popup__pill"
+    )
+  ).not.toHaveCount(0);
+});
+
+test("community path — map popup shows org type or initiatives", async ({ page }) => {
+  await page.goto("/index.html#community");
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+  await page.locator("#directory-results .card").first().click();
+  const popup = page.locator(".leaflet-popup-content .map-popup");
+  await expect(popup).toBeVisible();
+  await expect(
+    popup.locator(
+      ".map-popup__pill--type, .map-popup__list li, .map-popup__pill--theme"
+    )
+  ).not.toHaveCount(0);
+});
+
 test("demo — three-column layout smoke with show map", async ({ page }) => {
   await page.goto("/index.html?demo=1#support");
   await expect(page.locator("#demo-tools")).toBeVisible();
