@@ -131,7 +131,7 @@ Community workers may share the link; the directory is **not** a referral or cas
 
 When someone opens the directory they should be able to:
 
-1. **Site navigation** — Porirua Locality (Te Wāhi Tiaki Tātou) logo; **Your Porirua Directory** as the title in the top bar; **My list** and **About** on every page. A subnav row on **landing only** holds **I would like to…** and **Find support** / **Connect with community** (hidden in browse).
+1. **Site navigation** — Porirua Locality (Te Wāhi Tiaki Tātou) logo; **Your Porirua Directory** as a **centered, prominent** title in the top bar (logo left, **My list** and **About** right); subnav on **landing only** for **I would like to…** and **Find support** / **Connect with community** (hidden in browse).
 2. **Choose a path** — from the subnav on landing; filters and results appear after a path is chosen; **Back** returns to landing (only way to change path).
 3. **Emergency and crisis numbers** — compact sticky footer on every page (landing, browse, and About).
 4. **Support categories** (Find support path) — plain language, for example:
@@ -528,7 +528,7 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 
 ---
 
-*Changes in v1.10: **Three-column browse** is the production default (filters | results | sticky map on desktop); **Show map** on by default in browse; `?layout=top` restores map-above-results.*
+*Changes in v1.10: **Three-column browse** is the production default (filters | results | sticky map on desktop); **Show map** on by default in browse; `?layout=top` restores map-above-results; **Your Porirua Directory** title **centered** in the top bar with larger Recoleta sizing (stacked title row on very narrow screens).*
 
 *Changes in v1.9: FSD Porirua geo filter **documented and auditable** — [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md), excluded-row audit file on import, runbook review steps (address-context fixes Aug 2026).*
 

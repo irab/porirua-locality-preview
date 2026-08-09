@@ -36,17 +36,15 @@
           decoding="async"
         />
       </a>
-      <div class="site-topnav__cluster">
-        <a
-          class="site-product-title site-product-title--current"
-          href="index.html"
-          aria-current="page"
-        >Your Porirua Directory</a>
-        <nav class="site-nav" aria-label="Site">
-          <a class="site-nav__link" href="#mylist" id="nav-mylist">My list</a>
-          <a class="site-nav__link" href="about.html">About</a>
-        </nav>
-      </div>
+      <a
+        class="site-product-title site-product-title--current"
+        href="index.html"
+        aria-current="page"
+      >Your Porirua Directory</a>
+      <nav class="site-nav" aria-label="Site">
+        <a class="site-nav__link" href="#mylist" id="nav-mylist">My list</a>
+        <a class="site-nav__link" href="about.html">About</a>
+      </nav>
     </div>
     <div id="site-subnav" class="site-subnav" aria-label="What would you like to do">
       <p id="landing-prompt" class="site-subnav__prompt">I would like to…</p>
@@ -100,27 +98,33 @@
             <span class="visually-hidden">Search</span>
             <input id="search-input" type="search" placeholder="Search by name or keyword" autocomplete="off" />
           </label>
-          <label class="map-show-wrap">
+          <label class="map-show-wrap" id="show-map-wrap">
             <input id="show-map" type="checkbox" />
             Show map
           </label>
-          <button
-            type="button"
-            id="find-near-me"
-            class="near-me-btn"
-            hidden
-            aria-pressed="false"
-          >
-            Find support near me
-          </button>
-          <p id="near-me-status" class="near-me-status" role="status" hidden></p>
-          <div id="demo-layout-wrap" class="demo-layout-wrap" hidden>
-            <label class="demo-layout-label" for="demo-layout-select">Demo layout</label>
-            <select id="demo-layout-select" class="demo-layout-select">
-              <option value="default">Default (map on top)</option>
-              <option value="top">Top map (same as default)</option>
-              <option value="three-column">Three column (map right)</option>
-            </select>
+
+          <div id="demo-tools" class="demo-tools" hidden>
+            <p class="demo-tools__label">Layout demo</p>
+            <button
+              type="button"
+              id="find-near-me"
+              class="near-me-btn"
+              aria-pressed="false"
+            >
+              Find support near me
+            </button>
+            <p id="near-me-hint" class="near-me-hint">
+              Uses your device location once to show listings within 15&nbsp;km on the map. Your location is not saved.
+            </p>
+            <p id="near-me-status" class="near-me-status" role="status" hidden></p>
+            <div id="demo-layout-wrap" class="demo-layout-wrap">
+              <label class="demo-layout-label" for="demo-layout-select">Browse layout</label>
+              <select id="demo-layout-select" class="demo-layout-select">
+                <option value="default">Default (map on top)</option>
+                <option value="top">Top map (same as default)</option>
+                <option value="three-column">Three column (map right)</option>
+              </select>
+            </div>
           </div>
           </aside>
         </div>
@@ -131,6 +135,11 @@
         </div>
 
         <div id="map-block" class="map-block map-block--hidden" hidden>
+          <div class="map-block__head">
+            <button type="button" id="hide-map-btn" class="map-block__hide" hidden>
+              Hide map
+            </button>
+          </div>
           <div id="directory-map" class="map" aria-label="Map of listed places"></div>
         </div>
       </div>

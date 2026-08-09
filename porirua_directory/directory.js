@@ -268,9 +268,10 @@ async function main() {
   const resultsEl = document.getElementById("directory-results");
   const mapEl = document.getElementById("directory-map");
   const showMapCheckbox = document.getElementById("show-map");
+  const hideMapBtn = document.getElementById("hide-map-btn");
   const findNearMeBtn = document.getElementById("find-near-me");
   const nearMeStatus = document.getElementById("near-me-status");
-  const demoLayoutWrap = document.getElementById("demo-layout-wrap");
+  const demoTools = document.getElementById("demo-tools");
   const demoLayoutSelect = document.getElementById("demo-layout-select");
 
   const demoQuery = parseDemoQuery();
@@ -320,10 +321,36 @@ async function main() {
     weight: 2,
   };
 
+  function isThreeColumnDesktop() {
+    return (
+      browseLayout === "three-column" &&
+      window.matchMedia("(min-width: 1024px)").matches
+    );
+  }
+
+  function syncMapChrome() {
+    if (hideMapBtn) {
+      const mapVisible = mapBlock && !mapBlock.hidden;
+      hideMapBtn.hidden = !(isThreeColumnDesktop() && state.showMap && mapVisible);
+    }
+  }
+
+  function scheduleMapResize() {
+    if (!map) return;
+    const run = () => {
+      if (!map) return;
+      map.invalidateSize();
+    };
+    requestAnimationFrame(() => {
+      run();
+      requestAnimationFrame(run);
+    });
+    window.setTimeout(run, 120);
+  }
+
   function setDemoChromeVisible() {
     const show = demoQuery.demo;
-    if (findNearMeBtn) findNearMeBtn.hidden = !show;
-    if (demoLayoutWrap) demoLayoutWrap.hidden = !show;
+    if (demoTools) demoTools.hidden = !show;
     if (demoLayoutSelect) {
       demoLayoutSelect.value =
         browseLayout === "three-column" ? "three-column" : "default";
@@ -383,6 +410,7 @@ async function main() {
   function setMapBlockVisible(visible) {
     mapBlock.hidden = !visible;
     mapBlock.classList.toggle("map-block--hidden", !visible);
+    syncMapChrome();
   }
 
   function distanceKmToService(service) {
@@ -496,7 +524,7 @@ async function main() {
 
     requestAnimationFrame(() => {
       if (syncGen !== mapSyncGeneration || !map) return;
-      map.invalidateSize();
+      scheduleMapResize();
       const viewPoints = mapPointsForView(mappable);
       if (viewPoints.length > 0) {
         fitMapToPoints(viewPoints);
@@ -504,6 +532,7 @@ async function main() {
         map.setView([state.nearMe.lat, state.nearMe.lng], 12);
       }
     });
+    syncMapChrome();
   }
 
   function updateModeButtons(mode) {
@@ -692,9 +721,24 @@ async function main() {
     });
   }
 
-  showMapCheckbox.addEventListener("change", () => {
-    state.showMap = showMapCheckbox.checked;
-    refresh();
+  if (showMapCheckbox) {
+    showMapCheckbox.addEventListener("change", () => {
+      state.showMap = showMapCheckbox.checked;
+      refresh();
+    });
+  }
+
+  if (hideMapBtn) {
+    hideMapBtn.addEventListener("click", () => {
+      state.showMap = false;
+      if (showMapCheckbox) showMapCheckbox.checked = false;
+      refresh();
+    });
+  }
+
+  window.addEventListener("resize", () => {
+    syncMapChrome();
+    if (map && mapBlock && !mapBlock.hidden) scheduleMapResize();
   });
 
   if (demoLayoutSelect) {
@@ -712,9 +756,8 @@ async function main() {
         if (showMapCheckbox) showMapCheckbox.checked = true;
       }
       refresh();
-      setTimeout(() => {
-        if (map) map.invalidateSize();
-      }, 0);
+      setDemoChromeVisible();
+      scheduleMapResize();
     });
   }
 

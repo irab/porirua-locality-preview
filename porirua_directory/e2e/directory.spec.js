@@ -79,9 +79,9 @@ test("support path — all listings by default, no chip selected", async ({ page
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(0);
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
-  await expect(page.getByRole("checkbox", { name: "Show map" })).toBeChecked();
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide map" })).toBeVisible();
 });
 
 test("support path — single-select need chip filters and toggles off", async ({ page }) => {
@@ -119,9 +119,29 @@ test("support path — Show map reveals map when results have locations", async 
 test("support path — three-column default can hide map via Show map", async ({ page }) => {
   await page.goto("/index.html#support");
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
-  await expect(page.getByRole("checkbox", { name: "Show map" })).toBeChecked();
-  await page.getByRole("checkbox", { name: "Show map" }).uncheck();
+  await expect(page.locator("#map-block")).toBeVisible();
+  await page.getByRole("button", { name: "Hide map" }).click();
   await expect(page.locator("#map-block")).toBeHidden();
+});
+
+test("support path — mobile three-column shows map between filters and results", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html#support");
+  await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
+  await expect(page.locator("#map-block")).toBeVisible();
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+
+  const order = await page.evaluate(() => {
+    const panel = document.querySelector(".browse-sticky-panel");
+    const map = document.getElementById("map-block");
+    const main = document.querySelector(".browse-main");
+    const y = (el) => el?.getBoundingClientRect().top ?? 0;
+    return { panel: y(panel), map: y(map), main: y(main) };
+  });
+  expect(order.panel).toBeLessThan(order.map);
+  expect(order.map).toBeLessThan(order.main);
 });
 
 test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
@@ -207,9 +227,10 @@ test("my list — print list enables print mode without error", async ({ page })
 
 test("demo — three-column layout smoke with show map", async ({ page }) => {
   await page.goto("/index.html?demo=1#support");
-  await expect(page.locator("#demo-layout-wrap")).toBeVisible();
+  await expect(page.locator("#demo-tools")).toBeVisible();
   await expect(page.locator("#demo-layout-select")).toHaveValue("three-column");
   await expect(page.getByRole("button", { name: "Find support near me" })).toBeVisible();
+  await expect(page.getByText(/Uses your device location once/i)).toBeVisible();
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);

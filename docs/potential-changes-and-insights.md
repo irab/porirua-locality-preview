@@ -186,6 +186,7 @@ Use these in feedback sessions before committing Phase 1.5 or Phase 2 scope.
 5. **Editor workflow** — Is Google Sheet + occasional developer merge acceptable until Directus, or is manual hide/patch via `overrides.json` enough for the next months?
 6. **Community vs FSD duplication** — When community and FSD both list the same org, is hiding the FSD row (current behaviour) always right, or should some FSD **service lines** remain visible under the community org in Phase 2?
 7. **Search** — Should search match **subservice names** only after Phase 2, or is provider-name search enough for Phase 1.5?
+8. **Landing map-first** — If the home page becomes an all-listings map, should popup → browse **clear filters** (recommended) or **preserve map/chip context**? See [Landing map-first (design options)](#landing-map-first-design-options).
 
 ---
 
@@ -225,7 +226,7 @@ Implementation lives in `porirua_directory/` (`directory.js`, `directory.css`); 
 | Layout | Narrow screens |
 |--------|----------------|
 | **Top map (`layout=top`)** | Stack: **filters → map (when shown) → results**. |
-| **Three column (default)** | Stack: **filters → results → map** (map last so cards stay primary). |
+| **Three column (default)** | Stack: **filters → map (when shown) → results** so the map is usable without scrolling past all cards. |
 
 Below the three-column desktop breakpoint (1024px), the “three column” demo behaves as a single column stack — not a side-by-side map.
 
@@ -237,6 +238,53 @@ Below the three-column desktop breakpoint (1024px), the “three column” demo 
 | **Phase 2** | Product decision whether **near-me** becomes a first-class entry (landing CTA, analytics, privacy policy line). Consider **list-first** legal/consent pattern and map as enhancement (aligns with [Accessibility (target)](#accessibility-target)). |
 
 **Limitations today:** Near-me does not geocode addresses without lat/lng in `services.json`; FSD rows missing coordinates never appear in the radius filter. Geolocation accuracy varies by device; 15 km is a demo radius, not a service guarantee. `layout=top` and `layout=default` are intentionally identical aliases.
+
+---
+
+## Landing map-first (design options)
+
+**Status:** Product brainstorm — not scoped or implemented (August 2026).
+
+### Vision (stakeholder sketch)
+
+Make the **front page a map of every listing** that has coordinates in `services.json` (~400+ pins today, mix of community and FSD). **Tap a pin** → **Leaflet popup** in the spirit of the [Community Connections Map embed](../porirua_connections_map/) (type/theme pills, short description, location, website). Popup actions such as **Show me more** or **Take me to** move the person into **full browse** (list + filters + optional sticky map), rather than leaving them on map-only.
+
+**Tension:** Today, **Find support** and **Connect with community** are **mutually exclusive browse modes** (`directory.js` `setMode` + `filterServices`: support = FSD + categorised rows; community = Connections Map grain with org-type chips). If someone explores the map through a **community** lens (e.g. climate / Assembly theme) and deep-links into browse with those filters **locked**, they may never see the large **FSD-only** slice — even though those services share the same map.
+
+**Current baseline (for comparison):** Landing is **path-first**, not map-first: header subnav **I would like to…** with **Find support** / **Connect with community**; `#view-landing` is empty; no map until browse and (on desktop) **Show map** / three-column default. Map popups in browse are minimal (name ± distance). Connections Map popups are richer (org type, themes, initiatives, labels, **Visit website**).
+
+### Design approaches
+
+| # | Approach | What the user sees | Pros | Cons |
+|---|----------|-------------------|------|------|
+| **A** | **Map-all landing, browse-all on “View in directory”** | Home = full-screen (or hero) map, all mappable listings. Popup → **View in directory** opens browse with **that listing highlighted/ scrolled** but **no need/org-type chips pre-selected**; mode (`support` vs `community`) inferred from row (`source` / `communityFilters`) only for sidebar context, not as a hidden filter. Header keeps **Find support** / **Connect with community** as explicit second entries. | Simple mental model (“map = everything here”); avoids trapping help-seekers in a community-only subset; reuses one dataset. | Loses “map as filtered preview of my path”; two ways to enter browse may feel redundant; mode inference wrong for edge rows (community org with FSD categories, schools). |
+| **B** | **Map-all landing, browse **with** context (filtered handoff)** | Popup → **Take me to** opens browse in the **matching path** and **applies** the most relevant chip (e.g. org type, primary need category, or map legend filter the user had on). | Feels personalised; mirrors Connections Map “filter then click org”. | **Highest risk** for missing FSD: community filters exclude pure FSD rows; need chips hide non-matching support lines; user may not know another 300+ listings exist. |
+| **C** | **Hybrid: map + retained dual entry (no single map-only trap)** | Landing = **split**: map occupies main area **and** subnav path buttons stay prominent (current pattern elevated, not replaced). Optional light map legend (Support / Community / Both) filters **pins only** on landing; entering browse **clears** landing legend unless user opts in. Popup CTAs: **More about this place** (focused browse, filters off) vs **Browse all [support \| community]** (mode + empty chips). | Respects existing “I would like to…” UX; makes FSD vs community explicit; good for accessibility (path buttons remain primary for screen-reader / no-map users). | Busier first screen; map legend adds state to explain; still two concepts (explore vs choose path). |
+| **D** | **Map-first with discovery prompts (recommended variant of A/C)** | Same as **A** or **C**, plus **non-blocking discovery**: when browse opens from a **community** pin or with community mode, show a **sticky dismissible banner** — e.g. *“Also browse all support services in Porirua”* → `#support` with chips cleared; symmetric optional banner on support browse for community groups. Popup primary CTA: **View in directory** (focused row, **filters off**); secondary: **Browse all on map** (return to landing map). | Balances exploration with FSD visibility; low commitment (dismissible); testable in usability sessions. | Extra copy and UI chrome; banner fatigue if overused; needs analytics to see if anyone clicks through. |
+
+### Default recommendation (for stakeholder review)
+
+**Prefer D built on A:**
+
+1. **Landing:** Map of **all** mappable listings (support + community), with **Find support** / **Connect with community** still in the header subnav for people who want path-first entry (aligns with [Accessibility (target)](#accessibility-target) — map never the only path).
+2. **Popup:** Connections Map–style summary (type, categories/themes, address, truncated description, website). Primary: **View in directory** → browse in the **appropriate mode** for that row, **scroll/focus that card**, **no category/org-type lock**. Secondary: **Open website** where relevant.
+3. **Discovery:** If the person entered from a community context or is in **Connect with community** browse, show sticky **Also browse all support services** (link to `#support`, filters cleared). Optional inverse for community-curious support browsers.
+4. **Do not** default popup handoff to **B** (pre-filtered browse) unless product explicitly prioritises “filtered journey” over FSD discovery — document that trade-off in requirements if chosen.
+
+**Open product checks:** Should schools appear on the all-pins map or only under community path? Should duplicate ids (same org, many FSD lines) cluster or show multiple pins? Popup **Show me more** vs **Take me to** naming — user-test with stressed mobile users.
+
+### Technical reuse (implementation sketch)
+
+| Piece | Reuse today | Notes |
+|-------|-------------|--------|
+| **Data** | Same `services.json` + `loadServices` | Landing map = `mappableServices(services)` with a **landing** filter (all coords), not `filterServices` until browse. |
+| **Leaflet** | `ensureMap()`, tile layer, `SERVICE_MARKER_STYLE`, `fitBounds` | Either **move** `#directory-map` into `#view-landing` for map-first or **second lazy map** on landing (avoid double init cost — prefer one map DOM moved between views). |
+| **Popups** | Browse uses minimal `bindPopup`; Connections Map has rich inline HTML in `porirua_connections_map/map.js` / embed snippet | Extract or mirror a **`buildServicePopup(service)`** (esc + categories/community chips + formatted description snippet); wire **View in directory** as `setMode(...)` + `history`/`hash` + scroll to `#card-{id}`. |
+| **Routing** | `parseHash` / `setMode` / `setView` | Extend hash or query for `?service=id` focus; landing view toggles `data-view="landing-map"` vs current empty landing. |
+| **Mobile** | Browse already stacks filters → map → cards | Map-first landing likely **full-width map** with bottom sheet or popup; keep **path subnav** reachable without scrolling past map; respect `scrollWheelZoom: false` pattern. |
+| **E2E** | Landing tests expect **no map** today | Map-first would need new smokes behind a flag (e.g. `?landing=map`) or updated default expectations after product sign-off. |
+
+**Spike note:** A credible `?landing=map` prototype is **more than ~50 lines** (landing markup, CSS, landing map lifecycle, rich popups, handoff to browse). **No code spike** in repo until stakeholders pick an option; use this section for review.
 
 ---
 
