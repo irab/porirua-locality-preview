@@ -17,7 +17,7 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | Document | Audience | Purpose |
 |----------|----------|---------|
 | [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Porirua Locality, funders | Phase 1 / Phase 2 scope, budget, plain-language requirements |
-| [potential-changes-and-insights.md](./potential-changes-and-insights.md) | Team, stakeholders | MVP gaps, layout/near-me notes, [landing map-first options](./potential-changes-and-insights.md#landing-map-first-design-options), Phase 1.5/2 |
+| [potential-changes-and-insights.md](./potential-changes-and-insights.md) | Team, stakeholders | MVP gaps, [click-minimisation UX](./potential-changes-and-insights.md#ux-inspiration-from-directory-examples-click-minimisation), [landing map-first](./potential-changes-and-insights.md#landing-map-first-design-options), Phase 1.5/2 |
 | [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements (regenerate after v1.3 md changes) |
 | [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | System context, data flow, hosting at directory.bsky.nz |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Developers | Phase 1 data model, FSD rules, merge, overrides |

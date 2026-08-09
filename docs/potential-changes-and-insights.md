@@ -290,6 +290,140 @@ Make the **front page a map of every listing** that has coordinates in `services
 
 ---
 
+## UX inspiration from directory examples (click-minimisation)
+
+**Date:** 10 August 2026  
+**Audience:** Stakeholders and developers (design analysis only — not signed scope)  
+**Sources:** [Human Services Directory Examples deck](./slides/human-services-directory-examples.html) and [overview](./human-services-directory-examples-overview.md); live **Your Porirua Directory** behaviour (`porirua_directory/`); gaps elsewhere in this note (org/subservices, accessibility, landing map-first).
+
+**Two jobs the product must do well**
+
+| Person | Goal | Success looks like |
+|--------|------|-------------------|
+| **Under stress** | “I need food / safety / someone to talk to — **call now**” | Few taps from open site to **`tel:`** dialling; crisis numbers never buried |
+| **Community-minded** | “Find a **group** (climate, kai, marae, school hub…)” | See **clusters** of orgs and themes, not 13 identical NGO cards |
+
+Phase 1 already aligns with Ask Izzy–style **plain need chips**, dual paths (**Find support** / **Connect with community**), **`tel:` links on cards**, rich **map popups** (community rows), sticky **crisis footer**, and **search-as-you-type** once search is open. The friction is mostly **extra taps before the right row is visible**, **phone below long text**, and **flat FSD cards** instead of org/community clusters.
+
+### Patterns from other directories → Porirua
+
+| Example | Pattern that works | Applies to Porirua? | Suggested improvement |
+|---------|-------------------|----------------------|------------------------|
+| **Ask Izzy** | Home = “What do you need?” **category tiles**; results tuned for **mobile** and crisis language | **Yes** — we already use need chips on **Find support** | Add **landing shortcuts** (e.g. Food, Housing, Feeling unsafe) that jump straight to `#support` + chip selected; consider **category landing** copy (“Food in Porirua”) above results |
+| **211** | **Dial first** — human help for compound needs; web is secondary | **Partly** — no call centre in budget | Keep **1737 / 111 / Refuge** in sticky footer; optional **“Need help choosing?”** line pointing to local front-line numbers (not a 211 clone) |
+| **NZ Family Services Directory** | Keyword + region + category; **official** listings | **Data only** for us — not UX model | Don’t copy FSD browse; use FSD as **feed** behind Porirua filters; surface **provider + service** clearly when org grouping lands (Phase 2) |
+| **Sorted UK** | **One action** (postcode) → all local hardship schemes | **Adapt** — Porirua is one city | **Suburb or “near me”** as optional second tap after path (demo **Near me** exists behind `?demo=1`); default list stays **all Porirua** so nobody is locked out |
+| **Kore Hiakai / Connections Map** | **Map + type filters**; community **trust** and dignity language | **Yes** — community path + map popups mirror this | **Landing map-first (option D)** with theme/org-type **legend on pins**; popup **Call** + **View in directory**; handoff without hiding FSD (see [Landing map-first](#landing-map-first-design-options)) |
+| **Homeless England** | **Deep filters** within one domain (housing/homelessness) | **Later** — specialist slice | If stakeholders want a **housing-focused view**, reuse need chip **Housing** + curated banner — not a separate product |
+| **ORServices** | **Call / email / website** actions on records; export filtered lists | **Yes** for action buttons | **Primary “Call” button** on card and popup (not only a text link); **Print list** already supports referral-style shortlists |
+
+**Porirua MVP today (honest click budget)**
+
+| Flow step | Find support → call | Connect with community → group |
+|-----------|---------------------|--------------------------------|
+| Path choice | **Find support** (header) | **Connect with community** |
+| Narrow results | Optional **need chip**; full list if none | Optional **org-type chip** (e.g. Community groups) |
+| Search | **Search icon** → field → type (live filter) | Same |
+| Map | Desktop: map often **on** (three-column); tap pin → popup → **phone link** | Same; popups richer for community rows |
+| Call | Tap **phone** on card or popup | Usually **website** first; phone when present |
+| Crisis | **Always** visible footer (`tel:`) | Same |
+
+**Gap vs “2 taps to call”:** Minimum is often **path (1) + chip or scroll (1) + phone (1) = 3+**; search adds **open search (1)** first. Duplicate **Salvation Army–style** cards increase scrolling before the right **Call**.
+
+### Prioritised recommendations
+
+**Quick wins (Phase 1 polish — no schema change)**
+
+| Priority | Change | Why |
+|----------|--------|-----|
+| **P0** | **Prominent Call button** on every card and map popup when `phone` exists (large touch target, above the fold on mobile) | Matches 211/ORServices “action first”; `tel:` already works — this is layout and hierarchy |
+| **P0** | **Need shortcuts on landing** (3–6 tiles under “I would like to…”) → `#support` + chip pre-selected | Ask Izzy entry pattern; saves one browse step for food/housing/safety |
+| **P1** | **Community shortcuts on landing** (e.g. Community groups, Food / Pātaka Kai, Marae) → `#community` + chip | Same for “find a group” journeys |
+| **P1** | **Search visible on browse** (or open by default on mobile support path) | Removes expand-search tap; search-as-you-type already implemented |
+| **P1** | **Pin popup: Call as primary**, Website secondary; optional **Add to list** in popup | One-tap call from map without scrolling cards |
+| **P2** | **“Recently viewed” or session strip** (last 3 cards opened) | Low-cost recall when comparing options (session-only, like My list) |
+| **P2** | **Sort/filter: “With phone number”** on support browse | Helps stressed users skip rows they cannot act on immediately |
+
+**Phase 1.5 (pipeline + light UX)**
+
+| Priority | Change | Why |
+|----------|--------|-----|
+| **P1** | **Stable per-service ids** + clearer card titles (`SERVICE_NAME` where helpful) | Less duplicate-looking cards; favourites/overrides target one row ([Phase 1.5](#phase-15--pipeline-quick-win-not-started-in-code)) |
+| **P2** | **Near me** as productised control (not only `?demo=1`) with clear privacy copy | Sorted UK–style “what’s close” without postcode infrastructure |
+| **P2** | **Category landing headings** (“Food / kai in Porirua — N places”) | Orientation after shortcut or chip |
+
+**Phase 2 (structure + discovery)**
+
+| Priority | Change | Why |
+|----------|--------|-----|
+| **P0** | **One org card, many subservices** (expand / accordion) | Fixes NGO **cluster** problem; community map grain ([Org / subservices deficit](#org--subservices-deficit-highlight)) |
+| **P1** | **Map pin clustering** (or one pin per org with count badge) | “Find groups” on map — see **density** of community orgs, not stacked identical pins |
+| **P1** | **Landing map-first (option D)** — all pins, rich popup, **View in directory** without filter lock | Kore Hiakai + Connections Map exploration; discovery banner for FSD ([Landing map-first](#landing-map-first-design-options)) |
+| **P2** | Search matches **subservice names** and org aliases | Homeless England–depth without separate silos |
+| **P2** | **Themed community views** (e.g. climate / Assembly themes from sheet) as first-class chips or legend | Directly supports “climate group” intent |
+
+**Explicit user flows (target vs today)**
+
+**A — Stressed user: food + phone in ~2 taps (target)**
+
+1. **Tap “Food / kai”** on landing (shortcut) → browse opens, chip on, list filtered.  
+2. **Tap “Call”** on the first suitable card (or map pin popup **Call**).
+
+*Today:* Replace step 1 with **Find support** → **Food chip** (2 taps before list narrows); step 2 often requires **scroll past description** to phone link. Crisis path is faster: **footer 1737** = **1 tap** from any page (keep emphasising in testing).
+
+**B — Stressed user: “I don’t know the word” (target)**
+
+1. **Find support** (or default landing path).  
+2. **Open search / type** “food bank” (search already filters as you type).  
+3. **Call**.
+
+*Today:* Add **one tap** if search stays collapsed — recommend visible search on support browse.
+
+**C — Find a climate / community group (target)**
+
+1. **Connect with community** (or landing **Community groups** shortcut).  
+2. Optional **theme chip** or map **legend** (Phase 2 / sheet themes).  
+3. **Tap org** on map or card → **website** or **Call**; **Add to list** to compare.
+
+*Today:* **Community groups** chip + scroll/map; **no theme filter** for “climate” unless search hits description; duplicate FSD rows do not affect community path but **map-first handoff** must not trap users in community-only subset (prefer option **D**).
+
+**D — Referral worker: shortlist to print (already strong)**
+
+1. Filter/browse → **Add to your list** on several cards.  
+2. **My list** → **Print list**.
+
+Aligns with ORServices “export filtered list”; keep print styles and phones on printed rows.
+
+### Tie-in: landing map-first brainstorm
+
+If stakeholders adopt **map-first landing (option D)**:
+
+- **Click-minimisation for community:** pan map → tap pin → **Call / Website** in popup (2–3 taps) without opening full browse.  
+- **Click-minimisation for support:** same popup **Call**; primary **View in directory** should open browse with **filters cleared** and card focused so FSD-only services stay discoverable.  
+- **Clusters:** multiple FSD rows at one address may need **marker clustering** or org grouping before map-first feels trustworthy.  
+- **Accessibility:** path buttons (**Find support** / **Connect with community**) stay primary; map is **enhancement** ([Accessibility (target)](#accessibility-target)).
+
+### Wireframe notes (prose only)
+
+1. **Landing with shortcuts:** Header unchanged (“I would like to…”). Below it, a **grid of large tappable tiles** (Food, Housing, Feeling unsafe, Community groups, Pātaka Kai). Each tile jumps into browse with the right path + chip. Footer crisis strip unchanged.
+
+2. **Support card — action first:** Card title row unchanged; immediately under title, a **full-width “Call 04…” button** (plum/crimson); description collapses to **“Read more”** on mobile so the button stays above the fold.
+
+3. **Map popup — dual primary:** Popup title + one line of type/themes; **row of two buttons**: **[ Call ]** and **[ More in list ]**; tertiary “Visit website”. Matches Connections Map richness without forcing browse.
+
+4. **Browse sidebar — search always on:** Replace icon-only search with a **visible field** under Back; chips below; result count unchanged. Optional compact **“Has phone”** toggle under chips.
+
+5. **Phase 2 org card:** Single **Salvation Army Porirua** header; chevron **“12 services”** expands inline list of service lines each with its own **Call** if numbers differ; map shows **one pin** with badge “12”.
+
+### Stakeholder questions (UX)
+
+1. Should **landing shortcuts** replace empty `#view-landing` before map-first, or only accompany map-first (hybrid **C/D**)?  
+2. Is **“Call” as a button** acceptable on every listing that has a number (including after-hours mobiles)?  
+3. For **community themes** (climate, Assembly pillars), prefer **search**, **map legend**, or **new chips**?  
+4. What is the **maximum acceptable tap count** to dial from cold start in usability tests (2 vs 3)?
+
+---
+
 ## Related documentation
 
 | Document | Use for |
@@ -303,6 +437,7 @@ Make the **front page a map of every listing** that has coordinates in `services
 | [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Hosting, data flow, Phase 2 target architecture |
 | [README.md](./README.md) | Full docs index |
 | [porirua_directory/README.md](../porirua_directory/README.md) | App layout, npm scripts, UI behaviour |
+| [human-services-directory-examples-overview.md](./human-services-directory-examples-overview.md) | Reference directories (Ask Izzy, 211, FSD, ORServices, …) |
 
 ---
 
