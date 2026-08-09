@@ -98,7 +98,7 @@ a:hover {
 
 .site-topnav__inner {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) minmax(0, max-content);
   align-items: center;
   gap: 0.5rem 0.75rem;
   max-width: 72rem;
@@ -116,7 +116,11 @@ a:hover {
 .site-product-title {
   justify-self: center;
   text-align: center;
-  max-width: min(100%, 22rem);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--font-heading);
   font-size: clamp(1.25rem, 3.4vw, 1.75rem);
   font-weight: 700;
@@ -903,6 +907,9 @@ body[data-view="about"] .page-foot .site-footer {
     grid-row: 2;
     width: 100%;
     max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
     font-size: clamp(1.2rem, 5vw, 1.45rem);
     line-height: 1.4;
   }
@@ -933,6 +940,12 @@ body[data-view="about"] .page-foot .site-footer {
 @media (min-width: 640px) {
   .crisis__inner {
     font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 481px) {
+  .site-product-title {
+    font-size: clamp(1.1rem, 2.6vw, 1.45rem);
   }
 }
 
