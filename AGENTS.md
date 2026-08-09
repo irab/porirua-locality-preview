@@ -28,6 +28,7 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 | [`docs/README.md`](docs/README.md) | Full docs index |
 | [`docs/porirua-services-directory-requirements.md`](docs/porirua-services-directory-requirements.md) | Product scope, phases, changelog |
 | [`docs/potential-changes-and-insights.md`](docs/potential-changes-and-insights.md) | MVP gaps, org/subservices deficit, roadmap options |
+| [`docs/issues/README.md`](docs/issues/README.md) | Fixed and recurring bugs (issues directory) |
 | [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | System context, hosting |
 | [`docs/porirua-directory-phase1-spec.md`](docs/porirua-directory-phase1-spec.md) | Data model, FSD rules, merge, overrides |
 | [`docs/MVP-RUNBOOK.md`](docs/MVP-RUNBOOK.md) | Rebuild data, deploy, test |
