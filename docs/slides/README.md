@@ -1,5 +1,36 @@
 # Slide decks
 
+## Your Porirua Directory — MVP walkthrough
+
+**File:** [directory-mvp-walkthrough.html](./directory-mvp-walkthrough.html)
+
+Stakeholder walkthrough of **Phase 1 MVP**: what shipped on the directory (browse layout, map, My list, crisis footer, data pipeline), geocode QA, near-me demo, known org/subservices gap, accessibility target, landing map-first options, and Phase 1.5/2 roadmap. Several slides embed the local app in iframes.
+
+### Present locally
+
+**Important:** Start the HTTP server from the **repository root** (not `docs/slides/`). Embeds load `../../porirua_directory/index.html` relative to this deck.
+
+```bash
+cd /path/to/porirua-locality-preview
+python3 -m http.server 8080
+```
+
+Open: [http://localhost:8080/docs/slides/directory-mvp-walkthrough.html](http://localhost:8080/docs/slides/directory-mvp-walkthrough.html)
+
+Ensure `porirua_directory/index.html` and `porirua_directory/data/services.json` exist (run `cd porirua_directory && npm run build:data` if embeds look empty).
+
+> Reveal.js loads from a CDN — internet access when presenting.
+
+### Controls
+
+Same as the examples deck: → / Space next, ← previous, **F** fullscreen, **Esc** overview, **?** help.
+
+### Export to PDF
+
+Add `?print-pdf` to the URL before printing (background graphics on). Embedded iframes may not print fully — use live presentation for demos.
+
+---
+
 ## Human Services Directory Examples
 
 **File:** [human-services-directory-examples.html](./human-services-directory-examples.html)

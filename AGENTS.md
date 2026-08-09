@@ -60,7 +60,8 @@ python3 -m http.server 5173
 
 ```bash
 python3 -m http.server 8080
-# open docs/slides/human-services-directory-examples.html
+# docs/slides/directory-mvp-walkthrough.html (MVP stakeholder deck; embeds porirua_directory/)
+# docs/slides/human-services-directory-examples.html
 ```
 
 ## Commits and AI transparency

@@ -27,12 +27,13 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |
 | [human-services-directory-examples-overview.md](./human-services-directory-examples-overview.md) | Team, stakeholders | Comparable directories (Ask Izzy, 211, FSD, etc.) |
 | [human-services-directory-examples-overview.pdf](./human-services-directory-examples-overview.pdf) | Same (print/PDF) | Export of examples overview |
+| [slides/directory-mvp-walkthrough.html](./slides/directory-mvp-walkthrough.html) | Stakeholders | Reveal.js MVP walkthrough (live directory embeds) |
 | [slides/human-services-directory-examples.html](./slides/human-services-directory-examples.html) | Workshops | Reveal.js deck (non-technical) |
-| [slides/README.md](./slides/README.md) | Presenters | How to run and export the deck |
+| [slides/README.md](./slides/README.md) | Presenters | How to run and export the decks |
 | [superpowers/plans/2026-07-30-porirua-services-directory-mvp.md](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md) | Developers | Step-by-step MVP build (`porirua_directory/`) |
 | [AI-CONTRIBUTING.md](./AI-CONTRIBUTING.md) | Contributors, agents | Cursor/AI workflow, commits, which docs to update |
 
-## Present the examples deck
+## Present slide decks
 
 From the **repository root**:
 
@@ -40,7 +41,10 @@ From the **repository root**:
 python3 -m http.server 8080
 ```
 
-Open [http://localhost:8080/docs/slides/human-services-directory-examples.html](http://localhost:8080/docs/slides/human-services-directory-examples.html)
+- MVP walkthrough (directory embeds): [http://localhost:8080/docs/slides/directory-mvp-walkthrough.html](http://localhost:8080/docs/slides/directory-mvp-walkthrough.html)
+- Human Services examples: [http://localhost:8080/docs/slides/human-services-directory-examples.html](http://localhost:8080/docs/slides/human-services-directory-examples.html)
+
+See [slides/README.md](./slides/README.md) for server root requirements and PDF export.
 
 ## Regenerating PDFs
 

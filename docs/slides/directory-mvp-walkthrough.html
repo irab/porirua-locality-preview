@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Porirua Directory — MVP walkthrough</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Source+Sans+3:wght@400;600;700&display=swap");
+
+    :root {
+      --plum: #60174c;
+      --crimson: #cf2028;
+      --cream: #fdeeee;
+      --blush: #f5bfb8;
+      --text: #3c1b30;
+      --muted: #6b5563;
+    }
+
+    .reveal {
+      font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    .reveal h1, .reveal h2, .reveal h3 {
+      font-family: "DM Serif Display", Georgia, serif;
+      color: var(--plum);
+      text-transform: none;
+      letter-spacing: -0.02em;
+    }
+
+    .reveal h1 { font-size: 2em; margin-bottom: 0.35em; }
+    .reveal h2 { font-size: 1.45em; margin-bottom: 0.45em; }
+    .reveal h3 {
+      font-size: 0.95em;
+      color: var(--crimson);
+      font-family: "Source Sans 3", sans-serif;
+      font-weight: 700;
+      margin-top: 0.5em;
+    }
+
+    .reveal .slides { text-align: left; }
+    .reveal .slides section { padding: 16px 36px; }
+    .reveal .title-slide { text-align: center !important; }
+    .reveal .title-slide .subtitle { color: var(--muted); font-size: 0.92em; margin-top: 1.2em; }
+    .reveal .title-slide .meta { font-size: 0.72em; color: var(--muted); margin-top: 1.8em; }
+
+    .reveal ul { display: block; margin-left: 0; }
+    .reveal li { margin-bottom: 0.4em; line-height: 1.32; font-size: 0.82em; }
+    .reveal li::marker { color: var(--crimson); }
+    .reveal p { line-height: 1.38; margin-bottom: 0.5em; font-size: 0.82em; }
+    .reveal a { color: var(--crimson); }
+
+    .reveal .tag {
+      display: inline-block;
+      background: var(--cream);
+      color: var(--plum);
+      font-size: 0.52em;
+      font-weight: 700;
+      padding: 0.22em 0.65em;
+      border-radius: 999px;
+      margin-bottom: 0.6em;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .reveal table {
+      font-size: 0.58em;
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.5em 0;
+    }
+
+    .reveal table th {
+      background: var(--plum);
+      color: #fff;
+      font-weight: 600;
+      padding: 0.45em 0.6em;
+      text-align: left;
+    }
+
+    .reveal table td {
+      padding: 0.4em 0.6em;
+      border-bottom: 1px solid var(--blush);
+      vertical-align: top;
+    }
+
+    .reveal table tr:nth-child(even) td { background: #fffafa; }
+
+    .reveal .callout {
+      background: var(--cream);
+      border-left: 4px solid var(--crimson);
+      padding: 0.65em 0.9em;
+      font-size: 0.72em;
+      margin-top: 0.6em;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .reveal .callout strong { color: var(--plum); }
+
+    .reveal .compact { font-size: 0.78em; }
+    .reveal .tiny { font-size: 0.55em; }
+
+    .reveal .progress span { background: var(--crimson); }
+    .reveal .slide-number { color: var(--muted); font-size: 14px; }
+
+    .reveal .footer-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--plum), var(--crimson));
+      z-index: 20;
+    }
+
+    .reveal .embed-slide {
+      display: grid;
+      grid-template-columns: minmax(200px, 28%) 1fr;
+      gap: 1em;
+      align-items: start;
+      height: 100%;
+    }
+
+    .reveal .embed-slide .talking-points {
+      font-size: 0.72em;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .reveal .embed-slide .talking-points h3 { margin-top: 0; }
+
+    .reveal .embed-frame-wrap {
+      border: 2px solid var(--blush);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(96, 23, 76, 0.08);
+    }
+
+    .reveal .embed-frame-wrap iframe {
+      display: block;
+      width: 100%;
+      height: 70vh;
+      border: 0;
+    }
+
+    .reveal .embed-caption {
+      font-size: 0.5em;
+      color: var(--muted);
+      margin-top: 0.35em;
+    }
+
+    @media (max-width: 900px) {
+      .reveal .embed-slide {
+        grid-template-columns: 1fr;
+      }
+      .reveal .embed-frame-wrap iframe {
+        height: 55vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="footer-bar" aria-hidden="true"></div>
+
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 Title -->
+      <section class="title-slide" data-background-color="#fdeeee">
+        <span class="tag">Porirua Locality</span>
+        <h1>Your Porirua Directory</h1>
+        <p class="subtitle">Phase 1 MVP — what shipped, what we learned, what’s next</p>
+        <p class="meta">Interactive walkthrough for stakeholders · August 2026</p>
+        <p class="meta tiny" style="margin-top:1em;">Serve from repo root: <code>python3 -m http.server 8080</code></p>
+      </section>
+
+      <!-- 2 Agenda -->
+      <section>
+        <h2>Agenda</h2>
+        <ol class="compact">
+          <li>Live site and browse experience (embedded previews)</li>
+          <li>Data pipeline, geo filter fixes, geocode QA</li>
+          <li>Near-me demo, My list, crisis footer (1737)</li>
+          <li>Known gap: duplicate org cards from FSD</li>
+          <li>Accessibility target and landing map-first options</li>
+          <li>Phase 1.5 / Phase 2 roadmap and open questions</li>
+        </ol>
+        <div class="callout"><strong>Tip:</strong> Arrow keys or swipe to move. Embeds load the local app — keep the HTTP server running from the repository root.</div>
+      </section>
+
+      <!-- 3 Production -->
+      <section>
+        <h2>Production today</h2>
+        <p><strong>Public URL:</strong> <a href="https://directory.bsky.nz" target="_blank" rel="noopener">https://directory.bsky.nz</a></p>
+        <p>Phase 1 MVP merges <strong>Community Connections Map</strong> organisations with a <strong>Porirua-filtered</strong> slice of the NZ Family Services Directory — one static <code>services.json</code>, no login.</p>
+        <ul>
+          <li><strong>Find support</strong> or <strong>Connect with community</strong> — two browse paths</li>
+          <li>Search, need chips, optional map (~434 listings after Aug 2026 rebuild)</li>
+          <li><strong>About</strong> page, Porirua Locality branding, sticky crisis numbers</li>
+        </ul>
+        <p class="tiny">This deck embeds <code>../../porirua_directory/</code> for offline-friendly demos — same build as production when data is current.</p>
+      </section>
+
+      <!-- 4 Browse layout embed -->
+      <section>
+        <div class="embed-slide">
+          <div class="talking-points">
+            <span class="tag">Shipped UX</span>
+            <h2>Three-column browse</h2>
+            <h3>Talking points</h3>
+            <ul>
+              <li>Desktop default: filters left, cards centre, sticky map right when map is on</li>
+              <li>Full list first — map is optional on smaller screens</li>
+              <li>Single-select need chips refit map pins (brand purple / crimson)</li>
+              <li><strong>Back</strong> returns to path choice; subnav “I would like to…” on landing only</li>
+            </ul>
+          </div>
+          <div>
+            <div class="embed-frame-wrap">
+              <iframe
+                title="Find support browse — three column"
+                src="../../porirua_directory/index.html#support"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                loading="lazy"></iframe>
+            </div>
+            <p class="embed-caption">Local preview · <code>#support</code> · three-column at ≥1024px</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 Mobile -->
+      <section>
+        <div class="embed-slide">
+          <div class="talking-points">
+            <span class="tag">Mobile-first</span>
+            <h2>Phone layout</h2>
+            <h3>Talking points</h3>
+            <ul>
+              <li>Below 1024px: stack is <strong>filters → map (when shown) → results</strong></li>
+              <li>Plain language, touch-friendly controls, crisis footer always visible</li>
+              <li>Resize this window or open the URL on a phone while presenting</li>
+              <li>E2E tests use 1280px for desktop layout; mobile is manual smoke</li>
+            </ul>
+          </div>
+          <div>
+            <div class="embed-frame-wrap">
+              <iframe
+                title="Landing — mobile-friendly"
+                src="../../porirua_directory/index.html"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                loading="lazy"></iframe>
+            </div>
+            <p class="embed-caption">Landing path choice · same URL works on device width</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 Data pipeline -->
+      <section>
+        <h2>Data pipeline &amp; geo fixes</h2>
+        <p><strong>Build:</strong> <code>npm run build:data</code> — FSD import → Porirua filter → merge with Connections Map → <code>services.json</code>.</p>
+        <ul>
+          <li>Recent work reduced <strong>false positives</strong> in the FSD slice (address-context filter, exclusion audit)</li>
+          <li>Review <code>data/fsd-porirua-excluded.json</code> reason codes after each refresh</li>
+          <li><code>overrides.json</code> — hide or patch rows without a full rebuild workflow</li>
+          <li>Community row wins on dedupe (name + map coordinates); FSD duplicate hidden</li>
+        </ul>
+        <div class="callout"><strong>Not fixed by geo work:</strong> large NGOs still appear as <strong>many similar cards</strong> — FSD is one row per service line (see org gap slide).</div>
+        <p class="tiny">Docs: MVP-RUNBOOK, fsd-porirua-filter-rationale, issues directory</p>
+      </section>
+
+      <!-- 7 Geocode QA -->
+      <section>
+        <h2>Geocode QA workflow</h2>
+        <p>After inclusion, import runs <strong>post-filter geocode QA</strong> on FSD rows that made the slice.</p>
+        <ul>
+          <li>Flags suspicious coordinates (e.g. offshore Kapiti/Cook Strait box, out-of-bounds)</li>
+          <li>Output: <code>data/fsd-porirua-geocode-flags.json</code> (regenerated, gitignored)</li>
+          <li>Editors cross-check flagged rows before publish — map pins depend on good lat/lng</li>
+          <li>Script: <code>fsd-geocode-qa.mjs</code> + unit tests in pipeline</li>
+        </ul>
+        <table class="compact">
+          <tr><th>Step</th><th>Action</th></tr>
+          <tr><td>Import</td><td><code>npm run import:fsd</code> or full <code>build:data</code></td></tr>
+          <tr><td>Review</td><td>Open geocode flags + excluded JSON</td></tr>
+          <tr><td>Fix</td><td>Override hide/patch or upstream FSD correction</td></tr>
+          <tr><td>Publish</td><td>Commit <code>services.json</code> when satisfied</td></tr>
+        </table>
+      </section>
+
+      <!-- 8 Near-me demo -->
+      <section>
+        <div class="embed-slide">
+          <div class="talking-points">
+            <span class="tag">Demo only</span>
+            <h2>Near me (<code>?demo=1</code>)</h2>
+            <h3>Talking points</h3>
+            <ul>
+              <li><strong>Find support near me</strong> — 15&nbsp;km radius via browser GPS (session-only, not stored on server)</li>
+              <li>Layout picker compares three-column vs legacy top map</li>
+              <li>Production URLs omit <code>demo=1</code>; three-column remains default</li>
+              <li>Phase 2 decision: first-class entry vs stay experimental</li>
+            </ul>
+          </div>
+          <div>
+            <div class="embed-frame-wrap">
+              <iframe
+                title="Near-me and layout demo"
+                src="../../porirua_directory/index.html?demo=1#support"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                loading="lazy"></iframe>
+            </div>
+            <p class="embed-caption"><code>?demo=1#support</code> · geolocation prompt in iframe if you interact inside</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9 My list -->
+      <section>
+        <div class="embed-slide">
+          <div class="talking-points">
+            <span class="tag">Session notepad</span>
+            <h2>My list</h2>
+            <h3>Talking points</h3>
+            <ul>
+              <li><strong>Add to your list</strong> on cards — shortlist orgs to call or compare</li>
+              <li>Session-only (<code>sessionStorage</code>); nothing saved on Porirua servers</li>
+              <li><strong>Print list</strong> for paper handoff; crisis footer hidden in print view</li>
+              <li>Ask stakeholders: is session-only enough, or would saved lists need Phase 2 privacy design?</li>
+            </ul>
+          </div>
+          <div>
+            <div class="embed-frame-wrap">
+              <iframe
+                title="My list view"
+                src="../../porirua_directory/index.html#mylist"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                loading="lazy"></iframe>
+            </div>
+            <p class="embed-caption"><code>#mylist</code> · add favourites on browse slides first for a fuller preview</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10 Crisis footer -->
+      <section>
+        <div class="embed-slide">
+          <div class="talking-points">
+            <span class="tag">Every page</span>
+            <h2>Crisis footer &amp; 1737</h2>
+            <h3>Talking points</h3>
+            <ul>
+              <li>Sticky footer: <strong>Need to talk? 1737</strong>, emergency numbers, plain language</li>
+              <li>Present on landing, browse, My list, and About</li>
+              <li>Aligns with 211-style “help now” — directory complements human support</li>
+              <li>Accessibility target: footer must stay reachable and operable (Phase 1.5 audit scope)</li>
+            </ul>
+          </div>
+          <div>
+            <div class="embed-frame-wrap">
+              <iframe
+                title="Browse with crisis footer"
+                src="../../porirua_directory/index.html#support"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                loading="lazy"></iframe>
+            </div>
+            <p class="embed-caption">Scroll inside embed to confirm footer on narrow viewports</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11 Org duplication -->
+      <section>
+        <h2>Org / subservices gap</h2>
+        <p>Largest <strong>product vs data</strong> mismatch from MVP testing.</p>
+        <table>
+          <tr><th>Users expect</th><td>One organisation → list of offerings (Connections Map grain)</td></tr>
+          <tr><th>FSD provides</th><td>One CSV row per service line — repeated provider text</td></tr>
+          <tr><th>Phase 1 UI</th><td>One card per FSD row; duplicate slugs possible (e.g. Salvation Army Porirua ~13 cards)</td></tr>
+        </table>
+        <ul>
+          <li>Dedupe is <strong>community vs FSD only</strong> — not FSD-vs-FSD grouping</li>
+          <li>Directory is trustworthy for “something exists in Porirua” but can feel repetitive</li>
+        </ul>
+        <div class="callout"><strong>Fix needs product choice:</strong> Phase 1.5 stable service ids → Phase 2 org hierarchy + grouped UI (~1–2 weeks UX-dependent).</div>
+      </section>
+
+      <!-- 12 Accessibility -->
+      <section>
+        <h2>Accessibility (target)</h2>
+        <p>Public resource for people under stress — aim for <strong>high practical accessibility</strong>, not a compliance claim today.</p>
+        <table>
+          <tr><th>Phase 1 shipped</th><td>Skip link, landmarks, aria-live results, labelled favourites, print-friendly My list</td></tr>
+          <tr><th>Gap</th><td>No formal WCAG audit, axe gates, or assistive-technology test programme</td></tr>
+          <tr><th>Phase 1.5</th><td>WCAG 2.2 AA baseline on public pages; fix critical/serious audit findings</td></tr>
+          <tr><th>Phase 2</th><td>AA everywhere users transact; map as enhancement with list-first alternatives</td></tr>
+        </table>
+        <p class="compact">Budget accessibility explicitly in 1.5/2 — comparable importance to accurate data.</p>
+      </section>
+
+      <!-- 13 Landing map-first -->
+      <section>
+        <h2>Landing map-first (options)</h2>
+        <p class="compact"><strong>Not implemented</strong> — brainstorm for feedback. Today: path-first landing, map in browse.</p>
+        <table class="tiny">
+          <thead>
+            <tr><th>#</th><th>Approach</th><th>Summary</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>A</strong></td><td>Map-all landing</td><td>All pins; popup → browse with filters off</td></tr>
+            <tr><td><strong>B</strong></td><td>Filtered handoff</td><td>Popup applies chips — risk hiding FSD-only listings</td></tr>
+            <tr><td><strong>C</strong></td><td>Hybrid</td><td>Map + prominent Find support / Connect paths</td></tr>
+            <tr><td><strong>D</strong></td><td>Recommended (A/C + banners)</td><td>Map-all + dismissible “Also browse all support services” discovery</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Draft recommendation:</strong> Prefer <strong>D on A</strong> — map never the only path; rich popups like Connections Map; no default trap in community-only filters.</div>
+      </section>
+
+      <!-- 14 Roadmap -->
+      <section>
+        <h2>Phase 1.5 &amp; Phase 2</h2>
+        <h3>Phase 1.5 — pipeline quick win</h3>
+        <ul>
+          <li>Public <code>id</code> from <code>SERVICE_ID</code> / <code>FSD_ID</code>; optional service titles on cards</li>
+          <li>Still many cards per large org — minimal UX change</li>
+        </ul>
+        <h3>Phase 2 — product &amp; admin</h3>
+        <ul>
+          <li>Org grouping + subservices in UI and schema</li>
+          <li>Directus admin, weekly FSD automation, Squarespace embed</li>
+          <li>Duplicate linking UI, formal WCAG pass, near-me product decision</li>
+        </ul>
+        <p class="tiny">Deferred: Te Reo labels, PWA, analytics — see requirements §9–10</p>
+      </section>
+
+      <!-- 15 Open questions -->
+      <section>
+        <h2>Open questions for discussion</h2>
+        <ol class="compact">
+          <li>One card per service vs one org with expandable offerings?</li>
+          <li>Card title: organisation name, service name, or both?</li>
+          <li>Stricter regional FSD filter vs manual <code>hiddenIds</code>?</li>
+          <li>Literacy / multi-site FSD naming — accept, override, or wait for org grouping?</li>
+          <li>Editor workflow: Sheet + developer merge until Directus — acceptable?</li>
+          <li>When community and FSD match, always hide FSD — or show service lines under org in Phase 2?</li>
+          <li>Search subservices — Phase 2 only or enough provider-name search in 1.5?</li>
+          <li>Map-first handoff: clear filters (recommended) vs preserve map/chip context?</li>
+        </ol>
+      </section>
+
+      <!-- 16 Thank you -->
+      <section class="title-slide" data-background-color="#fdeeee">
+        <h2>Thank you</h2>
+        <p class="subtitle">Explore, test on your phone, share feedback</p>
+        <ul class="compact" style="text-align:left; max-width: 640px; margin: 1.2em auto;">
+          <li><a href="https://directory.bsky.nz" target="_blank" rel="noopener">directory.bsky.nz</a> — production</li>
+          <li><a href="../potential-changes-and-insights.md">potential-changes-and-insights.md</a> — living insights note</li>
+          <li><a href="../porirua-services-directory-requirements.md">Requirements &amp; changelog</a></li>
+          <li><a href="../MVP-RUNBOOK.md">MVP runbook</a> — rebuild &amp; deploy</li>
+          <li><a href="./human-services-directory-examples.html">Human Services Directory Examples</a> — comparator deck</li>
+        </ul>
+        <p class="meta">Porirua Locality · Your Porirua Directory · August 2026</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: "c/t",
+      width: 1280,
+      height: 720,
+      margin: 0.06,
+      transition: "slide",
+      transitionSpeed: "fast",
+      controls: true,
+      progress: true,
+      center: false,
+      keyboard: true,
+      touch: true,
+      help: true,
+    });
+  </script>
+</body>
+</html>

@@ -6,6 +6,8 @@
 
 Plain language up front; technical detail in subsections where helpful.
 
+**Stakeholder walkthrough:** Interactive Reveal.js deck with live local embeds — [slides/directory-mvp-walkthrough.html](./slides/directory-mvp-walkthrough.html) (serve from repo root; see [slides/README.md](./slides/README.md)).
+
 ---
 
 ## Executive summary
