@@ -1,6 +1,6 @@
 # Porirua Services Directory — Requirements
 
-**Version:** 1.8 (draft)  
+**Version:** 1.10 (draft)  
 **Date:** 31 July 2026  
 **Prepared for:** Porirua Locality / Te Wāhi Tiaki Tātou  
 **Timeline:** ~5–6 weeks total (MVP first, then iteration)  
@@ -145,7 +145,7 @@ When someone opens the directory they should be able to:
    - Work and learning
    - Everyday needs (clothes, showers, transport, etc.)
 5. **Search** — type what they need; results filtered to Porirua-relevant services (in the browse sidebar).
-6. **Map** — optional via **Show map** beside search; shown only when enabled and there are results with locations; tap a marker for details.
+6. **Browse layout (desktop)** — **filters left**, **results centre**, **map right** (three-column from tablet-wide breakpoints up). On narrow screens: filters, then results, then map. **Show map** is on by default in browse so the side map appears when listings have coordinates; users can turn it off. Legacy **map above results** remains available via `?layout=top` for comparison. Tap a marker for details.
 7. **List of results** — on **Find support**, the full listing shows by default with **no category chips selected**; tap one chip to filter to that topic only (tap again to show all); search narrows further.
 8. **My list** — **Add to your list** on each listing; saved **places and organisations** for this visit only (plain-language note that nothing is stored online); **Remove** on saved items; optional **Print list**.
 
@@ -188,7 +188,7 @@ Additional local lists may be added in future phases if a stable, maintainable s
 
 ### Porirua scope
 
-Only services relevant to **people in Porirua** appear in the public directory. Rules for inclusion (e.g. based on suburb, region, or service area) will be agreed at the start of the project and documented.
+Only services relevant to **people in Porirua** appear in the public directory. **Agreed rules (MVP):** documented in [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) with machine-readable **`reasonCode`** audit on each import (`data/fsd-porirua-excluded.json`; see [MVP-RUNBOOK.md](./MVP-RUNBOOK.md)). Human review before publish uses that file plus spot-checks on `data/services.json`.
 
 ### Duplicate services
 
@@ -412,6 +412,10 @@ Records should be exportable in standard formats (CSV/JSON) so data can move if 
 
 ### FSD sync behaviour
 
+**MVP (manual):** `npm run import:fsd` / `build:data` applies Porirua geo rules, writes included slice and **`fsd-porirua-excluded.json`** for audit; team reviews excluded reason codes before committing `services.json`. Rationale: [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md).
+
+**Phase 2 (target):**
+
 1. Weekly cron fetches Family Services Directory CSV from data.govt.nz.
 2. Filter to Wellington region / Porirua-relevant rules.
 3. Compare with existing records (name + address fuzzy match).
@@ -523,6 +527,10 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 - [MVP implementation plan](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md)
 
 ---
+
+*Changes in v1.10: **Three-column browse** is the production default (filters | results | sticky map on desktop); **Show map** on by default in browse; `?layout=top` restores map-above-results.*
+
+*Changes in v1.9: FSD Porirua geo filter **documented and auditable** — [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md), excluded-row audit file on import, runbook review steps (address-context fixes Aug 2026).*
 
 *Changes in v1.8: **My list** — session-only favourites; **Remove** + **Print list**; copy covers organisations and services; plain-language privacy note.*
 
