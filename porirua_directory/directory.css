@@ -955,14 +955,6 @@ body[data-view="browse"] .results {
   margin: 0 0 0.5rem;
 }
 
-.map-popup__pills--themes {
-  margin-top: 0.15rem;
-}
-
-.map-popup__pills--labels {
-  margin-top: 0.65rem;
-}
-
 .map-popup__pill {
   font-size: 0.62rem;
   text-transform: uppercase;
@@ -979,11 +971,6 @@ body[data-view="browse"] .results {
   color: #fff;
 }
 
-.map-popup__pill--theme {
-  background: color-mix(in srgb, var(--accent) 88%, #fff);
-  color: #fff;
-}
-
 .map-popup__location {
   font-size: 0.78rem;
   color: var(--muted);
@@ -994,36 +981,6 @@ body[data-view="browse"] .results {
   font-size: 0.85rem;
   line-height: 1.5;
   margin: 0.45rem 0 0.35rem;
-}
-
-.map-popup__section-label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  color: var(--accent);
-  margin: 0.65rem 0 0.25rem;
-}
-
-.map-popup__list {
-  margin: 0;
-  padding-left: 1.15rem;
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.map-popup__list li {
-  margin-bottom: 0.15rem;
-}
-
-.map-popup__label-chip {
-  font-size: 0.68rem;
-  font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--ink);
-  letter-spacing: 0.02em;
 }
 
 .map-popup__phone {
@@ -1051,6 +1008,33 @@ body[data-view="browse"] .results {
   color: var(--ink);
 }
 
+.map-popup__count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.map-popup__scroll-to-list {
+  display: inline-block;
+  margin: 0.5rem 0 0.35rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.map-popup__scroll-to-list:hover,
+.map-popup__scroll-to-list:focus-visible {
+  background: var(--accent);
+  color: #fff;
+}
+
 .map-popup__distance {
   margin-top: 0.5rem;
   font-size: 0.78rem;
@@ -1069,6 +1053,149 @@ body[data-view="browse"] .results {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1rem 1.05rem;
+}
+
+.card--org .card__org-count {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.service-rows {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.service-row {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--bg);
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.service-row__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.service-row__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.service-row__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.service-row__title {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.service-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.service-row__chevron {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  margin-top: -0.2rem;
+  transition: transform 0.15s ease;
+}
+
+.service-row--expanded .service-row__chevron {
+  transform: rotate(225deg);
+  margin-top: 0.15rem;
+}
+
+.service-row__detail {
+  padding: 0.55rem 0.65rem 0.65rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.service-row__detail-desc {
+  color: var(--text);
+}
+
+.service-row__detail-empty {
+  margin: 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.service-row__detail-contact {
+  margin: 0.5rem 0 0;
+}
+
+.service-row__detail-cats {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.service-row__detail-label {
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-row,
+  .service-row__chevron {
+    transition: none;
+  }
+}
+
+.service-row--match,
+.service-row.is-highlighted {
+  border-color: var(--accent);
+  border-left-width: 4px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+}
+
+.service-row--dim {
+  opacity: 0.55;
+}
+
+.badge--need {
+  font-size: 0.72rem;
+}
+
+.card--focus-ring {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .card__head {
@@ -1243,6 +1370,13 @@ body[data-view="browse"] .results {
 
 .badge--type {
   background: #efe6ec;
+}
+
+/* After .badge so active-need pills win cascade (same look as .chip.is-on). */
+.badge.badge--need-match {
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  color: #fff;
 }
 
 .card__desc {

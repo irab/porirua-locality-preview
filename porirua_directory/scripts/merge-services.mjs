@@ -12,6 +12,7 @@ import {
 } from "./config.mjs";
 import { mapCommunityRow } from "./lib/community-map.mjs";
 import { dedupeKey } from "./lib/normalize.mjs";
+import { applyOrgGrouping } from "./org-grouping.mjs";
 
 async function fetchText(url) {
   const res = await fetch(url);
@@ -70,16 +71,18 @@ export function mergeServices({ community = [], fsd = [], hiddenIds = [], patche
   const services = all.filter((s) => !hidden.has(s.id));
 
   const duplicatesHidden = services.filter((s) => s.duplicateOf).length;
-  const published = services.filter((s) => !s.duplicateOf).length;
+  const { entries, stats } = applyOrgGrouping(services);
 
   return {
     counts: {
       community: communityRows.length,
       fsd: fsdRows.length,
-      published,
+      published: entries.length,
+      serviceLines: stats.serviceLines,
+      organizations: stats.organizations,
       duplicatesHidden,
     },
-    services,
+    services: entries,
   };
 }
 
@@ -124,7 +127,7 @@ async function main() {
   const envelope = await buildServicesEnvelope();
   await fs.writeFile(SERVICES_JSON, `${JSON.stringify(envelope, null, 2)}\n`, "utf8");
   console.log(
-    `Wrote ${SERVICES_JSON}: community=${envelope.counts.community} fsd=${envelope.counts.fsd} published=${envelope.counts.published} duplicatesHidden=${envelope.counts.duplicatesHidden}`
+    `Wrote ${SERVICES_JSON}: community=${envelope.counts.community} fsd=${envelope.counts.fsd} published=${envelope.counts.published} serviceLines=${envelope.counts.serviceLines} organizations=${envelope.counts.organizations} duplicatesHidden=${envelope.counts.duplicatesHidden}`
   );
 }
 

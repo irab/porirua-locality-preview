@@ -406,19 +406,21 @@ test("support path — card click opens rich map popup", async ({ page }) => {
       ".map-popup__desc, .map-popup__location, .map-popup__phone, .map-popup__link, .map-popup__pill"
     )
   ).not.toHaveCount(0);
+  await expect(popup).not.toContainText(/how we roll/i);
+  await expect(popup.locator(".map-popup__pill--theme")).toHaveCount(0);
+  await expect(popup.locator(".map-popup__pill--type")).toHaveCount(0);
 });
 
-test("community path — map popup shows org type or initiatives", async ({ page }) => {
+test("community path — map popup shows org type, not Assembly themes", async ({ page }) => {
   await page.goto("/index.html#community");
   await expect(page.locator(".leaflet-container")).toBeVisible();
   await page.locator("#directory-results .card").first().click();
   const popup = page.locator(".leaflet-popup-content .map-popup");
   await expect(popup).toBeVisible();
-  await expect(
-    popup.locator(
-      ".map-popup__pill--type, .map-popup__list li, .map-popup__pill--theme"
-    )
-  ).not.toHaveCount(0);
+  await expect(popup.locator(".map-popup__pill--type")).not.toHaveCount(0);
+  await expect(popup.locator(".map-popup__pill--theme")).toHaveCount(0);
+  await expect(popup.locator(".map-popup__list li")).toHaveCount(0);
+  await expect(popup).not.toContainText(/key initiatives/i);
 });
 
 test("demo — three-column layout smoke with show map", async ({ page }) => {
@@ -480,7 +482,7 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
   const filteredCount = await page.locator("#directory-results .card").count();
   expect(filteredCount).toBeLessThan(initialCount);
   await expect(page.locator("#status-line")).toContainText(
-    new RegExp(`${filteredCount} listing`)
+    new RegExp(`${filteredCount} (listing|organisation)`)
   );
 
   await expect(page.locator(".leaflet-overlay-pane svg path")).toHaveCount(
@@ -492,4 +494,61 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
     .first()
     .getAttribute("stroke");
   expect(stroke?.toLowerCase()).toBe("#60164c");
+});
+
+test("org grouping — service row expands line detail", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
+  const multiOrg = page
+    .locator("#directory-results .card--org")
+    .filter({ has: page.locator(".service-row:nth-child(2)") })
+    .first();
+  await expect(multiOrg).toBeVisible();
+  const firstRow = multiOrg.locator(".service-row").first();
+  const toggle = firstRow.getByRole("button", { name: /show details$/i });
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  const detail = firstRow.locator(".service-row__detail");
+  await expect(detail).toBeVisible();
+  await expect(detail.locator(".service-row__detail-desc, .service-row__detail-empty")).toHaveCount(
+    1
+  );
+});
+
+test("org grouping — need chip highlights matching category pills on all service rows", async ({
+  page,
+}) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Support and counselling" }).click();
+  await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
+
+  const fwCard = page
+    .locator("#directory-results .card--org")
+    .filter({ hasText: /Family Works Central/i })
+    .first();
+  await expect(fwCard).toBeVisible();
+  const rows = fwCard.locator(".service-row");
+  await expect(rows.first()).toBeVisible();
+  expect(await rows.count()).toBeGreaterThanOrEqual(3);
+
+  await expect(fwCard.locator(".service-row--dim")).toHaveCount(0);
+  const matchBadge = fwCard.locator(".badge--need-match").first();
+  await expect(matchBadge).toBeVisible();
+  await expect(matchBadge).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(matchBadge).toHaveCSS("background-color", "rgb(96, 22, 76)");
+});
+
+test("org grouping — map popup View in list focuses org card", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
+  await page.getByRole("button", { name: "Food / kai" }).click();
+  const card = page.locator("#directory-results .card--org").first();
+  await expect(card).toBeVisible();
+  await card.click({ position: { x: 8, y: 8 } });
+  const popup = page.locator(".leaflet-popup-content .map-popup");
+  await expect(popup.getByRole("button", { name: "View in list" })).toBeVisible();
+  await popup.getByRole("button", { name: "View in list" }).click();
+  await expect(card).toHaveClass(/card--focus-ring/);
 });

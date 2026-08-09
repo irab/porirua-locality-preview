@@ -1,6 +1,20 @@
 import { loadServices } from "./directory-data.js";
 import { formatDescription } from "./format-description.mjs";
 import {
+  buildOrgFromMembers,
+  expandNeedFilterLines,
+  groupCatalogForDisplay,
+  groupForDisplay,
+  groupServicesByOrg,
+  lineMatchesNeed,
+  lineMatchesSearch,
+  organizationEntryToDisplayOrg,
+} from "./group-services.mjs";
+import {
+  buildMapPopup,
+  buildMapPopupForOrg,
+} from "./map-popup.mjs";
+import {
   crisisLinks,
   needCategories,
   communityFilters,
@@ -37,7 +51,13 @@ function matchesSearch(service, query) {
   if (!query) return true;
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  const hay = [service.name, service.description, service.address]
+  const hay = [
+    service.name,
+    service.serviceName,
+    service.title,
+    service.description,
+    service.address,
+  ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
@@ -64,9 +84,7 @@ function filterServices(services, state) {
       (s) => s.source === "fsd" || (s.categories?.length ?? 0) > 0
     );
     if (state.activeNeeds.size > 0) {
-      list = list.filter((s) =>
-        s.categories?.some((c) => state.activeNeeds.has(c))
-      );
+      list = expandNeedFilterLines(list, state.activeNeeds);
     }
   } else if (state.mode === "community") {
     list = list.filter((s) => matchesCommunity(s, state.activeCommunityFilters));
@@ -101,6 +119,10 @@ function renderChips(container, items, activeSet, attr) {
 }
 
 const FAV_TRASH_ICON = `<svg class="card__fav-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M5.5 2.5V3h-2v1h11V3h-2v-.5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1zM3 5v8.5a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5V5H3zm2.5 2h1v6h-1V7zm3 0h1v6h-1V7z"/></svg>`;
+
+const needLabelById = Object.fromEntries(
+  needCategories.map((n) => [n.id, n.label])
+);
 
 function telHrefFromPhone(phone) {
   return `tel:${String(phone).replace(/\s/g, "")}`;
@@ -145,116 +167,290 @@ function renderCard(service, favoriteIds) {
   </article>`;
 }
 
-const needLabelById = Object.fromEntries(
-  needCategories.map((n) => [n.id, n.label])
-);
-
-const MAP_POPUP_DESC_MAX = 280;
-
-function splitPipeOrSemi(value) {
-  return String(value ?? "")
-    .split(/[|;]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+function serviceLineFields(line) {
+  const svc = line.service ?? line;
+  return {
+    description: svc.description ?? line.description ?? "",
+    phone: String(svc.phone ?? line.phone ?? "").trim(),
+    url: String(svc.url ?? line.url ?? "").trim(),
+  };
 }
 
-function truncatePlain(text, maxLen = MAP_POPUP_DESC_MAX) {
-  const t = String(text ?? "")
-    .trim()
-    .replace(/\s+/g, " ");
-  if (!t) return "";
-  if (t.length <= maxLen) return t;
-  const cut = t.slice(0, maxLen).replace(/\s+\S*$/, "");
-  return `${cut}…`;
+function serviceRowDetailId(lineId) {
+  return `service-detail-${lineId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
 }
 
-function buildMapPopup(service, distKm) {
-  const isCommunity =
-    service.source === "community" ||
-    (service.communityFilters?.length ?? 0) > 0;
-  const meta = service.communityMeta;
+function renderServiceRowDetail(line, org) {
+  const { description, phone, url } = serviceLineFields(line);
+  const orgPhone = String(org.phone ?? "").trim();
+  const orgUrl = String(org.url ?? "").trim();
+  const showPhone = phone && phone !== orgPhone;
+  const showUrl = url && url !== orgUrl;
 
-  let html = '<div class="map-popup">';
+  const descBlock = description
+    ? `<div class="service-row__detail-desc">${formatDescription(description)}</div>`
+    : `<p class="service-row__detail-empty">No additional description for this service.</p>`;
 
-  if (service.orgType) {
-    html += `<div class="map-popup__pills"><span class="map-popup__pill map-popup__pill--type">${esc(service.orgType)}</span></div>`;
+  const contactParts = [];
+  if (showPhone) {
+    contactParts.push(
+      `<a href="${esc(telHrefFromPhone(phone))}">${esc(phone)}</a>`
+    );
   }
+  if (showUrl) {
+    contactParts.push(
+      `<a href="${esc(url)}" rel="noopener noreferrer">Website</a>`
+    );
+  }
+  const contactBlock = contactParts.length
+    ? `<p class="service-row__detail-contact">${contactParts.join(" · ")}</p>`
+    : "";
 
-  html += `<div class="map-popup__title">${esc(service.name)}</div>`;
-
-  const categoryLabels = (service.categories ?? [])
+  const catLabels = (line.categories ?? [])
     .map((id) => needLabelById[id])
     .filter(Boolean);
-  const badgeItems = [...(service.badges ?? []), ...categoryLabels];
-  if (badgeItems.length) {
-    html += '<div class="map-popup__pills">';
-    badgeItems.forEach((label) => {
-      html += `<span class="map-popup__pill">${esc(label)}</span>`;
-    });
-    html += "</div>";
-  }
+  const catBlock = catLabels.length
+    ? `<p class="service-row__detail-cats"><span class="service-row__detail-label">Categories:</span> ${catLabels.map((l) => esc(l)).join(", ")}</p>`
+    : "";
 
-  if (isCommunity && meta?.themes) {
-    const themes = String(meta.themes)
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (themes.length) {
-      html += '<div class="map-popup__pills map-popup__pills--themes">';
-      themes.forEach((theme) => {
-        html += `<span class="map-popup__pill map-popup__pill--theme">${esc(theme)}</span>`;
-      });
-      html += "</div>";
+  return `${descBlock}${contactBlock}${catBlock}`;
+}
+
+function renderServiceRow(line, org, highlight) {
+  const needOn = highlight.activeNeeds.size > 0;
+  const searchOn = Boolean(highlight.search.trim());
+  const matchSearch = lineMatchesSearch(line, org, highlight.search);
+  const orgNameMatch =
+    searchOn &&
+    org.name.toLowerCase().includes(highlight.search.trim().toLowerCase());
+  const matchRow = searchOn && (matchSearch || orgNameMatch);
+  const dim = searchOn && !matchRow;
+
+  let rowClass = "service-row";
+  if (matchRow) rowClass += " service-row--match is-highlighted";
+  else if (dim) rowClass += " service-row--dim";
+
+  const catBadges = (line.categories ?? [])
+    .map((id) => {
+      const label = needLabelById[id];
+      if (!label) return "";
+      const pillMatch =
+        needOn && highlight.activeNeeds.has(id) ? " badge--need-match" : "";
+      return `<span class="badge badge--need${pillMatch}">${esc(label)}</span>`;
+    })
+    .join("");
+  const extraBadges = (line.badges ?? [])
+    .map((b) => `<span class="badge">${esc(b)}</span>`)
+    .join("");
+
+  const ariaCurrent = matchRow ? ' aria-current="true"' : "";
+  const detailId = serviceRowDetailId(line.lineId);
+  const detailHtml = renderServiceRowDetail(line, org);
+
+  return `<li class="${rowClass}" data-line-id="${esc(line.lineId)}"${ariaCurrent}>
+    <button type="button" class="service-row__toggle" aria-expanded="false" aria-controls="${esc(detailId)}" aria-label="${esc(`${line.title} — show details`)}">
+      <span class="service-row__main">
+        <span class="service-row__title">${esc(line.title)}</span>
+        <span class="service-row__meta">${catBadges}${extraBadges}</span>
+      </span>
+      <span class="service-row__chevron" aria-hidden="true"></span>
+    </button>
+    <div id="${esc(detailId)}" class="service-row__detail" hidden>${detailHtml}</div>
+  </li>`;
+}
+
+function toggleServiceRow(toggle) {
+  const row = toggle.closest(".service-row");
+  const detail = row?.querySelector(".service-row__detail");
+  if (!row || !detail) return;
+  const expanded = toggle.getAttribute("aria-expanded") === "true";
+  const next = !expanded;
+  toggle.setAttribute("aria-expanded", next ? "true" : "false");
+  row.classList.toggle("service-row--expanded", next);
+  if (next) detail.removeAttribute("hidden");
+  else detail.setAttribute("hidden", "");
+}
+
+function handleServiceRowInteraction(e) {
+  const toggle = e.target.closest(".service-row__toggle");
+  if (!toggle) return false;
+  if (e.type === "click") {
+    toggleServiceRow(toggle);
+    return true;
+  }
+  if (e.type === "keydown" && (e.key === " " || e.key === "Enter")) {
+    e.preventDefault();
+    toggleServiceRow(toggle);
+    return true;
+  }
+  return false;
+}
+
+function renderOrgCard(org, favoriteIds, highlight) {
+  const orgType = org.orgType
+    ? `<span class="badge badge--type">${esc(org.orgType)}</span>`
+    : "";
+  const orgBadges = (org.badges ?? [])
+    .map((b) => `<span class="badge">${esc(b)}</span>`)
+    .join("");
+  const phoneTrimmed = String(org.phone ?? "").trim();
+  const callBtn = phoneTrimmed
+    ? `<a class="card__call" href="${esc(telHrefFromPhone(phoneTrimmed))}">Call</a>`
+    : "";
+  const callFooter = callBtn ? `<div class="card__footer">${callBtn}</div>` : "";
+  const url = org.url
+    ? `<p class="card__contact"><a href="${esc(org.url)}" rel="noopener noreferrer">Website</a></p>`
+    : "";
+  const address = org.address
+    ? `<p class="card__contact">${esc(org.address)}</p>`
+    : "";
+  const onList = favoriteIds.has(org.orgId);
+  const favAria = onList
+    ? `Remove ${org.name} from your list`
+    : `Add ${org.name} to your list`;
+  const favInner = onList
+    ? `${FAV_TRASH_ICON}<span class="card__fav-text">Remove</span>`
+    : `<span class="card__fav-text">Add to your list</span>`;
+  const favBtn = `<button type="button" class="card__fav${onList ? " is-on-list" : ""}" data-fav-toggle="${esc(org.orgId)}" aria-pressed="${onList ? "true" : "false"}" aria-label="${esc(favAria)}">${favInner}</button>`;
+
+  const serviceCount = org.services.length;
+  const countLabel = `${serviceCount} service${serviceCount === 1 ? "" : "s"}`;
+
+  const rows = org.services
+    .map((line) => renderServiceRow(line, org, highlight))
+    .join("");
+
+  const safeDomId = org.orgId.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  return `<article class="card card--org" id="org-${esc(safeDomId)}" data-org-id="${esc(org.orgId)}" data-id="${esc(org.orgId)}">
+    <div class="card__head">
+      <h3 class="card__title">${esc(org.name)}</h3>
+      ${favBtn}
+    </div>
+    <p class="card__org-count">${esc(countLabel)} at this location</p>
+    <div class="card__meta">${orgBadges}${orgType}</div>
+    ${address}${url}
+    <ul class="service-rows" aria-label="Services offered">${rows}</ul>
+    ${callFooter}
+  </article>`;
+}
+
+function renderDisplayItem(item, favoriteIds, highlight) {
+  if (item.type === "org") return renderOrgCard(item.org, favoriteIds, highlight);
+  return renderCard(item.service, favoriteIds);
+}
+
+function focusOrgInResults(orgId) {
+  const safeDomId = orgId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const el =
+    document.getElementById(`org-${safeDomId}`) ||
+    document.querySelector(`[data-org-id="${CSS.escape(orgId)}"]`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  el.classList.add("card--focus-ring");
+  window.setTimeout(() => el.classList.remove("card--focus-ring"), 2400);
+  if (typeof el.focus === "function") {
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+    el.focus({ preventScroll: true });
+  }
+}
+
+function resolveLegacyFavoriteId(favId, catalogEntries) {
+  if (catalogEntries.some((e) => e.id === favId)) return favId;
+  if (favId.startsWith("fsd-")) {
+    const orgCandidate = `org-${favId.slice(4)}`;
+    if (catalogEntries.some((e) => e.id === orgCandidate)) return orgCandidate;
+  }
+  for (const entry of catalogEntries) {
+    if (entry.kind !== "organization") continue;
+    if (entry.services?.some((s) => s.id === favId || s.lineId === favId)) {
+      return entry.id;
     }
   }
+  return favId;
+}
 
-  if (service.address) {
-    html += `<div class="map-popup__location">${esc(service.address)}</div>`;
-  }
-
-  const desc = truncatePlain(service.description);
-  if (desc) {
-    html += `<p class="map-popup__desc">${esc(desc)}</p>`;
-  }
-
-  if (isCommunity && meta?.initiatives) {
-    const items = splitPipeOrSemi(meta.initiatives);
-    if (items.length) {
-      html += '<div class="map-popup__section-label">Key initiatives</div>';
-      html += '<ul class="map-popup__list">';
-      items.forEach((item) => {
-        html += `<li>${esc(item)}</li>`;
+function resolveFavoriteDisplayItems(catalogEntries, serviceLines, favoriteIds) {
+  const ordered = [];
+  const seen = new Set();
+  for (let favId of favoriteIds) {
+    favId = resolveLegacyFavoriteId(favId, catalogEntries);
+    const orgEntry = catalogEntries.find(
+      (e) => e.kind === "organization" && e.id === favId
+    );
+    if (orgEntry && !seen.has(favId)) {
+      seen.add(favId);
+      ordered.push({
+        type: "org",
+        org: organizationEntryToDisplayOrg(orgEntry),
       });
-      html += "</ul>";
+      continue;
+    }
+    const flat = catalogEntries.find((e) => e.kind !== "organization" && e.id === favId);
+    if (flat && !seen.has(favId)) {
+      seen.add(favId);
+      ordered.push({ type: "card", service: flat });
+      continue;
+    }
+    const rows = serviceLines.filter((s) => s.id === favId);
+    if (rows.length > 1) {
+      const org = buildOrgFromMembers(rows);
+      if (!seen.has(org.orgId)) {
+        ordered.push({ type: "org", org });
+        seen.add(org.orgId);
+      }
+      continue;
+    }
+    if (rows.length === 1) {
+      ordered.push({ type: "card", service: rows[0] });
+      continue;
+    }
+    const org = groupServicesByOrg(serviceLines).find((o) => o.orgId === favId);
+    if (org && !seen.has(org.orgId)) {
+      ordered.push({ type: "org", org });
+      seen.add(org.orgId);
     }
   }
+  return ordered;
+}
 
-  if (isCommunity && meta?.labels) {
-    const labels = splitPipeOrSemi(meta.labels);
-    if (labels.length) {
-      html += '<div class="map-popup__pills map-popup__pills--labels">';
-      labels.forEach((label) => {
-        html += `<span class="map-popup__label-chip">${esc(label)}</span>`;
-      });
-      html += "</div>";
+function displayItemsFromFiltered(catalogEntries, filteredLines) {
+  if (catalogEntries.some((e) => e.kind === "organization")) {
+    return groupCatalogForDisplay(catalogEntries, filteredLines);
+  }
+  return groupForDisplay(filteredLines);
+}
+
+function mapTargetsFromFiltered(catalogEntries, filtered, activeNeeds, browseMode) {
+  const items = displayItemsFromFiltered(catalogEntries, filtered);
+  const targets = [];
+  for (const item of items) {
+    if (item.type === "org") {
+      const org = item.org;
+      if (org.lat != null && org.lng != null) {
+        targets.push({
+          key: org.orgId,
+          lat: org.lat,
+          lng: org.lng,
+          popupHtml: buildMapPopupForOrg(org, null, activeNeeds),
+          popupFactory: (dist) =>
+            buildMapPopupForOrg(org, dist, activeNeeds),
+        });
+      }
+    } else {
+      const service = item.service;
+      if (service.lat != null && service.lng != null) {
+        targets.push({
+          key: service.id,
+          lat: service.lat,
+          lng: service.lng,
+          popupHtml: buildMapPopup(service, null, browseMode),
+          popupFactory: (dist) => buildMapPopup(service, dist, browseMode),
+        });
+      }
     }
   }
-
-  if (service.phone) {
-    const tel = service.phone.replace(/\s/g, "");
-    html += `<p class="map-popup__phone"><a href="tel:${esc(tel)}">${esc(service.phone)}</a></p>`;
-  }
-
-  if (service.url) {
-    html += `<a class="map-popup__link" href="${esc(service.url)}" target="_blank" rel="noopener noreferrer">Visit website →</a>`;
-  }
-
-  if (distKm != null) {
-    html += `<div class="map-popup__distance">${distKm.toFixed(1)} km away</div>`;
-  }
-
-  html += "</div>";
-  return html;
+  return targets;
 }
 
 const FAVORITES_STORAGE_KEY = "porirua-directory-favorites";
@@ -479,10 +675,12 @@ async function main() {
     "community"
   );
 
-  let services = [];
+  let serviceLines = [];
+  let catalogEntries = [];
   try {
     const loaded = await loadServices();
-    services = loaded.services;
+    serviceLines = loaded.serviceLines ?? loaded.services ?? [];
+    catalogEntries = loaded.entries ?? serviceLines;
   } catch (err) {
     statusLine.textContent =
       "We couldn’t load the listings. Please refresh the page and try again.";
@@ -625,8 +823,9 @@ async function main() {
     markerLayer = L.layerGroup().addTo(map);
   }
 
-  function mappableServices(list) {
-    return list.filter((s) => s.lat != null && s.lng != null);
+  function distanceKmToTarget(target) {
+    if (!state.nearMe || target.lat == null || target.lng == null) return null;
+    return haversineKm(state.nearMe.lat, state.nearMe.lng, target.lat, target.lng);
   }
 
   function setMapBlockVisible(visible) {
@@ -663,8 +862,8 @@ async function main() {
     map.fitBounds(bounds, { maxZoom: 15, padding: [28, 28] });
   }
 
-  function mapPointsForView(mappable) {
-    const points = mappable.map((s) => [s.lat, s.lng]);
+  function mapPointsForView(targets) {
+    const points = targets.map((t) => [t.lat, t.lng]);
     if (state.nearMe) {
       points.push([state.nearMe.lat, state.nearMe.lng]);
     }
@@ -705,9 +904,14 @@ async function main() {
 
   async function syncMapForFiltered(filtered) {
     const syncGen = ++mapSyncGeneration;
-    const mappable = mappableServices(filtered);
+    const targets = mapTargetsFromFiltered(
+      catalogEntries,
+      filtered,
+      state.activeNeeds,
+      state.mode
+    );
     const hasMapData =
-      state.nearMe || (filtered.length > 0 && mappable.length > 0);
+      state.nearMe || (filtered.length > 0 && targets.length > 0);
     setMapBlockVisible(hasMapData);
 
     if (!hasMapData) {
@@ -728,22 +932,22 @@ async function main() {
 
     syncUserMapOverlays(L);
 
-    mappable.forEach((service) => {
-      const dist = distanceKmToService(service);
+    targets.forEach((target) => {
+      const dist = distanceKmToTarget(target);
       const nearby = state.nearMe && dist != null && dist <= nearMeRadiusKm;
-      const marker = L.circleMarker([service.lat, service.lng], {
+      const marker = L.circleMarker([target.lat, target.lng], {
         radius: nearby ? 9 : 7,
         ...SERVICE_MARKER_STYLE,
       });
-      marker.bindPopup(buildMapPopup(service, dist), { maxWidth: 320 });
+      marker.bindPopup(target.popupFactory(dist), { maxWidth: 320 });
       marker.addTo(markerLayer);
-      markersById.set(service.id, marker);
+      markersById.set(target.key, marker);
     });
 
     requestAnimationFrame(() => {
       if (syncGen !== mapSyncGeneration || !map) return;
       scheduleMapResize({ afterTransition: true });
-      const viewPoints = mapPointsForView(mappable);
+      const viewPoints = mapPointsForView(targets);
       if (viewPoints.length > 0) {
         fitMapToPoints(viewPoints);
       } else if (state.nearMe) {
@@ -877,10 +1081,16 @@ async function main() {
 
   function renderMyList() {
     if (!mylistResults) return;
-    const ordered = [...favoriteIds]
-      .map((id) => services.find((s) => s.id === id))
-      .filter(Boolean);
-    const hasItems = ordered.length > 0;
+    const highlight = {
+      activeNeeds: new Set(),
+      search: "",
+    };
+    const items = resolveFavoriteDisplayItems(
+      catalogEntries,
+      serviceLines,
+      favoriteIds
+    );
+    const hasItems = items.length > 0;
     if (mylistPrint) {
       mylistPrint.hidden = !hasItems;
       mylistPrint.disabled = !hasItems;
@@ -891,10 +1101,12 @@ async function main() {
         '<p class="empty-state">Your list is empty. Browse organisations and services, then tap <strong>Add to your list</strong> on any place you want to keep for this visit.</p>';
     } else {
       if (mylistStatus) {
-        const n = ordered.length;
+        const n = items.length;
         mylistStatus.textContent = `${n} ${n === 1 ? "place" : "places"} saved for this visit`;
       }
-      mylistResults.innerHTML = ordered.map((s) => renderCard(s, favoriteIds)).join("");
+      mylistResults.innerHTML = items
+        .map((item) => renderDisplayItem(item, favoriteIds, highlight))
+        .join("");
     }
   }
 
@@ -969,7 +1181,7 @@ async function main() {
   function refresh() {
     if (!state.mode) return;
 
-    let filtered = filterServices(services, state);
+    let filtered = filterServices(serviceLines, state);
     if (state.nearMe) {
       filtered = applyNearMeListFilter(filtered);
     }
@@ -988,12 +1200,28 @@ async function main() {
           '<p class="empty-state">We couldn’t find anything. Try clearing your choices or using a wider search.</p>';
       }
     } else {
-      let status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
+      const displayItems = displayItemsFromFiltered(catalogEntries, filtered);
+      const highlight = {
+        activeNeeds: state.activeNeeds,
+        search: state.search,
+      };
+      let status;
+      const matchingLineCount =
+        state.activeNeeds.size > 0
+          ? filtered.filter((s) => lineMatchesNeed(s, state.activeNeeds)).length
+          : filtered.length;
+      if (displayItems.length !== filtered.length) {
+        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"} (${matchingLineCount} matching service lines)`;
+      } else {
+        status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
+      }
       if (state.nearMe) {
         status += ` within ${nearMeRadiusKm} km`;
       }
       statusLine.textContent = status;
-      resultsEl.innerHTML = filtered.map((s) => renderCard(s, favoriteIds)).join("");
+      resultsEl.innerHTML = displayItems
+        .map((item) => renderDisplayItem(item, favoriteIds, highlight))
+        .join("");
     }
   }
 
@@ -1178,7 +1406,9 @@ async function main() {
 
   resultsEl.addEventListener("click", (e) => {
     if (handleFavClick(e)) return;
+    if (handleServiceRowInteraction(e)) return;
     if (e.target.closest(".card__call")) return;
+    if (e.target.closest(".service-row")) return;
     const card = e.target.closest(".card");
     if (!card || !map) return;
     const marker = markersById.get(card.dataset.id);
@@ -1188,11 +1418,27 @@ async function main() {
     }
   });
 
+  document.addEventListener("click", (e) => {
+    const scrollBtn = e.target.closest("[data-scroll-to-org]");
+    if (!scrollBtn) return;
+    e.preventDefault();
+    focusOrgInResults(scrollBtn.dataset.scrollToOrg);
+    if (map) map.closePopup();
+  });
+
   if (mylistResults) {
     mylistResults.addEventListener("click", (e) => {
-      handleFavClick(e);
+      if (handleFavClick(e)) return;
+      handleServiceRowInteraction(e);
+    });
+    mylistResults.addEventListener("keydown", (e) => {
+      handleServiceRowInteraction(e);
     });
   }
+
+  resultsEl.addEventListener("keydown", (e) => {
+    handleServiceRowInteraction(e);
+  });
 
   browseChromeExpand?.addEventListener("click", () => {
     setBrowseChromeCollapsed(false);

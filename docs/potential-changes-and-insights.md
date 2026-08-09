@@ -67,6 +67,8 @@ Current published slice (Aug 2026 rebuild, after [address-context filter](./issu
 
 Detailed analysis and options: [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md).
 
+**UX design options (Aug 2026):** Dataset clustering (**76** provider names with ≥2 listings; **367** rows), four layout patterns (collapsed org card, org header + highlighted service rows, UI-only merge, one map pin per org), filter/My list behaviour, and desktop/mobile sketches — [design/org-service-grouping-options.md](./design/org-service-grouping-options.md). Recommended product direction: **org header + service rows** with map pin grouping, on Phase 2 schema after unique per-service ids. **Branch spike (`feature/org-service-grouping-design`):** Option B + map pin grouping implemented at runtime in `group-services.mjs` for stakeholder review (not production default until sign-off).
+
 ---
 
 ## Accessibility (target)

@@ -161,7 +161,8 @@ test("maps FSD row to service with source fsd", () => {
   assert.equal(s.source, "fsd");
   assert.equal(s.name, "Test Provider");
   assert.ok(s.categories.includes("food"));
-  assert.equal(s.id.startsWith("fsd-"), true);
+  assert.equal(s.id, "fsd-1");
+  assert.equal(s.fsdServiceId, "1");
 });
 
 test("normalizeDescriptionText converts CRLF and preserves paragraph breaks", () => {

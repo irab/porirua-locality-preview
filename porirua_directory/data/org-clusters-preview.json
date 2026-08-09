@@ -1,0 +1,358 @@
+{
+  "generatedAt": "2026-08-09T15:06:53.731Z",
+  "sourceFile": "data/services.json",
+  "totals": {
+    "published": 434,
+    "community": 52,
+    "fsd": 382
+  },
+  "clustering": {
+    "orgsWithSameNormalizedName2Plus": 76,
+    "listingsInThoseGroups": 367,
+    "clusterKeyGroups2Plus": 76,
+    "sharedIdGroups2Plus": 76,
+    "duplicateDescriptionGroups2Plus": 93,
+    "fsdOnlyNameGroups2Plus": 75
+  },
+  "topMultiServiceOrgsByName": [
+    {
+      "normalizedName": "maraeroa marae health clinic",
+      "displayName": "Maraeroa Marae Health Clinic",
+      "count": 17,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-maraeroa-marae-health-clinic",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "porirua whanau centre",
+      "displayName": "Porirua Whanau Centre",
+      "count": 17,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-porirua-whanau-centre",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "work and income - porirua community link",
+      "displayName": "Work and Income - Porirua Community Link",
+      "count": 16,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-work-and-income-porirua-community-link",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "the salvation army - porirua",
+      "displayName": "The Salvation Army - Porirua",
+      "count": 13,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-the-salvation-army-porirua",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "taeaomanino trust",
+      "displayName": "Taeaomanino Trust",
+      "count": 12,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-taeaomanino-trust",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "te runanga o toa rangatira",
+      "displayName": "Te Runanga o Toa Rangatira",
+      "count": 11,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-te-runanga-o-toa-rangatira",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "te whare tiaki wahine refuge/rongoma tane",
+      "displayName": "Te Whare Tiaki Wahine Refuge/Rongoma Tane",
+      "count": 10,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-te-whare-tiaki-wahine-refuge-rongoma-tane",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "family works central",
+      "displayName": "Family Works Central",
+      "count": 9,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-family-works-central",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "family heart services",
+      "displayName": "Family Heart Services",
+      "count": 9,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-family-heart-services",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "citizens advice bureau porirua",
+      "displayName": "Citizens Advice Bureau Porirua",
+      "count": 8,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-citizens-advice-bureau-porirua",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "te waka whaiora trust",
+      "displayName": "Te Waka Whaiora Trust",
+      "count": 7,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-te-waka-whaiora-trust",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "toa - te roopu awhina social services",
+      "displayName": "TOA - Te Roopu Awhina Social Services",
+      "count": 7,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-toa-te-roopu-awhina-social-services",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": true
+    },
+    {
+      "normalizedName": "presbyterian support central",
+      "displayName": "Presbyterian Support Central",
+      "count": 7,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-presbyterian-support-central",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "north porirua care centre",
+      "displayName": "North Porirua Care Centre",
+      "count": 7,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-north-porirua-care-centre",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "playcentre aotearoa",
+      "displayName": "Playcentre Aotearoa",
+      "count": 7,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-playcentre-aotearoa",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "porirua sexual abuse help foundation",
+      "displayName": "Porirua Sexual Abuse HELP Foundation",
+      "count": 7,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-porirua-sexual-abuse-help-foundation",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "literacy aotearoa - upper hutt",
+      "displayName": "Literacy Aotearoa -  Upper Hutt",
+      "count": 6,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-literacy-aotearoa-upper-hutt",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "tenancy services",
+      "displayName": "Tenancy Services",
+      "count": 6,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-tenancy-services",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "whitireia community polytechnic: free courses",
+      "displayName": "Whitireia Community Polytechnic: Free Courses",
+      "count": 6,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-whitireia-community-polytechnic-free-courses",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "papakōwhai school - school board",
+      "displayName": "Papakōwhai School - School Board",
+      "count": 6,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-papakowhai-school-school-board",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "after school fun club",
+      "displayName": "After School Fun Club",
+      "count": 6,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-after-school-fun-club",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "little shadow",
+      "displayName": "Little Shadow",
+      "count": 5,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-little-shadow",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "graeme dingle foundation - wellington",
+      "displayName": "Graeme Dingle Foundation - Wellington",
+      "count": 5,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-graeme-dingle-foundation-wellington",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    },
+    {
+      "normalizedName": "riding for the disabled association - wellington",
+      "displayName": "Riding for the Disabled Association - Wellington",
+      "count": 5,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-riding-for-the-disabled-association-wellington",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": true
+    },
+    {
+      "normalizedName": "atareira (family/whanau support service)",
+      "displayName": "Atareira (Family/Whanau Support Service)",
+      "count": 5,
+      "sources": [
+        "fsd"
+      ],
+      "sharedId": "fsd-atareira-family-whanau-support-service",
+      "distinctIds": 1,
+      "duplicateDescriptionLines": false
+    }
+  ],
+  "citedExamples": [
+    {
+      "pattern": "capital coast|ccdhb|te whatu ora.*capital",
+      "groups": []
+    },
+    {
+      "pattern": "family works",
+      "groups": [
+        {
+          "name": "Family Works Central",
+          "count": 9,
+          "sources": [
+            "fsd"
+          ],
+          "sharedId": "fsd-family-works-central"
+        }
+      ]
+    },
+    {
+      "pattern": "salvation army",
+      "groups": [
+        {
+          "name": "The Salvation Army - Porirua",
+          "count": 13,
+          "sources": [
+            "fsd"
+          ],
+          "sharedId": "fsd-the-salvation-army-porirua"
+        }
+      ]
+    },
+    {
+      "pattern": "little shadow",
+      "groups": [
+        {
+          "name": "Little Shadow",
+          "count": 5,
+          "sources": [
+            "fsd"
+          ],
+          "sharedId": "fsd-little-shadow"
+        }
+      ]
+    },
+    {
+      "pattern": "literacy aotearoa",
+      "groups": [
+        {
+          "name": "Literacy Aotearoa -  Upper Hutt",
+          "count": 6,
+          "sources": [
+            "fsd"
+          ],
+          "sharedId": "fsd-literacy-aotearoa-upper-hutt"
+        }
+      ]
+    }
+  ],
+  "communityVsFsd": {
+    "communityListingCount": 52,
+    "fsdListingCount": 382,
+    "fsdRowsWhoseNameMatchesACommunityOrg": 0,
+    "note": "Merge hides FSD duplicate when community row wins dedupeKey; these counts are name overlap only."
+  }
+}
