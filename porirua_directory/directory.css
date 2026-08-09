@@ -610,6 +610,7 @@ body[data-view="landing"] .main {
   body[data-browse-layout="three-column"] .browse-sticky-panel {
     grid-column: 1;
     grid-row: 1 / -1;
+    align-self: stretch;
   }
 
   body[data-browse-layout="three-column"] .status-line {
@@ -622,6 +623,7 @@ body[data-view="landing"] .main {
     grid-column: 2;
     grid-row: 2;
     min-width: 0;
+    z-index: 0;
   }
 
   body[data-browse-layout="three-column"] #map-block {
@@ -703,20 +705,32 @@ body[data-view="browse"] .browse-sticky-panel {
     100vh - var(--site-topnav-sticky-height) - var(--crisis-strip-height) -
       env(safe-area-inset-bottom, 0px)
   );
-  overflow-x: visible;
+  overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0;
   background: var(--bg);
+  isolation: isolate;
 }
 
-body[data-view="browse"] .browse-toolbar {
+body[data-view="browse"] .view-browse .browse-toolbar {
   position: sticky;
   top: 0;
-  z-index: 1;
-  margin: 0 0 0.5rem;
-  padding: 0.15rem 0 0.35rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.15rem 0 0.85rem;
   background: var(--bg);
+  box-shadow: 0 0.35rem 0 0 var(--bg);
+}
+
+body[data-view="browse"] .browse-sidebar {
+  background: var(--bg);
+  padding-bottom: 0.35rem;
+}
+
+body[data-view="browse"] .results {
+  position: relative;
+  z-index: 0;
 }
 
 .section-title {
