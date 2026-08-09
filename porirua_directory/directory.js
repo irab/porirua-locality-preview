@@ -5,6 +5,7 @@ import {
   needCategories,
   communityFilters,
   mapDefaults,
+  nearMeRadiusKm,
 } from "./config-directory.js";
 
 function esc(s) {
@@ -157,9 +158,67 @@ function persistFavoriteIds(ids) {
 
 function parseHash() {
   const raw = location.hash.replace(/^#/, "").toLowerCase();
-  if (raw === "mylist") return { kind: "mylist" };
-  if (raw === "support" || raw === "community") return { kind: "browse", mode: raw };
+  const routePart = raw.split(/[&?]/)[0];
+  if (routePart === "mylist") return { kind: "mylist" };
+  if (routePart === "support" || routePart === "community")
+    return { kind: "browse", mode: routePart };
   return { kind: "landing" };
+}
+
+const BROWSE_LAYOUTS = new Set(["default", "top", "three-column"]);
+
+function normalizeBrowseLayout(value) {
+  const v = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (!v || v === "top" || v === "default") return "default";
+  if (v === "three-column" || v === "threecolumn" || v === "3col") return "three-column";
+  if (BROWSE_LAYOUTS.has(v)) return v;
+  return "default";
+}
+
+function parseBrowseLayoutFromHash() {
+  const m = location.hash.match(/(?:^|[&#?])layout=([\w-]+)/i);
+  return m ? normalizeBrowseLayout(m[1]) : null;
+}
+
+function parseDemoQuery() {
+  const params = new URLSearchParams(location.search);
+  const demo = params.get("demo") === "1";
+  const fromQuery = params.get("layout");
+  const layout = normalizeBrowseLayout(fromQuery ?? parseBrowseLayoutFromHash());
+  return { demo, layout };
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function applyBrowseLayout(layout) {
+  const normalized = normalizeBrowseLayout(layout);
+  if (normalized === "default") {
+    delete document.body.dataset.browseLayout;
+  } else {
+    document.body.dataset.browseLayout = normalized;
+  }
+  return normalized;
+}
+
+function buildUrlWithQuery(updates) {
+  const params = new URLSearchParams(location.search);
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value == null || value === "") params.delete(key);
+    else params.set(key, value);
+  });
+  const q = params.toString();
+  return `${location.pathname}${q ? `?${q}` : ""}${location.hash}`;
 }
 
 function syncHash(kind, mode) {
@@ -193,6 +252,13 @@ async function main() {
   const resultsEl = document.getElementById("directory-results");
   const mapEl = document.getElementById("directory-map");
   const showMapCheckbox = document.getElementById("show-map");
+  const findNearMeBtn = document.getElementById("find-near-me");
+  const nearMeStatus = document.getElementById("near-me-status");
+  const demoLayoutWrap = document.getElementById("demo-layout-wrap");
+  const demoLayoutSelect = document.getElementById("demo-layout-select");
+
+  const demoQuery = parseDemoQuery();
+  let browseLayout = applyBrowseLayout(demoQuery.layout);
 
   const state = {
     mode: null,
@@ -200,6 +266,7 @@ async function main() {
     activeCommunityFilters: new Set(),
     search: "",
     showMap: false,
+    nearMe: null,
   };
 
   const favoriteIds = loadFavoriteIds();
@@ -225,7 +292,19 @@ async function main() {
 
   let map = null;
   let markerLayer = null;
+  let userMarker = null;
   let markersById = new Map();
+
+  function setDemoChromeVisible() {
+    const show = demoQuery.demo;
+    if (findNearMeBtn) findNearMeBtn.hidden = !show;
+    if (demoLayoutWrap) demoLayoutWrap.hidden = !show;
+    if (demoLayoutSelect) {
+      demoLayoutSelect.value =
+        browseLayout === "three-column" ? "three-column" : "default";
+    }
+  }
+  setDemoChromeVisible();
 
   async function ensureMap() {
     if (map) return;
@@ -251,6 +330,24 @@ async function main() {
     mapBlock.classList.toggle("map-block--hidden", !visible);
   }
 
+  function distanceKmToService(service) {
+    if (!state.nearMe || service.lat == null || service.lng == null) return null;
+    return haversineKm(
+      state.nearMe.lat,
+      state.nearMe.lng,
+      service.lat,
+      service.lng
+    );
+  }
+
+  function applyNearMeListFilter(list) {
+    if (!state.nearMe) return list;
+    return list.filter((s) => {
+      const d = distanceKmToService(s);
+      return d != null && d <= nearMeRadiusKm;
+    });
+  }
+
   async function syncMapForFiltered(filtered) {
     const mappable = mappableServices(filtered);
     const showMapBlock =
@@ -262,6 +359,10 @@ async function main() {
         markerLayer.clearLayers();
         markersById = new Map();
       }
+      if (userMarker) {
+        userMarker.remove();
+        userMarker = null;
+      }
       return;
     }
 
@@ -269,15 +370,36 @@ async function main() {
     markerLayer.clearLayers();
     markersById = new Map();
     const L = window.L;
+
+    if (state.nearMe) {
+      if (!userMarker) {
+        userMarker = L.circleMarker([state.nearMe.lat, state.nearMe.lng], {
+          radius: 9,
+          color: "#1a5276",
+          fillColor: "#3498db",
+          fillOpacity: 0.9,
+          weight: 2,
+        }).addTo(map);
+        userMarker.bindPopup("Your location (this visit only)");
+      } else {
+        userMarker.setLatLng([state.nearMe.lat, state.nearMe.lng]);
+      }
+      map.setView([state.nearMe.lat, state.nearMe.lng], 13);
+    }
+
     mappable.forEach((service) => {
+      const dist = distanceKmToService(service);
+      const nearby = state.nearMe && dist != null && dist <= nearMeRadiusKm;
       const marker = L.circleMarker([service.lat, service.lng], {
-        radius: 7,
-        color: "#60164c",
-        fillColor: "#ce2026",
-        fillOpacity: 0.85,
-        weight: 2,
+        radius: nearby ? 9 : 7,
+        color: nearby ? "#60164c" : "#888",
+        fillColor: nearby ? "#ce2026" : "#bbb",
+        fillOpacity: nearby ? 0.9 : 0.55,
+        weight: nearby ? 2 : 1,
       });
-      marker.bindPopup(`<strong>${esc(service.name)}</strong>`);
+      const distLabel =
+        dist != null ? `<br><span>${dist.toFixed(1)} km away</span>` : "";
+      marker.bindPopup(`<strong>${esc(service.name)}</strong>${distLabel}`);
       marker.addTo(markerLayer);
       markersById.set(service.id, marker);
     });
@@ -369,7 +491,12 @@ async function main() {
       state.activeCommunityFilters.clear();
       state.search = "";
       state.showMap = false;
+      state.nearMe = null;
       if (showMapCheckbox) showMapCheckbox.checked = false;
+      if (nearMeStatus) {
+        nearMeStatus.hidden = true;
+        nearMeStatus.textContent = "";
+      }
       searchInput.value = "";
       setView("browse");
     } else {
@@ -378,7 +505,12 @@ async function main() {
       state.activeCommunityFilters.clear();
       state.search = "";
       state.showMap = false;
+      state.nearMe = null;
       if (showMapCheckbox) showMapCheckbox.checked = false;
+      if (nearMeStatus) {
+        nearMeStatus.hidden = true;
+        nearMeStatus.textContent = "";
+      }
       searchInput.value = "";
       setView("landing");
       statusLine.textContent = "";
@@ -400,22 +532,38 @@ async function main() {
       "community"
     );
     if (!fromHash) syncHash(mode ? "browse" : "landing", mode);
+    if (mode && demoQuery.demo && browseLayout === "three-column") {
+      state.showMap = true;
+      if (showMapCheckbox) showMapCheckbox.checked = true;
+    }
     if (mode) refresh();
   }
 
   function refresh() {
     if (!state.mode) return;
 
-    const filtered = filterServices(services, state);
+    let filtered = filterServices(services, state);
+    if (state.nearMe) {
+      filtered = applyNearMeListFilter(filtered);
+    }
     syncMapForFiltered(filtered);
 
     if (filtered.length === 0) {
-      statusLine.textContent =
-        "Nothing found — try another topic or search.";
+      if (state.nearMe) {
+        statusLine.textContent =
+          `No listings with a map location within ${nearMeRadiusKm} km — try clearing filters or turning off near-me.`;
+      } else {
+        statusLine.textContent =
+          "Nothing found — try another topic or search.";
+      }
       resultsEl.innerHTML =
         '<p class="empty-state">We couldn’t find anything. Try clearing your choices or using a wider search.</p>';
     } else {
-      statusLine.textContent = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
+      let status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
+      if (state.nearMe) {
+        status += ` within ${nearMeRadiusKm} km`;
+      }
+      statusLine.textContent = status;
       resultsEl.innerHTML = filtered.map((s) => renderCard(s, favoriteIds)).join("");
     }
   }
@@ -454,6 +602,72 @@ async function main() {
     state.showMap = showMapCheckbox.checked;
     refresh();
   });
+
+  if (demoLayoutSelect) {
+    demoLayoutSelect.addEventListener("change", () => {
+      const next = normalizeBrowseLayout(demoLayoutSelect.value);
+      browseLayout = applyBrowseLayout(next);
+      const layoutParam = next === "default" ? null : next;
+      history.replaceState(
+        null,
+        "",
+        buildUrlWithQuery({ demo: demoQuery.demo ? "1" : null, layout: layoutParam })
+      );
+      if (next === "three-column" && !state.showMap) {
+        state.showMap = true;
+        if (showMapCheckbox) showMapCheckbox.checked = true;
+      }
+      refresh();
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 0);
+    });
+  }
+
+  if (findNearMeBtn) {
+    findNearMeBtn.addEventListener("click", () => {
+      if (!demoQuery.demo) return;
+      if (!navigator.geolocation) {
+        if (nearMeStatus) {
+          nearMeStatus.hidden = false;
+          nearMeStatus.textContent =
+            "Your browser doesn’t support location. Use search or the map instead.";
+        }
+        return;
+      }
+      if (nearMeStatus) {
+        nearMeStatus.hidden = false;
+        nearMeStatus.textContent = "Requesting your location…";
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          state.nearMe = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          state.showMap = true;
+          if (showMapCheckbox) showMapCheckbox.checked = true;
+          if (nearMeStatus) {
+            nearMeStatus.textContent = `Showing places within ${nearMeRadiusKm} km of you. Location is not saved.`;
+          }
+          refresh();
+        },
+        (err) => {
+          state.nearMe = null;
+          const msg =
+            err.code === err.PERMISSION_DENIED
+              ? "Location was blocked. You can still browse and use Show map."
+              : "We couldn’t get your location. Try again or browse without near-me.";
+          if (nearMeStatus) {
+            nearMeStatus.hidden = false;
+            nearMeStatus.textContent = msg;
+          }
+          refresh();
+        },
+        { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+      );
+    });
+  }
 
   needChips.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-need]");

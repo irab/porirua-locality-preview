@@ -104,16 +104,28 @@
             <input id="show-map" type="checkbox" />
             Show map
           </label>
+          <button type="button" id="find-near-me" class="near-me-btn" hidden>
+            Find support near me
+          </button>
+          <p id="near-me-status" class="near-me-status" role="status" hidden></p>
+          <div id="demo-layout-wrap" class="demo-layout-wrap" hidden>
+            <label class="demo-layout-label" for="demo-layout-select">Demo layout</label>
+            <select id="demo-layout-select" class="demo-layout-select">
+              <option value="default">Default (map on top)</option>
+              <option value="top">Top map (same as default)</option>
+              <option value="three-column">Three column (map right)</option>
+            </select>
+          </div>
           </aside>
         </div>
 
         <div class="browse-main">
-          <div id="map-block" class="map-block map-block--hidden" hidden>
-            <div id="directory-map" class="map" aria-label="Map of listed places"></div>
-          </div>
-
           <p id="status-line" class="status-line" role="status"></p>
           <div id="directory-results" class="results" aria-live="polite"></div>
+        </div>
+
+        <div id="map-block" class="map-block map-block--hidden" hidden>
+          <div id="directory-map" class="map" aria-label="Map of listed places"></div>
         </div>
       </div>
     </div>

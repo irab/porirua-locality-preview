@@ -55,6 +55,8 @@ After `npm run build:data`, typical counts: ~50 community orgs from the live she
 
 Internal browse mode is `support` (not `help`); optional URL hash `#support`, `#community`, or `#mylist`.
 
+**Layout demos (internal):** Add `?demo=1` to show a **Demo layout** picker and **Find support near me** in the browse sidebar. Optional `?layout=three-column` (or `#support&layout=three-column`) switches CSS grid experiments; default production URLs are unchanged. See [potential-changes-and-insights.md](../docs/potential-changes-and-insights.md#layout-experiments-demo).
+
 ## Deploy
 
 **Target URL:** [https://directory.bsky.nz](https://directory.bsky.nz) (Cloudflare `bsky.nz` → blackbox prod tenant `porirua-directory`). See [MVP runbook](../docs/MVP-RUNBOOK.md) and `.github/workflows/directory.yml`.

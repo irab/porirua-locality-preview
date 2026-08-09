@@ -164,3 +164,14 @@ test("my list — print list enables print mode without error", async ({ page })
   expect(printSmoke.hasClass).toBe(true);
   expect(printSmoke.cleared).toBe(true);
 });
+
+test("demo — three-column layout smoke with show map", async ({ page }) => {
+  await page.goto("/index.html?demo=1&layout=three-column#support");
+  await expect(page.locator("#demo-layout-wrap")).toBeVisible();
+  await expect(page.locator("#demo-layout-select")).toHaveValue("three-column");
+  await expect(page.getByRole("button", { name: "Find support near me" })).toBeVisible();
+  await expect(page.locator("#map-block")).toBeVisible();
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
+  await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
+});

@@ -10,7 +10,7 @@ Plain language up front; technical detail in subsections where helpful.
 
 ## Executive summary
 
-**Phase 1 MVP is live and testable** at [https://directory.bsky.nz](https://directory.bsky.nz). People can choose **Find support** or **Connect with community**, search and filter, optionally show a map, save a session **My list**, and read crisis numbers on every page. Data merges **Porirua Community Connections Map** organisations with a **Porirua-filtered slice** of the NZ Family Services Directory (FSD), published as a single `services.json` file.
+**Phase 1 MVP is live and testable** at [https://directory.bsky.nz](https://directory.bsky.nz). People can choose **Find support** or **Connect with community**, search and filter, optionally show a map, save a session **My list** (a short notepad of organisations to revisit or call through), and read crisis numbers on every page. Data merges **Porirua Community Connections Map** organisations with a **Porirua-filtered slice** of the NZ Family Services Directory (FSD), published as a single `services.json` file.
 
 **What works well**
 
@@ -143,6 +143,8 @@ These came from MVP feedback, data review, and requirements iterations (see requ
 
 - **Community map badge removed** — Provenance stays internal (`source: community`); no “Community map” label on cards (requirements v1.7).
 - **My list** — Session-only favourites (`sessionStorage`); **Add to your list** / **Remove**; **Print list**; plain-language note that nothing is stored on a server (v1.8).
+
+**Why My list (product insight):** Browsing support or community listings means working through **many options at once** — different organisations, phone numbers, and types of help. It is easy to lose track of what looked promising. **Add to your list** is a lightweight **notepad for this visit**: tap to save places and organisations you might call back, compare, or walk through with someone else (e.g. working through a shortlist of groups by phone). Nothing is stored on a server — it is intentionally **session-only** so the feature stays simple and private while people are under stress or supporting whānau. **Print list** supports the same workflow on paper. Stakeholder testing should ask whether this helps front-line and help-seeking journeys, or whether a saved list across visits would ever be wanted (that would be a different, Phase 2 privacy and auth conversation).
 - **Landing vs browse** — “I would like to…” subnav on landing only; **Find support** / **Connect with community**; **Back** to change path.
 - **Find support listing** — Full list by default; single-select need chips; optional **Show map** (not auto-opened).
 - **Site chrome** — Porirua Locality logo, **Your Porirua Directory** title, **About** page, sticky crisis footer on all pages.
@@ -184,6 +186,57 @@ Use these in feedback sessions before committing Phase 1.5 or Phase 2 scope.
 5. **Editor workflow** — Is Google Sheet + occasional developer merge acceptable until Directus, or is manual hide/patch via `overrides.json` enough for the next months?
 6. **Community vs FSD duplication** — When community and FSD both list the same org, is hiding the FSD row (current behaviour) always right, or should some FSD **service lines** remain visible under the community org in Phase 2?
 7. **Search** — Should search match **subservice names** only after Phase 2, or is provider-name search enough for Phase 1.5?
+
+---
+
+## Layout experiments (demo)
+
+**Purpose:** Try alternative browse layouts and a **near-me map** flow without changing Phase 1 production behaviour for normal visitors. Stakeholders and designers can share demo URLs; the public site stays on the current **map on top** pattern unless query flags are present.
+
+### Layout names
+
+| Name | Query value | Behaviour |
+|------|-------------|-----------|
+| **Default / top map** | `layout=default` or `layout=top` (or omitted) | Same as Phase 1 MVP: optional **Show map** puts the map **above** the result cards in the main column (sidebar filters on the left from tablet width up). |
+| **Three column** | `layout=three-column` | With **Show map** on: **filters left**, **cards centre**, **sticky map right** on large desktops (≥1024px). |
+
+### How to open demos
+
+- **Layout picker + near-me button:** add **`?demo=1`** (e.g. `index.html?demo=1#support`). The sidebar shows **Demo layout** and **Find support near me**; without `demo=1` those controls stay hidden.
+- **Layout only:** `?layout=three-column` (works with or without `demo=1`). Alternate: hash fragment `layout=` e.g. `#support&layout=three-column` if you need layout in the hash without clobbering `#support`.
+- **Combined example:** `https://directory.bsky.nz/index.html?demo=1&layout=three-column#support`
+
+Implementation lives in `porirua_directory/` (`directory.js`, `directory.css`); no pipeline or schema changes.
+
+### Feasibility
+
+- **Low risk for production:** Layout is CSS grid + DOM order; default URL behaviour is unchanged. E2E smokes run without `demo=1`.
+- **Three-column** reuses the same Leaflet instance and **Show map** checkbox — no second map.
+- **Near-me** filters the **already filtered** browse list to rows with coordinates within **15 km** (haversine), centres the map, and highlights nearby markers. No server round-trip.
+
+### Privacy (GPS consent)
+
+- **Find support near me** uses the browser **`navigator.geolocation`** API once per click; the browser shows the standard permission prompt.
+- Coordinates are kept **in memory for the session tab only** (not sent to Porirua Locality servers, not written to `sessionStorage`). Clearing browse / **Back** clears near-me state.
+- Copy should continue to state that location is optional and list-first browse remains fully usable if permission is denied.
+
+### Mobile behaviour
+
+| Layout | Narrow screens |
+|--------|----------------|
+| **Default / top** | Stack: **filters → map (when shown) → results**. |
+| **Three column** | Stack: **filters → results → map** (map last so cards stay primary). |
+
+Below the three-column desktop breakpoint (1024px), the “three column” demo behaves as a single column stack — not a side-by-side map.
+
+### Phase 1.5 vs Phase 2
+
+| Horizon | Recommendation |
+|---------|----------------|
+| **Phase 1.5** | Keep layouts **demo-flagged** (`?demo=1`); gather stakeholder feedback on three-column and near-me copy. Optional: persist last layout in `sessionStorage` for demo sessions only. |
+| **Phase 2** | Product decision whether **near-me** becomes a first-class entry (landing CTA, analytics, privacy policy line). Consider **list-first** legal/consent pattern and map as enhancement (aligns with [Accessibility (target)](#accessibility-target)). Three-column may become default desktop if testing shows clearer scan path. |
+
+**Limitations today:** Near-me does not geocode addresses without lat/lng in `services.json`; FSD rows missing coordinates never appear in the radius filter. Geolocation accuracy varies by device; 15 km is a demo radius, not a service guarantee. `layout=top` and `layout=default` are intentionally identical aliases.
 
 ---
 

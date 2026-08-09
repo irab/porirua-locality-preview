@@ -34,3 +34,6 @@ export const mapDefaults = {
   lng: 174.84,
   zoom: 12,
 };
+
+/** Demo “near me” radius (km) — browser geolocation only, not stored. */
+export const nearMeRadiusKm = 15;
