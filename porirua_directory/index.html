@@ -79,12 +79,13 @@
     </section>
 
     <div id="view-browse" class="view-browse" hidden>
-      <p class="browse-toolbar">
-        <button type="button" id="back-to-landing" class="back-link">← Back</button>
-      </p>
-
       <div class="browse-layout">
-        <aside class="browse-sidebar" aria-label="Search and topics">
+        <div class="browse-sticky-panel">
+          <p class="browse-toolbar">
+            <button type="button" id="back-to-landing" class="back-link">← Back</button>
+          </p>
+
+          <aside class="browse-sidebar" aria-label="Search and topics">
           <section id="filters-support" class="filters filters--hidden" aria-labelledby="support-filters-heading">
             <h2 id="support-filters-heading" class="section-title">Support with…</h2>
             <div id="need-chips" class="chip-row" role="group" aria-label="Types of support"></div>
@@ -103,7 +104,8 @@
             <input id="show-map" type="checkbox" />
             Show map
           </label>
-        </aside>
+          </aside>
+        </div>
 
         <div class="browse-main">
           <div id="map-block" class="map-block map-block--hidden" hidden>
