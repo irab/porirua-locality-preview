@@ -17,9 +17,11 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | Document | Audience | Purpose |
 |----------|----------|---------|
 | [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Porirua Locality, funders | Phase 1 / Phase 2 scope, budget, plain-language requirements |
+| [potential-changes-and-insights.md](./potential-changes-and-insights.md) | Team, stakeholders | MVP gaps (org/subservices), fixes shipped, Phase 1.5/2 options |
 | [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements (regenerate after v1.3 md changes) |
 | [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | System context, data flow, hosting at directory.bsky.nz |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Developers | Phase 1 data model, FSD rules, merge, overrides |
+| [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Developers | FSD Aranui/Rānui geo fix, Salvation Army duplicates, org→service roadmap |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |
 | [human-services-directory-examples-overview.md](./human-services-directory-examples-overview.md) | Team, stakeholders | Comparable directories (Ask Izzy, 211, FSD, etc.) |
 | [human-services-directory-examples-overview.pdf](./human-services-directory-examples-overview.pdf) | Same (print/PDF) | Export of examples overview |

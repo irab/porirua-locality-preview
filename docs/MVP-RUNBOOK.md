@@ -55,7 +55,7 @@ CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes
 1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the container image.
 2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`).
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
-4. Verify [https://directory.bsky.nz](https://directory.bsky.nz).
+4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
 
 **Pin a SHA:** edit `deployment.yaml` image tag to `:sha` instead of `:latest` for reproducible rollouts.
 
@@ -67,12 +67,13 @@ Use this checklist when testing the MVP with help-seekers and the Porirua Locali
 
 | Topic | Question |
 |-------|----------|
-| Browse entry | Is **I need help** vs **Connect with community** clear? |
-| Need categories | Are the nine help categories the right plain-language set? |
+| Browse entry | Is **Find support** vs **Connect with community** clear on landing (**I would like to…**)? |
+| Need categories | Are the nine support categories the right plain-language set? |
 | Community filters | Can people find marae, councils, and kai initiatives without schools crowding the view? |
-| Crisis strip | Compact enough on the community path; visible enough on the help path? |
+| Crisis footer | Sticky bar readable on mobile; links work from landing, browse, and About? |
+| Browse layout | **Back** to change path (subnav hidden); filters left, optional map, results — quick on a phone? |
 | Search & map | Can people find a known service (name or suburb) on a phone? |
-| Trust | Do **Community map** badges and descriptions feel local and accurate? |
+| Trust | Do community org descriptions and org-type chips feel local and accurate? |
 | Gaps | What services or org types are missing from the merged list? |
 
 Capture notes for Phase 2 priorities (admin UI, weekly FSD sync, Squarespace embed, **D1 + Workers vs Directus** spike).

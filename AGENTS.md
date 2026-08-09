@@ -6,7 +6,7 @@ Short index for Cursor and other coding agents working in this repository.
 
 Monorepo for **Porirua Locality** preview web apps:
 
-- **`porirua_directory/`** — public “find help in Porirua” services directory (Connections Map + NZ Family Services Directory merge).
+- **`porirua_directory/`** — **Your Porirua Directory** (Connections Map + NZ Family Services Directory merge).
 - **`porirua_connections_map/`** — Assembly-themed **Community Connections Map** (Squarespace embed, Google Sheet source).
 - **`docs/`** — requirements, architecture, runbook, phase specs, stakeholder material.
 
@@ -27,6 +27,7 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 |-----|---------|
 | [`docs/README.md`](docs/README.md) | Full docs index |
 | [`docs/porirua-services-directory-requirements.md`](docs/porirua-services-directory-requirements.md) | Product scope, phases, changelog |
+| [`docs/potential-changes-and-insights.md`](docs/potential-changes-and-insights.md) | MVP gaps, org/subservices deficit, roadmap options |
 | [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | System context, hosting |
 | [`docs/porirua-directory-phase1-spec.md`](docs/porirua-directory-phase1-spec.md) | Data model, FSD rules, merge, overrides |
 | [`docs/MVP-RUNBOOK.md`](docs/MVP-RUNBOOK.md) | Rebuild data, deploy, test |

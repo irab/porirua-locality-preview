@@ -111,7 +111,7 @@ See [Phase 1 spec](../porirua-directory-phase1-spec.md#service-record). Summary:
 
 - Identity: `id`, `name`, `description`, `phone`, `url`, `address`, `lat`, `lng`
 - Browse: `categories[]` (need/help), `communityFilters[]`, `orgType`
-- Provenance: `source` (`community` | `fsd`), `badges` (e.g. `Community map`)
+- Provenance: `source` (`community` | `fsd`), optional `badges` (public labels; community rows default to none)
 - Dedup: `duplicateOf` (hidden from public list when set)
 
 ---

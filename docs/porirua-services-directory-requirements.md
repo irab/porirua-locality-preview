@@ -1,6 +1,6 @@
 # Porirua Services Directory — Requirements
 
-**Version:** 1.3 (draft)  
+**Version:** 1.8 (draft)  
 **Date:** 31 July 2026  
 **Prepared for:** Porirua Locality / Te Wāhi Tiaki Tātou  
 **Timeline:** ~5–6 weeks total (MVP first, then iteration)  
@@ -54,7 +54,6 @@ What people can test:
 - **Need-based categories** + **search** + **map** + **crisis numbers**
 - **Merged service listings** from Connections Map + Family Services Directory (Porirua-filtered)
 - **Service cards** — name, description, phone, address, website where available
-- *Community map* label for Connections Map entries
 
 How data is managed in MVP (simplified):
 
@@ -132,9 +131,10 @@ Community workers may share the link; the directory is **not** a referral or cas
 
 When someone opens the directory they should be able to:
 
-1. **Emergency and crisis numbers** — available without burying other uses (compact bar; stronger emphasis on the help path).
-2. **Choose how to browse** — e.g. **I need help** (need categories) or **Connect with community** (organisation types: marae, groups, councils, kai initiatives; schools optional and not selected by default).
-3. **Need categories** (help path) — plain language, for example:
+1. **Site navigation** — Porirua Locality (Te Wāhi Tiaki Tātou) logo; **Your Porirua Directory** as the title in the top bar; **My list** and **About** on every page. A subnav row on **landing only** holds **I would like to…** and **Find support** / **Connect with community** (hidden in browse).
+2. **Choose a path** — from the subnav on landing; filters and results appear after a path is chosen; **Back** returns to landing (only way to change path).
+3. **Emergency and crisis numbers** — compact sticky footer on every page (landing, browse, and About).
+4. **Support categories** (Find support path) — plain language, for example:
    - Food / kai
    - Housing / a place to stay
    - Money help / budgeting
@@ -144,11 +144,12 @@ When someone opens the directory they should be able to:
    - Legal advice
    - Work and learning
    - Everyday needs (clothes, showers, transport, etc.)
-3. **Search** — type what they need; results filtered to Porirua-relevant services.
-4. **Map** — show where services are; tap a marker for details.
-5. **List of results** — cards below the map when a category or search is active.
+5. **Search** — type what they need; results filtered to Porirua-relevant services (in the browse sidebar).
+6. **Map** — optional via **Show map** beside search; shown only when enabled and there are results with locations; tap a marker for details.
+7. **List of results** — on **Find support**, the full listing shows by default with **no category chips selected**; tap one chip to filter to that topic only (tap again to show all); search narrows further.
+8. **My list** — **Add to your list** on each listing; saved **places and organisations** for this visit only (plain-language note that nothing is stored online); **Remove** on saved items; optional **Print list**.
 
-People can start from a **need** (“I need food”) or from the **map** (“what’s near me”). They should not need to know which list a service came from.
+People can start from a **need** (e.g. food / kai) or from **search**. They should not need to know which list a service came from.
 
 ### 4.2 Service listing (each result)
 
@@ -161,9 +162,7 @@ Each service should show, where available:
 - Website link
 - Opening hours (if known)
 
-Optional small labels only when useful to the public, for example:
-
-- *Community map* — curated local organisation from the Connections Map
+Do **not** show source/provenance labels (e.g. which database or map a row came from) or internal IDs on cards. Connections Map entries are distinguished in data by `source: community` only, not a public badge.
 
 Do **not** show internal labels like “government record” or database IDs.
 
@@ -524,6 +523,16 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 - [MVP implementation plan](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md)
 
 ---
+
+*Changes in v1.8: **My list** — session-only favourites; **Remove** + **Print list**; copy covers organisations and services; plain-language privacy note.*
+
+*Changes in v1.7: Removed public *Community map* card badge; Connections Map provenance stays internal (`source: community`).*
+
+*Changes in v1.6: Condensed nav — **Your Porirua Directory** in top bar; path buttons in subnav; **Find support** shows all listings with no chips selected; single-select category filter.*
+
+*Changes in v1.5: Sticky crisis footer on all pages; map via optional **Show map** checkbox (not auto-shown).*
+
+*Changes in v1.4: Landing vs browse UX; **Find support** / **Connect with community** copy; crisis strip on support path only; collapsible map (shown only when results have locations); left-hand filters; top nav with logo and About; Back to landing.*
 
 *Changes in v1.3: Three public audiences; directory.bsky.nz hosting; Phase 1 architecture docs; Phase 2 D1 alternative noted alongside Directus.*
 
