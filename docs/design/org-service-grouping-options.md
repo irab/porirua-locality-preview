@@ -1,7 +1,7 @@
 # Organisation / service grouping — UX options
 
 **Date:** 10 August 2026  
-**Status:** Design + data analysis (no production UI in this change)  
+**Status:** Design + data analysis; **Option B MVP spike** on branch `feature/org-service-grouping-design` (runtime grouping in `group-services.mjs` + `directory.js`; not yet Phase 2 pipeline schema).  
 **Audience:** Porirua Locality product, stakeholders, developers  
 
 **Related:** [Org / subservices deficit](../potential-changes-and-insights.md#org--subservices-deficit-highlight) · [FSD org plan](../plans/fsd-org-subservices-and-geo-filter.md) · Analysis artifact: [`porirua_directory/data/org-clusters-preview.json`](../porirua_directory/data/org-clusters-preview.json) · Script: `porirua_directory/scripts/analyze-org-clusters.mjs`
@@ -292,3 +292,16 @@ node scripts/analyze-org-clusters.mjs
 ```
 
 Compare `clustering.orgsWithSameNormalizedName2Plus` and top-of-list providers against stakeholder expectations.
+
+---
+
+## 11. Implementation status (branch spike)
+
+| Area | Approach |
+|------|----------|
+| Grouping | **Runtime** in `porirua_directory/group-services.mjs` (same cluster key as `analyze-org-clusters.mjs`). Tradeoff: no `services[]` in `services.json` yet; rebuild not required for UI experiments. Phase 2 should move grouping to merge + unique `SERVICE_ID` per line. |
+| Browse / My list | Option **B** org card (`card--org`) with `service-row` lines; community rows unchanged (single card). |
+| Favourites | Org-level `orgId` (shared slug when all lines share one `id`, else `org-…`). |
+| Map | One pin per org cluster; compact popup + **View in list** scrolls to `#org-{id}` in `#directory-results` with brief focus ring. |
+| Need filter | Matching rows get `.service-row--match` / `.is-highlighted`; others dimmed when a chip is active. |
+

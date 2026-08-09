@@ -480,7 +480,7 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
   const filteredCount = await page.locator("#directory-results .card").count();
   expect(filteredCount).toBeLessThan(initialCount);
   await expect(page.locator("#status-line")).toContainText(
-    new RegExp(`${filteredCount} listing`)
+    new RegExp(`${filteredCount} (listing|organisation)`)
   );
 
   await expect(page.locator(".leaflet-overlay-pane svg path")).toHaveCount(
@@ -492,4 +492,30 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
     .first()
     .getAttribute("stroke");
   expect(stroke?.toLowerCase()).toBe("#60164c");
+});
+
+test("org grouping — need chip highlights matching service rows", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Food / kai" }).click();
+  const card = page
+    .locator("#directory-results .card--org")
+    .filter({ hasText: "Salvation Army" })
+    .first();
+  await expect(card).toBeVisible();
+  await expect(card.locator(".service-row--match")).not.toHaveCount(0);
+});
+
+test("org grouping — map popup View in list focuses org card", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Food / kai" }).click();
+  const card = page
+    .locator("#directory-results .card--org")
+    .filter({ hasText: "Salvation Army" })
+    .first();
+  await expect(card).toBeVisible();
+  await card.click({ position: { x: 8, y: 8 } });
+  const popup = page.locator(".leaflet-popup-content .map-popup");
+  await expect(popup.getByRole("button", { name: "View in list" })).toBeVisible();
+  await popup.getByRole("button", { name: "View in list" }).click();
+  await expect(card).toHaveClass(/card--focus-ring/);
 });
