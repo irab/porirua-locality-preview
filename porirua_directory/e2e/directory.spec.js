@@ -175,3 +175,30 @@ test("demo — three-column layout smoke with show map", async ({ page }) => {
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
 });
+
+test("demo — three-column need chip filters list and map markers", async ({ page }) => {
+  await page.goto("/index.html?demo=1&layout=three-column#support");
+  await page.waitForSelector(".leaflet-overlay-pane svg path");
+  const initialCount = await page.locator("#directory-results .card").count();
+  const initialMarkers = await page.locator(".leaflet-overlay-pane svg path").count();
+  expect(initialMarkers).toBe(initialCount);
+
+  await page.locator("#need-chips .chip").first().click();
+  await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
+
+  const filteredCount = await page.locator("#directory-results .card").count();
+  expect(filteredCount).toBeLessThan(initialCount);
+  await expect(page.locator("#status-line")).toContainText(
+    new RegExp(`${filteredCount} listing`)
+  );
+
+  await expect(page.locator(".leaflet-overlay-pane svg path")).toHaveCount(
+    filteredCount
+  );
+
+  const stroke = await page
+    .locator(".leaflet-overlay-pane svg path")
+    .first()
+    .getAttribute("stroke");
+  expect(stroke?.toLowerCase()).toBe("#60164c");
+});

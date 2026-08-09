@@ -294,6 +294,14 @@ async function main() {
   let markerLayer = null;
   let userMarker = null;
   let markersById = new Map();
+  let mapSyncGeneration = 0;
+
+  const SERVICE_MARKER_STYLE = {
+    color: "#60164c",
+    fillColor: "#ce2026",
+    fillOpacity: 0.9,
+    weight: 2,
+  };
 
   function setDemoChromeVisible() {
     const show = demoQuery.demo;
@@ -348,7 +356,19 @@ async function main() {
     });
   }
 
+  function fitMapToMappable(mappable) {
+    if (!map || !window.L || mappable.length === 0) return;
+    const L = window.L;
+    if (mappable.length === 1) {
+      map.setView([mappable[0].lat, mappable[0].lng], 14);
+      return;
+    }
+    const bounds = L.latLngBounds(mappable.map((s) => [s.lat, s.lng]));
+    map.fitBounds(bounds, { maxZoom: 15, padding: [28, 28] });
+  }
+
   async function syncMapForFiltered(filtered) {
+    const syncGen = ++mapSyncGeneration;
     const mappable = mappableServices(filtered);
     const showMapBlock =
       state.showMap && filtered.length > 0 && mappable.length > 0;
@@ -367,6 +387,8 @@ async function main() {
     }
 
     await ensureMap();
+    if (syncGen !== mapSyncGeneration) return;
+
     markerLayer.clearLayers();
     markersById = new Map();
     const L = window.L;
@@ -392,10 +414,7 @@ async function main() {
       const nearby = state.nearMe && dist != null && dist <= nearMeRadiusKm;
       const marker = L.circleMarker([service.lat, service.lng], {
         radius: nearby ? 9 : 7,
-        color: nearby ? "#60164c" : "#888",
-        fillColor: nearby ? "#ce2026" : "#bbb",
-        fillOpacity: nearby ? 0.9 : 0.55,
-        weight: nearby ? 2 : 1,
+        ...SERVICE_MARKER_STYLE,
       });
       const distLabel =
         dist != null ? `<br><span>${dist.toFixed(1)} km away</span>` : "";
@@ -403,7 +422,14 @@ async function main() {
       marker.addTo(markerLayer);
       markersById.set(service.id, marker);
     });
-    setTimeout(() => map.invalidateSize(), 0);
+
+    requestAnimationFrame(() => {
+      if (syncGen !== mapSyncGeneration || !map) return;
+      map.invalidateSize();
+      if (!state.nearMe) {
+        fitMapToMappable(mappable);
+      }
+    });
   }
 
   function updateModeButtons(mode) {
