@@ -3,6 +3,30 @@ import { test, expect } from "@playwright/test";
 const LOGO_ALT = "Te Wāhi Tiaki Tātou — Porirua Locality";
 const PRODUCT_TITLE = "Your Porirua Directory";
 
+/** Playwright context geolocation is unreliable with getCurrentPosition; stub in-page. */
+async function mockGeolocation(page, { latitude, longitude, accuracy = 10 }) {
+  await page.addInitScript(
+    ({ latitude, longitude, accuracy }) => {
+      const position = {
+        coords: {
+          latitude,
+          longitude,
+          accuracy,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        },
+        timestamp: Date.now(),
+      };
+      navigator.geolocation.getCurrentPosition = (success) => {
+        queueMicrotask(() => success(position));
+      };
+    },
+    { latitude, longitude, accuracy }
+  );
+}
+
 test("accessibility smoke — skip link targets main landmark", async ({ page }) => {
   await page.goto("/index.html");
   const skip = page.getByRole("link", { name: "Skip to content" });
@@ -27,6 +51,9 @@ test("landing — path buttons in subnav, crisis footer, no map", async ({ page 
   await expect(pathNav.getByRole("button", { name: "Find support" })).toBeVisible();
   await expect(pathNav.getByRole("button", { name: "Connect with community" })).toBeVisible();
   await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
+  await expect(
+    page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "Need to talk? 1737" })
+  ).toBeVisible();
   await expect(page.locator("#search-input")).toBeHidden();
   await expect(page.locator(".leaflet-container")).toHaveCount(0);
   await expect(page.locator("#map-block")).toBeHidden();
@@ -38,7 +65,9 @@ test("about page — nav, copy, crisis footer", async ({ page }) => {
   await expect(page.getByRole("link", { name: LOGO_ALT })).toBeVisible();
   await expect(page.locator(".site-product-title")).toHaveText(PRODUCT_TITLE);
   await expect(page.getByRole("link", { name: "Back to Your Porirua Directory" })).toBeVisible();
-  await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "1737" })).toBeVisible();
+  await expect(
+    page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "Need to talk? 1737" })
+  ).toBeVisible();
 });
 
 test("support path — all listings by default, no chip selected", async ({ page }) => {
@@ -49,8 +78,10 @@ test("support path — all listings by default, no chip selected", async ({ page
   await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(0);
-  await expect(page.locator("#map-block")).toBeHidden();
-  await expect(page.locator(".leaflet-container")).toHaveCount(0);
+  await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
+  await expect(page.getByRole("checkbox", { name: "Show map" })).toBeChecked();
+  await expect(page.locator("#map-block")).toBeVisible();
+  await expect(page.locator(".leaflet-container")).toBeVisible();
 });
 
 test("support path — single-select need chip filters and toggles off", async ({ page }) => {
@@ -75,13 +106,22 @@ test("support path — single-select need chip filters and toggles off", async (
 });
 
 test("support path — Show map reveals map when results have locations", async ({ page }) => {
-  await page.goto("/index.html");
+  await page.goto("/index.html?layout=top");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
   await expect(page.getByText(/Support with…/i)).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
+  await expect(page.locator("#map-block")).toBeHidden();
   await page.getByRole("checkbox", { name: "Show map" }).check();
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
+});
+
+test("support path — three-column default can hide map via Show map", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
+  await expect(page.getByRole("checkbox", { name: "Show map" })).toBeChecked();
+  await page.getByRole("checkbox", { name: "Show map" }).uncheck();
+  await expect(page.locator("#map-block")).toBeHidden();
 });
 
 test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
@@ -166,7 +206,7 @@ test("my list — print list enables print mode without error", async ({ page })
 });
 
 test("demo — three-column layout smoke with show map", async ({ page }) => {
-  await page.goto("/index.html?demo=1&layout=three-column#support");
+  await page.goto("/index.html?demo=1#support");
   await expect(page.locator("#demo-layout-wrap")).toBeVisible();
   await expect(page.locator("#demo-layout-select")).toHaveValue("three-column");
   await expect(page.getByRole("button", { name: "Find support near me" })).toBeVisible();
@@ -176,8 +216,42 @@ test("demo — three-column layout smoke with show map", async ({ page }) => {
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
 });
 
+test("demo — near me toggle keeps map working", async ({ page, context }) => {
+  await context.grantPermissions(["geolocation"]);
+  await mockGeolocation(page, { latitude: -41.134, longitude: 174.84 });
+  await page.goto("/index.html?demo=1#support");
+  const nearBtn = page.locator("#find-near-me");
+  await nearBtn.click();
+  await expect(nearBtn).toHaveAttribute("aria-pressed", "true");
+  await expect(nearBtn).toContainText(/Near me: on/i);
+  await expect(page.locator("#map-block")).toBeVisible();
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
+  await expect(page.locator("#near-me-status")).toContainText(/within 15 km/i);
+
+  await nearBtn.click();
+  await expect(nearBtn).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+});
+
+test("demo — near me far from Porirua keeps map with empty list", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["geolocation"]);
+  await mockGeolocation(page, { latitude: -43.53, longitude: 172.63 });
+  await page.goto("/index.html?demo=1#support");
+  await page.locator("#find-near-me").click();
+  await expect(page.locator("#find-near-me")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#directory-results .card")).toHaveCount(0);
+  await expect(page.locator("#status-line")).toContainText(/within 15 km of you/i);
+  await expect(page.locator("#map-block")).toBeVisible();
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+});
+
 test("demo — three-column need chip filters list and map markers", async ({ page }) => {
-  await page.goto("/index.html?demo=1&layout=three-column#support");
+  await page.goto("/index.html?demo=1#support");
   await page.waitForSelector(".leaflet-overlay-pane svg path");
   const initialCount = await page.locator("#directory-results .card").count();
   const initialMarkers = await page.locator(".leaflet-overlay-pane svg path").count();

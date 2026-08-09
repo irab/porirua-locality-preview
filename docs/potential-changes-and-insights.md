@@ -27,7 +27,7 @@ Plain language up front; technical detail in subsections where helpful.
 - **Accessibility not yet a first-class deliverable** — the public UI includes intentional basics (skip link, landmarks, plain language, crisis footer), but there has been **no formal WCAG audit, remediation pass, or assistive-technology test programme**. See [Accessibility (target)](#accessibility-target) below.
 - **Phase 2 items deferred** — weekly FSD automation, Directus, Squarespace embed, formal duplicate workflow (see [requirements](./porirua-services-directory-requirements.md)).
 
-Geographic false positives in the FSD slice have been reduced in recent pipeline work (see [issues](./issues/README.md)); that did **not** fix duplicate org cards from multi-service FSD providers.
+Geographic false positives in the FSD slice have been reduced in recent pipeline work (see [issues](./issues/README.md)); that did **not** fix duplicate org cards from multi-service FSD providers. After each FSD refresh, use the **import audit workflow** in [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) and [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) to review `data/fsd-porirua-excluded.json` reason codes before publishing.
 
 ---
 
@@ -59,7 +59,7 @@ Dedupe at merge time only links **community** rows to **FSD** rows on name + map
 | **Family Works Central** (and related FSD names) | Many cards; long duplicated descriptions | Multiple service lines; regional centre text repeated |
 | **Presbyterian Support / Family Works** (community side) | Often **one** community card with rich local copy | Connections Map is **org-grain** — aligns with mental model |
 
-Current published slice (Aug 2026 rebuild): **461** listings (~52 community + ~409 FSD). Salvation Army Porirua remains **13** listings (same id).
+Current published slice (Aug 2026 rebuild, after [address-context filter](./issues/fixed-fsd-locality-address-context-filter.md)): **434** listings (~52 community + ~382 FSD). Salvation Army Porirua remains **13** listings (same id).
 
 **Stakeholder takeaway:** The directory is trustworthy for “something exists in Porirua” but can feel **repetitive or confusing** for NGOs with many FSD service lines. Fixing that needs a deliberate product choice (many service cards vs one org card), not only a bug fix.
 
@@ -191,41 +191,41 @@ Use these in feedback sessions before committing Phase 1.5 or Phase 2 scope.
 
 ## Layout experiments (demo)
 
-**Purpose:** Try alternative browse layouts and a **near-me map** flow without changing Phase 1 production behaviour for normal visitors. Stakeholders and designers can share demo URLs; the public site stays on the current **map on top** pattern unless query flags are present.
+**Purpose:** Document browse layout behaviour and keep **near-me** and **legacy top-map** experiments behind `?demo=1` where useful. **Production default** (no query params) is **three-column on desktop**: filters left, cards centre, sticky map right when **Show map** is on (auto-enabled for three-column).
 
 ### Layout names
 
 | Name | Query value | Behaviour |
 |------|-------------|-----------|
-| **Default / top map** | `layout=default` or `layout=top` (or omitted) | Same as Phase 1 MVP: optional **Show map** puts the map **above** the result cards in the main column (sidebar filters on the left from tablet width up). |
-| **Three column** | `layout=three-column` | With **Show map** on: **filters left**, **cards centre**, **sticky map right** on large desktops (≥1024px). |
+| **Three column (default)** | omitted, or `layout=three-column` | **Show map** on by default when entering browse: **filters left**, **cards centre**, **sticky map right** on large desktops (≥1024px). Result count sits above the cards (centre only); map top aligns with the **first card**. Need chips refit the map to filtered markers (brand purple/crimson pins). |
+| **Top map (legacy)** | `layout=top` or `layout=default` | Optional **Show map** puts the map **above** the result cards in the main column (sidebar filters on the left from tablet width up). Map hidden until the user checks **Show map**. |
 
 ### How to open demos
 
-- **Layout picker + near-me button:** add **`?demo=1`** (e.g. `index.html?demo=1#support`). The sidebar shows **Demo layout** and **Find support near me**; without `demo=1` those controls stay hidden.
-- **Layout only:** `?layout=three-column` (works with or without `demo=1`). Alternate: hash fragment `layout=` e.g. `#support&layout=three-column` if you need layout in the hash without clobbering `#support`.
-- **Combined example:** `https://directory.bsky.nz/index.html?demo=1&layout=three-column#support`
+- **Layout picker + near-me button:** add **`?demo=1`** (e.g. `index.html?demo=1#support`). The sidebar shows **Demo layout** and **Find support near me**; without `demo=1` those controls stay hidden. The picker can switch back to **map on top** for stakeholder comparison (`?layout=top` is written to the URL).
+- **Legacy top map only:** `?layout=top` (works with or without `demo=1`). Alternate: hash fragment `layout=` e.g. `#support&layout=top`.
+- **Combined example:** `https://directory.bsky.nz/index.html?demo=1#support` (three-column default) or `?demo=1&layout=top#support` for top-map experiment.
 
 Implementation lives in `porirua_directory/` (`directory.js`, `directory.css`); no pipeline or schema changes.
 
 ### Feasibility
 
-- **Low risk for production:** Layout is CSS grid + DOM order; default URL behaviour is unchanged. E2E smokes run without `demo=1`.
-- **Three-column** reuses the same Leaflet instance and **Show map** checkbox — no second map.
-- **Near-me** filters the **already filtered** browse list to rows with coordinates within **15 km** (haversine), centres the map, and highlights nearby markers. No server round-trip.
+- **Production default:** Layout is CSS grid + DOM order; E2E smokes the main support path with `data-browse-layout="three-column"` at default Playwright viewport (1280px).
+- **Three-column** reuses the same Leaflet instance and **Show map** checkbox — no second map. Filter changes call **`invalidateSize`** + **`fitBounds`** on the mappable subset (except near-me mode); marker styling uses brand **`#60164c` / `#ce2026`**. E2E covers need-chip filtering on the default layout and **`?layout=top`** for optional map reveal.
+- **Near-me** filters the **already filtered** browse list to rows with coordinates within **15 km** (haversine), centres the map, and highlights nearby markers. No server round-trip. The control is a **toggle**: pressed state (`aria-pressed`, `.is-on` on the button), label **Near me: on — tap to turn off**, status line states the **15 km** radius, and a dashed circle on the map shows the search area. The map stays visible when near-me is on even if nothing is in radius (common if GPS is far from Porirua). Empty copy distinguishes **no listings in radius** from **location blocked / unavailable**. Low-accuracy GPS (&gt;5 km reported) adds a warning in the status line. Turning near-me off restores the full filtered list.
 
 ### Privacy (GPS consent)
 
 - **Find support near me** uses the browser **`navigator.geolocation`** API once per click; the browser shows the standard permission prompt.
-- Coordinates are kept **in memory for the session tab only** (not sent to Porirua Locality servers, not written to `sessionStorage`). Clearing browse / **Back** clears near-me state.
+- Coordinates are kept **in memory for the session tab only** (not sent to Porirua Locality servers, not written to `sessionStorage`). Clearing browse / **Back** or toggling **Near me** off clears near-me state.
 - Copy should continue to state that location is optional and list-first browse remains fully usable if permission is denied.
 
 ### Mobile behaviour
 
 | Layout | Narrow screens |
 |--------|----------------|
-| **Default / top** | Stack: **filters → map (when shown) → results**. |
-| **Three column** | Stack: **filters → results → map** (map last so cards stay primary). |
+| **Top map (`layout=top`)** | Stack: **filters → map (when shown) → results**. |
+| **Three column (default)** | Stack: **filters → results → map** (map last so cards stay primary). |
 
 Below the three-column desktop breakpoint (1024px), the “three column” demo behaves as a single column stack — not a side-by-side map.
 
@@ -233,8 +233,8 @@ Below the three-column desktop breakpoint (1024px), the “three column” demo 
 
 | Horizon | Recommendation |
 |---------|----------------|
-| **Phase 1.5** | Keep layouts **demo-flagged** (`?demo=1`); gather stakeholder feedback on three-column and near-me copy. Optional: persist last layout in `sessionStorage` for demo sessions only. |
-| **Phase 2** | Product decision whether **near-me** becomes a first-class entry (landing CTA, analytics, privacy policy line). Consider **list-first** legal/consent pattern and map as enhancement (aligns with [Accessibility (target)](#accessibility-target)). Three-column may become default desktop if testing shows clearer scan path. |
+| **Phase 1.5** | Three-column is **live by default** on desktop; use **`?demo=1`** for near-me trials and the layout picker when comparing top-map. Optional: persist last layout in `sessionStorage` for demo sessions only. |
+| **Phase 2** | Product decision whether **near-me** becomes a first-class entry (landing CTA, analytics, privacy policy line). Consider **list-first** legal/consent pattern and map as enhancement (aligns with [Accessibility (target)](#accessibility-target)). |
 
 **Limitations today:** Near-me does not geocode addresses without lat/lng in `services.json`; FSD rows missing coordinates never appear in the radius filter. Geolocation accuracy varies by device; 15 km is a demo radius, not a service guarantee. `layout=top` and `layout=default` are intentionally identical aliases.
 
@@ -248,6 +248,7 @@ Below the three-column desktop breakpoint (1024px), the “three column” demo 
 | [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | FSD row model, Phase 1.5 / 2 / UI-only options |
 | [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Product scope, budget, phased delivery, public UX requirements |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Service schema, FSD rules, merge, overrides |
+| [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) | FSD geo filter rationale, exclusion audit |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Rebuild data, deploy, test |
 | [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Hosting, data flow, Phase 2 target architecture |
 | [README.md](./README.md) | Full docs index |

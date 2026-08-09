@@ -3,7 +3,11 @@
 export const crisisLinks = [
   { label: "111 Emergency", href: "tel:111", description: "Life-threatening emergency" },
   { label: "105 Police non-emergency", href: "tel:105", description: "Report a crime or incident" },
-  { label: "1737", href: "tel:1737", description: "Need to talk? Free call or text" },
+  {
+    label: "Need to talk? 1737",
+    href: "tel:1737",
+    description: "Free call or text 1737 — 24/7 mental health and addiction support",
+  },
   { label: "Women's Refuge", href: "tel:0800733843", description: "0800 REFUGE / 0800 733 843" },
 ];
 

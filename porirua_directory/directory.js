@@ -182,11 +182,27 @@ function parseBrowseLayoutFromHash() {
   return m ? normalizeBrowseLayout(m[1]) : null;
 }
 
+function resolveBrowseLayout() {
+  const params = new URLSearchParams(location.search);
+  if (params.has("layout")) {
+    return normalizeBrowseLayout(params.get("layout"));
+  }
+  const fromHash = parseBrowseLayoutFromHash();
+  if (fromHash != null) return fromHash;
+  return "three-column";
+}
+
+/** Query `layout` value when persisting URL (omit when production default). */
+function layoutQueryValue(normalized) {
+  if (normalized === "three-column") return null;
+  if (normalized === "default") return "top";
+  return normalized;
+}
+
 function parseDemoQuery() {
   const params = new URLSearchParams(location.search);
   const demo = params.get("demo") === "1";
-  const fromQuery = params.get("layout");
-  const layout = normalizeBrowseLayout(fromQuery ?? parseBrowseLayoutFromHash());
+  const layout = resolveBrowseLayout();
   return { demo, layout };
 }
 
@@ -293,6 +309,7 @@ async function main() {
   let map = null;
   let markerLayer = null;
   let userMarker = null;
+  let userRadiusCircle = null;
   let markersById = new Map();
   let mapSyncGeneration = 0;
 
@@ -313,6 +330,36 @@ async function main() {
     }
   }
   setDemoChromeVisible();
+
+  function updateNearMeUi() {
+    if (!findNearMeBtn) return;
+    const on = Boolean(state.nearMe);
+    findNearMeBtn.classList.toggle("is-on", on);
+    findNearMeBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    findNearMeBtn.textContent = on
+      ? "Near me: on — tap to turn off"
+      : "Find support near me";
+  }
+
+  function clearNearMe({ hideStatus = true } = {}) {
+    state.nearMe = null;
+    updateNearMeUi();
+    if (hideStatus && nearMeStatus) {
+      nearMeStatus.hidden = true;
+      nearMeStatus.textContent = "";
+    }
+  }
+
+  function removeUserMapOverlays() {
+    if (userMarker) {
+      userMarker.remove();
+      userMarker = null;
+    }
+    if (userRadiusCircle) {
+      userRadiusCircle.remove();
+      userRadiusCircle = null;
+    }
+  }
 
   async function ensureMap() {
     if (map) return;
@@ -356,22 +403,63 @@ async function main() {
     });
   }
 
-  function fitMapToMappable(mappable) {
-    if (!map || !window.L || mappable.length === 0) return;
+  function fitMapToPoints(points) {
+    if (!map || !window.L || points.length === 0) return;
     const L = window.L;
-    if (mappable.length === 1) {
-      map.setView([mappable[0].lat, mappable[0].lng], 14);
+    if (points.length === 1) {
+      map.setView(points[0], 14);
       return;
     }
-    const bounds = L.latLngBounds(mappable.map((s) => [s.lat, s.lng]));
+    const bounds = L.latLngBounds(points);
     map.fitBounds(bounds, { maxZoom: 15, padding: [28, 28] });
+  }
+
+  function mapPointsForView(mappable) {
+    const points = mappable.map((s) => [s.lat, s.lng]);
+    if (state.nearMe) {
+      points.push([state.nearMe.lat, state.nearMe.lng]);
+    }
+    return points;
+  }
+
+  function syncUserMapOverlays(L) {
+    if (!state.nearMe) {
+      removeUserMapOverlays();
+      return;
+    }
+    const { lat, lng } = state.nearMe;
+    if (!userMarker) {
+      userMarker = L.circleMarker([lat, lng], {
+        radius: 9,
+        color: "#1a5276",
+        fillColor: "#3498db",
+        fillOpacity: 0.9,
+        weight: 2,
+      }).addTo(map);
+      userMarker.bindPopup("Your location (this visit only)");
+    } else {
+      userMarker.setLatLng([lat, lng]);
+    }
+    if (!userRadiusCircle) {
+      userRadiusCircle = L.circle([lat, lng], {
+        radius: nearMeRadiusKm * 1000,
+        color: "#1a5276",
+        fillColor: "#3498db",
+        fillOpacity: 0.08,
+        weight: 1,
+        dashArray: "4 6",
+      }).addTo(map);
+    } else {
+      userRadiusCircle.setLatLng([lat, lng]);
+    }
   }
 
   async function syncMapForFiltered(filtered) {
     const syncGen = ++mapSyncGeneration;
     const mappable = mappableServices(filtered);
     const showMapBlock =
-      state.showMap && filtered.length > 0 && mappable.length > 0;
+      state.showMap &&
+      (state.nearMe || (filtered.length > 0 && mappable.length > 0));
     setMapBlockVisible(showMapBlock);
 
     if (!showMapBlock) {
@@ -379,10 +467,7 @@ async function main() {
         markerLayer.clearLayers();
         markersById = new Map();
       }
-      if (userMarker) {
-        userMarker.remove();
-        userMarker = null;
-      }
+      removeUserMapOverlays();
       return;
     }
 
@@ -393,21 +478,7 @@ async function main() {
     markersById = new Map();
     const L = window.L;
 
-    if (state.nearMe) {
-      if (!userMarker) {
-        userMarker = L.circleMarker([state.nearMe.lat, state.nearMe.lng], {
-          radius: 9,
-          color: "#1a5276",
-          fillColor: "#3498db",
-          fillOpacity: 0.9,
-          weight: 2,
-        }).addTo(map);
-        userMarker.bindPopup("Your location (this visit only)");
-      } else {
-        userMarker.setLatLng([state.nearMe.lat, state.nearMe.lng]);
-      }
-      map.setView([state.nearMe.lat, state.nearMe.lng], 13);
-    }
+    syncUserMapOverlays(L);
 
     mappable.forEach((service) => {
       const dist = distanceKmToService(service);
@@ -426,8 +497,11 @@ async function main() {
     requestAnimationFrame(() => {
       if (syncGen !== mapSyncGeneration || !map) return;
       map.invalidateSize();
-      if (!state.nearMe) {
-        fitMapToMappable(mappable);
+      const viewPoints = mapPointsForView(mappable);
+      if (viewPoints.length > 0) {
+        fitMapToPoints(viewPoints);
+      } else if (state.nearMe) {
+        map.setView([state.nearMe.lat, state.nearMe.lng], 12);
       }
     });
   }
@@ -517,12 +591,8 @@ async function main() {
       state.activeCommunityFilters.clear();
       state.search = "";
       state.showMap = false;
-      state.nearMe = null;
+      clearNearMe();
       if (showMapCheckbox) showMapCheckbox.checked = false;
-      if (nearMeStatus) {
-        nearMeStatus.hidden = true;
-        nearMeStatus.textContent = "";
-      }
       searchInput.value = "";
       setView("browse");
     } else {
@@ -531,12 +601,8 @@ async function main() {
       state.activeCommunityFilters.clear();
       state.search = "";
       state.showMap = false;
-      state.nearMe = null;
+      clearNearMe();
       if (showMapCheckbox) showMapCheckbox.checked = false;
-      if (nearMeStatus) {
-        nearMeStatus.hidden = true;
-        nearMeStatus.textContent = "";
-      }
       searchInput.value = "";
       setView("landing");
       statusLine.textContent = "";
@@ -558,7 +624,7 @@ async function main() {
       "community"
     );
     if (!fromHash) syncHash(mode ? "browse" : "landing", mode);
-    if (mode && demoQuery.demo && browseLayout === "three-column") {
+    if (mode && browseLayout === "three-column") {
       state.showMap = true;
       if (showMapCheckbox) showMapCheckbox.checked = true;
     }
@@ -577,13 +643,15 @@ async function main() {
     if (filtered.length === 0) {
       if (state.nearMe) {
         statusLine.textContent =
-          `No listings with a map location within ${nearMeRadiusKm} km — try clearing filters or turning off near-me.`;
+          `No Porirua listings with a map location within ${nearMeRadiusKm} km of you — try clearing filters or tap Near me to turn off.`;
+        resultsEl.innerHTML =
+          `<p class="empty-state">Nothing in this directory within ${nearMeRadiusKm} km of your location. Most listings are in Porirua — turn off <strong>Near me</strong> to browse all places, or clear your filters.</p>`;
       } else {
         statusLine.textContent =
           "Nothing found — try another topic or search.";
+        resultsEl.innerHTML =
+          '<p class="empty-state">We couldn’t find anything. Try clearing your choices or using a wider search.</p>';
       }
-      resultsEl.innerHTML =
-        '<p class="empty-state">We couldn’t find anything. Try clearing your choices or using a wider search.</p>';
     } else {
       let status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
       if (state.nearMe) {
@@ -633,7 +701,7 @@ async function main() {
     demoLayoutSelect.addEventListener("change", () => {
       const next = normalizeBrowseLayout(demoLayoutSelect.value);
       browseLayout = applyBrowseLayout(next);
-      const layoutParam = next === "default" ? null : next;
+      const layoutParam = layoutQueryValue(next);
       history.replaceState(
         null,
         "",
@@ -653,6 +721,11 @@ async function main() {
   if (findNearMeBtn) {
     findNearMeBtn.addEventListener("click", () => {
       if (!demoQuery.demo) return;
+      if (state.nearMe) {
+        clearNearMe();
+        refresh();
+        return;
+      }
       if (!navigator.geolocation) {
         if (nearMeStatus) {
           nearMeStatus.hidden = false;
@@ -665,32 +738,43 @@ async function main() {
         nearMeStatus.hidden = false;
         nearMeStatus.textContent = "Requesting your location…";
       }
+      findNearMeBtn.disabled = true;
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          findNearMeBtn.disabled = false;
           state.nearMe = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
+            accuracyM: pos.coords.accuracy,
           };
           state.showMap = true;
           if (showMapCheckbox) showMapCheckbox.checked = true;
+          updateNearMeUi();
           if (nearMeStatus) {
-            nearMeStatus.textContent = `Showing places within ${nearMeRadiusKm} km of you. Location is not saved.`;
+            nearMeStatus.hidden = false;
+            let msg = `Showing places within ${nearMeRadiusKm} km of you. Location is not saved.`;
+            const acc = pos.coords.accuracy;
+            if (typeof acc === "number" && acc > 5000) {
+              msg += ` Your device reported low accuracy (about ${Math.round(acc / 1000)} km) — results may not match where you are.`;
+            }
+            nearMeStatus.textContent = msg;
           }
           refresh();
         },
         (err) => {
-          state.nearMe = null;
+          findNearMeBtn.disabled = false;
+          clearNearMe({ hideStatus: false });
           const msg =
             err.code === err.PERMISSION_DENIED
-              ? "Location was blocked. You can still browse and use Show map."
-              : "We couldn’t get your location. Try again or browse without near-me.";
+              ? "Location was blocked. You can still browse all listings and use Show map."
+              : "We couldn’t get your location. Try again or browse without near me.";
           if (nearMeStatus) {
             nearMeStatus.hidden = false;
             nearMeStatus.textContent = msg;
           }
           refresh();
         },
-        { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     });
   }
