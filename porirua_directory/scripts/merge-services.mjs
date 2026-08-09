@@ -46,12 +46,7 @@ export function mergeServices({ community = [], fsd = [], hiddenIds = [], patche
 
   const communityRows = community.map((c) => ({
     ...c,
-    badges:
-      c.badges?.length > 0
-        ? c.badges
-        : c.source === "community"
-          ? ["Community map"]
-          : [],
+    badges: c.badges?.length > 0 ? c.badges : [],
   }));
 
   const keyToCommunityId = new Map();

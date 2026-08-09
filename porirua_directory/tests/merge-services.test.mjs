@@ -35,7 +35,7 @@ test("community row wins description when duplicate detected", () => {
   const published = out.services.filter((s) => !s.duplicateOf);
   assert.equal(published.length, 1);
   assert.equal(published[0].description, "Local kaupapa");
-  assert.deepEqual(published[0].badges, ["Community map"]);
+  assert.deepEqual(published[0].badges, []);
   assert.equal(out.counts.duplicatesHidden, 1);
 });
 
@@ -56,6 +56,6 @@ test("parseCommunityCsv maps fixture rows", async () => {
   const rows = parseCommunityCsv(csv);
   assert.equal(rows.length, 2);
   assert.equal(rows[0].source, "community");
-  assert.deepEqual(rows[0].badges, ["Community map"]);
+  assert.deepEqual(rows[0].badges, []);
   assert.ok(rows[0].communityFilters.includes("marae_iwi"));
 });

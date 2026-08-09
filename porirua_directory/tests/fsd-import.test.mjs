@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { isPoriruaRelevant, mapFsdRowToService } from "../scripts/fsd-porirua-rules.mjs";
+import { isPoriruaRelevant, mapFsdRowToService, normalizeDescriptionText } from "../scripts/fsd-porirua-rules.mjs";
 import { importFsdFromCsv } from "../scripts/fsd-import.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +31,28 @@ test("includes suburb address when district empty", () => {
   );
 });
 
+test("excludes Christchurch suburb Aranui (not Porirua Rānui)", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Canterbury",
+      PHYSICAL_DISTRICT: "Christchurch",
+      PHYSICAL_ADDRESS: "250 Pages Road, Aranui, Christchurch",
+    }),
+    false
+  );
+});
+
+test("includes Porirua suburb Rānui in address", () => {
+  assert.equal(
+    isPoriruaRelevant({
+      PHYSICAL_REGION: "Wellington",
+      PHYSICAL_DISTRICT: "",
+      PHYSICAL_ADDRESS: "12 Ranui Grove, Porirua",
+    }),
+    true
+  );
+});
+
 test("maps FSD row to service with source fsd", () => {
   const s = mapFsdRowToService({
     FSD_ID: "1",
@@ -48,6 +70,20 @@ test("maps FSD row to service with source fsd", () => {
   assert.equal(s.name, "Test Provider");
   assert.ok(s.categories.includes("food"));
   assert.equal(s.id.startsWith("fsd-"), true);
+});
+
+test("normalizeDescriptionText converts CRLF and preserves paragraph breaks", () => {
+  assert.equal(normalizeDescriptionText("  a\r\n\r\nb\r\n- item  "), "a\n\nb\n- item");
+});
+
+test("mapFsdRowToService preserves SERVICE_DETAIL newlines", () => {
+  const s = mapFsdRowToService({
+    FSD_ID: "99",
+    PROVIDER_NAME: "Multiline Provider",
+    SERVICE_DETAIL: "Intro line.\r\n\r\nDetail line.\r\n- eligibility item",
+    PHYSICAL_DISTRICT: "Porirua",
+  });
+  assert.equal(s.description, "Intro line.\n\nDetail line.\n- eligibility item");
 });
 
 test("importFsdFromCsv filters fixture to Porirua-relevant rows", async () => {

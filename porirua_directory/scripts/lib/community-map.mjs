@@ -57,7 +57,7 @@ export function mapCommunityRow(row) {
     communityFilters,
     orgType,
     source: "community",
-    badges: ["Community map"],
+    badges: [],
     communityMeta: {
       theme: String(row.theme ?? "").trim(),
       themes: String(row.themes ?? "").trim(),

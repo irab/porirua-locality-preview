@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-07-31T06:57:31.745Z",
+  "generatedAt": "2026-08-09T12:49:24.726Z",
   "counts": {
     "community": 52,
-    "fsd": 478,
-    "published": 530,
+    "fsd": 409,
+    "published": 461,
     "duplicatesHidden": 0
   },
   "services": [
@@ -22,9 +22,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, How We Roll, Weaving Porirua Together, Know More Do More",
@@ -47,9 +45,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, How We Roll, Weaving Porirua Together",
@@ -72,9 +68,7 @@
       ],
       "orgType": "School / Kura",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Know More Do More",
         "themes": "Know More Do More, Te Taiao, Rangatahi",
@@ -97,9 +91,7 @@
       ],
       "orgType": "Council / Government",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -122,9 +114,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -147,9 +137,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -172,9 +160,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -197,9 +183,7 @@
       ],
       "orgType": "Rangatahi led movement",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Rangatahi",
         "themes": "Weaving Porirua Together, How We Roll, Te Taiao, Rangatahi, Know More Do More.",
@@ -222,9 +206,7 @@
       ],
       "orgType": "Iwi & Marae",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, Te Taiao",
@@ -247,9 +229,7 @@
       ],
       "orgType": "Kaupapa Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How We Roll",
         "themes": "How We Roll, Weaving Porirua Together",
@@ -272,9 +252,7 @@
       ],
       "orgType": "Kaupapa Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, Te Taiao",
@@ -297,9 +275,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -322,9 +298,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, How We Roll",
@@ -347,9 +321,7 @@
       ],
       "orgType": "Business",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao",
@@ -372,9 +344,7 @@
       ],
       "orgType": "Iwi & Marae",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, How We Roll",
@@ -397,9 +367,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, How Stuff Works",
@@ -422,9 +390,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -447,9 +413,7 @@
       ],
       "orgType": "Iwi & Marae",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, How We Roll, Te Taiao, Rangatahi",
@@ -472,9 +436,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, How Stuff Works, Know More Do More, How We Roll",
@@ -497,9 +459,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -522,9 +482,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -547,9 +505,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -572,9 +528,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How We Roll",
         "themes": "How We Roll, Te Taiao",
@@ -597,9 +551,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How We Roll",
         "themes": "How We Roll, Te Taiao, Weaving Porirua Together",
@@ -622,9 +574,7 @@
       ],
       "orgType": "Council / Government",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How We Roll",
         "themes": "How We Roll, How Stuff Works, Rangatahi",
@@ -647,9 +597,7 @@
       ],
       "orgType": "Council / Government",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "",
         "themes": "How We Roll, How Stuff Works",
@@ -672,9 +620,7 @@
       ],
       "orgType": "Council / Government",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "",
         "themes": "",
@@ -697,9 +643,7 @@
       ],
       "orgType": "Council / Government",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "",
         "themes": "Te Taiao, Resilient Infrastructure",
@@ -722,9 +666,7 @@
       ],
       "orgType": "Council / Government",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "",
         "themes": "",
@@ -747,9 +689,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, How We Roll",
@@ -772,9 +712,7 @@
       ],
       "orgType": "Social Enterprise",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "",
         "themes": "",
@@ -797,9 +735,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, How Stuff Works, Resilient Infrastructure",
@@ -822,9 +758,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, How We Roll",
@@ -847,9 +781,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together",
@@ -872,9 +804,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More",
@@ -897,9 +827,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao",
@@ -922,9 +850,7 @@
       ],
       "orgType": "Not-for-profit organisation",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao",
@@ -947,9 +873,7 @@
       ],
       "orgType": "Council / Government",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Know More Do More, Weaving Porirua Together",
@@ -972,9 +896,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How Stuff Works",
         "themes": "How Stuff Works, Know More Do More",
@@ -997,9 +919,7 @@
       ],
       "orgType": "Social Enterprise",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, Weaving Porirua Together, How We Roll",
@@ -1022,9 +942,7 @@
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How We Roll",
         "themes": "How We Roll, Rangatahi",
@@ -1047,9 +965,7 @@
       ],
       "orgType": "Iwi & Marae",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "",
         "themes": "",
@@ -1072,9 +988,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How We Roll",
         "themes": "How We Roll, Weaving Porirua Together, How We Roll, Know More Do More, Rangatahi, Te Taiao",
@@ -1097,9 +1011,7 @@
       ],
       "orgType": "Social Enterprise",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together",
@@ -1122,9 +1034,7 @@
       ],
       "orgType": "Iwi & Marae",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, How We Roll, Know More Do More",
@@ -1147,9 +1057,7 @@
       ],
       "orgType": "Not-for-Profit organisation",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao",
@@ -1172,9 +1080,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together, How We Roll",
@@ -1197,9 +1103,7 @@
       ],
       "orgType": "Not-for-Profit organisation",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao, How We Roll, Know More Do More",
@@ -1222,9 +1126,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Weaving Porirua Together",
         "themes": "Weaving Porirua Together",
@@ -1247,9 +1149,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao",
@@ -1272,9 +1172,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "How We Roll",
         "themes": "How We Roll, Te Taiao",
@@ -1297,9 +1195,7 @@
       ],
       "orgType": "Community Group",
       "source": "community",
-      "badges": [
-        "Community map"
-      ],
+      "badges": [],
       "communityMeta": {
         "theme": "Te Taiao",
         "themes": "Te Taiao",
@@ -1319,275 +1215,6 @@
       "categories": [
         "support",
         "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Free consultation and rehabilitation programmes for problem gamblers, partners of gamblers and affected family members.\r\n\r\nPlease contact us at:\r\n\r\nChristhurch Oasis\r\n126 Bealey Avenue,\r\nChristchurch\r\nPhone: (03) 365 9659\r\nEmail: oasis_christchurch@nzf.salvationarmy.org",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "support"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Driver training for Restricted and Full licences\r\n\r\nMSD funded service for those who are eligible.\r\n\r\nTo be eligible to participate individuals need to meet the following pre-conditions:\r\n- legally allowed to obtain their class 1 NZ driver licence\r\n- a NZ citizen, hold a NZ residence class visa, or be a refugee in the process of gaining a NZ residence class visa\r\n- meet the following income test if aged 18 or above.\r\n\r\nGross weekly income limit\r\nSingle, 18+ years - $1,353.00\r\nMarried, civil union or de facto couple (without children) - $2,006.00\r\nMarried, civil union or de facto couple 1+ children - $2,337.00\r\nSole parent, 1 child - $1,846.00\r\nSole parent, 2+ children - $2,126.00\r\n\r\nOther eligibility criteria will apply depending on the individual's circumstances.",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Driver training for Restricted and Full licences\r\n\r\nMSD funded service for those who are eligible.\r\n\r\nTo be eligible to participate individuals need to meet the following pre-conditions:\r\n- legally allowed to obtain their class 1 NZ driver licence\r\n- a NZ citizen, hold a NZ residence class visa, or be a refugee in the process of gaining a NZ residence class visa\r\n- meet the following income test if aged 18 or above.\r\n\r\nGross weekly income limit\r\nSingle, 18+ years - $1,353.00\r\nMarried, civil union or de facto couple (without children) - $2,006.00\r\nMarried, civil union or de facto couple 1+ children - $2,337.00\r\nSole parent, 1 child - $1,846.00\r\nSole parent, 2+ children - $2,126.00\r\n\r\nOther eligibility criteria will apply depending on the individual's circumstances.",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Court and Prison chaplaincy services are available in the Christchurch area. Please contact us at:\r\n\r\nChristchurch Court and Prison Services\r\nCourt Officer Fraser Kearse  Mob: 027 474 4327",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Various programmes for youth and children. \r\n\r\nPlease contact our office for more details:\r\nPhone: (03) 388 1072",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Various programmes for youth and children. \r\n\r\nPlease contact our office for more details:\r\nPhone: (03) 388 1072",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Please contact the Christchurch Referral Officer for more information:\r\n\r\nMajor Gillian Waugh\r\nBelfast\r\nPhone: (03) 323 8257",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "housing"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Please contact the Christchurch Referral Officer for more information:\r\n\r\nMajor Gillian Waugh\r\nBelfast\r\nPhone: (03) 323 8257",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "housing"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Please contact us at:\r\n\r\nAddington Centre\r\n62 Poulson Street,\r\nAddington, Christchurch\r\nPhone: (03) 338 5154\r\nEmail: addington@nzf.salvationarmy.org",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "housing"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Please contact us at:\r\n\r\nAddington Centre\r\n62 Poulson Street,\r\nAddington, Christchurch\r\nPhone: (03) 338 5154\r\nEmail: addington@nzf.salvationarmy.org",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "housing",
-        "support"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Provides a safe, integrated, high-quality treatment service for people whose lives have been affected by the harmful use of, or dependency on, alcohol or drugs. \r\n\r\nPlease contact us at:\r\n\r\nChristchurch Bridge\r\n35 Collins Street,\r\nAddington, Christchurch\r\nPhone: (03) 338 4436\r\nEmail: christchurch_bridge@nzf.salvationarmy.org",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "support"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Counselling and assistance with food and clothing",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "food",
-        "everyday"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Counselling and assistance with food and clothing",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "food",
-        "everyday"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-the-salvation-army-aranui",
-      "name": "The Salvation Army - Aranui",
-      "description": "Salvation Army Family Stores are a great way to recycle household goods, clothing and furniture—and to buy them at an accessible price",
-      "phone": "03 388 1072",
-      "url": "https://www.salvationarmy.org.nz/find-churchcentre/new-zealand/canterbury/aranui/aranui-corps",
-      "address": "34 Portsmouth Street, Wainoni, Christchurch, 8061",
-      "lat": -43.510349,
-      "lng": 172.700489,
-      "categories": [
-        "everyday"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-maramatanga-ki-otautahi",
-      "name": "Te Maramatanga ki Otautahi",
-      "description": "Te Maramatanga ki Otautahi",
-      "phone": "03 388 4607",
-      "url": "https://0",
-      "address": "250 Pages Road, Aranui, Christchurch",
-      "lat": -43.521408,
-      "lng": 172.699186,
-      "categories": [
-        "support"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-aranui-handiscope",
-      "name": "Aranui Handiscope",
-      "description": "A weekly programme involving crafts and other activities to encourage those over 21 to learn new skills which, if appropriate, will enable them to return to employment or have a more meaningful life.",
-      "phone": "027 451 8796",
-      "url": "https://www.facebook.com/Handiscope/",
-      "address": "309 Breezes Road, Aranui, Christchurch, 8061",
-      "lat": -43.517919,
-      "lng": 172.702816,
-      "categories": [
-        "work"
       ],
       "communityFilters": [],
       "orgType": "",
@@ -4046,38 +3673,6 @@
       "badges": []
     },
     {
-      "id": "fsd-aranui-community-trust",
-      "name": "Aranui Community Trust",
-      "description": "One of 7 pilots funded under Strengthening Community Action Fund.\r\nProvision of services to the Aranui Community",
-      "phone": "03 963 7070",
-      "url": "http://www.actis.org.nz",
-      "address": "37 Hampshire Street, Aranui, Christchurch",
-      "lat": -43.511468,
-      "lng": 172.701075,
-      "categories": [
-        "money"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-aranui-community-trust",
-      "name": "Aranui Community Trust",
-      "description": "One of 7 pilots funded under Strengthening Community Action Fund.\r\nProvision of services to the Aranui Community",
-      "phone": "03 963 7070",
-      "url": "http://www.actis.org.nz",
-      "address": "37 Hampshire Street, Aranui, Christchurch",
-      "lat": -43.511468,
-      "lng": 172.701075,
-      "categories": [],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
       "id": "fsd-tenancy-services",
       "name": "Tenancy Services",
       "description": "See the website for information on:\r\n- Starting a tenancy\r\n- Rent, bond and bills\r\n- Maintenance and inspections\r\n- Ending a tenancy\r\n- Disputes\r\n\r\nYou can also lodge and pay bond online.",
@@ -4449,60 +4044,6 @@
         "legal",
         "work",
         "everyday"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-oranga-tamariki-ministry-for-children-taumarunui",
-      "name": "Oranga Tamariki-Ministry for Children, Taumarunui",
-      "description": "- Care Support, investigate referrals where a child or young person is believed to be 'at risk of' or have experienced physical, sexual or emotional abuse or neglect or violence and conflict between their parents or caregivers \r\n- Youth Justice, working with children (10-13 years) and young people (14-17 years) who offend \r\n- Adoption Services, including counselling for birth parents and those considering adoption \r\n- Contracting Group, considers and administers applications for funding from groups providing community and welfare services \r\n- Community Liaison Social Workers, educate and liaise with professionals and community agencies.",
-      "phone": "0508 326 459",
-      "url": "https://www.orangatamariki.govt.nz/",
-      "address": "9 Marae Street, Taumarunui, 3920",
-      "lat": -38.883789,
-      "lng": 175.260658,
-      "categories": [
-        "safety",
-        "support"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-oranga-tamariki-ministry-for-children-taumarunui",
-      "name": "Oranga Tamariki-Ministry for Children, Taumarunui",
-      "description": "- Care Support, investigate referrals where a child or young person is believed to be 'at risk of' or have experienced physical, sexual or emotional abuse or neglect or violence and conflict between their parents or caregivers \r\n- Youth Justice, working with children (10-13 years) and young people (14-17 years) who offend \r\n- Adoption Services, including counselling for birth parents and those considering adoption \r\n- Contracting Group, considers and administers applications for funding from groups providing community and welfare services \r\n- Community Liaison Social Workers, educate and liaise with professionals and community agencies.",
-      "phone": "0508 326 459",
-      "url": "https://www.orangatamariki.govt.nz/",
-      "address": "9 Marae Street, Taumarunui, 3920",
-      "lat": -38.883789,
-      "lng": 175.260658,
-      "categories": [
-        "safety",
-        "support"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-oranga-tamariki-ministry-for-children-taumarunui",
-      "name": "Oranga Tamariki-Ministry for Children, Taumarunui",
-      "description": "- Care Support, investigate referrals where a child or young person is believed to be 'at risk of' or have experienced physical, sexual or emotional abuse or neglect or violence and conflict between their parents or caregivers \r\n- Youth Justice, working with children (10-13 years) and young people (14-17 years) who offend \r\n- Adoption Services, including counselling for birth parents and those considering adoption \r\n- Contracting Group, considers and administers applications for funding from groups providing community and welfare services \r\n- Community Liaison Social Workers, educate and liaise with professionals and community agencies.",
-      "phone": "0508 326 459",
-      "url": "https://www.orangatamariki.govt.nz/",
-      "address": "9 Marae Street, Taumarunui, 3920",
-      "lat": -38.883789,
-      "lng": 175.260658,
-      "categories": [
-        "safety",
-        "support"
       ],
       "communityFilters": [],
       "orgType": "",
@@ -5595,410 +5136,6 @@
       "badges": []
     },
     {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "to address indicators of poor health in individuals and the community, and to assist individuals and whanau in dealing with exsisting health issues/conditions",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "To assist whanau to reach their dreams and aspirations",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "To assist whanau to reach their dreams and aspirations",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Assist whanau in rental properties",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Assist whanau in rental properties",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "MoneyMates are group sessions where people can talk openly about money and finances. They’re an opportunity to learn from others, talk about finances (no personal info needs to be shared) and learn how to make changes to achieve goals. Sessions can include information on spending, cash flows, managing debt, and ways to build community support and work with peers to make sustainable change around money.",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "money",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Financial mentors support and inspire people, their families and whanau to build Financial Action Plans. \r\n\r\nThey work together to: \r\n• deal with immediate pressures, then take steps towards achieving longer-term goals \r\n• manage cash flows and debt using their Plan and other budget advice tools\r\n• explore ways to generate extra income\r\n• connect people with their communities depending on their needs.",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "money",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Early childhood education.",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Early childhood education.",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Early childhood education.",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Early childhood education.",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "GP services in Taumaranui and Te Kuiti",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "an education programme for whanau looking to purchase their first home",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "a quit service, including advice, support NRT (nicotine replacement therapy)",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "an early intervention programme for tamariki and whanau at high risk of poor outcomes",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "an early intervention programme for tamariki and whanau at high risk of poor outcomes",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Assist mama with pēpē first 2000 days",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Assist mama with pēpē first 2000 days",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Needs assessment, service coordination and community support service for those who experience significant disruption to their lives due to poor mental health (Adults and Tamariki/Rangatahi)",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Well Child Service for pre-school aged tamariki",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-taumarunui-community-kokiri-trust",
-      "name": "Taumarunui Community Kokiri Trust",
-      "description": "Well Child Service for pre-school aged tamariki",
-      "phone": "07 895 5919",
-      "url": "http://www.kokiritrust.nz",
-      "address": "121 Hakiaha Street, Taumarunui, 3920",
-      "lat": -38.883195,
-      "lng": 175.26572,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
       "id": "fsd-toa-te-roopu-awhina-social-services",
       "name": "TOA - Te Roopu Awhina Social Services",
       "description": "SWiS is a community social work service, delivered in the school setting. By intervening early, social workers are able to work with children, their families/whānau and schools, to help protect vulnerable children and develop plans to improve their safety, wellbeing and educational outcomes",
@@ -7027,299 +6164,6 @@
       "badges": []
     },
     {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "The support service for mothers and their pepi targets those mothers who have no support network of their own (such as partner, family, etc). This service has a particular emphasis on Maori woman with babies aged between zero and two years old and their whanau.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "We provide kaupapa Māori approaches to wellbeing and reintegration support in the community. Please contact us for more information on the range of support available.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "Supporting youth who are coming out of Oranga Tamariki Care and Protection, YJ residences for a period of at least 4 years as they make the transition to independence.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "Long-term healing and recovery services for people affected by family violence.  Supporting whanau to develop the skills to become resilient to the patterns of behaviour that lead to violence.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "safety",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "Group sessions where people can talk openly about money and finances. They’re an opportunity to learn from others, talk about finances (no personal info needs to be shared) and learn how to make changes to achieve goals. Sessions can include information on spending, cash flows, managing debt, and ways to build community support and work with peers to make sustainable change around money.\r\n\r\nAvailable to anyone aged 18 years and over.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "money",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "Te Runanga o Nga Maata Waka is contracted by the Nga Hau E Wha National Marae Charitable Trust Board of Trustees to manage the reservation.  \r\nThe Marae complex is available for events, workshops, seminars, conferences, summits or meetings.  Terms and conditions apply.  \r\n\r\nFor more information please go to our website.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "Co-ordinating, managing and overseeing the Maori Warden Volunteers who provide a range of services at a number of community events, meetings and venues that ensures safety, security and well-being of the community.\r\nRequests for Maori Warden Services have increased and are averaging 3 x full days per week involving up to 8 x Maori Wardens per day.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "safety",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "We have a number of certified financial mentors that offer free face to face sessions to individuals or groups on building financial capability. \r\n\r\nFinancial mentors support and inspire people, their families and whanau to build Financial Action Plans. \r\n\r\nThey work together to: \r\n• deal with immediate pressures, then take steps towards achieving longer-term goals \r\n• manage cash flows and debt using their Plan and other budget advice tools\r\n• explore ways to generate extra income\r\n• connect people with their communities depending on their needs.\r\n\r\nMoneyMates \r\n- are group sessions where people can talk openly about money and finances. They’re an opportunity to learn from others, talk about finances (no personal info needs to be shared) and learn how to make changes to achieve goals. Sessions can include information on spending, cash flows, managing debt, and ways to build community support and work with peers to make sustainable change around money.\r\n\r\nAvailable to anyone aged 18 years and over.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "money",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "We have a number of certified financial mentors that offer free face to face sessions to individuals or groups on building financial capability. \r\n\r\nFinancial mentors support and inspire people, their families and whanau to build Financial Action Plans. \r\n\r\nThey work together to: \r\n• deal with immediate pressures, then take steps towards achieving longer-term goals \r\n• manage cash flows and debt using their Plan and other budget advice tools\r\n• explore ways to generate extra income\r\n• connect people with their communities depending on their needs.\r\n\r\nMoneyMates \r\n- are group sessions where people can talk openly about money and finances. They’re an opportunity to learn from others, talk about finances (no personal info needs to be shared) and learn how to make changes to achieve goals. Sessions can include information on spending, cash flows, managing debt, and ways to build community support and work with peers to make sustainable change around money.\r\n\r\nAvailable to anyone aged 18 years and over.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "money",
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "We are accredited to deliver driving education.\r\nIndividual tailored programmes for those wanting to gain their Learner, Restricted or Full Licence.  \r\n\r\nDefensive Driving Courses are also delivered, this consists of 4 x 2 hour theory lessons and a 1 hour practical assessment at a cost of $250 per course. \r\n\r\nLessons are available to anyone aged 16 years and over who have a valid learner or restricted licence. \r\n\r\nMSD funded service for those who are eligible.\r\n\r\nTo be eligible to participate individuals need to meet the following pre-conditions:\r\n- legally allowed to obtain their class 1 NZ driver licence\r\n- a NZ citizen, hold a NZ residence class visa, or be a refugee in the process of gaining a NZ residence class visa\r\n- meet the following income test if aged 18 or above.\r\n\r\nGross weekly income limit\r\nSingle, 18+ years - $1,353.00\r\nMarried, civil union or de facto couple (without children) - $2,006.00\r\nMarried, civil union or de facto couple 1+ children - $2,337.00\r\nSole parent, 1 child - $1,846.00\r\nSole parent, 2+ children - $2,126.00\r\n\r\nOther eligibility criteria will apply depending on the individual's circumstances.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work",
-        "everyday"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "We are accredited to deliver driving education.\r\nIndividual tailored programmes for those wanting to gain their Learner, Restricted or Full Licence.  \r\n\r\nDefensive Driving Courses are also delivered, this consists of 4 x 2 hour theory lessons and a 1 hour practical assessment at a cost of $250 per course. \r\n\r\nLessons are available to anyone aged 16 years and over who have a valid learner or restricted licence. \r\n\r\nMSD funded service for those who are eligible.\r\n\r\nTo be eligible to participate individuals need to meet the following pre-conditions:\r\n- legally allowed to obtain their class 1 NZ driver licence\r\n- a NZ citizen, hold a NZ residence class visa, or be a refugee in the process of gaining a NZ residence class visa\r\n- meet the following income test if aged 18 or above.\r\n\r\nGross weekly income limit\r\nSingle, 18+ years - $1,353.00\r\nMarried, civil union or de facto couple (without children) - $2,006.00\r\nMarried, civil union or de facto couple 1+ children - $2,337.00\r\nSole parent, 1 child - $1,846.00\r\nSole parent, 2+ children - $2,126.00\r\n\r\nOther eligibility criteria will apply depending on the individual's circumstances.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work",
-        "everyday"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "We are accredited to deliver driving education.\r\nIndividual tailored programmes for those wanting to gain their Learner, Restricted or Full Licence.  \r\n\r\nDefensive Driving Courses are also delivered, this consists of 4 x 2 hour theory lessons and a 1 hour practical assessment at a cost of $250 per course. \r\n\r\nLessons are available to anyone aged 16 years and over who have a valid learner or restricted licence. \r\n\r\nMSD funded service for those who are eligible.\r\n\r\nTo be eligible to participate individuals need to meet the following pre-conditions:\r\n- legally allowed to obtain their class 1 NZ driver licence\r\n- a NZ citizen, hold a NZ residence class visa, or be a refugee in the process of gaining a NZ residence class visa\r\n- meet the following income test if aged 18 or above.\r\n\r\nGross weekly income limit\r\nSingle, 18+ years - $1,353.00\r\nMarried, civil union or de facto couple (without children) - $2,006.00\r\nMarried, civil union or de facto couple 1+ children - $2,337.00\r\nSole parent, 1 child - $1,846.00\r\nSole parent, 2+ children - $2,126.00\r\n\r\nOther eligibility criteria will apply depending on the individual's circumstances.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work",
-        "everyday"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "Our Whanau Ora approach supports a Whanau centred practice that ensures an integrated approach in the delivery of health, social, education, justice, employment and economic services to whanau. \r\nWhanau Ora is about successful whanau who are: \r\n\r\n• Self-managing \r\n• Living healthy lifestyles \r\n• Participating full in society \r\n• Participating in Te Ao Maori \r\n• Economically secure and are successfully involved in wealth creation \r\n• Cohesive, resilient and nurturing. \r\n\r\nWhanau must always be in control of their health and well being.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "The National Diploma in Social Services and Community Work is a two year programme. It is a clinical programme, which means that academic studies are complemented by fieldwork placement in year two. \r\n\r\nPeople awarded the National Diploma in Social Services and Community Work are able to work in the social services industry under professional supervision, with a considerable degree of autonomy and accountability for achieving outcomes as a social services worker.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-runanga-o-nga-maata-waka-incorporated",
-      "name": "Te Runanga O Nga Maata Waka Incorporated",
-      "description": "The support service for mothers and their pepi targets those mothers who have no support network of their own (such as partner, family, etc). This service has a particular emphasis on Maori woman with babies aged between zero and two years old and their whanau.",
-      "phone": "03 382 6628",
-      "url": "https://maatawaka.org.nz",
-      "address": "250 Pages Road, Wainoni, Christchurch, 8062",
-      "lat": -43.521462,
-      "lng": 172.699137,
-      "categories": [
-        "support",
-        "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
       "id": "fsd-the-learning-shop",
       "name": "The Learning Shop",
       "description": "At The Learning Shop, you can: \r\nAsk us for help and support with your study. We can explore your learning needs, provide you with a mentor, offer career advice, or just answer any questions about study that you might have\r\nUse the Career Quest programme to help you look at jobs to suit your skills and interests\r\nAsk for information about any course you are interested in\r\nUse Careers NZ website to find out about jobs, training and education. You can gather information on courses in Porirua, Wellington and all over New Zealand\r\nUse the givME Database to find out about scholarships and grants that you may be eligible for\r\nAsk us about loans and allowances and how to get them\r\nType up your CV, search for jobs or fill in course applications\r\nUse the internet connection for research for your course work help\r\nAsk for assistance with interview skills for those seeking employment\r\nAccess a suite of computers linked to the internet for student use",
@@ -7421,42 +6265,6 @@
       "lng": 174.839779,
       "categories": [
         "support",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-kupenga-o-aranui",
-      "name": "Te Kupenga o Aranui",
-      "description": "Working to 13 1/2 - 15 year olds who have been alienated from mainstream school through truancy and/or behavioural problems. We try to work with the youth and their families to engage them into education. We look at transitioning the youth onto courses, mainstream and employment. Once they reach 16, they can stay until the end of the school year depending on their behaviour and attitude or they could start on their course.\r\n\r\nYouth need to be verified by Ministry of Education which is arranged from the youth's enrolling school (forms can be downloaded from Cashmere High School website). Once they are verified then the Consortium will refer to an alternative education programme.",
-      "phone": "03 388 3665",
-      "url": "https://0",
-      "address": "235 Stanmore Road, Richmond, Christchurch, 8013",
-      "lat": -43.523139,
-      "lng": 172.656425,
-      "categories": [
-        "safety",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-te-kupenga-o-aranui",
-      "name": "Te Kupenga o Aranui",
-      "description": "Working to 13 1/2 - 15 year olds who have been alienated from mainstream school through truancy and/or behavioural problems. We try to work with the youth and their families to engage them into education. We look at transitioning the youth onto courses, mainstream and employment. Once they reach 16, they can stay until the end of the school year depending on their behaviour and attitude or they could start on their course.\r\n\r\nYouth need to be verified by Ministry of Education which is arranged from the youth's enrolling school (forms can be downloaded from Cashmere High School website). Once they are verified then the Consortium will refer to an alternative education programme.",
-      "phone": "03 388 3665",
-      "url": "https://0",
-      "address": "235 Stanmore Road, Richmond, Christchurch, 8013",
-      "lat": -43.523139,
-      "lng": 172.656425,
-      "categories": [
-        "safety",
         "work"
       ],
       "communityFilters": [],
@@ -7800,40 +6608,6 @@
       "lng": 174.859271,
       "categories": [
         "money"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-crossroads-youth-with-a-future-trust",
-      "name": "Crossroads Youth With A Future Trust",
-      "description": "Stay Real offers young people a chance to work on building their emotional capacity and challenging themselves to change and grow.  We use the outdoors, goal setting and discussion.  We offer a safe and confidential environment.\r\n\r\nOur Depot is a drop-in centre at 49 Hampshire St which is open on Wednesday nights during the school term, and is open for youth.",
-      "phone": "03 388 6967",
-      "url": "http://www.facebook.com/stayrealeastside49",
-      "address": "47 Hampshire St, Aranui, Christchurch",
-      "lat": -43.511252,
-      "lng": 172.701102,
-      "categories": [
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-crossroads-youth-with-a-future-trust",
-      "name": "Crossroads Youth With A Future Trust",
-      "description": "Stay Real offers young people a chance to work on building their emotional capacity and challenging themselves to change and grow.  We use the outdoors, goal setting and discussion.  We offer a safe and confidential environment.\r\n\r\nOur Depot is a drop-in centre at 49 Hampshire St which is open on Wednesday nights during the school term, and is open for youth.",
-      "phone": "03 388 6967",
-      "url": "http://www.facebook.com/stayrealeastside49",
-      "address": "47 Hampshire St, Aranui, Christchurch",
-      "lat": -43.511252,
-      "lng": 172.701102,
-      "categories": [
-        "work"
       ],
       "communityFilters": [],
       "orgType": "",
@@ -8984,135 +7758,6 @@
       "badges": []
     },
     {
-      "id": "fsd-he-waka-tapu",
-      "name": "He Waka Tapu",
-      "description": "We support individuals, groups, and have a supported accommodation whare for tangata whaiora who want to reduce harm and or stop the addiction of alcohol and drugs. The programmes delivered are: Te Takahi Te Taniwha (Day or Evening Programme) - education harm reduction, Mauri Ora Programme 8 week supported accommodation service.",
-      "phone": "0800 439 252",
-      "url": "https://www.hewakatapu.org.nz/",
-      "address": "161 Pages Road, Wainoni, Christchurch, 8061",
-      "lat": -43.520441,
-      "lng": 172.696334,
-      "categories": [
-        "housing",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-he-waka-tapu",
-      "name": "He Waka Tapu",
-      "description": "We provide kaupapa Māori approaches to wellbeing and reintegration support in the community. Please contact us for more information on the range of support available.",
-      "phone": "0800 439 252",
-      "url": "https://www.hewakatapu.org.nz/",
-      "address": "161 Pages Road, Wainoni, Christchurch, 8061",
-      "lat": -43.520441,
-      "lng": 172.696334,
-      "categories": [
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-he-waka-tapu",
-      "name": "He Waka Tapu",
-      "description": "Te Aranga Health is a general practice located on the East side of Ōtautahi. Our services encompass the whole whānau (Family) to then providing aftercare treatment with the direct support from our neighbours, He Waka Tapu.\r\n\r\nIf this sounds like you, we encourage you to follow our enrolment process and start your payment plan as low as $2.00 a week. Our staff will also guide you through it kānohi ki te kānohi (Face to face).\r\n\r\nOur enrolments are zoned within the perimeter of Bickerton street, Wainoni Road, Anzac Drive and Pages Road. Please visit the site located at 161 Pages Road, Wainoni in Ōtautahi to enrol.\r\n\r\nThe practice hours are Monday through to Friday 9am to 5pm (excluding public holidays).\r\n\r\nFor further information check out our website https://tearangahealth.staging.hwt.org.nz/",
-      "phone": "0800 439 252",
-      "url": "https://www.hewakatapu.org.nz/",
-      "address": "161 Pages Road, Wainoni, Christchurch, 8061",
-      "lat": -43.520441,
-      "lng": 172.696334,
-      "categories": [
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-he-waka-tapu",
-      "name": "He Waka Tapu",
-      "description": "We have registered nurses onsite that are available to support you or your whānau health needs, in a comfortable and relatable environment for you to discuss the areas that are important to you. You may want to chat about medications, start up at the gym, or just have a friendly chat. The programmes delivered are: Whānau Navigators, Quit smoking, wāhine ora, partnership community support, community support, parenting programme and Mana ake.",
-      "phone": "0800 439 252",
-      "url": "https://www.hewakatapu.org.nz/",
-      "address": "161 Pages Road, Wainoni, Christchurch, 8061",
-      "lat": -43.520441,
-      "lng": 172.696334,
-      "categories": [
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-he-waka-tapu",
-      "name": "He Waka Tapu",
-      "description": "We have registered nurses onsite that are available to support you or your whānau health needs, in a comfortable and relatable environment for you to discuss the areas that are important to you. You may want to chat about medications, start up at the gym, or just have a friendly chat. The programmes delivered are: Whānau Navigators, Quit smoking, wāhine ora, partnership community support, community support, parenting programme and Mana ake.",
-      "phone": "0800 439 252",
-      "url": "https://www.hewakatapu.org.nz/",
-      "address": "161 Pages Road, Wainoni, Christchurch, 8061",
-      "lat": -43.520441,
-      "lng": 172.696334,
-      "categories": [
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-he-waka-tapu",
-      "name": "He Waka Tapu",
-      "description": "Individual and group programmes are available to learn about your behaviours and ways to keep your whānau safe. Groups consist of kōrero and action-based activities like mau rākau, waka ama, MMA & bread making! We are a family court accredited stopping violence provider here in Christchurch and Ashburton. The programmes delivered: non-violence programmes for men only ministry of justice and corrections, Ngā Ara Tika women only, Reintegration support.",
-      "phone": "0800 439 252",
-      "url": "https://www.hewakatapu.org.nz/",
-      "address": "161 Pages Road, Wainoni, Christchurch, 8061",
-      "lat": -43.520441,
-      "lng": 172.696334,
-      "categories": [
-        "safety",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-he-waka-tapu",
-      "name": "He Waka Tapu",
-      "description": "Individual and group programmes are available to learn about your behaviours and ways to keep your whānau safe. Groups consist of kōrero and action-based activities like mau rākau, waka ama, MMA & bread making! We are a family court accredited stopping violence provider here in Christchurch and Ashburton. The programmes delivered: non-violence programmes for men only ministry of justice and corrections, Ngā Ara Tika women only, Reintegration support.",
-      "phone": "0800 439 252",
-      "url": "https://www.hewakatapu.org.nz/",
-      "address": "161 Pages Road, Wainoni, Christchurch, 8061",
-      "lat": -43.520441,
-      "lng": 172.696334,
-      "categories": [
-        "safety",
-        "support",
-        "health"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
       "id": "fsd-the-salvation-army-porirua",
       "name": "The Salvation Army - Porirua",
       "description": "Counselling, budgeting advice, advocacy services and food bank assistance is available from our Porirua office. Please contact us at:\r\n\r\nPorirua Community Ministries\r\nCnr Warspite Avenue & Fantame Street,\r\nPorirua East, Wellington\r\nPhone: (04) 235 6266\r\nEmail: Porirua_cm@nzf.salvationarmy.org\r\n\r\nBuilding Financial Capability, financial mentors and MoneyMates",
@@ -9842,24 +8487,6 @@
       "categories": [
         "support",
         "health",
-        "work"
-      ],
-      "communityFilters": [],
-      "orgType": "",
-      "source": "fsd",
-      "badges": []
-    },
-    {
-      "id": "fsd-christchurch-community-corrections-rawhiti",
-      "name": "Christchurch Community Corrections (Rāwhiti)",
-      "description": "If you are serving a community sentence or you have been released from prison on parole or with special conditions, you are “on probation”.\r\n\r\nOur Probation Officers work with people on probation to motivate them to make changes in their lives. This may include attending Community Work or programmes to address violence, alcohol and drug abuse or driving offences. If appropriate, offenders can attend programmes that teach them about Maori culture and give them opportunity to re-connect to their iwi.\r\n\r\nTo find out more about the services of Corrections, reporting to a Community Corrections site, community sentences and programmes, partnering with Corrections or for help with your local community project, contact your local site or visit https://www.corrections.govt.nz/.",
-      "phone": "0800 381 390",
-      "url": "http://www.corrections.govt.nz",
-      "address": "296 Breezes Road, Aranui, Christchurch, 8061",
-      "lat": -43.516865,
-      "lng": 172.701031,
-      "categories": [
-        "safety",
         "work"
       ],
       "communityFilters": [],

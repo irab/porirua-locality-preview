@@ -10,8 +10,9 @@
 
 import { normalizePhone, normalizeUrl, parseCoord, slugId } from "./lib/normalize.mjs";
 
+/** Porirua locality tokens; Rānui uses lookbehind so Christchurch suburb Aranui is not matched. */
 export const PORIRUA_LOCALITY_PATTERN =
-  /porirua|titahi\s*bay|whitby|cannons?\s*creek|waitangirua|kenepuru|plimmerton|paek[āa]k[āa]riki|r[āa]nui|elsdon|pukerua|takap[ūu]w[āa]hia|hongoeka/i;
+  /porirua|titahi\s*bay|whitby|cannons?\s*creek|waitangirua|kenepuru|plimmerton|paek[āa]k[āa]riki|(?<![a-z])r[āa]nui\b|elsdon|pukerua|takap[ūu]w[āa]hia|hongoeka/i;
 
 const ADDRESS_FIELDS = [
   "PHYSICAL_ADDRESS",
@@ -86,15 +87,24 @@ export function mapCategoriesFromFsd(row) {
   return ids;
 }
 
+/** Preserve FSD multiline text; normalize line endings only. */
+export function normalizeDescriptionText(text) {
+  return String(text ?? "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .trim();
+}
+
 /** @param {Record<string, string>} row */
 export function mapFsdRowToService(row) {
   const name = String(row.PROVIDER_NAME ?? row.SERVICE_NAME ?? "").trim();
   const fsdId = String(row.FSD_ID ?? row.SERVICE_ID ?? "").trim();
   const id = slugId(name || fsdId || "provider", "fsd-");
 
-  const detail = String(row.SERVICE_DETAIL ?? "").trim();
-  const serviceName = String(row.SERVICE_NAME ?? "").trim();
-  const description = detail || serviceName || String(row.ORGANISATION_PURPOSE ?? "").trim();
+  const detail = normalizeDescriptionText(row.SERVICE_DETAIL);
+  const serviceName = normalizeDescriptionText(row.SERVICE_NAME);
+  const description =
+    detail || serviceName || normalizeDescriptionText(row.ORGANISATION_PURPOSE);
 
   const url =
     normalizeUrl(row.PROVIDER_WEBSITE_1) ||
