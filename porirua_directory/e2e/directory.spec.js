@@ -494,6 +494,26 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
   expect(stroke?.toLowerCase()).toBe("#60164c");
 });
 
+test("org grouping — service row expands line detail", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
+  const multiOrg = page
+    .locator("#directory-results .card--org")
+    .filter({ has: page.locator(".service-row:nth-child(2)") })
+    .first();
+  await expect(multiOrg).toBeVisible();
+  const firstRow = multiOrg.locator(".service-row").first();
+  const toggle = firstRow.getByRole("button", { name: /show details$/i });
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  const detail = firstRow.locator(".service-row__detail");
+  await expect(detail).toBeVisible();
+  await expect(detail.locator(".service-row__detail-desc, .service-row__detail-empty")).toHaveCount(
+    1
+  );
+});
+
 test("org grouping — need chip highlights matching service rows", async ({ page }) => {
   await page.goto("/index.html#support");
   await expect(page.locator("#directory-results .card").first()).toBeVisible();

@@ -164,6 +164,55 @@ function renderCard(service, favoriteIds) {
   </article>`;
 }
 
+function serviceLineFields(line) {
+  const svc = line.service ?? line;
+  return {
+    description: svc.description ?? line.description ?? "",
+    phone: String(svc.phone ?? line.phone ?? "").trim(),
+    url: String(svc.url ?? line.url ?? "").trim(),
+  };
+}
+
+function serviceRowDetailId(lineId) {
+  return `service-detail-${lineId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+}
+
+function renderServiceRowDetail(line, org) {
+  const { description, phone, url } = serviceLineFields(line);
+  const orgPhone = String(org.phone ?? "").trim();
+  const orgUrl = String(org.url ?? "").trim();
+  const showPhone = phone && phone !== orgPhone;
+  const showUrl = url && url !== orgUrl;
+
+  const descBlock = description
+    ? `<div class="service-row__detail-desc">${formatDescription(description)}</div>`
+    : `<p class="service-row__detail-empty">No additional description for this service.</p>`;
+
+  const contactParts = [];
+  if (showPhone) {
+    contactParts.push(
+      `<a href="${esc(telHrefFromPhone(phone))}">${esc(phone)}</a>`
+    );
+  }
+  if (showUrl) {
+    contactParts.push(
+      `<a href="${esc(url)}" rel="noopener noreferrer">Website</a>`
+    );
+  }
+  const contactBlock = contactParts.length
+    ? `<p class="service-row__detail-contact">${contactParts.join(" · ")}</p>`
+    : "";
+
+  const catLabels = (line.categories ?? [])
+    .map((id) => needLabelById[id])
+    .filter(Boolean);
+  const catBlock = catLabels.length
+    ? `<p class="service-row__detail-cats"><span class="service-row__detail-label">Categories:</span> ${catLabels.map((l) => esc(l)).join(", ")}</p>`
+    : "";
+
+  return `${descBlock}${contactBlock}${catBlock}`;
+}
+
 function renderServiceRow(line, org, highlight) {
   const needOn = highlight.activeNeeds.size > 0;
   const searchOn = Boolean(highlight.search.trim());
@@ -189,13 +238,46 @@ function renderServiceRow(line, org, highlight) {
     .join("");
 
   const ariaCurrent = match ? ' aria-current="true"' : "";
+  const detailId = serviceRowDetailId(line.lineId);
+  const detailHtml = renderServiceRowDetail(line, org);
 
   return `<li class="${rowClass}" data-line-id="${esc(line.lineId)}"${ariaCurrent}>
-    <div class="service-row__main">
-      <span class="service-row__title">${esc(line.title)}</span>
-      <div class="service-row__meta">${catBadges}${extraBadges}</div>
-    </div>
+    <button type="button" class="service-row__toggle" aria-expanded="false" aria-controls="${esc(detailId)}" aria-label="${esc(`${line.title} — show details`)}">
+      <span class="service-row__main">
+        <span class="service-row__title">${esc(line.title)}</span>
+        <span class="service-row__meta">${catBadges}${extraBadges}</span>
+      </span>
+      <span class="service-row__chevron" aria-hidden="true"></span>
+    </button>
+    <div id="${esc(detailId)}" class="service-row__detail" hidden>${detailHtml}</div>
   </li>`;
+}
+
+function toggleServiceRow(toggle) {
+  const row = toggle.closest(".service-row");
+  const detail = row?.querySelector(".service-row__detail");
+  if (!row || !detail) return;
+  const expanded = toggle.getAttribute("aria-expanded") === "true";
+  const next = !expanded;
+  toggle.setAttribute("aria-expanded", next ? "true" : "false");
+  row.classList.toggle("service-row--expanded", next);
+  if (next) detail.removeAttribute("hidden");
+  else detail.setAttribute("hidden", "");
+}
+
+function handleServiceRowInteraction(e) {
+  const toggle = e.target.closest(".service-row__toggle");
+  if (!toggle) return false;
+  if (e.type === "click") {
+    toggleServiceRow(toggle);
+    return true;
+  }
+  if (e.type === "keydown" && (e.key === " " || e.key === "Enter")) {
+    e.preventDefault();
+    toggleServiceRow(toggle);
+    return true;
+  }
+  return false;
 }
 
 function renderOrgCard(org, favoriteIds, highlight) {
@@ -1466,6 +1548,7 @@ async function main() {
 
   resultsEl.addEventListener("click", (e) => {
     if (handleFavClick(e)) return;
+    if (handleServiceRowInteraction(e)) return;
     if (e.target.closest(".card__call")) return;
     if (e.target.closest(".service-row")) return;
     const card = e.target.closest(".card");
@@ -1487,9 +1570,17 @@ async function main() {
 
   if (mylistResults) {
     mylistResults.addEventListener("click", (e) => {
-      handleFavClick(e);
+      if (handleFavClick(e)) return;
+      handleServiceRowInteraction(e);
+    });
+    mylistResults.addEventListener("keydown", (e) => {
+      handleServiceRowInteraction(e);
     });
   }
+
+  resultsEl.addEventListener("keydown", (e) => {
+    handleServiceRowInteraction(e);
+  });
 
   browseChromeExpand?.addEventListener("click", () => {
     setBrowseChromeCollapsed(false);

@@ -304,6 +304,7 @@ Compare `clustering.orgsWithSameNormalizedName2Plus` and top-of-list providers a
 | Favourites | Org-level `id` / `orgId`. |
 | Map | One pin per org; popup **View in list** focuses org card. |
 | Need filter | `.service-row--match` on matching lines. |
+| Service detail | Each row is a **toggle button** (`aria-expanded`) revealing `.service-row__detail` (description, line-specific contact when different from org, categories). Org **Call** unchanged; row clicks do not open the map popup. |
 
 Matching rules: see [phase1 spec](../porirua-directory-phase1-spec.md) dedupe section and table in prior design review (exact name + geo/phone/address tie-break for community↔FSD).
 
