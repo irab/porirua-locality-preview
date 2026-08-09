@@ -295,13 +295,15 @@ Compare `clustering.orgsWithSameNormalizedName2Plus` and top-of-list providers a
 
 ---
 
-## 11. Implementation status (branch spike)
+## 11. Implementation (Option B — merge pipeline)
 
 | Area | Approach |
 |------|----------|
-| Grouping | **Runtime** in `porirua_directory/group-services.mjs` (same cluster key as `analyze-org-clusters.mjs`). Tradeoff: no `services[]` in `services.json` yet; rebuild not required for UI experiments. Phase 2 should move grouping to merge + unique `SERVICE_ID` per line. |
-| Browse / My list | Option **B** org card (`card--org`) with `service-row` lines; community rows unchanged (single card). |
-| Favourites | Org-level `orgId` (shared slug when all lines share one `id`, else `org-…`). |
-| Map | One pin per org cluster; compact popup + **View in list** scrolls to `#org-{id}` in `#directory-results` with brief focus ring. |
-| Need filter | Matching rows get `.service-row--match` / `.is-highlighted`; others dimmed when a chip is active. |
+| Grouping | **`scripts/org-grouping.mjs`** at merge; published `services.json` includes `kind: "organization"` + `services[]`. FSD `id` = `fsd-<FSD_ID>`. |
+| UI | `directory-data.js` expands lines for filters; `groupCatalogForDisplay` renders org cards from catalog. |
+| Favourites | Org-level `id` / `orgId`. |
+| Map | One pin per org; popup **View in list** focuses org card. |
+| Need filter | `.service-row--match` on matching lines. |
+
+Matching rules: see [phase1 spec](../porirua-directory-phase1-spec.md) dedupe section and table in prior design review (exact name + geo/phone/address tie-break for community↔FSD).
 
