@@ -406,6 +406,9 @@ test("support path — card click opens rich map popup", async ({ page }) => {
       ".map-popup__desc, .map-popup__location, .map-popup__phone, .map-popup__link, .map-popup__pill"
     )
   ).not.toHaveCount(0);
+  await expect(popup).not.toContainText(/how we roll/i);
+  await expect(popup.locator(".map-popup__pill--theme")).toHaveCount(0);
+  await expect(popup.locator(".map-popup__pill--type")).toHaveCount(0);
 });
 
 test("community path — map popup shows org type or initiatives", async ({ page }) => {
