@@ -389,6 +389,13 @@ async function main() {
   const nearMeStatus = document.getElementById("near-me-status");
   const demoTools = document.getElementById("demo-tools");
   const demoLayoutSelect = document.getElementById("demo-layout-select");
+  const browseChromeExpand = document.getElementById("browse-chrome-expand");
+
+  const BROWSE_CHROME_EXPAND_SCROLL_Y = 56;
+  const BROWSE_CHROME_SCROLL_DELTA = 10;
+  let browseChromeCollapsed = false;
+  let browseChromeLastScrollY = 0;
+  let browseChromeScrollScheduled = false;
 
   const demoQuery = parseDemoQuery();
   let browseLayout = applyBrowseLayout(demoQuery.layout);
@@ -426,6 +433,7 @@ async function main() {
   }
 
   function openSearch() {
+    setBrowseChromeCollapsed(false);
     setSearchOpen(true);
   }
 
@@ -695,6 +703,65 @@ async function main() {
     else navMylist.removeAttribute("aria-current");
   }
 
+  function setBrowseChromeCollapsed(collapsed, { force = false } = {}) {
+    if (!force && browseChromeCollapsed === collapsed) return;
+    browseChromeCollapsed = collapsed;
+    if (collapsed) {
+      document.body.dataset.browseChrome = "collapsed";
+    } else {
+      delete document.body.dataset.browseChrome;
+    }
+    if (browseChromeExpand) {
+      browseChromeExpand.hidden = !collapsed;
+      browseChromeExpand.setAttribute(
+        "aria-expanded",
+        collapsed ? "false" : "true"
+      );
+    }
+    if (map && mapBlock && !mapBlock.hidden) {
+      scheduleMapResize();
+    }
+  }
+
+  function resetBrowseChrome() {
+    browseChromeLastScrollY = window.scrollY;
+    setBrowseChromeCollapsed(false, { force: true });
+  }
+
+  function updateBrowseChromeFromScroll() {
+    browseChromeScrollScheduled = false;
+    if (document.body.dataset.view !== "browse") return;
+    if (browseSearch?.classList.contains("is-open")) {
+      setBrowseChromeCollapsed(false);
+      browseChromeLastScrollY = window.scrollY;
+      return;
+    }
+
+    const y = window.scrollY;
+    const delta = y - browseChromeLastScrollY;
+    browseChromeLastScrollY = y;
+
+    if (y <= BROWSE_CHROME_EXPAND_SCROLL_Y) {
+      setBrowseChromeCollapsed(false);
+      return;
+    }
+    if (delta > BROWSE_CHROME_SCROLL_DELTA) {
+      setBrowseChromeCollapsed(true);
+    } else if (delta < -BROWSE_CHROME_SCROLL_DELTA) {
+      setBrowseChromeCollapsed(false);
+    }
+  }
+
+  function onBrowseWindowScroll() {
+    if (document.body.dataset.view !== "browse") return;
+    if (!browseChromeScrollScheduled) {
+      browseChromeScrollScheduled = true;
+      requestAnimationFrame(updateBrowseChromeFromScroll);
+    }
+  }
+
+  window.addEventListener("scroll", onBrowseWindowScroll, { passive: true });
+
   function setView(view) {
     document.body.dataset.view = view;
     const landing = view === "landing";
@@ -705,6 +772,11 @@ async function main() {
     if (siteSubnav) {
       siteSubnav.hidden = !landing;
       siteSubnav.setAttribute("aria-hidden", landing ? "false" : "true");
+    }
+    if (view !== "browse") {
+      resetBrowseChrome();
+    } else {
+      browseChromeLastScrollY = window.scrollY;
     }
     updateNavMylistCurrent();
   }
@@ -1052,6 +1124,11 @@ async function main() {
       handleFavClick(e);
     });
   }
+
+  browseChromeExpand?.addEventListener("click", () => {
+    setBrowseChromeCollapsed(false);
+    browseChromeExpand.blur();
+  });
 
   window.addEventListener("hashchange", () => {
     const route = parseHash();

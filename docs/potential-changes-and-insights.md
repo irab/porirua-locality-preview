@@ -232,6 +232,8 @@ Implementation lives in `porirua_directory/` (`directory.js`, `directory.css`); 
 
 Below the three-column desktop breakpoint (1024px), the “three column” demo behaves as a single column stack — not a side-by-side map.
 
+**Scroll chrome (shipped):** On browse, scrolling **down** into the listing sets `data-browse-chrome="collapsed"` — filter chips and the map block animate to a compact height while **← Back**, **Search**, and a **Filters** expand control stay in the sticky panel. Scrolling **up** near the top of the page (or opening search / tapping **Filters**) expands again. Hysteresis on scroll delta reduces flicker at the boundary; **`prefers-reduced-motion`** disables the transitions. Sticky panel paint/containment was tightened so scrolling cards stay visually beneath the filter column (see e2e “masks scrolling result cards”).
+
 ### Phase 1.5 vs Phase 2
 
 | Horizon | Recommendation |

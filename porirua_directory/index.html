@@ -125,6 +125,16 @@
           </div>
 
           <aside class="browse-sidebar" aria-label="Filters and topics">
+          <button
+            type="button"
+            id="browse-chrome-expand"
+            class="browse-chrome-expand"
+            hidden
+            aria-expanded="false"
+          >
+            Filters
+          </button>
+          <div class="browse-sidebar__body">
           <section id="filters-support" class="filters filters--hidden" aria-labelledby="support-filters-heading">
             <h2 id="support-filters-heading" class="section-title">Support with…</h2>
             <div id="need-chips" class="chip-row" role="group" aria-label="Types of support"></div>
@@ -162,6 +172,7 @@
                 <option value="three-column">Three column (map right)</option>
               </select>
             </div>
+          </div>
           </div>
           </aside>
         </div>

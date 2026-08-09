@@ -167,6 +167,21 @@ test("browse sticky panel masks scrolling result cards on mobile", async ({ page
   expect(covered.skipped || covered.insidePanel).toBe(true);
 });
 
+test("browse chrome collapses on scroll down and expands near top", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html#support");
+  await page.waitForSelector("#directory-results .card");
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    window.scrollTo(0, 320);
+  });
+  await expect(page.locator("body")).toHaveAttribute("data-browse-chrome", "collapsed");
+  await expect(page.locator("#browse-chrome-expand")).toBeVisible();
+  await expect(page.locator("#search-toggle")).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
+});
+
 test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
   await page.goto("/index.html");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Connect with community" }).click();

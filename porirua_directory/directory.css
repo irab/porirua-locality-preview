@@ -711,6 +711,14 @@ body[data-view="browse"] .browse-sticky-panel {
   padding-bottom: 0;
   background: var(--bg);
   isolation: isolate;
+  contain: paint;
+  box-shadow: 0 0.65rem 0 0.65rem var(--bg);
+}
+
+body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sticky-panel {
+  max-height: none;
+  overflow-y: visible;
+  overscroll-behavior: auto;
 }
 
 body[data-view="browse"] .view-browse .browse-toolbar {
@@ -726,6 +734,86 @@ body[data-view="browse"] .view-browse .browse-toolbar {
 body[data-view="browse"] .browse-sidebar {
   background: var(--bg);
   padding-bottom: 0.35rem;
+}
+
+.browse-chrome-expand {
+  display: none;
+  width: 100%;
+  margin: 0 0 0.35rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.browse-chrome-expand:hover,
+.browse-chrome-expand:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+body[data-view="browse"][data-browse-chrome="collapsed"] .browse-chrome-expand:not([hidden]) {
+  display: block;
+}
+
+body[data-view="browse"] .browse-sidebar__body {
+  overflow: hidden;
+  max-height: 2400px;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    max-height 0.38s ease,
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sidebar__body {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-0.35rem);
+  pointer-events: none;
+}
+
+body[data-view="browse"] #map-block.map-block:not(.map-block--hidden) {
+  overflow: hidden;
+  max-height: 1200px;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    max-height 0.38s ease,
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    margin 0.38s ease;
+}
+
+body[data-view="browse"][data-browse-chrome="collapsed"]
+  #map-block.map-block:not(.map-block--hidden) {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-0.35rem);
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+body[data-view="browse"][data-browse-chrome="collapsed"]
+  #map-block.map-block:not(.map-block--hidden)
+  .map {
+  height: 0 !important;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-view="browse"] .browse-sidebar__body,
+  body[data-view="browse"] #map-block.map-block:not(.map-block--hidden) {
+    transition: none;
+    transform: none;
+  }
 }
 
 body[data-view="browse"] .results {
