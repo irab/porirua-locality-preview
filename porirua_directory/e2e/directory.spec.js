@@ -144,6 +144,29 @@ test("support path — mobile three-column shows map between filters and results
   expect(order.map).toBeLessThan(order.main);
 });
 
+test("browse sticky panel masks scrolling result cards on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html#support");
+  await page.waitForSelector("#directory-results .card");
+  await page.evaluate(() => window.scrollTo(0, 800));
+
+  const covered = await page.evaluate(() => {
+    const panel = document.querySelector("#view-browse .browse-sticky-panel");
+    const card = document.querySelector("#directory-results .card");
+    if (!panel || !card) return null;
+    const pr = panel.getBoundingClientRect();
+    const cr = card.getBoundingClientRect();
+    if (cr.top >= pr.bottom || cr.bottom <= pr.top) return { skipped: true };
+    const x = pr.left + pr.width / 2;
+    const y = Math.max(pr.top + 4, Math.min(pr.bottom - 4, cr.top + 20));
+    const el = document.elementFromPoint(x, y);
+    return { skipped: false, insidePanel: panel.contains(el) };
+  });
+
+  expect(covered).not.toBeNull();
+  expect(covered.skipped || covered.insidePanel).toBe(true);
+});
+
 test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
   await page.goto("/index.html");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Connect with community" }).click();
