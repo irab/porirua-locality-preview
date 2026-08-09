@@ -76,7 +76,7 @@ Envelope written to `services.json`:
 Documented in `fsd-porirua-rules.mjs`:
 
 1. **District:** `PHYSICAL_DISTRICT` matches `/porirua/i`.
-2. **Suburb / address:** `PHYSICAL_ADDRESS`, `POSTAL_ADDRESS`, or `SERVICE_AREA` (if present) match agreed locality tokens (Titahi Bay, Whitby, Cannons Creek, Waitangirua, Kenepuru, Plimmerton, Paekākāriki, Rānui, Elsdon, etc.). **Rānui** uses `(?<![a-z])r[āa]nui\b` so Christchurch suburb **Aranui** is not matched via the `ranui` substring.
+2. **Suburb / address:** `PHYSICAL_ADDRESS`, `POSTAL_ADDRESS`, or `SERVICE_AREA` (if present) match agreed locality tokens (Titahi Bay, Whitby, Cannons Creek, Waitangirua, Kenepuru, Plimmerton, Paekākāriki, Rānui, Elsdon, etc.). Token definitions live in `PORIRUA_LOCALITY_PATTERN` in `fsd-porirua-rules.mjs`.
 3. **Exclude:** Wellington-region-only rows with no Porirua signal.
 4. **Categories:** Map FSD `LEVEL_1_CATEGORY` and keywords to need `categories[]`.
 

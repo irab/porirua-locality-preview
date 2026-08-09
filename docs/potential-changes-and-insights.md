@@ -27,7 +27,7 @@ Plain language up front; technical detail in subsections where helpful.
 - **Accessibility not yet a first-class deliverable** — the public UI includes intentional basics (skip link, landmarks, plain language, crisis footer), but there has been **no formal WCAG audit, remediation pass, or assistive-technology test programme**. See [Accessibility (target)](#accessibility-target) below.
 - **Phase 2 items deferred** — weekly FSD automation, Directus, Squarespace embed, formal duplicate workflow (see [requirements](./porirua-services-directory-requirements.md)).
 
-Recent pipeline work fixed **wrong geography** (Christchurch **Aranui** no longer matches Porirua **Rānui**). That reduced noise in the dataset but did **not** fix duplicate org cards from multi-service FSD providers.
+Geographic false positives in the FSD slice have been reduced in recent pipeline work (see [issues](./issues/README.md)); that did **not** fix duplicate org cards from multi-service FSD providers.
 
 ---
 
@@ -59,7 +59,7 @@ Dedupe at merge time only links **community** rows to **FSD** rows on name + map
 | **Family Works Central** (and related FSD names) | Many cards; long duplicated descriptions | Multiple service lines; regional centre text repeated |
 | **Presbyterian Support / Family Works** (community side) | Often **one** community card with rich local copy | Connections Map is **org-grain** — aligns with mental model |
 
-After the Aranui/Rānui geo fix and rebuild: **461** published listings (~52 community + ~409 FSD), **no** Christchurch/Aranui pollution; Salvation Army Porirua remains **13** listings (same id).
+Current published slice (Aug 2026 rebuild): **461** listings (~52 community + ~409 FSD). Salvation Army Porirua remains **13** listings (same id).
 
 **Stakeholder takeaway:** The directory is trustworthy for “something exists in Porirua” but can feel **repetitive or confusing** for NGOs with many FSD service lines. Fixing that needs a deliberate product choice (many service cards vs one org card), not only a bug fix.
 
@@ -124,9 +124,10 @@ Grouping cards in the browser by normalised `name` + lat/lng **without** schema 
 
 **Recommendation (from technical review):**
 
-1. Geo filter — **done**.  
-2. **Next:** Phase 1.5 (`SERVICE_ID`-based ids, optional service titles).  
-3. **When prioritised:** Phase 2 org hierarchy + grouped UI.
+1. **Next:** Phase 1.5 (`SERVICE_ID`-based ids, optional service titles).  
+2. **When prioritised:** Phase 2 org hierarchy + grouped UI.
+
+Fixed pipeline bugs are tracked in [issues/README.md](./issues/README.md).
 
 ---
 
@@ -136,7 +137,6 @@ These came from MVP feedback, data review, and requirements iterations (see requ
 
 ### Data pipeline
 
-- **Aranui / Rānui geo filter** — Locality token for Porirua **Rānui** now uses `(?<![a-z])r[āa]nui\b` so Christchurch suburb **Aranui** is not matched via the substring `ranui`. Unit tests in `tests/fsd-import.test.mjs`. Documented in [phase 1 spec](./porirua-directory-phase1-spec.md) and [plan](./plans/fsd-org-subservices-and-geo-filter.md).
 - **Description formatting** — Import preserves FSD newlines (`normalizeDescriptionText`); UI uses `format-description.mjs` for paragraphs, `-` list lines, and inline bullet patterns. Roughly **six in ten** FSD descriptions are multiline in the current slice (~57% cited at time of plan write; exact share shifts slightly after each `build:data`).
 
 ### Public UX and copy
@@ -191,7 +191,8 @@ Use these in feedback sessions before committing Phase 1.5 or Phase 2 scope.
 
 | Document | Use for |
 |----------|---------|
-| [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Geo fix detail, FSD row model, Phase 1.5 / 2 / UI-only options |
+| [issues/README.md](./issues/README.md) | Fixed & recurring bugs (e.g. FSD geo false positives) |
+| [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | FSD row model, Phase 1.5 / 2 / UI-only options |
 | [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Product scope, budget, phased delivery, public UX requirements |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Service schema, FSD rules, merge, overrides |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Rebuild data, deploy, test |

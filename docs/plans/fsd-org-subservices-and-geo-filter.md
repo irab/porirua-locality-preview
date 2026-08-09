@@ -1,7 +1,9 @@
-# FSD geographic filter fix & org / subservice model
+# FSD org / subservice model
 
 **Date:** 2026-08-10  
-**Status:** Geo fix implemented in pipeline; org grouping proposed for Phase 2 (optional Phase 1.5 import tweak).
+**Status:** Org grouping proposed for Phase 2 (optional Phase 1.5 import tweak).
+
+**Fixed geo false positives** (e.g. non-Porirua addresses in the FSD slice) are documented in [issues/README.md](../issues/README.md), not in this plan.
 
 ---
 
@@ -9,14 +11,10 @@
 
 | Issue | Symptom | Root cause |
 |-------|---------|------------|
-| Wrong geography | Christchurch / Aranui listings in Porirua directory | Locality regex token `r[āa]nui` matched the substring **`ranui`** inside **Aranui** (Christchurch suburb). |
-| Duplicate cards | e.g. 14× “The Salvation Army - Aranui”, 13× “The Salvation Army - Porirua” | FSD is **one CSV row per service**; import maps each row to a flat `service` but **`id` is slugged from `PROVIDER_NAME` only**, so many rows share one `id` while remaining separate array entries. UI lists each row. |
+| Duplicate cards | e.g. 13× “The Salvation Army - Porirua” | FSD is **one CSV row per service**; import maps each row to a flat `service` but **`id` is slugged from `PROVIDER_NAME` only**, so many rows share one `id` while remaining separate array entries. UI lists each row. |
 | Org vs service | User expects one org with subservices | Phase 1 schema is **flat**; no `organizationId`, `parentId`, or nested `services[]`. |
 
-After the geo fix and rebuild (`npm run build:data`):
-
-- **Before:** ~530 rows in `services.json`, 57 mentions of Christchurch, 14 Salvation Army - Aranui rows.
-- **After:** 461 published rows (52 community + 409 FSD), **no Christchurch / Aranui** in dataset; Salvation Army - Porirua still **13 separate listings** (same `fsd-the-salvation-army-porirua` id).
+**Dataset snapshot (Aug 2026, after locality filter fixes):** 461 published rows (52 community + 409 FSD). Salvation Army - Porirua still **13 separate listings** (same `fsd-the-salvation-army-porirua` id).
 
 ---
 
@@ -38,37 +36,11 @@ There is **no** `SERVICE_AREA` column in the current CSV (the import rules still
 
 **Import flow today:** `fsd-import.mjs` → filter with `isPoriruaRelevant` → `mapFsdRowToService` → one JSON object per CSV row → merge with community map → `services.json`.
 
----
-
-## 3. Geographic filter — cause and fix
-
-### Cause
-
-`PORIRUA_LOCALITY_PATTERN` included `r[āa]nui` intended for Porirua suburb **Rānui**. In JavaScript, `"Aranui".match(/r[āa]nui/i)` succeeds because **`aranui`** contains **`ranui`**.
-
-Any row whose `PHYSICAL_ADDRESS`, `POSTAL_ADDRESS`, or `PHYSICAL_DISTRICT` field contained “Aranui, Christchurch” was treated as Porirua-relevant. `PHYSICAL_DISTRICT: Porirua` still correctly includes true Porirua rows first.
-
-### Fix (implemented)
-
-In `porirua_directory/scripts/fsd-porirua-rules.mjs`, the Rānui token is now:
-
-```text
-(?<![a-z])r[āa]nui\b
-```
-
-So **Aranui** no longer matches; **Ranui Grove, Porirua** still matches.
-
-Unit tests added in `tests/fsd-import.test.mjs` (Christchurch Aranui excluded; Porirua Ranui included).
-
-### Residual geo risks (monitor)
-
-- **Broad `SERVICE_AREA` / address text** mentioning “Porirua” for a national or regional provider could still include non-local rows if DIA adds columns or text is ambiguous.
-- **District-only inclusion:** `PHYSICAL_DISTRICT` matching `/porirua/i` trusts FSD data quality.
-- **Manual curation:** `data/overrides.json` `hiddenIds` for one-off bad rows.
+**Residual geo risks (monitor):** broad address text mentioning “Porirua” for a national provider; district-only inclusion trusting FSD data quality; one-off bad rows via `data/overrides.json` `hiddenIds`. See [issues](../issues/README.md) for resolved filter bugs.
 
 ---
 
-## 4. Current flat schema vs desired org hierarchy
+## 3. Current flat schema vs desired org hierarchy
 
 ### Phase 1 `services.json` record (published)
 
@@ -86,7 +58,7 @@ See `docs/porirua-directory-phase1-spec.md`. Each entry is one **listing card**:
 
 ---
 
-## 5. Options: Phase 1 vs Phase 2
+## 4. Options: Phase 1 vs Phase 2
 
 ### Option A — Phase 1.5 pipeline only (minimal UX change)
 
@@ -150,28 +122,27 @@ Group rendered cards by normalised `name` + lat/lng in `directory.js`.
 
 ### Recommendation
 
-1. **Done:** Geo filter fix.  
-2. **Next quick win (Phase 1.5):** Unique `id` per FSD row via `SERVICE_ID` / `FSD_ID`; consider display `name` = service title where useful.  
-3. **Phase 2:** Org hierarchy in schema + grouped UI when product prioritises NGO browse over flat FSD parity.
+1. **Next quick win (Phase 1.5):** Unique `id` per FSD row via `SERVICE_ID` / `FSD_ID`; consider display `name` = service title where useful.  
+2. **Phase 2:** Org hierarchy in schema + grouped UI when product prioritises NGO browse over flat FSD parity.
 
 Community map rows stay **org-grain** already; merge logic would treat FSD org groups as matching one community pin when name/geo align.
 
 ---
 
-## 6. Verification
+## 5. Verification
 
 ```bash
 cd porirua_directory
 npm test
 npm run build:data
-# Optional: rg 'Christchurch|Aranui' data/services.json  → no matches
 ```
 
 ---
 
-## 7. References
+## 6. References
 
 - `porirua_directory/scripts/fsd-porirua-rules.mjs` — filter + mapping
 - `porirua_directory/scripts/fsd-import.mjs` — CSV → raw JSON
 - `porirua_directory/scripts/merge-services.mjs` — community + FSD + overrides
 - `docs/porirua-directory-phase1-spec.md` — service schema and inclusion rules
+- `docs/issues/README.md` — fixed pipeline bugs (geo filter, etc.)

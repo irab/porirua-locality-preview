@@ -8,7 +8,7 @@ Stakeholder and technical docs for **Porirua Locality** preview work. They apply
 |------|------------|
 | [`porirua_connections_map/`](../porirua_connections_map/) | Assembly **Community Connections Map** (Squarespace embed, Google Sheet / CSV) |
 | [`porirua_directory/`](../porirua_directory/) | **Services directory** MVP (find help — Connections Map + FSD merge) |
-| [`docs/`](.) | Requirements, examples research, slides, implementation plans |
+| [`docs/`](.) | Requirements, examples research, slides, implementation plans, issues |
 
 Product code lives in the two app folders; **planning and stakeholder material stays here** so one requirements doc covers both the map and the directory.
 
@@ -21,7 +21,8 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements (regenerate after v1.3 md changes) |
 | [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | System context, data flow, hosting at directory.bsky.nz |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Developers | Phase 1 data model, FSD rules, merge, overrides |
-| [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Developers | FSD Aranui/Rānui geo fix, Salvation Army duplicates, org→service roadmap |
+| [issues/README.md](./issues/README.md) | Developers | **Issues directory** (fixed & recurring bugs) |
+| [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Developers | FSD Salvation Army duplicates, org→service roadmap |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |
 | [human-services-directory-examples-overview.md](./human-services-directory-examples-overview.md) | Team, stakeholders | Comparable directories (Ask Izzy, 211, FSD, etc.) |
 | [human-services-directory-examples-overview.pdf](./human-services-directory-examples-overview.pdf) | Same (print/PDF) | Export of examples overview |
