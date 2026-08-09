@@ -155,7 +155,9 @@ test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
 test("search filters results on support path", async ({ page }) => {
   await page.goto("/index.html");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
-  await page.getByPlaceholder(/Search/i).fill("Wesley");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Search", exact: true })).toHaveAttribute("aria-expanded", "true");
+  await page.locator("#search-input").fill("Wesley");
   await expect(page.locator("#directory-results")).toContainText(/Wesley/i);
 });
 

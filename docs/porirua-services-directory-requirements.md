@@ -144,7 +144,7 @@ When someone opens the directory they should be able to:
    - Legal advice
    - Work and learning
    - Everyday needs (clothes, showers, transport, etc.)
-5. **Search** — type what they need; results filtered to Porirua-relevant services (in the browse sidebar).
+5. **Search** — in browse, tap the **search icon** beside **Back**; the field expands to type what you need (sidebar keyword box removed). Results filter to Porirua-relevant services.
 6. **Browse layout (desktop)** — **filters left**, **results centre**, **map right** (three-column from tablet-wide breakpoints up). On narrow screens: filters, then results, then map. **Show map** is on by default in browse so the side map appears when listings have coordinates; users can turn it off. Legacy **map above results** remains available via `?layout=top` for comparison. Tap a marker for details.
 7. **List of results** — on **Find support**, the full listing shows by default with **no category chips selected**; tap one chip to filter to that topic only (tap again to show all); search narrows further.
 8. **My list** — **Add to your list** on each listing; saved **places and organisations** for this visit only (plain-language note that nothing is stored online); **Remove** on saved items; optional **Print list**.

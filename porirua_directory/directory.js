@@ -264,6 +264,10 @@ async function main() {
   const needChips = document.getElementById("need-chips");
   const communityChips = document.getElementById("community-chips");
   const searchInput = document.getElementById("search-input");
+  const browseSearch = document.getElementById("browse-search");
+  const searchToggle = document.getElementById("search-toggle");
+  const searchClose = document.getElementById("search-close");
+  const browseSearchField = document.getElementById("browse-search-field");
   const statusLine = document.getElementById("status-line");
   const resultsEl = document.getElementById("directory-results");
   const mapEl = document.getElementById("directory-map");
@@ -285,6 +289,34 @@ async function main() {
     showMap: false,
     nearMe: null,
   };
+
+  function setSearchOpen(open) {
+    if (!browseSearch || !searchToggle || !browseSearchField) return;
+    browseSearch.classList.toggle("is-open", open);
+    searchToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    browseSearchField.setAttribute("aria-hidden", open ? "false" : "true");
+    if (searchInput) {
+      searchInput.tabIndex = open ? 0 : -1;
+    }
+    if (open && searchInput) {
+      window.requestAnimationFrame(() => searchInput.focus());
+    } else if (!open) {
+      searchToggle.focus();
+    }
+  }
+
+  function closeSearch() {
+    setSearchOpen(false);
+  }
+
+  function openSearch() {
+    setSearchOpen(true);
+  }
+
+  function clearSearchField() {
+    state.search = "";
+    if (searchInput) searchInput.value = "";
+  }
 
   const favoriteIds = loadFavoriteIds();
 
@@ -622,7 +654,8 @@ async function main() {
       state.showMap = false;
       clearNearMe();
       if (showMapCheckbox) showMapCheckbox.checked = false;
-      searchInput.value = "";
+      clearSearchField();
+      closeSearch();
       setView("browse");
     } else {
       state.mode = null;
@@ -632,7 +665,8 @@ async function main() {
       state.showMap = false;
       clearNearMe();
       if (showMapCheckbox) showMapCheckbox.checked = false;
-      searchInput.value = "";
+      clearSearchField();
+      closeSearch();
       setView("landing");
       statusLine.textContent = "";
       resultsEl.innerHTML = "";
@@ -851,9 +885,41 @@ async function main() {
     refresh();
   });
 
-  searchInput.addEventListener("input", () => {
-    state.search = searchInput.value;
-    refresh();
+  if (searchInput) {
+    searchInput.tabIndex = -1;
+    searchInput.addEventListener("input", () => {
+      state.search = searchInput.value;
+      refresh();
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeSearch();
+      }
+    });
+  }
+
+  if (searchToggle) {
+    searchToggle.addEventListener("click", () => {
+      if (browseSearch?.classList.contains("is-open")) {
+        closeSearch();
+      } else {
+        openSearch();
+      }
+    });
+  }
+
+  if (searchClose) {
+    searchClose.addEventListener("click", () => {
+      closeSearch();
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !browseSearch?.classList.contains("is-open")) return;
+    if (e.target === searchInput) return;
+    closeSearch();
   });
 
   resultsEl.addEventListener("click", (e) => {

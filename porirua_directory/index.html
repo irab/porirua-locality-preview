@@ -79,11 +79,39 @@
     <div id="view-browse" class="view-browse" hidden>
       <div class="browse-layout">
         <div class="browse-sticky-panel">
-          <p class="browse-toolbar">
+          <div class="browse-toolbar">
             <button type="button" id="back-to-landing" class="back-link">← Back</button>
-          </p>
+            <div class="browse-search" id="browse-search">
+              <div class="browse-search__field" id="browse-search-field" aria-hidden="true">
+                <label class="visually-hidden" for="search-input">Search by name or keyword</label>
+                <input
+                  id="search-input"
+                  type="search"
+                  placeholder="Search by name or keyword"
+                  autocomplete="off"
+                  enterkeyhint="search"
+                />
+                <button type="button" id="search-close" class="browse-search__close" aria-label="Close search">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <button
+                type="button"
+                id="search-toggle"
+                class="browse-search__toggle"
+                aria-label="Search"
+                aria-expanded="false"
+                aria-controls="search-input"
+              >
+                <svg class="browse-search__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+                  <path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-          <aside class="browse-sidebar" aria-label="Search and topics">
+          <aside class="browse-sidebar" aria-label="Filters and topics">
           <section id="filters-support" class="filters filters--hidden" aria-labelledby="support-filters-heading">
             <h2 id="support-filters-heading" class="section-title">Support with…</h2>
             <div id="need-chips" class="chip-row" role="group" aria-label="Types of support"></div>
@@ -94,10 +122,6 @@
             <div id="community-chips" class="chip-row" role="group" aria-label="Organisation types"></div>
           </section>
 
-          <label class="search-wrap">
-            <span class="visually-hidden">Search</span>
-            <input id="search-input" type="search" placeholder="Search by name or keyword" autocomplete="off" />
-          </label>
           <label class="map-show-wrap" id="show-map-wrap">
             <input id="show-map" type="checkbox" />
             Show map
