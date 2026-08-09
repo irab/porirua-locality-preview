@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { expandServiceLines } from "../scripts/org-grouping.mjs";
 import {
   buildOrgFromMembers,
+  groupCatalogForDisplay,
   groupForDisplay,
   groupServicesByOrg,
   orgClusterKey,
@@ -14,43 +16,90 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const servicesPath = path.join(__dirname, "../data/services.json");
 
-function loadServices() {
+function loadCatalog() {
   const raw = JSON.parse(readFileSync(servicesPath, "utf8"));
   return raw.services ?? raw;
 }
 
-test("orgClusterKey groups Salvation Army rows together", () => {
-  const services = loadServices();
-  const sa = services.filter((s) => s.id === "fsd-the-salvation-army-porirua");
-  assert.ok(sa.length >= 2);
-  const keys = new Set(sa.map(orgClusterKey));
+const flatMemberFixture = () => [
+  {
+    id: "fsd-a",
+    name: "The Salvation Army - Porirua",
+    phone: "04 235 6266",
+    address: "89 Warspite Avenue, Cannons Creek, Porirua, 5024",
+    lat: -41.13684,
+    lng: 174.872683,
+    description: "Line A",
+    source: "fsd",
+    categories: ["housing"],
+  },
+  {
+    id: "fsd-b",
+    name: "The Salvation Army - Porirua",
+    phone: "04 235 6266",
+    address: "89 Warspite Avenue, Cannons Creek, Porirua, 5024",
+    lat: -41.13684,
+    lng: 174.872683,
+    description: "Line B",
+    source: "fsd",
+    categories: ["food"],
+  },
+];
+
+test("orgClusterKey groups flat FSD rows at the same site", () => {
+  const members = flatMemberFixture();
+  const keys = new Set(members.map(orgClusterKey));
   assert.equal(keys.size, 1);
 });
 
 test("buildOrgFromMembers assigns unique line ids", () => {
-  const services = loadServices();
-  const sa = services.filter((s) => s.id === "fsd-the-salvation-army-porirua");
-  const org = buildOrgFromMembers(sa);
-  assert.equal(org.orgId, "fsd-the-salvation-army-porirua");
-  assert.equal(org.services.length, sa.length);
+  const members = flatMemberFixture();
+  const org = buildOrgFromMembers(members);
+  assert.equal(org.services.length, 2);
   const lineIds = new Set(org.services.map((l) => l.lineId));
-  assert.equal(lineIds.size, sa.length);
+  assert.equal(lineIds.size, 2);
 });
 
-test("groupForDisplay collapses multi-row FSD into one org card item", () => {
-  const services = loadServices();
-  const sa = services.filter((s) => s.id === "fsd-the-salvation-army-porirua");
-  const items = groupForDisplay(sa);
+test("groupForDisplay collapses legacy flat duplicates into one org card", () => {
+  const members = flatMemberFixture();
+  const items = groupForDisplay(members);
   assert.equal(items.length, 1);
   assert.equal(items[0].type, "org");
-  assert.equal(items[0].org.services.length, sa.length);
+  assert.equal(items[0].org.services.length, 2);
 });
 
-test("groupServicesByOrg returns fewer orgs than flat FSD rows", () => {
-  const services = loadServices();
-  const fsd = services.filter((s) => s.source === "fsd");
-  const orgs = groupServicesByOrg(services);
-  assert.ok(orgs.length < fsd.length);
+test("published catalog includes multi-line Salvation Army organization", () => {
+  const catalog = loadCatalog();
+  const sa = catalog.find(
+    (e) =>
+      e.kind === "organization" &&
+      String(e.name ?? "").includes("Salvation Army")
+  );
+  assert.ok(sa, "expected Salvation Army organization entry");
+  assert.ok(sa.services.length >= 2);
+});
+
+test("groupCatalogForDisplay yields one org card for filtered org lines", () => {
+  const catalog = loadCatalog();
+  const sa = catalog.find(
+    (e) =>
+      e.kind === "organization" &&
+      String(e.name ?? "").includes("Salvation Army")
+  );
+  assert.ok(sa);
+  const lines = expandServiceLines(catalog).filter((l) => l.orgId === sa.id);
+  assert.ok(lines.length >= 2);
+  const items = groupCatalogForDisplay(catalog, lines);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].type, "org");
+  assert.equal(items[0].org.services.length, lines.length);
+});
+
+test("groupServicesByOrg clusters legacy flat rows", () => {
+  const members = flatMemberFixture();
+  const orgs = groupServicesByOrg(members);
+  assert.equal(orgs.length, 1);
+  assert.equal(orgs[0].services.length, 2);
 });
 
 test("serviceLineTitle uses first description line", () => {
