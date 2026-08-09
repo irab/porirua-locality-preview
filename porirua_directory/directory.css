@@ -1156,6 +1156,43 @@ body[data-view="browse"] .results {
   margin-bottom: 0.75rem;
 }
 
+.card__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.6rem;
+}
+
+.card__call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.55rem 1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  color: #fff;
+  background: var(--accent);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.card__call:hover,
+.card__call:focus-visible {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .card__meta {
   display: flex;
   flex-wrap: wrap;

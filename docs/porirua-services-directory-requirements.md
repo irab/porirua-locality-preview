@@ -1,6 +1,6 @@
 # Porirua Services Directory — Requirements
 
-**Version:** 1.10 (draft)  
+**Version:** 1.11 (draft)  
 **Date:** 31 July 2026  
 **Prepared for:** Porirua Locality / Te Wāhi Tiaki Tātou  
 **Timeline:** ~5–6 weeks total (MVP first, then iteration)  
@@ -158,7 +158,7 @@ Each service should show, where available:
 - Name
 - Short description (plain language)
 - Address or suburb
-- Phone number (tap to call on mobile)
+- Phone number — compact **Call** button (bottom-right on the card; label **Call** only, `tel:` link) on each result and **My list** card when a number is listed
 - Website link
 - Opening hours (if known)
 
@@ -527,6 +527,8 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 - [MVP implementation plan](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md)
 
 ---
+
+*Changes in v1.11: compact **Call** button (bottom-right on card; label **Call** only) on browse and **My list** cards when `phone` is present.*
 
 *Changes in v1.10: **Three-column browse** is the production default (filters | results | sticky map on desktop); **Show map** on by default in browse; `?layout=top` restores map-above-results; **Your Porirua Directory** title **centered** in the top bar with larger Recoleta sizing (stacked title row on very narrow screens).*
 

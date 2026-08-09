@@ -102,6 +102,10 @@ function renderChips(container, items, activeSet, attr) {
 
 const FAV_TRASH_ICON = `<svg class="card__fav-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M5.5 2.5V3h-2v1h11V3h-2v-.5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1zM3 5v8.5a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5V5H3zm2.5 2h1v6h-1V7zm3 0h1v6h-1V7z"/></svg>`;
 
+function telHrefFromPhone(phone) {
+  return `tel:${String(phone).replace(/\s/g, "")}`;
+}
+
 function renderCard(service, favoriteIds) {
   const badges = (service.badges ?? [])
     .map((b) => `<span class="badge">${esc(b)}</span>`)
@@ -109,9 +113,11 @@ function renderCard(service, favoriteIds) {
   const orgType = service.orgType
     ? `<span class="badge badge--type">${esc(service.orgType)}</span>`
     : "";
-  const phone = service.phone
-    ? `<p class="card__contact"><a href="tel:${esc(service.phone.replace(/\s/g, ""))}">${esc(service.phone)}</a></p>`
+  const phoneTrimmed = String(service.phone ?? "").trim();
+  const callBtn = phoneTrimmed
+    ? `<a class="card__call" href="${esc(telHrefFromPhone(phoneTrimmed))}">Call</a>`
     : "";
+  const callFooter = callBtn ? `<div class="card__footer">${callBtn}</div>` : "";
   const url = service.url
     ? `<p class="card__contact"><a href="${esc(service.url)}" rel="noopener noreferrer">Website</a></p>`
     : "";
@@ -134,7 +140,8 @@ function renderCard(service, favoriteIds) {
     </div>
     <div class="card__meta">${badges}${orgType}</div>
     ${service.description ? `<div class="card__desc">${formatDescription(service.description)}</div>` : ""}
-    ${address}${phone}${url}
+    ${address}${url}
+    ${callFooter}
   </article>`;
 }
 
@@ -1110,6 +1117,7 @@ async function main() {
 
   resultsEl.addEventListener("click", (e) => {
     if (handleFavClick(e)) return;
+    if (e.target.closest(".card__call")) return;
     const card = e.target.closest(".card");
     if (!card || !map) return;
     const marker = markersById.get(card.dataset.id);

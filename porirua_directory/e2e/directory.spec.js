@@ -290,6 +290,18 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
   await expect(page.locator("#mylist-results .card").first().locator(".card__fav-icon")).toBeVisible();
 });
 
+test("my list — Call button when saved service has phone", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.locator("#search-input").fill("Little People");
+  const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
+  const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
+  await card.getByRole("button", { name: `Add ${name} to your list` }).click();
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" }).click();
+  const listCard = page.locator("#mylist-results .card").filter({ hasText: "Little People" }).first();
+  await expect(listCard.getByRole("link", { name: "Call", exact: true })).toBeVisible();
+});
+
 test("my list — print list enables print mode without error", async ({ page }) => {
   await page.goto("/index.html");
   await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
@@ -321,6 +333,26 @@ test("my list — print list enables print mode without error", async ({ page })
   expect(printSmoke.errors).toEqual([]);
   expect(printSmoke.hasClass).toBe(true);
   expect(printSmoke.cleared).toBe(true);
+});
+
+test("support card shows Call button when phone exists", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.locator("#search-input").fill("Little People");
+  const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
+  await expect(card).toBeVisible();
+  const callLink = card.getByRole("link", { name: "Call", exact: true });
+  await expect(callLink).toBeVisible();
+  await expect(callLink).toHaveAttribute("href", "tel:0211309377");
+});
+
+test("Call button on card does not open map popup", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.locator("#search-input").fill("Little People");
+  const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
+  await card.getByRole("link", { name: "Call", exact: true }).click();
+  await expect(page.locator(".leaflet-popup-content .map-popup")).toHaveCount(0);
 });
 
 test("support path — card click opens rich map popup", async ({ page }) => {

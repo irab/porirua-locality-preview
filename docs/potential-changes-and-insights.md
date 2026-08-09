@@ -338,7 +338,7 @@ Phase 1 already aligns with Ask Izzy–style **plain need chips**, dual paths (*
 
 | Priority | Change | Why |
 |----------|--------|-----|
-| **P0** | **Prominent Call button** on every card and map popup when `phone` exists (large touch target, above the fold on mobile) | Matches 211/ORServices “action first”; `tel:` already works — this is layout and hierarchy |
+| **P0** | **Prominent Call button** on every card and map popup when `phone` exists (large touch target, above the fold on mobile) | Matches 211/ORServices “action first”; `tel:` already works — this is layout and hierarchy. **Shipped (Aug 2026):** compact **Call** link (bottom-right on card, `tel:` with normalized number; label is “Call” only) on browse and My list when `phone` is set; map popup still uses inline phone link only. |
 | **P0** | **Need shortcuts on landing** (3–6 tiles under “I would like to…”) → `#support` + chip pre-selected | Ask Izzy entry pattern; saves one browse step for food/housing/safety |
 | **P1** | **Community shortcuts on landing** (e.g. Community groups, Food / Pātaka Kai, Marae) → `#community` + chip | Same for “find a group” journeys |
 | **P1** | **Search visible on browse** (or open by default on mobile support path) | Removes expand-search tap; search-as-you-type already implemented |
