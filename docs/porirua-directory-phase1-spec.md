@@ -1,7 +1,7 @@
 # Porirua Services Directory — Phase 1 technical spec
 
 **Version:** 1.0 (2026-07-31)  
-**Scope:** Milestones 0–A (spec alignment + data pipeline). UI and deploy are Milestones B–D.
+**Scope:** Phase 1 data pipeline (Milestone A) and public UI (Milestones B–D). Phase 2 admin is out of scope here.
 
 **Architecture overview:** [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md)
 
@@ -17,6 +17,9 @@
 | Normalisation / dedupe | `porirua_directory/scripts/lib/normalize.mjs` |
 | Published dataset | `porirua_directory/data/services.json` |
 | Manual curation | `porirua_directory/data/overrides.json` |
+| Public UI | `index.html`, `directory.js`, `config-directory.js`, `directory.css` |
+| E2E tests | `e2e/directory.spec.js`, `playwright.config.js` |
+| Container | `Dockerfile`, `infra/nginx.conf` |
 | Unit tests | `porirua_directory/tests/*.test.mjs` |
 
 **Commands:**

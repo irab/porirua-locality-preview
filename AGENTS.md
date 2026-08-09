@@ -41,7 +41,7 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 cd porirua_directory
 npm install
 npm run build:data    # import FSD + merge → data/services.json
-npm run serve         # http://localhost:5173/directory.html
+npm run serve         # http://localhost:5173/index.html
 npm test              # unit tests (import/merge)
 npm run test:e2e      # Playwright
 ```

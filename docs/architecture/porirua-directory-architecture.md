@@ -1,6 +1,6 @@
 # Porirua Services Directory — Architecture
 
-**Status:** Phase 1 (MVP) in progress  
+**Status:** Phase 1 (MVP) — UI, CI, and prod tenant manifests in repo; live at directory.bsky.nz after image push + Argo sync  
 **Public URL (target):** [https://directory.bsky.nz](https://directory.bsky.nz)  
 **App code:** [`porirua_directory/`](../../porirua_directory/)  
 **Connections Map (parallel):** [`porirua_connections_map/`](../../porirua_connections_map/)

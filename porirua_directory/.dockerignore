@@ -1,0 +1,6 @@
+node_modules
+data/fsd-porirua.raw.json
+tests
+e2e
+playwright-report
+test-results

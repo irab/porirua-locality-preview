@@ -2,20 +2,22 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a testable MVP public directory (categories, search, map, crisis strip) merging Connections Map + Porirua-filtered FSD, deployed to **Blackbox dev** for stakeholder testing.
+**Goal:** Ship a testable MVP public directory (dual browse: need help + connect with community; search, map, compact crisis strip) merging Connections Map + Porirua-filtered FSD, deployed at **https://directory.bsky.nz** (Cloudflare `bsky.nz` → blackbox prod nginx).
 
-**Architecture:** Node scripts fetch/normalise FSD CSV and merge with Connections Map (Google Sheet CSV or local fallback) into committed `data/services.json`. Static directory UI (new `directory.html` + modules) reads that JSON. **nginx** image serves static assets; **Blackbox dev k3s** tenant (`dev-porirua-services`) exposes the app on Tailscale at path `/porirua-help` on `blackbox.folk-universe.ts.net`. **Playwright** validates locally in CI; optional smoke job hits the Blackbox URL after deploy.
+**Architecture:** Node scripts fetch/normalise FSD CSV and merge with Connections Map (Google Sheet CSV or local fallback) into committed `data/services.json`. Static directory UI (`index.html` + modules) reads that JSON. **nginx** Docker image on **blackbox prod** tenant `porirua-directory` with Ingress host `directory.bsky.nz` (ExternalDNS). **Playwright** validates locally in CI on every PR touching `porirua_directory/`.
 
-**Tech Stack:** Vanilla JS + Leaflet (existing), Node 20+ (`node:test`), PapaParse (existing), Playwright, Docker nginx, ArgoCD manifests in [`~/repos/blackbox`](file:///Users/ira/repos/blackbox).
+**Tech Stack:** Vanilla JS + Leaflet (existing), Node 20+ (`node:test`), csv-parse, Playwright, Docker nginx, ArgoCD manifests in [`~/repos/blackbox`](file:///Users/ira/repos/blackbox) `clusters/prod/tenants/porirua-directory/`.
 
-**Spec:** [docs/porirua-services-directory-requirements.md](../porirua-services-directory-requirements.md) v1.2 — Phase 1 only (~50 hours).
+**Spec:** [docs/porirua-services-directory-requirements.md](../porirua-services-directory-requirements.md) **v1.3** — Phase 1 only (~50 hours). Strategic milestone order: [Cursor MVP plan](file:///Users/ira/.cursor/plans/porirua_directory_mvp_921fcae1.plan.md).
+
+**Progress (2026-08):** Milestone A (data pipeline) complete. Milestones B–E (UI, e2e, Docker/CI, blackbox prod tenant, runbook) in flight — checkboxes below updated as tasks land.
 
 ## Global Constraints
 
 - **Budget scope:** Phase 1 MVP only — no Directus, no weekly FSD cron, no Squarespace embed.
 - **Data sources:** Connections Map + FSD only; Google Sheet remains editor for community orgs until Phase 2.
 - **Public UX:** Plain language; no login; crisis numbers always visible; no internal source jargon on cards.
-- **Longevity:** Prefer portable JSON + static site; Blackbox **dev** cluster for testing (not prod until Phase 2 decision).
+- **Longevity:** Prefer portable JSON + static site; public MVP on **directory.bsky.nz** (prod tenant + ExternalDNS).
 - **Existing site:** Keep current Assembly map in `porirua_connections_map/` (`index.html` / `map.js`) working — directory is a **parallel entry point**, not a breaking change.
 - **FSD CSV URL (verified):** `https://catalogue.data.govt.nz/dataset/3e967faa-c44b-4f64-989d-2df574b3adf3/resource/35de6bf8-b254-4025-89f5-da9eb6adf9a0/download/fsd_provider_dia_rpt.csv`
 
@@ -471,52 +473,26 @@ git commit -m "ci: test and publish porirua-directory container image"
 
 ---
 
-### Task 8: Blackbox dev tenant (testing environment)
+### Task 8: Blackbox **prod** tenant (`directory.bsky.nz`)
 
 **Files (in `~/repos/blackbox`):**
-- Create: `clusters/dev/tenants/porirua-services/kustomization.yaml`
-- Create: `clusters/dev/tenants/porirua-services/deployment.yaml`
-- Create: `clusters/dev/tenants/porirua-services/service.yaml`
-- Create: `clusters/dev/tenants/porirua-services/ingress.yaml`
-- Create: `clusters/dev/tenants/porirua-services/middleware-headers.yaml` (copy from `coshop/middleware-headers.yaml`)
-- Create: `clusters/dev/tenants/porirua-services/README.md`
+- `clusters/prod/tenants/porirua-directory/` — Deployment, Service, Ingress host **`directory.bsky.nz`**, `https-proto` middleware (Flexible SSL pattern from coshop).
 
-**Reference:** [blackbox README](file:///Users/ira/repos/blackbox/README.md) — dev cluster, ArgoCD auto-discovers new tenant dirs.
+**Reference:** [bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md), prod `external-dns-bsky`.
 
-- [ ] **Step 1: Deployment** — image `ghcr.io/irab/porirua-directory:dev` (confirm org), port 8080, resources like hello-world/coshop frontend
+- [ ] **Step 1: Deployment** — image `ghcr.io/irab/porirua-directory:latest`, port 8080
 
-- [ ] **Step 2: Service** — ClusterIP port 8080
+- [ ] **Step 2: Ingress** — host `directory.bsky.nz`, path `/`, middleware `prod-porirua-directory-https-proto@kubernetescrd`
 
-- [ ] **Step 3: Ingress** — host `blackbox.folk-universe.ts.net`, path prefix `/porirua-help`, middleware `dev-porirua-services-https-proto@kubernetescrd`
+- [ ] **Step 3: Push blackbox repo** — ArgoCD ApplicationSet picks up new tenant dir → namespace `prod-porirua-directory`
 
-Pattern from [coshop ingress](file:///Users/ira/repos/blackbox/clusters/dev/tenants/coshop/ingress.yaml).
-
-- [ ] **Step 4: Push blackbox repo** — ArgoCD syncs `dev-porirua-services` namespace
-
-- [ ] **Step 5: Verify on Tailscale**
-
-Open: `https://blackbox.folk-universe.ts.net/porirua-help/directory.html`  
-Expected: MVP loads with live data.
-
-- [ ] **Step 6: Commit (blackbox repo)**
-
-```bash
-cd ~/repos/blackbox
-git add clusters/dev/tenants/porirua-services/
-git commit -m "feat: add dev-porirua-services tenant for Porirua directory MVP"
-git push
-```
+- [ ] **Step 4: Verify** — `https://directory.bsky.nz` loads after GHCR image exists and DNS propagates
 
 ---
 
-### Task 9: Playwright smoke against Blackbox (optional CI job)
+### Task 9: Post-deploy smoke (optional)
 
-**Files:**
-- Modify: `.github/workflows/directory.yml`
-
-- [ ] **Step 1: Add job `e2e-blackbox`** — `if: github.ref == 'refs/heads/main'`, secrets/`vars.BLACKBOX_BASE_URL` = `https://blackbox.folk-universe.ts.net/porirua-help`
-
-Run: `BASE_URL=$BLACKBOX_BASE_URL npm run test:e2e` (no webServer)
+- [ ] **Optional CI job** — `BASE_URL=https://directory.bsky.nz npm run test:e2e` after image push (no local webServer)
 
 - [ ] **Step 2: Document in `docs/MVP-RUNBOOK.md`**
 

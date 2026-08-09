@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find help in Porirua — Porirua Locality</title>
+  <meta name="description" content="Find help, connect with community groups, and discover local organisations in Porirua." />
+  <link rel="stylesheet" href="https://use.typekit.net/xcy1epi.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="directory.css" />
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <p class="site-eyebrow">Porirua Locality</p>
+    <h1>Find help and community in Porirua</h1>
+    <p class="site-lede">Search services, browse by need, or connect with local groups and places.</p>
+  </header>
+
+  <div id="crisis-strip" class="crisis" aria-label="Crisis and emergency numbers"></div>
+
+  <main id="main" class="main">
+    <section class="browse-entry" aria-labelledby="browse-heading">
+      <h2 id="browse-heading" class="section-title">How would you like to browse?</h2>
+      <div class="browse-entry__buttons">
+        <button type="button" class="browse-entry__btn" data-mode="help">I need help</button>
+        <button type="button" class="browse-entry__btn" data-mode="community">Connect with community</button>
+      </div>
+    </section>
+
+    <section id="filters-help" class="filters filters--hidden" aria-labelledby="help-filters-heading">
+      <h2 id="help-filters-heading" class="section-title">What do you need help with?</h2>
+      <div id="need-chips" class="chip-row" role="group" aria-label="Need categories"></div>
+    </section>
+
+    <section id="filters-community" class="filters filters--hidden" aria-labelledby="community-filters-heading">
+      <h2 id="community-filters-heading" class="section-title">Organisation type</h2>
+      <p class="filters-hint">Schools are optional — turn on the chip if you want to include kura.</p>
+      <div id="community-chips" class="chip-row" role="group" aria-label="Community filters"></div>
+    </section>
+
+    <label class="search-wrap">
+      <span class="visually-hidden">Search</span>
+      <input id="search-input" type="search" placeholder="Search by name, description, or address" autocomplete="off" />
+    </label>
+
+    <p id="status-line" class="status-line" role="status"></p>
+
+    <div id="directory-map" class="map" aria-label="Map of services"></div>
+    <div id="directory-results" class="results" aria-live="polite"></div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Community listings from the Porirua Community Connections Map. Other services from the NZ Family Services Directory (Porirua area).</p>
+  </footer>
+
+  <script type="module" src="directory.js"></script>
+</body>
+</html>
