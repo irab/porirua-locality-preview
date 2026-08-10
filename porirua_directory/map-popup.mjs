@@ -1,5 +1,9 @@
 import { needCategories } from "./config-directory.js";
 import { lineMatchesNeed } from "./group-services.mjs";
+import {
+  PHONE_ICON,
+  websiteAnchorHtml,
+} from "./contact-links.mjs";
 
 const needLabelById = Object.fromEntries(
   needCategories.map((n) => [n.id, n.label])
@@ -75,11 +79,11 @@ export function buildMapPopup(service, distKm, browseMode = "support") {
 
   if (service.phone) {
     const tel = service.phone.replace(/\s/g, "");
-    html += `<p class="map-popup__phone"><a href="tel:${esc(tel)}">${esc(service.phone)}</a></p>`;
+    html += `<p class="map-popup__phone"><a href="tel:${esc(tel)}">${PHONE_ICON}${esc(service.phone)}</a></p>`;
   }
 
   if (service.url) {
-    html += `<a class="map-popup__link" href="${esc(service.url)}" target="_blank" rel="noopener noreferrer">Visit website →</a>`;
+    html += websiteAnchorHtml(service.url, { className: "map-popup__link" });
   }
 
   if (distKm != null) {
@@ -103,10 +107,8 @@ function orgPopupTeaserLines(org, activeNeeds) {
 
 /** Compact org pin popup — no Connections Map org-type or theme pills. */
 export function buildMapPopupForOrg(org, distKm, activeNeeds) {
-  const n = org.services.length;
   let html = '<div class="map-popup map-popup--org">';
   html += `<div class="map-popup__title">${esc(org.name)}</div>`;
-  html += `<div class="map-popup__count">${n} service${n === 1 ? "" : "s"} at this location</div>`;
 
   if (org.address) {
     html += `<div class="map-popup__location">${esc(org.address)}</div>`;
@@ -119,13 +121,13 @@ export function buildMapPopupForOrg(org, distKm, activeNeeds) {
 
   if (org.phone) {
     const tel = org.phone.replace(/\s/g, "");
-    html += `<p class="map-popup__phone"><a href="tel:${esc(tel)}">${esc(org.phone)}</a></p>`;
+    html += `<p class="map-popup__phone"><a href="tel:${esc(tel)}">${PHONE_ICON}${esc(org.phone)}</a></p>`;
   }
 
   html += `<button type="button" class="map-popup__scroll-to-list" data-scroll-to-org="${esc(org.orgId)}">View in list</button>`;
 
   if (org.url) {
-    html += `<a class="map-popup__link" href="${esc(org.url)}" target="_blank" rel="noopener noreferrer">Visit website →</a>`;
+    html += websiteAnchorHtml(org.url, { className: "map-popup__link" });
   }
 
   if (distKm != null) {
