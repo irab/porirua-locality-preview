@@ -15,6 +15,11 @@ import {
   buildMapPopupForOrg,
 } from "./map-popup.mjs";
 import {
+  cardFooterHtml,
+  telHrefFromPhone,
+  websiteLinkHtml,
+} from "./contact-links.mjs";
+import {
   crisisLinks,
   needCategories,
   communityFilters,
@@ -124,10 +129,6 @@ const needLabelById = Object.fromEntries(
   needCategories.map((n) => [n.id, n.label])
 );
 
-function telHrefFromPhone(phone) {
-  return `tel:${String(phone).replace(/\s/g, "")}`;
-}
-
 function renderCard(service, favoriteIds) {
   const badges = (service.badges ?? [])
     .map((b) => `<span class="badge">${esc(b)}</span>`)
@@ -135,14 +136,7 @@ function renderCard(service, favoriteIds) {
   const orgType = service.orgType
     ? `<span class="badge badge--type">${esc(service.orgType)}</span>`
     : "";
-  const phoneTrimmed = String(service.phone ?? "").trim();
-  const callBtn = phoneTrimmed
-    ? `<a class="card__call" href="${esc(telHrefFromPhone(phoneTrimmed))}">Call</a>`
-    : "";
-  const callFooter = callBtn ? `<div class="card__footer">${callBtn}</div>` : "";
-  const url = service.url
-    ? `<p class="card__contact"><a href="${esc(service.url)}" rel="noopener noreferrer">Website</a></p>`
-    : "";
+  const callFooter = cardFooterHtml(service.phone, service.url);
   const address = service.address
     ? `<p class="card__contact">${esc(service.address)}</p>`
     : "";
@@ -162,7 +156,7 @@ function renderCard(service, favoriteIds) {
     </div>
     <div class="card__meta">${badges}${orgType}</div>
     ${service.description ? `<div class="card__desc">${formatDescription(service.description)}</div>` : ""}
-    ${address}${url}
+    ${address}
     ${callFooter}
   </article>`;
 }
@@ -198,9 +192,7 @@ function renderServiceRowDetail(line, org) {
     );
   }
   if (showUrl) {
-    contactParts.push(
-      `<a href="${esc(url)}" rel="noopener noreferrer">Website</a>`
-    );
+    contactParts.push(websiteLinkHtml(url));
   }
   const contactBlock = contactParts.length
     ? `<p class="service-row__detail-contact">${contactParts.join(" · ")}</p>`
@@ -293,14 +285,7 @@ function renderOrgCard(org, favoriteIds, highlight) {
   const orgBadges = (org.badges ?? [])
     .map((b) => `<span class="badge">${esc(b)}</span>`)
     .join("");
-  const phoneTrimmed = String(org.phone ?? "").trim();
-  const callBtn = phoneTrimmed
-    ? `<a class="card__call" href="${esc(telHrefFromPhone(phoneTrimmed))}">Call</a>`
-    : "";
-  const callFooter = callBtn ? `<div class="card__footer">${callBtn}</div>` : "";
-  const url = org.url
-    ? `<p class="card__contact"><a href="${esc(org.url)}" rel="noopener noreferrer">Website</a></p>`
-    : "";
+  const callFooter = cardFooterHtml(org.phone, org.url);
   const address = org.address
     ? `<p class="card__contact">${esc(org.address)}</p>`
     : "";
@@ -313,9 +298,6 @@ function renderOrgCard(org, favoriteIds, highlight) {
     : `<span class="card__fav-text">Add to your list</span>`;
   const favBtn = `<button type="button" class="card__fav${onList ? " is-on-list" : ""}" data-fav-toggle="${esc(org.orgId)}" aria-pressed="${onList ? "true" : "false"}" aria-label="${esc(favAria)}">${favInner}</button>`;
 
-  const serviceCount = org.services.length;
-  const countLabel = `${serviceCount} service${serviceCount === 1 ? "" : "s"}`;
-
   const rows = org.services
     .map((line) => renderServiceRow(line, org, highlight))
     .join("");
@@ -327,9 +309,8 @@ function renderOrgCard(org, favoriteIds, highlight) {
       <h3 class="card__title">${esc(org.name)}</h3>
       ${favBtn}
     </div>
-    <p class="card__org-count">${esc(countLabel)} at this location</p>
     <div class="card__meta">${orgBadges}${orgType}</div>
-    ${address}${url}
+    ${address}
     <ul class="service-rows" aria-label="Services offered">${rows}</ul>
     ${callFooter}
   </article>`;

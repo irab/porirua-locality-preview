@@ -327,7 +327,7 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
   await expect(page.locator("#mylist-results .card").first().locator(".card__fav-icon")).toBeVisible();
 });
 
-test("my list — Call button when saved service has phone", async ({ page }) => {
+test("my list — phone link in footer when saved service has phone", async ({ page }) => {
   await page.goto("/index.html#support");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.locator("#search-input").fill("Little People");
@@ -335,8 +335,16 @@ test("my list — Call button when saved service has phone", async ({ page }) =>
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
   await card.getByRole("button", { name: `Add ${name} to your list` }).click();
   await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" }).click();
+  await expect(page.locator("#view-mylist")).toBeVisible();
   const listCard = page.locator("#mylist-results .card").filter({ hasText: "Little People" }).first();
-  await expect(listCard.getByRole("link", { name: "Call", exact: true })).toBeVisible();
+  await expect(listCard.getByRole("link", { name: "021 130 9377", exact: true })).toBeVisible();
+  const callLink = listCard.locator(".card__call");
+  await expect(callLink).toBeVisible();
+  await expect(callLink.locator(".link-phone-icon")).toBeVisible();
+  await expect(callLink).toHaveAttribute("href", "tel:0211309377");
+  await expect(listCard.locator(".card__website")).toHaveAttribute("href", "http://www.lpnz.org.nz");
+  await expect(listCard.locator(".card__website")).toContainText("lpnz.org.nz");
+  await expect(listCard.locator(".card__website .link-external-icon")).toBeVisible();
 });
 
 test("my list — print list enables print mode without error", async ({ page }) => {
@@ -372,23 +380,59 @@ test("my list — print list enables print mode without error", async ({ page })
   expect(printSmoke.cleared).toBe(true);
 });
 
-test("support card shows Call button when phone exists", async ({ page }) => {
+test("my list — print layout shows phone number in footer", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.locator("#search-input").fill("Little People");
+  const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
+  const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
+  await card.getByRole("button", { name: `Add ${name} to your list` }).click();
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" }).click();
+  await expect(page.locator("#mylist-results .card").filter({ hasText: "Little People" })).toBeVisible();
+
+  const printLayout = await page.evaluate(() => {
+    document.body.classList.add("printing-mylist");
+    const cards = [...document.querySelectorAll("#mylist-results .card")];
+    const listCard = cards.find((el) => el.textContent?.includes("Little People"));
+    const call = listCard?.querySelector(".card__call");
+    const callVisible = !!call && getComputedStyle(call).display !== "none";
+    const phoneText = call?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+    const icon = call?.querySelector(".link-phone-icon");
+    const iconHidden = !icon || getComputedStyle(icon).display === "none";
+    document.body.classList.remove("printing-mylist");
+    return { callVisible, phoneText, iconHidden, hasCard: !!listCard };
+  });
+
+  expect(printLayout.hasCard).toBe(true);
+  expect(printLayout.callVisible).toBe(true);
+  expect(printLayout.phoneText).toBe("021 130 9377");
+  expect(printLayout.iconHidden).toBe(true);
+});
+
+test("support card shows phone link in footer when phone exists", async ({ page }) => {
   await page.goto("/index.html#support");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.locator("#search-input").fill("Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   await expect(card).toBeVisible();
-  const callLink = card.getByRole("link", { name: "Call", exact: true });
+  await expect(card.getByRole("link", { name: "021 130 9377", exact: true })).toBeVisible();
+  const callLink = card.locator(".card__call");
   await expect(callLink).toBeVisible();
+  await expect(callLink.locator(".link-phone-icon")).toBeVisible();
   await expect(callLink).toHaveAttribute("href", "tel:0211309377");
+  const websiteLink = card.locator(".card__website");
+  await expect(websiteLink).toBeVisible();
+  await expect(websiteLink).toHaveAttribute("href", "http://www.lpnz.org.nz");
+  await expect(websiteLink).toContainText("lpnz.org.nz");
+  await expect(websiteLink.locator(".link-external-icon")).toBeVisible();
 });
 
-test("Call button on card does not open map popup", async ({ page }) => {
+test("Call link on card does not open map popup", async ({ page }) => {
   await page.goto("/index.html#support");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.locator("#search-input").fill("Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
-  await card.getByRole("link", { name: "Call", exact: true }).click();
+  await card.locator(".card__call").click();
   await expect(page.locator(".leaflet-popup-content .map-popup")).toHaveCount(0);
 });
 

@@ -989,6 +989,9 @@ body[data-view="browse"] .results {
 }
 
 .map-popup__phone a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
   color: var(--ink);
   font-weight: 600;
 }
@@ -1006,13 +1009,6 @@ body[data-view="browse"] .results {
 .map-popup__link:hover,
 .map-popup__link:focus-visible {
   color: var(--ink);
-}
-
-.map-popup__count {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 0.35rem;
 }
 
 .map-popup__scroll-to-list {
@@ -1053,13 +1049,6 @@ body[data-view="browse"] .results {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1rem 1.05rem;
-}
-
-.card--org .card__org-count {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
 }
 
 .service-rows {
@@ -1315,11 +1304,27 @@ body[data-view="browse"] .results {
 
 .card__footer {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.5rem;
   margin-top: 0.6rem;
 }
 
+.card__website {
+  margin-right: auto;
+  max-width: min(100%, 16rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card__call {
+  white-space: nowrap;
+}
+
+.card__call,
+.card__website {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1339,10 +1344,13 @@ body[data-view="browse"] .results {
   border-radius: 10px;
   cursor: pointer;
   box-sizing: border-box;
+  gap: 0.15em;
 }
 
 .card__call:hover,
-.card__call:focus-visible {
+.card__call:focus-visible,
+.card__website:hover,
+.card__website:focus-visible {
   background: var(--ink);
   border-color: var(--ink);
   color: #fff;
@@ -1409,6 +1417,40 @@ body[data-view="browse"] .results {
 
 .card__contact a {
   font-weight: 600;
+}
+
+.link-external-icon {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-inline-start: 0.25em;
+  vertical-align: -0.1em;
+  flex-shrink: 0;
+}
+
+.link-phone-icon {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: -0.1em;
+  flex-shrink: 0;
+}
+
+.link-social-icon {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: -0.1em;
+  flex-shrink: 0;
+}
+
+.card__contact a,
+.card__website,
+.map-popup__link,
+.service-row__detail-contact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
 }
 
 .empty-state {
@@ -1494,6 +1536,13 @@ body[data-view="about"] .page-foot .site-footer {
   }
 }
 
+/* My List print preview — footer links stay visible; icons hidden when printing */
+body.printing-mylist .card__call .link-phone-icon,
+body.printing-mylist .card__website .link-external-icon,
+body.printing-mylist .card__website .link-social-icon {
+  display: none !important;
+}
+
 @media print {
   .skip-link,
   .site-topnav,
@@ -1532,6 +1581,23 @@ body[data-view="about"] .page-foot .site-footer {
   body.printing-mylist .mylist-intro,
   body.printing-mylist #mylist-status,
   body.printing-mylist .card__fav {
+    display: none !important;
+  }
+
+  body.printing-mylist .card__call,
+  body.printing-mylist .card__website {
+    background: transparent;
+    border: none;
+    color: #000;
+    padding: 0;
+    min-height: 0;
+    max-width: none;
+    white-space: normal;
+  }
+
+  body.printing-mylist .card__call .link-phone-icon,
+  body.printing-mylist .card__website .link-external-icon,
+  body.printing-mylist .card__website .link-social-icon {
     display: none !important;
   }
 
