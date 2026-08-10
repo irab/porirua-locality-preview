@@ -148,5 +148,9 @@ export function cardFooterHtml(phone, url) {
   const callBtn = phoneTrimmed
     ? `<a class="card__call" href="${esc(telHrefFromPhone(phoneTrimmed))}" aria-label="${esc(phoneTrimmed)}">${PHONE_ICON}${esc(phoneTrimmed)}</a>`
     : "";
-  return `<div class="card__footer">${websiteBtn}${callBtn}</div>`;
+  const sep =
+    websiteBtn && callBtn
+      ? `<span class="card__contact-sep" aria-hidden="true">·</span>`
+      : "";
+  return `<div class="card__footer card__contact-strip">${websiteBtn}${sep}${callBtn}</div>`;
 }
