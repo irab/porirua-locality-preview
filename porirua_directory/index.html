@@ -46,7 +46,7 @@
         <a class="site-nav__link" href="about.html">About</a>
       </nav>
     </div>
-    <div id="site-subnav" class="site-subnav" aria-label="What would you like to do">
+    <div id="site-subnav" class="site-subnav" hidden aria-hidden="true" aria-label="What would you like to do">
       <p id="landing-prompt" class="site-subnav__prompt">I would like to…</p>
       <div class="path-mode-switch" role="group" aria-label="Choose a path">
         <button type="button" class="path-mode-switch__btn" data-mode="support">Find support</button>
@@ -56,7 +56,28 @@
   </header>
 
   <main id="main" class="main">
-    <section id="view-landing" class="view-landing" hidden aria-hidden="true"></section>
+    <section id="view-landing" class="view-landing" hidden aria-labelledby="landing-heading">
+      <div class="landing-intro">
+        <h1 id="landing-heading" class="landing-heading">Where would you like to start?</h1>
+        <p class="landing-lead">
+          Find support services or connect with community groups and organisations across our city.
+        </p>
+      </div>
+      <div class="landing-paths" aria-labelledby="landing-heading">
+        <button type="button" class="landing-path-card" data-mode="support">
+          <span class="landing-path-card__title">Find support</span>
+          <span class="landing-path-card__desc">
+            Browse by topic or search — food, housing, health, and other help.
+          </span>
+        </button>
+        <button type="button" class="landing-path-card" data-mode="community">
+          <span class="landing-path-card__title">Connect with community</span>
+          <span class="landing-path-card__desc">
+            Marae, groups, councils, and local initiatives.
+          </span>
+        </button>
+      </div>
+    </section>
 
     <section id="view-mylist" class="view-mylist" hidden aria-labelledby="mylist-heading">
       <p class="browse-toolbar">

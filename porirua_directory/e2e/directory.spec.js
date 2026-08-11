@@ -3,6 +3,14 @@ import { test, expect } from "@playwright/test";
 const LOGO_ALT = "Te Wāhi Tiaki Tātou — Porirua Locality";
 const PRODUCT_TITLE = "Your Porirua Directory";
 
+async function pickSupportPath(page) {
+  await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i }).click();
+}
+
+async function pickCommunityPath(page) {
+  await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Connect with community/i }).click();
+}
+
 /** Playwright context geolocation is unreliable with getCurrentPosition; stub in-page. */
 async function mockGeolocation(page, { latitude, longitude, accuracy = 10 }) {
   await page.addInitScript(
@@ -40,16 +48,20 @@ test("accessibility smoke — about page main landmark and single h1", async ({ 
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
 });
 
-test("landing — path buttons in subnav, crisis footer, no map", async ({ page }) => {
+test("landing — welcome, path cards, no duplicate path choice, crisis footer, no map", async ({ page }) => {
   await page.goto("/index.html");
   await expect(page.getByRole("link", { name: LOGO_ALT })).toBeVisible();
   await expect(page.getByRole("link", { name: PRODUCT_TITLE })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "About" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" })).toBeVisible();
-  await expect(page.getByText("I would like to…")).toBeVisible();
-  const pathNav = page.getByRole("group", { name: "Choose a path" });
-  await expect(pathNav.getByRole("button", { name: "Find support" })).toBeVisible();
-  await expect(pathNav.getByRole("button", { name: "Connect with community" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Where would you like to start?" })).toBeVisible();
+  await expect(page.getByText(/Find support services or connect with community/i)).toBeVisible();
+  const landingPaths = page.locator("#view-landing .landing-paths");
+  await expect(landingPaths.getByRole("button", { name: /Find support/i })).toBeVisible();
+  await expect(landingPaths.getByRole("button", { name: /Connect with community/i })).toBeVisible();
+  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(page.getByText("I would like to…")).toBeHidden();
+  await expect(page.getByRole("group", { name: "Choose a path" })).toHaveCount(0);
   await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
   await expect(
     page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "Need to talk? 1737" })
@@ -72,7 +84,7 @@ test("about page — nav, copy, crisis footer", async ({ page }) => {
 
 test("support path — all listings by default, no chip selected", async ({ page }) => {
   await page.goto("/index.html");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  await pickSupportPath(page);
   await expect(page.locator("#site-subnav")).toBeHidden();
   await expect(page.getByText("I would like to…")).toBeHidden();
   await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
@@ -109,7 +121,7 @@ test("support path — layout=top shows map when mappable, no toolbar toggle", a
   page,
 }) => {
   await page.goto("/index.html?layout=top");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  await pickSupportPath(page);
   await expect(page.getByText(/Support with…/i)).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("#map-block")).toBeVisible();
@@ -221,7 +233,7 @@ test("browse chrome does not collapse on three-column desktop scroll", async ({ 
 
 test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
   await page.goto("/index.html");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Connect with community" }).click();
+  await pickCommunityPath(page);
   await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
   await page.getByRole("button", { name: /Marae and iwi/i }).click();
   await expect(page.locator("#directory-results")).toContainText(/Ngāti Toa/i);
@@ -229,7 +241,7 @@ test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
 
 test("search filters results on support path", async ({ page }) => {
   await page.goto("/index.html");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  await pickSupportPath(page);
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "true");
   await page.locator("#search-input").fill("Wesley");
@@ -239,7 +251,7 @@ test("search filters results on support path", async ({ page }) => {
 test("browse search toggle stays in viewport on narrow screens", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/index.html");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  await pickSupportPath(page);
   const toggle = page.locator("#search-toggle");
   await expect(toggle).toBeVisible();
   const box = await toggle.boundingBox();
@@ -294,20 +306,29 @@ test("browse search — expanded field fits placeholder on mobile", async ({ pag
   expect(layout.prefixInsideField).toBe(true);
 });
 
+test("landing path card enters support browse", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i }).click();
+  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
+  await expect(page.locator("body")).toHaveAttribute("data-view", "browse");
+});
+
 test("back control returns to landing", async ({ page }) => {
   await page.goto("/index.html");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  await pickSupportPath(page);
   await expect(page.locator("#site-subnav")).toBeHidden();
   await page.getByRole("button", { name: "← Back" }).click();
-  await expect(page.locator("#site-subnav")).toBeVisible();
-  await expect(page.getByText("I would like to…")).toBeVisible();
-  await expect(page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" })).toBeVisible();
+  await expect(page.locator("#view-landing")).toBeVisible();
+  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(page.getByText("I would like to…")).toBeHidden();
+  await expect(page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i })).toBeVisible();
   await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
 });
 
 test("my list — add to list, view list, privacy note", async ({ page }) => {
   await page.goto("/index.html");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  await pickSupportPath(page);
   const firstCard = page.locator("#directory-results .card").first();
   await expect(firstCard).toBeVisible();
   const serviceName = await firstCard.locator(".card__title").textContent();
@@ -349,7 +370,7 @@ test("my list — phone link in footer when saved service has phone", async ({ p
 
 test("my list — print list enables print mode without error", async ({ page }) => {
   await page.goto("/index.html");
-  await page.getByRole("group", { name: "Choose a path" }).getByRole("button", { name: "Find support" }).click();
+  await pickSupportPath(page);
   const firstCard = page.locator("#directory-results .card").first();
   const serviceName = (await firstCard.locator(".card__title").textContent())?.trim() ?? "";
   await firstCard.getByRole("button", { name: `Add ${serviceName} to your list` }).click();

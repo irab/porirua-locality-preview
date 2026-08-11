@@ -131,8 +131,8 @@ Community workers may share the link; the directory is **not** a referral or cas
 
 When someone opens the directory they should be able to:
 
-1. **Site navigation** — Porirua Locality (Te Wāhi Tiaki Tātou) logo; **Your Porirua Directory** as a **centered, prominent** title in the top bar (logo left, **My list** and **About** right); subnav on **landing only** for **I would like to…** and **Find support** / **Connect with community** (hidden in browse).
-2. **Choose a path** — from the subnav on landing; filters and results appear after a path is chosen; **Back** returns to landing (only way to change path).
+1. **Site navigation** — Porirua Locality (Te Wāhi Tiaki Tātou) logo; **Your Porirua Directory** as a **centered, prominent** title in the top bar (logo left, **My list** and **About** right). The path subnav (**I would like to…** / path buttons) is **not shown** on landing or browse — path choice lives in the main column only.
+2. **Choose a path** — welcome copy (**Where would you like to start?**) and two **path cards** in the main column (title + short blurb each); filters and results appear after a path is chosen; **Back** returns to landing (only way to change path).
 3. **Emergency and crisis numbers** — compact sticky footer on every page (landing, browse, and About).
 4. **Support categories** (Find support path) — plain language, for example:
    - Food / kai
@@ -527,6 +527,8 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 - [MVP implementation plan](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md)
 
 ---
+
+*Changes in v1.14: **Landing (Direction 1)** — `#view-landing` welcome copy (**Where would you like to start?**) and two calm path cards (title + blurb) as the **only** path choice on landing; path subnav hidden; crisis footer unchanged; browse **← Back** unchanged.*
 
 *Changes in v1.13: Scroll-collapse flicker pass — map panel uses grid-only motion (opacity fade on filter chips only); **`map-block--paint-suppressed`** hides Leaflet tiles during collapse/expand; sticky panel **box-shadow** and layout **gap** animate in sync; E2E covers mobile scroll-collapse and desktop non-collapse (Chromium). **Manual:** real-device iOS Safari / Android Chrome for scroll chrome smoothness.*
 

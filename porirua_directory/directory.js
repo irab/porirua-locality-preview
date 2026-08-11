@@ -1046,11 +1046,12 @@ async function main() {
     const landing = view === "landing";
     const mylist = view === "mylist";
     viewLanding.hidden = !landing;
+    viewLanding.setAttribute("aria-hidden", landing ? "false" : "true");
     viewBrowse.hidden = landing || mylist;
     if (viewMylist) viewMylist.hidden = !mylist;
     if (siteSubnav) {
-      siteSubnav.hidden = !landing;
-      siteSubnav.setAttribute("aria-hidden", landing ? "false" : "true");
+      siteSubnav.hidden = true;
+      siteSubnav.setAttribute("aria-hidden", "true");
     }
     if (view !== "browse") {
       resetBrowseChrome();
