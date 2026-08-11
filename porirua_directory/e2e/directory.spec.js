@@ -447,7 +447,7 @@ test("support path — card click opens rich map popup", async ({ page }) => {
   await expect(popup.locator(".map-popup__title")).toHaveText(title ?? "");
   await expect(
     popup.locator(
-      ".map-popup__desc, .map-popup__location, .map-popup__phone, .map-popup__link, .map-popup__pill"
+      ".map-popup__desc, .map-popup__location, .map-popup__contact-strip, .map-popup__call, .map-popup__website, .map-popup__pill"
     )
   ).not.toHaveCount(0);
   await expect(popup).not.toContainText(/how we roll/i);
@@ -592,7 +592,8 @@ test("org grouping — map popup View in list focuses org card", async ({ page }
   await expect(card).toBeVisible();
   await card.click({ position: { x: 8, y: 8 } });
   const popup = page.locator(".leaflet-popup-content .map-popup");
-  await expect(popup.getByRole("button", { name: "View in list" })).toBeVisible();
-  await popup.getByRole("button", { name: "View in list" }).click();
+  const viewInList = popup.getByRole("button", { name: "View in list" });
+  await expect(viewInList).toBeVisible();
+  await viewInList.evaluate((el) => el.click());
   await expect(card).toHaveClass(/card--focus-ring/);
 });

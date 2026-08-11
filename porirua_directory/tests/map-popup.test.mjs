@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildMapPopup,
+  buildMapPopupForOrg,
   mapPopupShowsCommunityChrome,
 } from "../map-popup.mjs";
 
@@ -59,4 +60,44 @@ test("FSD listing on support keeps need category pills only", () => {
   const html = buildMapPopup(fsd, null, "support");
   assert.match(html, /Support/);
   assert.doesNotMatch(html, /map-popup__pill--theme/);
+});
+
+test("org popup omits teaser when service title duplicates org name", () => {
+  const html = buildMapPopupForOrg(
+    {
+      orgId: "org-wellfed",
+      name: "WELLfed",
+      address: "1 Kai St, Porirua",
+      phone: "",
+      url: "https://www.wellfed.kiwi/",
+      services: [{ title: "WELLfed", categories: ["food"] }],
+    },
+    null,
+    new Set(["food"])
+  );
+  assert.match(html, /map-popup__title/);
+  assert.match(html, />WELLfed</);
+  assert.doesNotMatch(html, /map-popup__desc/);
+  assert.match(html, /map-popup__contact-strip/);
+  assert.match(html, /map-popup__website/);
+  assert.match(html, /map-popup__view-in-list/);
+  assert.doesNotMatch(html, /map-popup__scroll-to-list/);
+});
+
+test("org popup contact strip uses typographic website and phone links", () => {
+  const html = buildMapPopupForOrg(
+    {
+      orgId: "org-x",
+      name: "Example Org",
+      phone: "04 123 4567",
+      url: "https://example.org/",
+      services: [{ title: "Youth programme", categories: ["youth"] }],
+    },
+    2.5,
+    new Set()
+  );
+  assert.match(html, /map-popup__contact-sep/);
+  assert.match(html, /map-popup__call/);
+  assert.match(html, /2\.5 km away/);
+  assert.match(html, /Youth programme/);
 });

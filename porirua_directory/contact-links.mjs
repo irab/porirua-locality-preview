@@ -137,20 +137,42 @@ export function websiteLinkHtml(url) {
   return websiteAnchorHtml(url);
 }
 
-export function cardFooterHtml(phone, url) {
+/**
+ * Website · phone row shared by cards and map popups.
+ * @param {{ strip?: string, website?: string, call?: string, sep?: string }} [classes]
+ */
+export function contactStripHtml(phone, url, classes = {}) {
+  const stripClass = classes.strip ?? "card__footer card__contact-strip";
+  const websiteClass = classes.website ?? "card__website";
+  const callClass = classes.call ?? "card__call";
+  const sepClass = classes.sep ?? "card__contact-sep";
+
   const phoneTrimmed = String(phone ?? "").trim();
   const urlTrimmed = String(url ?? "").trim();
   const hasWebsite = urlTrimmed && !isUnusableWebsiteUrl(urlTrimmed);
   if (!phoneTrimmed && !hasWebsite) return "";
   const websiteBtn = hasWebsite
-    ? websiteAnchorHtml(urlTrimmed, { className: "card__website" })
+    ? websiteAnchorHtml(urlTrimmed, { className: websiteClass })
     : "";
   const callBtn = phoneTrimmed
-    ? `<a class="card__call" href="${esc(telHrefFromPhone(phoneTrimmed))}" aria-label="${esc(phoneTrimmed)}">${PHONE_ICON}${esc(phoneTrimmed)}</a>`
+    ? `<a class="${esc(callClass)}" href="${esc(telHrefFromPhone(phoneTrimmed))}" aria-label="${esc(phoneTrimmed)}">${PHONE_ICON}${esc(phoneTrimmed)}</a>`
     : "";
   const sep =
     websiteBtn && callBtn
-      ? `<span class="card__contact-sep" aria-hidden="true">·</span>`
+      ? `<span class="${esc(sepClass)}" aria-hidden="true">·</span>`
       : "";
-  return `<div class="card__footer card__contact-strip">${websiteBtn}${sep}${callBtn}</div>`;
+  return `<div class="${esc(stripClass)}">${websiteBtn}${sep}${callBtn}</div>`;
+}
+
+export function mapPopupContactStripHtml(phone, url) {
+  return contactStripHtml(phone, url, {
+    strip: "map-popup__contact-strip",
+    website: "map-popup__website",
+    call: "map-popup__call",
+    sep: "map-popup__contact-sep",
+  });
+}
+
+export function cardFooterHtml(phone, url) {
+  return contactStripHtml(phone, url);
 }

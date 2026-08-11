@@ -1,8 +1,7 @@
 import { needCategories } from "./config-directory.js";
 import { lineMatchesNeed } from "./group-services.mjs";
 import {
-  PHONE_ICON,
-  websiteAnchorHtml,
+  mapPopupContactStripHtml,
 } from "./contact-links.mjs";
 
 const needLabelById = Object.fromEntries(
@@ -77,14 +76,7 @@ export function buildMapPopup(service, distKm, browseMode = "support") {
     html += `<p class="map-popup__desc">${esc(desc)}</p>`;
   }
 
-  if (service.phone) {
-    const tel = service.phone.replace(/\s/g, "");
-    html += `<p class="map-popup__phone"><a href="tel:${esc(tel)}">${PHONE_ICON}${esc(service.phone)}</a></p>`;
-  }
-
-  if (service.url) {
-    html += websiteAnchorHtml(service.url, { className: "map-popup__link" });
-  }
+  html += mapPopupContactStripHtml(service.phone, service.url);
 
   if (distKm != null) {
     html += `<div class="map-popup__distance">${distKm.toFixed(1)} km away</div>`;
@@ -94,15 +86,26 @@ export function buildMapPopup(service, distKm, browseMode = "support") {
   return html;
 }
 
+function titleDuplicatesOrgName(title, orgName) {
+  const t = String(title ?? "").trim().toLowerCase();
+  const n = String(orgName ?? "").trim().toLowerCase();
+  return t && n && t === n;
+}
+
 function orgPopupTeaserLines(org, activeNeeds) {
-  const lines = org.services.map((l) => l.title);
+  const pick = (titles) =>
+    titles
+      .filter((title) => !titleDuplicatesOrgName(title, org.name))
+      .slice(0, 2);
+
   if (activeNeeds.size > 0) {
     const matching = org.services
       .filter((l) => lineMatchesNeed(l, activeNeeds))
       .map((l) => l.title);
-    if (matching.length) return matching.slice(0, 2);
+    const filtered = pick(matching);
+    if (filtered.length) return filtered;
   }
-  return lines.slice(0, 2);
+  return pick(org.services.map((l) => l.title));
 }
 
 /** Compact org pin popup — no Connections Map org-type or theme pills. */
@@ -119,16 +122,9 @@ export function buildMapPopupForOrg(org, distKm, activeNeeds) {
     html += `<p class="map-popup__desc">${esc(teasers.join(" · "))}</p>`;
   }
 
-  if (org.phone) {
-    const tel = org.phone.replace(/\s/g, "");
-    html += `<p class="map-popup__phone"><a href="tel:${esc(tel)}">${PHONE_ICON}${esc(org.phone)}</a></p>`;
-  }
+  html += mapPopupContactStripHtml(org.phone, org.url);
 
-  html += `<button type="button" class="map-popup__scroll-to-list" data-scroll-to-org="${esc(org.orgId)}">View in list</button>`;
-
-  if (org.url) {
-    html += websiteAnchorHtml(org.url, { className: "map-popup__link" });
-  }
+  html += `<p class="map-popup__actions"><button type="button" class="map-popup__view-in-list" data-scroll-to-org="${esc(org.orgId)}">View in list</button></p>`;
 
   if (distKm != null) {
     html += `<div class="map-popup__distance">${distKm.toFixed(1)} km away</div>`;
