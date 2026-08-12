@@ -1198,8 +1198,12 @@ async function main() {
         search: state.search,
       };
       let status;
+      const matchingLineCount =
+        state.activeNeeds.size > 0
+          ? filtered.filter((s) => lineMatchesNeed(s, state.activeNeeds)).length
+          : filtered.length;
       if (displayItems.length !== filtered.length) {
-        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"}`;
+        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"} (${matchingLineCount} matching service line${matchingLineCount === 1 ? "" : "s"})`;
       } else {
         status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
       }

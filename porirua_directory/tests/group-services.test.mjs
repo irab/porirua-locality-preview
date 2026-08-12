@@ -131,6 +131,38 @@ test("orgServiceLinesForDisplay hides non-matching lines when need filter active
   assert.ok(visible[0].categories.includes("food"));
 });
 
+test("orgServiceLinesForDisplay + need filter does not surface search-only sibling rows", () => {
+  const members = [
+    ...flatMemberFixture(),
+    {
+      id: "fsd-c",
+      name: "The Salvation Army - Porirua",
+      phone: "04 235 6266",
+      address: "89 Warspite Avenue, Cannons Creek, Porirua, 5024",
+      lat: -41.13684,
+      lng: 174.872683,
+      description: "SWiS programme",
+      serviceName: "Social Workers in Schools",
+      source: "fsd",
+      categories: ["support"],
+    },
+  ];
+  const org = buildOrgFromMembers(members);
+  const needFiltered = expandNeedFilterLines(members, new Set(["food"]));
+  assert.equal(needFiltered.length, 1);
+  assert.equal(needFiltered[0].id, "fsd-b");
+  const searchHits = needFiltered.filter((s) =>
+    `${s.name} ${s.serviceName ?? ""} ${s.description ?? ""}`
+      .toLowerCase()
+      .includes("swis")
+  );
+  assert.equal(searchHits.length, 0);
+  const visible = orgServiceLinesForDisplay(org, new Set(["food"]));
+  assert.equal(visible.length, 1);
+  assert.ok(visible[0].categories.includes("food"));
+  assert.ok(!/swis/i.test(visible[0].title));
+});
+
 test("groupServicesByOrg clusters legacy flat rows", () => {
   const members = flatMemberFixture();
   const orgs = groupServicesByOrg(members);
@@ -138,12 +170,11 @@ test("groupServicesByOrg clusters legacy flat rows", () => {
   assert.equal(orgs[0].services.length, 2);
 });
 
-test("expandNeedFilterLines includes org siblings when one line matches need", () => {
+test("expandNeedFilterLines keeps only need-matching lines (no siblings)", () => {
   const members = flatMemberFixture();
   const expanded = expandNeedFilterLines(members, new Set(["food"]));
-  assert.equal(expanded.length, 2);
-  assert.ok(expanded.some((s) => s.id === "fsd-a"));
-  assert.ok(expanded.some((s) => s.id === "fsd-b"));
+  assert.equal(expanded.length, 1);
+  assert.equal(expanded[0].id, "fsd-b");
 });
 
 test("serviceLineTitle uses first description line", () => {

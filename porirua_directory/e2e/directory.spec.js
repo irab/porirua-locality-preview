@@ -602,6 +602,9 @@ test("org grouping — need chip shows only matching service rows with category 
   await page.locator("#need-chips").getByRole("button", { name: "Health" }).click();
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
   await expect(page.locator("#directory-results .card").first()).toBeVisible();
+  await expect(page.locator("#status-line")).toContainText(
+    /\d+ organisations? \(\d+ matching service lines?\)/i
+  );
 
   const fwCard = page
     .locator("#directory-results .card--org")
@@ -610,13 +613,24 @@ test("org grouping — need chip shows only matching service rows with category 
   await expect(fwCard).toBeVisible();
   const rows = fwCard.locator(".service-row");
   await expect(rows).toHaveCount(1);
+  await expect(rows.getByText("Family Works", { exact: true })).toBeVisible();
+  await expect(fwCard.getByText(/Social Workers in Schools/i)).toHaveCount(0);
 
-  await expect(fwCard.locator(".service-row--dim")).toHaveCount(0);
-  const matchBadge = fwCard.locator(".badge--need-match").first();
-  await expect(matchBadge).toBeVisible();
+  const matchBadge = fwCard.locator(".badge--need-match");
+  await expect(matchBadge).toHaveCount(1);
   await expect(matchBadge).toHaveText("Health");
-  await expect(matchBadge).toHaveCSS("color", "rgb(255, 255, 255)");
-  await expect(matchBadge).toHaveCSS("background-color", "rgb(96, 22, 76)");
+});
+
+test("org grouping — need chip + search does not keep org via non-matching sibling", async ({
+  page,
+}) => {
+  await page.goto("/index.html#support");
+  await page.locator("#need-chips").getByRole("button", { name: "Health" }).click();
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.locator("#search-input").fill("swis");
+  await expect(
+    page.locator("#directory-results .card--org").filter({ hasText: /Family Works Central/i })
+  ).toHaveCount(0);
 });
 
 test("org grouping — map popup View in list focuses org card", async ({ page }) => {
