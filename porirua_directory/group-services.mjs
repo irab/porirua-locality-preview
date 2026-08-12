@@ -152,7 +152,7 @@ export function lineMatchesNeed(line, activeNeeds) {
 
 /**
  * Need chip filter: keep lines that match, plus all sibling lines at the same org/site
- * so org cards can show every service with pill-only highlight (not row hiding).
+ * so the org stays in results when any line matches (row visibility is handled in UI).
  */
 export function expandNeedFilterLines(lines, activeNeeds) {
   if (!activeNeeds || activeNeeds.size === 0) return lines;
@@ -172,6 +172,13 @@ export function expandNeedFilterLines(lines, activeNeeds) {
       (s.orgId && orgIds.has(s.orgId)) ||
       (!isCommunityOrgGrain(s) && clusterKeys.has(orgClusterKey(s)))
   );
+}
+
+/** Service rows to render on an org card (all lines, or need-matching only). */
+export function orgServiceLinesForDisplay(org, activeNeeds) {
+  const lines = org.services ?? [];
+  if (!activeNeeds || activeNeeds.size === 0) return lines;
+  return lines.filter((l) => lineMatchesNeed(l, activeNeeds));
 }
 
 export function lineMatchesSearch(line, org, query) {

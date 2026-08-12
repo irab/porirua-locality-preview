@@ -8,6 +8,7 @@ import {
   groupServicesByOrg,
   lineMatchesNeed,
   lineMatchesSearch,
+  orgServiceLinesForDisplay,
   organizationEntryToDisplayOrg,
 } from "./group-services.mjs";
 import {
@@ -174,12 +175,13 @@ function serviceRowDetailId(lineId) {
   return `service-detail-${lineId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
 }
 
-function renderServiceRowDetail(line, org) {
+function renderServiceRowDetail(line, org, highlight) {
   const { description, phone, url } = serviceLineFields(line);
   const orgPhone = String(org.phone ?? "").trim();
   const orgUrl = String(org.url ?? "").trim();
   const showPhone = phone && phone !== orgPhone;
   const showUrl = url && url !== orgUrl;
+  const needOn = highlight.activeNeeds.size > 0;
 
   const descBlock = description
     ? `<div class="service-row__detail-desc">${formatDescription(description)}</div>`
@@ -198,9 +200,12 @@ function renderServiceRowDetail(line, org) {
     ? `<p class="service-row__detail-contact">${contactParts.join(" · ")}</p>`
     : "";
 
-  const catLabels = (line.categories ?? [])
-    .map((id) => needLabelById[id])
-    .filter(Boolean);
+  const catLabels = needOn
+    ? (line.categories ?? [])
+        .filter((id) => highlight.activeNeeds.has(id))
+        .map((id) => needLabelById[id])
+        .filter(Boolean)
+    : [];
   const catBlock = catLabels.length
     ? `<p class="service-row__detail-cats"><span class="service-row__detail-label">Categories:</span> ${catLabels.map((l) => esc(l)).join(", ")}</p>`
     : "";
@@ -222,22 +227,23 @@ function renderServiceRow(line, org, highlight) {
   if (matchRow) rowClass += " service-row--match is-highlighted";
   else if (dim) rowClass += " service-row--dim";
 
-  const catBadges = (line.categories ?? [])
-    .map((id) => {
-      const label = needLabelById[id];
-      if (!label) return "";
-      const pillMatch =
-        needOn && highlight.activeNeeds.has(id) ? " badge--need-match" : "";
-      return `<span class="badge badge--need${pillMatch}">${esc(label)}</span>`;
-    })
-    .join("");
+  const catBadges = needOn
+    ? (line.categories ?? [])
+        .filter((id) => highlight.activeNeeds.has(id))
+        .map((id) => {
+          const label = needLabelById[id];
+          if (!label) return "";
+          return `<span class="badge badge--need badge--need-match">${esc(label)}</span>`;
+        })
+        .join("")
+    : "";
   const extraBadges = (line.badges ?? [])
     .map((b) => `<span class="badge">${esc(b)}</span>`)
     .join("");
 
   const ariaCurrent = matchRow ? ' aria-current="true"' : "";
   const detailId = serviceRowDetailId(line.lineId);
-  const detailHtml = renderServiceRowDetail(line, org);
+  const detailHtml = renderServiceRowDetail(line, org, highlight);
 
   return `<li class="${rowClass}" data-line-id="${esc(line.lineId)}"${ariaCurrent}>
     <button type="button" class="service-row__toggle" aria-expanded="false" aria-controls="${esc(detailId)}" aria-label="${esc(`${line.title} — show details`)}">
@@ -298,7 +304,7 @@ function renderOrgCard(org, favoriteIds, highlight) {
     : `<span class="card__fav-text">Add to your list</span>`;
   const favBtn = `<button type="button" class="card__fav${onList ? " is-on-list" : ""}" data-fav-toggle="${esc(org.orgId)}" aria-pressed="${onList ? "true" : "false"}" aria-label="${esc(favAria)}">${favInner}</button>`;
 
-  const rows = org.services
+  const rows = orgServiceLinesForDisplay(org, highlight.activeNeeds)
     .map((line) => renderServiceRow(line, org, highlight))
     .join("");
 
@@ -1188,12 +1194,8 @@ async function main() {
         search: state.search,
       };
       let status;
-      const matchingLineCount =
-        state.activeNeeds.size > 0
-          ? filtered.filter((s) => lineMatchesNeed(s, state.activeNeeds)).length
-          : filtered.length;
       if (displayItems.length !== filtered.length) {
-        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"} (${matchingLineCount} matching service lines)`;
+        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"}`;
       } else {
         status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
       }

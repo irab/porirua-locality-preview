@@ -146,7 +146,7 @@ When someone opens the directory they should be able to:
    - Everyday needs (clothes, showers, transport, etc.)
 5. **Search** — in browse, tap the **search icon** beside **Back**; the field expands to type what you need (sidebar keyword box removed). Results filter to Porirua-relevant services.
 6. **Browse layout (desktop)** — **filters left**, **results centre**, **map right** (three-column from **1024px** up). Filters and the side map **stay visible** while scrolling results on that layout (no map show/hide control on desktop three-column). On **narrow stacked** browse (below 1024px): filters, then map, then results. The map appears when listings have coordinates; there is **no manual Hide/Show map control** — on stacked layout only, scrolling **down** into the listing compacts filter chips and the map while **Back**, **Search**, and **Filters** stay in the sticky bar; scrolling up, opening search, or tapping **Filters** expands again. Legacy **map above results** remains available via `?layout=top` for comparison (same scroll behaviour on narrow viewports). Tap a marker for details.
-7. **List of results** — on **Find support**, the full listing shows by default with **no category chips selected**; tap one chip to filter to that topic only (tap again to show all); search narrows further.
+7. **List of results** — on **Find support**, the full listing shows by default with **no category chips selected**; tap one chip to filter to that topic only (tap again to show all); search narrows further. Multi-service FSD providers appear as **one org card** with expandable **service rows**: with **no chip selected**, all service lines show **without category badge pills**; with a chip selected, an org stays in the list if **any** line matches, but the card shows **only matching lines**, each with a highlighted category pill.
 8. **My list** — **Add to your list** on each listing; saved **places and organisations** for this visit only (plain-language note that nothing is stored online); **Remove** on saved items; optional **Print list**.
 
 People can start from a **need** (e.g. food / kai) or from **search**. They should not need to know which list a service came from.
@@ -531,6 +531,8 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 *Changes in v1.14: **Landing (Direction 1)** — `#view-landing` welcome copy (**Where would you like to start?**) and two calm path cards (title + blurb) as the **only** path choice on landing; path subnav hidden; crisis footer unchanged; browse **← Back** unchanged.*
 
 *Changes in v1.13: Scroll-collapse flicker pass — map panel uses grid-only motion (opacity fade on filter chips only); **`map-block--paint-suppressed`** hides Leaflet tiles during collapse/expand; sticky panel **box-shadow** and layout **gap** animate in sync; E2E covers mobile scroll-collapse and desktop non-collapse (Chromium). **Manual:** real-device iOS Safari / Android Chrome for scroll chrome smoothness.*
+
+*Changes in v1.13: Org cards — **no category pills** on service rows by default; need chip filter shows **only matching service rows** with highlighted category pills (org still listed when any line matches).*
 
 *Changes in v1.12: Removed sidebar **Show map** checkbox and all manual **Hide map** / **Show map** controls; map shows when listings have coordinates; **scroll-collapse** of filters and map on **stacked browse only** (under 1024px) with grid-row motion and deferred Leaflet resize; **desktop three-column** keeps filters and side map visible while scrolling results.*
 

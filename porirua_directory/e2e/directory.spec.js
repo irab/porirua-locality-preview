@@ -581,11 +581,25 @@ test("org grouping — service row expands line detail", async ({ page }) => {
   );
 });
 
-test("org grouping — need chip highlights matching category pills on all service rows", async ({
+test("org grouping — no category pills on service rows by default", async ({
   page,
 }) => {
   await page.goto("/index.html#support");
-  await page.getByRole("button", { name: "Support and counselling" }).click();
+  await expect(page.locator("#directory-results .card--org").first()).toBeVisible();
+  const orgCard = page
+    .locator("#directory-results .card--org")
+    .filter({ has: page.locator(".service-row:nth-child(2)") })
+    .first();
+  await expect(orgCard).toBeVisible();
+  await expect(orgCard.locator(".service-row .badge--need")).toHaveCount(0);
+  await expect(orgCard.locator(".service-row .badge--need-match")).toHaveCount(0);
+});
+
+test("org grouping — need chip shows only matching service rows with category pills", async ({
+  page,
+}) => {
+  await page.goto("/index.html#support");
+  await page.locator("#need-chips").getByRole("button", { name: "Health" }).click();
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
   await expect(page.locator("#directory-results .card").first()).toBeVisible();
 
@@ -595,12 +609,12 @@ test("org grouping — need chip highlights matching category pills on all servi
     .first();
   await expect(fwCard).toBeVisible();
   const rows = fwCard.locator(".service-row");
-  await expect(rows.first()).toBeVisible();
-  expect(await rows.count()).toBeGreaterThanOrEqual(3);
+  await expect(rows).toHaveCount(1);
 
   await expect(fwCard.locator(".service-row--dim")).toHaveCount(0);
   const matchBadge = fwCard.locator(".badge--need-match").first();
   await expect(matchBadge).toBeVisible();
+  await expect(matchBadge).toHaveText("Health");
   await expect(matchBadge).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(matchBadge).toHaveCSS("background-color", "rgb(96, 22, 76)");
 });

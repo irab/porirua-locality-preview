@@ -11,6 +11,7 @@ import {
   groupForDisplay,
   groupServicesByOrg,
   orgClusterKey,
+  orgServiceLinesForDisplay,
   serviceLineTitle,
 } from "../group-services.mjs";
 
@@ -98,7 +99,7 @@ test("groupCatalogForDisplay yields one org card for filtered org lines", () => 
   assert.equal(items[0].org.services.length, sa.services.length);
 });
 
-test("groupCatalogForDisplay shows all org services when only one line matches need", () => {
+test("groupCatalogForDisplay yields org card when one org line matches need", () => {
   const catalog = loadCatalog();
   const sa = catalog.find(
     (e) =>
@@ -116,6 +117,18 @@ test("groupCatalogForDisplay shows all org services when only one line matches n
   const items = groupCatalogForDisplay(catalog, foodOnly);
   assert.equal(items.length, 1);
   assert.equal(items[0].org.services.length, sa.services.length);
+});
+
+test("orgServiceLinesForDisplay shows all lines without need filter", () => {
+  const org = buildOrgFromMembers(flatMemberFixture());
+  assert.equal(orgServiceLinesForDisplay(org, new Set()).length, 2);
+});
+
+test("orgServiceLinesForDisplay hides non-matching lines when need filter active", () => {
+  const org = buildOrgFromMembers(flatMemberFixture());
+  const visible = orgServiceLinesForDisplay(org, new Set(["food"]));
+  assert.equal(visible.length, 1);
+  assert.ok(visible[0].categories.includes("food"));
 });
 
 test("groupServicesByOrg clusters legacy flat rows", () => {
