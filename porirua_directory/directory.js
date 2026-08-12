@@ -669,9 +669,13 @@ async function main() {
     serviceLines = loaded.serviceLines ?? loaded.services ?? [];
     catalogEntries = loaded.entries ?? serviceLines;
   } catch (err) {
-    statusLine.textContent =
-      "We couldn’t load the listings. Please refresh the page and try again.";
-    return;
+    serviceLines = [];
+    catalogEntries = [];
+    const landingLead = document.querySelector(".landing-lead");
+    if (landingLead) {
+      landingLead.textContent =
+        "We couldn’t load the listings. Please refresh the page and try again.";
+    }
   }
 
   let map = null;
