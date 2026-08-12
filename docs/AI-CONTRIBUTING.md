@@ -24,7 +24,7 @@ Persistent Cursor rules:
 | Hosting, nginx, Cloudflare, high-level data flow | [`architecture/porirua-directory-architecture.md`](./architecture/porirua-directory-architecture.md) |
 | FSD filters, merge logic, JSON schema, overrides | [`porirua-directory-phase1-spec.md`](./porirua-directory-phase1-spec.md) |
 | Rebuild, deploy, editor workflow | [`MVP-RUNBOOK.md`](./MVP-RUNBOOK.md) |
-| Phase scope, budget, stakeholder requirements | [`porirua-services-directory-requirements.md`](./porirua-services-directory-requirements.md) (version/changelog there) |
+| Phase scope, budget, stakeholder requirements | [`porirua-services-directory-requirements-v2.md`](./porirua-services-directory-requirements-v2.md) (concise SOW); changelog in [`porirua-services-directory-requirements.md`](./porirua-services-directory-requirements.md) (v1) |
 | App README-level usage | `porirua_directory/README.md` or `porirua_connections_map/README.md` |
 
 Keep doc updates in the **same commit** as the related code when you ask the agent to commit.

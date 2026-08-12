@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Porirua Directory — Scope of Work</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin />
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin />
+  <link rel="stylesheet" href="https://use.typekit.net/xcy1epi.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: "Recoleta";
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+      src: url("https://static1.squarespace.com/static/64d9585e944b8f367e746a03/t/67ec59adee84111b10946195/1743542702859/Recoleta-Bold.otf") format("opentype");
+    }
+
+    :root {
+      --ink: #60164c;
+      --ink-soft: #4a1a3d;
+      --text: #3c1b30;
+      --muted: #8a677a;
+      --bg: #fcf1f0;
+      --surface: #ffffff;
+      --border: #f5bfb8;
+      --accent: #ce2026;
+      --accent-soft: #f9d8d9;
+      --font-heading: "Recoleta", "DM Serif Display", Georgia, serif;
+      --font-body: "aktiv-grotesk", "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 10pt;
+      line-height: 1.4;
+      background: var(--surface);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    @page {
+      size: A4;
+      margin: 14mm 15mm 16mm;
+    }
+
+    @page :first {
+      margin: 0;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--font-heading);
+      color: var(--ink);
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 0 0 0.45em;
+    }
+
+    h2 {
+      font-size: 14.5pt;
+      padding-bottom: 0.22em;
+      border-bottom: 2px solid var(--border);
+      margin-top: 0;
+      margin-bottom: 0.55em;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.7em;
+      margin-bottom: 0.3em;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    p { margin: 0 0 0.55em; }
+
+    strong { color: var(--ink-soft); font-weight: 600; }
+
+    ul, ol {
+      margin: 0 0 0.7em;
+      padding-left: 1.2em;
+    }
+
+    li { margin-bottom: 0.28em; }
+    li::marker { color: var(--accent); }
+
+    a { color: var(--ink); text-decoration: none; }
+
+    /* —— Cover —— */
+    .cover {
+      min-height: 100vh;
+      min-height: 297mm;
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22mm 18mm 16mm;
+      background:
+        radial-gradient(ellipse 90% 55% at 100% 0%, rgba(206, 32, 38, 0.12), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 0% 100%, rgba(96, 22, 76, 0.1), transparent 50%),
+        linear-gradient(165deg, #fff 0%, var(--bg) 55%, #f8e4e2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      background: linear-gradient(180deg, var(--ink) 0%, var(--accent) 100%);
+    }
+
+    .cover__eyebrow {
+      font-size: 9.5pt;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.4em;
+    }
+
+    .cover__title {
+      font-size: 34pt;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      max-width: 12ch;
+      margin-bottom: 0.35em;
+    }
+
+    .cover__subtitle {
+      font-size: 16pt;
+      font-family: var(--font-heading);
+      color: var(--ink-soft);
+      margin-bottom: 1.4em;
+    }
+
+    .cover__lede {
+      font-size: 11.5pt;
+      max-width: 38em;
+      color: var(--text);
+      margin-bottom: 0;
+    }
+
+    .cover__meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 18px;
+      margin-top: 2.2em;
+      padding: 1.1em 1.2em;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .cover__meta dt {
+      font-size: 8pt;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .cover__meta dd {
+      margin: 0.15em 0 0;
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .cover__footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1em;
+      padding-top: 1.5em;
+      border-top: 1px solid var(--border);
+      font-size: 9pt;
+      color: var(--muted);
+    }
+
+    .cover__footer strong {
+      display: block;
+      color: var(--ink);
+      font-size: 10.5pt;
+      margin-bottom: 0.15em;
+    }
+
+    .cover__badge {
+      text-align: right;
+      font-weight: 700;
+      font-size: 12pt;
+      color: var(--ink);
+      font-family: var(--font-heading);
+    }
+
+    /* —— Contents —— */
+    .toc {
+      page-break-after: always;
+      break-after: page;
+      padding-top: 2mm;
+    }
+
+    .toc__intro {
+      color: var(--muted);
+      margin-bottom: 1.4em;
+      max-width: 40em;
+    }
+
+    .toc__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .toc__list li {
+      margin: 0;
+      border-bottom: 1px dotted var(--border);
+    }
+
+    .toc__list a {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75em;
+      padding: 0.72em 0.2em;
+      color: var(--ink);
+    }
+
+    .toc__list a:hover { background: var(--bg); }
+
+    .toc__num {
+      flex: 0 0 1.6em;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      font-size: 10pt;
+    }
+
+    .toc__label {
+      flex: 1;
+      font-weight: 600;
+      font-size: 11pt;
+    }
+
+    .toc__hint {
+      flex: 0 0 auto;
+      font-size: 8.5pt;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* —— Body —— */
+    .doc { padding-top: 1mm; }
+
+    .section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 1.05em;
+    }
+
+    /* Start major blocks on a fresh page so headings are never orphaned */
+    #see,
+    #timeline,
+    #assumptions {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .lede {
+      font-size: 10.5pt;
+      margin-bottom: 0.7em;
+    }
+
+    .phase-banner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4em 1em;
+      align-items: center;
+      margin: 0 0 0.8em;
+      padding: 0.55em 0.8em;
+      background: var(--bg);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: var(--ink);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .note {
+      font-size: 9.5pt;
+      color: var(--muted);
+      margin-top: 0.5em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 0.75em;
+      font-size: 9.5pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 0.45em 0.55em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--ink);
+      color: #fff;
+      font-weight: 600;
+      font-size: 8.5pt;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    th:first-child { border-radius: 6px 0 0 0; }
+    th:last-child { border-radius: 0 6px 0 0; }
+
+    tr:nth-child(even) td { background: rgba(252, 241, 240, 0.55); }
+
+    .keep {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9em 1.2em;
+    }
+
+    .callout {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7em 0.85em;
+      margin: 0 0 0.75em;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .callout p:last-child { margin-bottom: 0; }
+
+    .approval-lines td {
+      height: 2.4em;
+      border-bottom: 1px solid var(--border-strong, var(--border));
+      background: transparent !important;
+    }
+
+    .doc-end {
+      margin-top: 1em;
+      padding-top: 0.7em;
+      border-top: 1px solid var(--border);
+      font-size: 8.5pt;
+      color: var(--muted);
+    }
+
+    .screen-hint {
+      display: none;
+    }
+
+    @media screen {
+      body {
+        background: #e8d6dc;
+        padding: 24px 0 48px;
+      }
+      .cover, .toc, .doc {
+        width: 210mm;
+        margin: 0 auto 24px;
+        background: #fff;
+        box-shadow: 0 8px 32px rgba(96, 22, 76, 0.12);
+      }
+      .toc, .doc {
+        padding: 16mm;
+        min-height: auto;
+      }
+      .cover { margin-top: 0; }
+      .screen-hint {
+        display: block;
+        width: 210mm;
+        margin: 0 auto 16px;
+        font-size: 13px;
+        color: var(--ink);
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <p class="screen-hint">Print preview / PDF source — Scope of Work v2</p>
+
+  <!-- ========== COVER ========== -->
+  <header class="cover">
+    <div>
+      <p class="cover__eyebrow">Porirua Locality · Te Wāhi Tiaki Tātou</p>
+      <h1 class="cover__title">Your Porirua Directory</h1>
+      <p class="cover__subtitle">Scope of Work</p>
+      <p class="cover__lede">
+        A simple, trustworthy online directory so people in Porirua can find help,
+        connect with community groups, and find local organisations — delivered in
+        two clear phases.
+      </p>
+
+      <dl class="cover__meta">
+        <div>
+          <dt>Prepared for</dt>
+          <dd>Porirua Locality team</dd>
+        </div>
+        <div>
+          <dt>Version</dt>
+          <dd>2.0 · July 2026</dd>
+        </div>
+        <div>
+          <dt>Timeline</dt>
+          <dd>~5–6 weeks (MVP first)</dd>
+        </div>
+        <div>
+          <dt>Total budget</dt>
+          <dd>NZ$10,000</dd>
+        </div>
+        <div>
+          <dt>Phase 1 — MVP</dt>
+          <dd>NZ$5,000 · ~50 hours</dd>
+        </div>
+        <div>
+          <dt>Phase 2 — Iteration</dt>
+          <dd>NZ$5,000 · ~50 hours</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="cover__footer">
+      <div>
+        <strong>Deliverables-focused scope</strong>
+        What will be built, when, and for how much — without technical detail.
+      </div>
+      <div class="cover__badge">v2.0</div>
+    </div>
+  </header>
+
+  <!-- ========== CONTENTS ========== -->
+  <nav class="toc" aria-label="Contents">
+    <h2>Contents</h2>
+    <p class="toc__intro">
+      This scope sets out what the Porirua Locality team will receive in each phase,
+      who it is for, and what success looks like.
+    </p>
+    <ol class="toc__list">
+      <li><a href="#purpose"><span class="toc__num">01</span><span class="toc__label">Purpose</span><span class="toc__hint">Why</span></a></li>
+      <li><a href="#two-phases"><span class="toc__num">02</span><span class="toc__label">Why two phases</span><span class="toc__hint">Approach</span></a></li>
+      <li><a href="#phase-1"><span class="toc__num">03</span><span class="toc__label">Phase 1 — MVP deliverables</span><span class="toc__hint">Build</span></a></li>
+      <li><a href="#phase-2"><span class="toc__num">04</span><span class="toc__label">Phase 2 — Iteration deliverables</span><span class="toc__hint">Build</span></a></li>
+      <li><a href="#who"><span class="toc__num">05</span><span class="toc__label">Who it is for</span><span class="toc__hint">People</span></a></li>
+      <li><a href="#success"><span class="toc__num">06</span><span class="toc__label">What success looks like</span><span class="toc__hint">Outcomes</span></a></li>
+      <li><a href="#see"><span class="toc__num">07</span><span class="toc__label">What people will see</span><span class="toc__hint">Experience</span></a></li>
+      <li><a href="#data"><span class="toc__num">08</span><span class="toc__label">Data</span><span class="toc__hint">Sources</span></a></li>
+      <li><a href="#timeline"><span class="toc__num">09</span><span class="toc__label">Timeline</span><span class="toc__hint">When</span></a></li>
+      <li><a href="#budget"><span class="toc__num">10</span><span class="toc__label">Budget</span><span class="toc__hint">Cost</span></a></li>
+      <li><a href="#not-included"><span class="toc__num">11</span><span class="toc__label">Not included</span><span class="toc__hint">Out of scope</span></a></li>
+      <li><a href="#assumptions"><span class="toc__num">12</span><span class="toc__label">Assumptions</span><span class="toc__hint">Needs</span></a></li>
+      <li><a href="#approval"><span class="toc__num">13</span><span class="toc__label">Approval</span><span class="toc__hint">Sign-off</span></a></li>
+    </ol>
+  </nav>
+
+  <!-- ========== BODY ========== -->
+  <main class="doc">
+
+    <section class="section" id="purpose">
+      <h2>1. Purpose</h2>
+      <p>
+        Build a simple, trustworthy online directory so people in Porirua can
+        <strong>find help</strong>, <strong>connect with community groups</strong>,
+        and <strong>find local organisations</strong> — marae, councils, Pātaka Kai,
+        services, and similar — not only urgent crisis help.
+      </p>
+      <p>The directory brings together:</p>
+      <ul>
+        <li>
+          The <strong>Porirua Community Connections Map</strong> — local groups and
+          services the community already knows and trusts
+        </li>
+        <li>
+          The <strong>New Zealand Family Services Directory</strong> — the government’s
+          national register of social services, filtered to Porirua
+        </li>
+      </ul>
+      <p>
+        It should feel easy on a phone, use plain language, and stay accurate for
+        <strong>at least three years</strong> with modest ongoing effort from the
+        Porirua Locality team.
+      </p>
+      <div class="callout">
+        <p>
+          Delivery is <strong>two phases</strong>: a testable MVP at half the budget
+          goes live first; the second half funds changes from real feedback and
+          completes the admin and update layer.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="two-phases">
+      <h2>2. Why two phases</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Budget</th>
+            <th>Goal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Phase 1 — MVP</strong></td>
+            <td>~50 hrs / NZ$5,000</td>
+            <td>A working directory people can use and test</td>
+          </tr>
+          <tr>
+            <td><strong>Phase 2 — Iteration</strong></td>
+            <td>~50 hrs / NZ$5,000</td>
+            <td>Improve from feedback; add admin, automation, and polish</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">
+        Real users — help-seekers and the Locality team — should shape categories,
+        layout, and content before we invest in the full editing and update setup.
+      </p>
+    </section>
+
+    <section class="section" id="phase-1">
+      <h2>3. Phase 1 — MVP deliverables</h2>
+      <p class="phase-banner">~50 hours / NZ$5,000 · ~2–3 weeks to soft launch</p>
+
+      <div class="keep">
+        <h3>What people can use</h3>
+        <ul>
+          <li><strong>Public website</strong> — shareable URL, works well on phones</li>
+          <li><strong>Need-based categories</strong>, <strong>search</strong>, <strong>map</strong>, and <strong>crisis numbers</strong></li>
+          <li><strong>Combined listings</strong> from the Connections Map and the Family Services Directory (Porirua only)</li>
+          <li><strong>Clear service cards</strong> — name, short description, phone, address, and website where available</li>
+        </ul>
+      </div>
+
+      <div class="keep">
+        <h3>How data is managed in MVP</h3>
+        <ul>
+          <li>Connections Map stays in the <strong>existing Google Sheet</strong> (the team already knows this)</li>
+          <li>Government directory imported <strong>once</strong> (can be re-run by hand if needed)</li>
+          <li>One <strong>published list</strong> the website reads</li>
+          <li>Basic duplicate flagging; tidy-up by hand is fine for MVP</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="phase-2">
+      <h2>4. Phase 2 — Iteration deliverables</h2>
+      <p class="phase-banner">~50 hours / NZ$5,000 · ~2–3 weeks after feedback is collected</p>
+      <ul>
+        <li>Changes from testing (categories, labels, layout, crisis numbers display, map behaviour)</li>
+        <li><strong>Password-protected admin</strong> to review, edit, publish, or hide listings</li>
+        <li><strong>Weekly automated refresh</strong> of the government directory, with a review queue</li>
+        <li><strong>Duplicate linking</strong> in admin (so the same service is not shown twice)</li>
+        <li><strong>Embed</strong> on the Porirua Locality website</li>
+        <li>Short <strong>editor guide</strong>, backups, and handover so the directory lasts</li>
+      </ul>
+    </section>
+
+    <section class="section" id="who">
+      <h2>5. Who it is for</h2>
+      <h3>Public (no login, no personal details)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Need</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Immediate help</strong></td>
+            <td>Support for themselves or someone they know (food, housing, safety, health, and similar)</td>
+          </tr>
+          <tr>
+            <td><strong>Community connection</strong></td>
+            <td>Contact or connect with community groups and local kaupapa</td>
+          </tr>
+          <tr>
+            <td><strong>Civic &amp; community places</strong></td>
+            <td>Marae, councils, Pātaka Kai, libraries, and organisations the community trusts</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Behind the scenes</h3>
+      <p>
+        Porirua Locality team members keep listings accurate — Sheet and manual updates
+        in Phase 1; admin tools in Phase 2.
+      </p>
+      <p>
+        Community workers may share the link. This is <strong>not</strong> a referral
+        or case-management system.
+      </p>
+    </section>
+
+    <section class="section" id="success">
+      <h2>6. What success looks like</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Goal</th>
+            <th>How we will know</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>People find help quickly</td>
+            <td>Clear categories, search, and a map of nearby services</td>
+          </tr>
+          <tr>
+            <td>Information is trustworthy</td>
+            <td>Curated merge for MVP; publish/hide workflow in Phase 2</td>
+          </tr>
+          <tr>
+            <td>Local context is kept</td>
+            <td>Connections Map organisations keep their local story and kaupapa where relevant</td>
+          </tr>
+          <tr>
+            <td>Real-world validation</td>
+            <td>MVP live within ~50 hours; feedback collected before Phase 2</td>
+          </tr>
+          <tr>
+            <td>Low ongoing effort</td>
+            <td>After Phase 2: automatic government refresh; team ~1–2 hours per month on review</td>
+          </tr>
+          <tr>
+            <td>Long-lasting</td>
+            <td>Stable tools, exportable data, documented handover — useful for ~3 years</td>
+          </tr>
+          <tr>
+            <td>Fits the budget</td>
+            <td>MVP ≤ NZ$5,000; total ≤ NZ$10,000</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="see">
+      <h2>7. What people will see</h2>
+      <p class="lede">When someone opens the directory they can:</p>
+      <ol>
+        <li><strong>Choose a path</strong> — find support, or connect with community</li>
+        <li><strong>Browse by need</strong> — plain-language categories such as food / kai, housing, money help, feeling unsafe, counselling, health, legal advice, work and learning, everyday needs</li>
+        <li><strong>Search</strong> — type what they need</li>
+        <li><strong>Use the map</strong> — see nearby services when locations are known</li>
+        <li><strong>Reach crisis numbers</strong> — always easy to find</li>
+        <li><strong>Open a listing</strong> — name, short description, address or suburb, phone, website, and opening hours if known</li>
+        <li><strong>Save a short list for this visit</strong> (optional) — nothing stored online; print if useful</li>
+      </ol>
+      <p>People should not need to know which list a service came from.</p>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Phase 1</th>
+            <th>Phase 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Standalone website</strong></td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td><strong>On the Porirua Locality site</strong></td>
+            <td>Link out</td>
+            <td>Embed</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="data">
+      <h2>8. Data</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>What it provides</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Community Connections Map</strong></td>
+            <td>Local organisations, kaupapa, and initiatives</td>
+          </tr>
+          <tr>
+            <td><strong>NZ Family Services Directory</strong></td>
+            <td>Broader social services, filtered to Porirua</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Only services relevant to <strong>people in Porirua</strong> appear. When the
+        same organisation is in both lists, we prefer the <strong>richest local description</strong>
+        (usually from the Connections Map) and avoid showing the same service twice.
+      </p>
+    </section>
+
+    <section class="section" id="timeline">
+      <h2>9. Timeline</h2>
+
+      <div class="keep">
+        <h3>Phase 1 — MVP (~2–3 weeks)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Focus</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>Bring the two data sources together; categories and crisis numbers</td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>Search, map, service cards; mobile check; public URL live</td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Soft launch, fix gaps, brief handover — <strong>start user testing</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <p>
+          <strong>Between phases (~1–2 weeks, not in budget)</strong> —
+          Collect feedback from help-seekers, the Locality team, and community workers.
+          Prioritise changes for Phase 2.
+        </p>
+      </div>
+
+      <div class="keep">
+        <h3>Phase 2 — Iteration (~2–3 weeks)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Focus</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>Priority changes from feedback; admin for review and publish</td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>Weekly government refresh; duplicates; Locality site embed</td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Editor guide, backups, production launch</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Total elapsed:</strong> roughly 5–8 weeks including the feedback window.</p>
+    </section>
+
+    <section class="section" id="budget">
+      <h2>10. Budget</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Hours</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Phase 1 — MVP</strong></td>
+            <td>~50</td>
+            <td><strong>NZ$5,000</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Phase 2 — Iteration</strong></td>
+            <td>~50</td>
+            <td><strong>NZ$5,000</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Total</strong></td>
+            <td>~100</td>
+            <td><strong>NZ$10,000</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        <strong>Ongoing hosting (from Phase 2):</strong> about NZ$25–60 per month.
+        MVP can run at minimal cost on a simple public website.
+      </p>
+    </section>
+
+    <section class="section" id="not-included">
+      <h2>11. Not included</h2>
+      <div class="two-col keep">
+        <ul>
+          <li>Phone helpline or human navigator</li>
+          <li>Referral tracking</li>
+          <li>Public user accounts or collecting personal information</li>
+          <li>Provider login to edit their own listing</li>
+          <li>Installable phone app</li>
+          <li>Usage analytics dashboard</li>
+        </ul>
+        <ul>
+          <li>Te Reo category labels (can be added later)</li>
+          <li>Extra data sources beyond the two named above</li>
+          <li>National coverage outside Porirua</li>
+          <li>Replacing 111 or national crisis helplines</li>
+          <li>Real-time availability (e.g. “bed free tonight”)</li>
+        </ul>
+      </div>
+      <div class="callout">
+        <p>
+          <strong>Phase 1 specifically does not include:</strong> admin website,
+          automatic weekly refresh, Locality site embed, formal duplicate tools,
+          or full editor runbooks — those are Phase 2.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="assumptions">
+      <h2>12. Assumptions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Porirua Locality team</td>
+            <td>People available to review listings; ~1–2 hours per month after Phase 2</td>
+          </tr>
+          <tr>
+            <td>Government directory</td>
+            <td>Continues to be published as open data</td>
+          </tr>
+          <tr>
+            <td>Connections Map</td>
+            <td>Existing Google Sheet remains the starting point for local organisations</td>
+          </tr>
+          <tr>
+            <td>Locality website</td>
+            <td>Can host an embed in Phase 2</td>
+          </tr>
+          <tr>
+            <td>Branding &amp; content</td>
+            <td>Team provides crisis numbers and final category wording</td>
+          </tr>
+          <tr>
+            <td>MVP feedback</td>
+            <td>Team helps recruit testers and capture feedback between phases</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="approval">
+      <h2>13. Approval</h2>
+      <table class="approval-lines">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Signature</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Project sponsor</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Porirua Locality lead</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="doc-end">
+        Your Porirua Directory — Scope of Work v2.0 · July 2026 · Porirua Locality / Te Wāhi Tiaki Tātou
+      </p>
+    </section>
+
+  </main>
+</body>
+</html>

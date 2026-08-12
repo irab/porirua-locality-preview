@@ -26,7 +26,8 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 | Doc | Use for |
 |-----|---------|
 | [`docs/README.md`](docs/README.md) | Full docs index |
-| [`docs/porirua-services-directory-requirements.md`](docs/porirua-services-directory-requirements.md) | Product scope, phases, changelog |
+| [`docs/porirua-services-directory-requirements-v2.md`](docs/porirua-services-directory-requirements-v2.md) | Product scope of work (concise, Locality-facing) |
+| [`docs/porirua-services-directory-requirements.md`](docs/porirua-services-directory-requirements.md) | Longer v1 draft — phases detail, changelog |
 | [`docs/potential-changes-and-insights.md`](docs/potential-changes-and-insights.md) | MVP gaps, org/subservices deficit, roadmap options |
 | [`docs/issues/README.md`](docs/issues/README.md) | Fixed and recurring bugs (issues directory) |
 | [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | System context, hosting |

@@ -16,9 +16,12 @@ Product code lives in the two app folders; **planning and stakeholder material s
 
 | Document | Audience | Purpose |
 |----------|----------|---------|
-| [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Porirua Locality, funders | Phase 1 / Phase 2 scope, budget, plain-language requirements |
+| [porirua-services-directory-requirements-v2.md](./porirua-services-directory-requirements-v2.md) | Porirua Locality team | **Primary** — concise scope of work, deliverables, budget (v2) |
+| [porirua-services-directory-requirements-v2.pdf](./porirua-services-directory-requirements-v2.pdf) | Porirua Locality team | Designed PDF of v2 SOW (cover + contents) — [print source](./pdf/porirua-directory-scope-of-work-v2.html) |
+| [porirua-services-directory-requirements-v2.docx](./porirua-services-directory-requirements-v2.docx) | Porirua Locality team | Word export of v2 SOW — upload to Google Drive → Open with Google Docs |
+| [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Team, implementers | Longer v1 working draft (UX detail, tech notes, changelog) |
 | [potential-changes-and-insights.md](./potential-changes-and-insights.md) | Team, stakeholders | MVP gaps, [click-minimisation UX](./potential-changes-and-insights.md#ux-inspiration-from-directory-examples-click-minimisation), [landing map-first](./potential-changes-and-insights.md#landing-map-first-design-options), Phase 1.5/2 |
-| [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements (regenerate after v1.3 md changes) |
+| [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements v1 (regenerate after md changes) |
 | [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | System context, data flow, hosting at directory.bsky.nz |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Developers | Phase 1 data model, FSD rules, merge, overrides |
 | [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) | Developers, data editors | FSD geo filter rationale, reason codes, import audit |

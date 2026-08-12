@@ -3,3 +3,7 @@
 .vscode/
 .idea/
 node_modules/
+.venv/
+
+# PDF render previews
+docs/pdf/_preview/
