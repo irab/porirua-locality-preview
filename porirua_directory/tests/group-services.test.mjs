@@ -11,6 +11,8 @@ import {
   groupForDisplay,
   groupServicesByOrg,
   orgClusterKey,
+  orgCardServiceLines,
+  orgHasHiddenSiblingLines,
   orgServiceLinesForDisplay,
   serviceLineTitle,
 } from "../group-services.mjs";
@@ -183,4 +185,52 @@ test("serviceLineTitle uses first description line", () => {
     description: "First line here\nSecond line",
   });
   assert.equal(title, "First line here");
+});
+
+test("orgHasHiddenSiblingLines is false for a single-line org", () => {
+  const org = buildOrgFromMembers([flatMemberFixture()[0]]);
+  assert.equal(orgHasHiddenSiblingLines(org, new Set(["housing"])), false);
+});
+
+test("orgHasHiddenSiblingLines is false when no need chips are on", () => {
+  const org = buildOrgFromMembers(flatMemberFixture());
+  assert.equal(orgHasHiddenSiblingLines(org, new Set()), false);
+});
+
+test("orgHasHiddenSiblingLines is false when every line already matches", () => {
+  const members = flatMemberFixture().map((m) => ({
+    ...m,
+    categories: ["food", ...(m.categories ?? [])],
+  }));
+  const org = buildOrgFromMembers(members);
+  assert.equal(orgHasHiddenSiblingLines(org, new Set(["food"])), false);
+});
+
+test("orgHasHiddenSiblingLines is true when chips hide sibling lines", () => {
+  const org = buildOrgFromMembers(flatMemberFixture());
+  assert.equal(orgHasHiddenSiblingLines(org, new Set(["food"])), true);
+});
+
+test("orgCardServiceLines returns only matching lines until others are shown", () => {
+  const org = buildOrgFromMembers(flatMemberFixture());
+  const visible = orgCardServiceLines(org, new Set(["food"]), false);
+  assert.equal(visible.length, 1);
+  assert.ok(visible[0].categories.includes("food"));
+});
+
+test("orgCardServiceLines keeps matching lines first when revealing siblings", () => {
+  const org = buildOrgFromMembers(flatMemberFixture());
+  const lines = orgCardServiceLines(org, new Set(["food"]), true);
+  assert.equal(lines.length, 2);
+  assert.ok(lines[0].categories.includes("food"));
+  assert.ok(lines[1].categories.includes("housing"));
+});
+
+test("orgCardServiceLines does not change expandNeedFilterLines sibling rule", () => {
+  const members = flatMemberFixture();
+  const filtered = expandNeedFilterLines(members, new Set(["food"]));
+  assert.equal(filtered.length, 1);
+  const org = buildOrgFromMembers(members);
+  const revealed = orgCardServiceLines(org, new Set(["food"]), true);
+  assert.equal(revealed.length, 2);
 });

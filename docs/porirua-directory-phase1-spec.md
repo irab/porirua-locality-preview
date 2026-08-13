@@ -155,7 +155,7 @@ Applied at merge time. `hiddenIds` removes rows from published output entirely.
 
 - URL: `https://directory.bsky.nz`
 - Dual browse: **Find support** vs **Connect with community** (landing subnav only; **Back** from browse).
-- **Find support:** full listing by default (no chips selected); single-select category chips; optional **Show map** (sidebar checkbox; map only when enabled and results have coordinates).
+- **Find support:** full listing by default (no chips selected); multi-select union category chips (tap to add, tap again to remove that topic); org cards show matching service rows when chips are on, with **See other services** to reveal hidden sibling lines on that card; opening a service row shows that line’s category labels; map shown when results have coordinates.
 - Crisis numbers: compact **sticky footer** on every page (landing, browse, About).
 - Schools filter: available, **off by default** on community browse.
 

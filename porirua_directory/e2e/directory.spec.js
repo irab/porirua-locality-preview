@@ -96,25 +96,47 @@ test("support path — all listings by default, no chip selected", async ({ page
   await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
 });
 
-test("support path — single-select need chip filters and toggles off", async ({ page }) => {
+test("support path — multi-select need chips filter as a union", async ({ page }) => {
   await page.goto("/index.html#support");
-  const chips = page.locator("#need-chips .chip");
+  const needGroup = page.getByRole("group", { name: "Types of support" });
+  const chips = needGroup.getByRole("button");
   await expect(chips.first()).toBeVisible();
-  const firstLabel = await chips.first().textContent();
-  const initialCount = await page.locator("#directory-results .card").count();
+  const firstChip = chips.first();
+  const secondChip = chips.nth(1);
+  const cards = page.locator("#directory-results .card");
+  await expect(cards.first()).toBeVisible();
+  const initialCount = await cards.count();
 
-  await chips.first().click();
+  await firstChip.click();
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
-  const filteredCount = await page.locator("#directory-results .card").count();
-  expect(filteredCount).toBeLessThanOrEqual(initialCount);
+  await expect(firstChip).toHaveClass(/is-on/);
+  const oneChipCount = await cards.count();
+  expect(oneChipCount).toBeLessThan(initialCount);
+  expect(oneChipCount).toBeGreaterThan(0);
+  const oneChipTitles = await cards.locator(".card__title").allTextContents();
 
-  await chips.first().click();
+  await secondChip.click();
+  await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(2);
+  await expect(firstChip).toHaveClass(/is-on/);
+  await expect(secondChip).toHaveClass(/is-on/);
+  const unionCount = await cards.count();
+  expect(unionCount).toBeGreaterThan(0);
+  expect(unionCount).toBeGreaterThanOrEqual(oneChipCount);
+  expect(unionCount).toBeLessThanOrEqual(initialCount);
+  expect(unionCount).toBeGreaterThan(oneChipCount);
+  const unionTitles = await cards.locator(".card__title").allTextContents();
+  for (const title of oneChipTitles) {
+    expect(unionTitles).toContain(title);
+  }
+
+  await firstChip.click();
+  await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
+  await expect(firstChip).not.toHaveClass(/is-on/);
+  await expect(secondChip).toHaveClass(/is-on/);
+
+  await secondChip.click();
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(0);
-  await expect(page.locator("#directory-results .card")).toHaveCount(initialCount);
-
-  await chips.nth(1).click();
-  await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
-  await expect(page.locator("#need-chips .chip.is-on")).not.toHaveText(firstLabel ?? "");
+  await expect(cards).toHaveCount(initialCount);
 });
 
 test("support path — layout=top shows map when mappable, no toolbar toggle", async ({
@@ -246,6 +268,50 @@ test("search filters results on support path", async ({ page }) => {
   await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "true");
   await page.locator("#search-input").fill("Wesley");
   await expect(page.locator("#directory-results")).toContainText(/Wesley/i);
+});
+
+test("browse search toggle shows the word Search until the field is open", async ({ page }) => {
+  await page.goto("/index.html#support");
+  const toggle = page.getByRole("button", { name: "Search", exact: true });
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toContainText("Search");
+  await toggle.click();
+  await expect(toggle).toBeHidden();
+  await expect(page.getByRole("searchbox", { name: "Search listings" })).toBeVisible();
+  await page.getByRole("button", { name: "Close search" }).click();
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toContainText("Search");
+});
+
+test("closing search clears the filter and restores listings", async ({ page }) => {
+  await page.goto("/index.html#support");
+  const cards = page.locator("#directory-results .card");
+  await expect(cards.first()).toBeVisible();
+  const initialCount = await cards.count();
+
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.getByRole("searchbox", { name: "Search listings" }).fill("zzzxnotaservice999");
+  await expect(page.getByText(/We couldn’t find anything/i)).toBeVisible();
+
+  await page.getByRole("button", { name: "Close search" }).click();
+  await expect(page.getByRole("button", { name: "Search", exact: true })).toBeVisible();
+  await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "false");
+  await expect(cards.first()).toBeVisible();
+  await expect(cards).toHaveCount(initialCount);
+
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByRole("searchbox", { name: "Search listings" })).toHaveValue("");
+});
+
+test("browse search hides the native clear control while typing", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  const input = page.getByRole("searchbox", { name: "Search listings" });
+  await expect(input).toBeVisible();
+  await input.fill("asdas");
+  await expect(page.getByRole("button", { name: "Close search" })).toBeVisible();
+  // type=search adds a second native × in Chrome/Safari that CSS cannot reliably hide.
+  await expect(input).toHaveAttribute("type", "text");
 });
 
 test("browse search toggle stays in viewport on narrow screens", async ({ page }) => {
@@ -476,6 +542,30 @@ test("support path — card click opens rich map popup", async ({ page }) => {
   await expect(popup.locator(".map-popup__pill--type")).toHaveCount(0);
 });
 
+test("map zoom controls sit in the bottom left", async ({ page }) => {
+  await page.goto("/index.html#support");
+  const map = page.locator(".leaflet-container");
+  await expect(map).toBeVisible();
+  const zoomIn = page.getByRole("button", { name: "Zoom in" });
+  const zoomOut = page.getByRole("button", { name: "Zoom out" });
+  await expect(zoomIn).toBeVisible();
+  await expect(zoomOut).toBeVisible();
+
+  const mapBox = await map.boundingBox();
+  const inBox = await zoomIn.boundingBox();
+  const outBox = await zoomOut.boundingBox();
+  expect(mapBox).not.toBeNull();
+  expect(inBox).not.toBeNull();
+  expect(outBox).not.toBeNull();
+
+  const mapMidX = mapBox.x + mapBox.width / 2;
+  const mapMidY = mapBox.y + mapBox.height / 2;
+  expect(inBox.x + inBox.width).toBeLessThan(mapMidX);
+  expect(outBox.x + outBox.width).toBeLessThan(mapMidX);
+  expect(inBox.y).toBeGreaterThan(mapMidY);
+  expect(outBox.y).toBeGreaterThan(mapMidY);
+});
+
 test("community path — map popup shows org type, not Assembly themes", async ({ page }) => {
   await page.goto("/index.html#community");
   await expect(page.locator(".leaflet-container")).toBeVisible();
@@ -616,7 +706,7 @@ test("org grouping — need chip shows only matching service rows with category 
   await expect(rows.getByText("Family Works", { exact: true })).toBeVisible();
   await expect(fwCard.getByText(/Social Workers in Schools/i)).toHaveCount(0);
 
-  const matchBadge = fwCard.locator(".badge--need-match");
+  const matchBadge = fwCard.locator(".service-row__toggle .badge--need-match");
   await expect(matchBadge).toHaveCount(1);
   await expect(matchBadge).toHaveText("Health");
 });
@@ -631,6 +721,98 @@ test("org grouping — need chip + search does not keep org via non-matching sib
   await expect(
     page.locator("#directory-results .card--org").filter({ hasText: /Family Works Central/i })
   ).toHaveCount(0);
+});
+
+test("org grouping — See other services reveals hidden sibling rows with labels", async ({
+  page,
+}) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("group", { name: "Types of support" }).getByRole("button", { name: "Health" }).click();
+  const fwCard = page
+    .getByRole("article")
+    .filter({ hasText: /Family Works Central/i })
+    .first();
+  await expect(fwCard).toBeVisible();
+  const services = fwCard.getByRole("list", { name: "Services offered" });
+  await expect(services.getByText("Family Works", { exact: true })).toBeVisible();
+  await expect(fwCard.getByText(/Social Workers in Schools/i)).toHaveCount(0);
+
+  const seeOther = fwCard.getByRole("button", { name: "See other services" });
+  await expect(seeOther).toBeVisible();
+  await expect(seeOther).toHaveAttribute("aria-expanded", "false");
+  await seeOther.click();
+
+  const hideOther = fwCard.getByRole("button", { name: "Hide other services" });
+  await expect(hideOther).toBeVisible();
+  await expect(hideOther).toHaveAttribute("aria-expanded", "true");
+  const swisRow = services.getByRole("listitem").filter({ hasText: /Social Workers in Schools/i });
+  await expect(swisRow).toBeVisible();
+  await expect(swisRow.getByText("Support and counselling", { exact: true })).toBeVisible();
+  await expect(services.getByRole("listitem").first()).toContainText("Family Works");
+
+  await hideOther.click();
+  await expect(fwCard.getByRole("button", { name: "See other services" })).toBeVisible();
+  await expect(fwCard.getByText(/Social Workers in Schools/i)).toHaveCount(0);
+});
+
+test("org grouping — See other services is omitted when nothing is hidden", async ({
+  page,
+}) => {
+  await page.goto("/index.html#support");
+  await expect(page.getByRole("article").first()).toBeVisible();
+  const saCard = page
+    .getByRole("article")
+    .filter({ hasText: /The Salvation Army/i })
+    .first();
+  await expect(saCard).toBeVisible();
+  await expect(saCard.getByRole("button", { name: "See other services" })).toHaveCount(0);
+
+  await page.getByRole("group", { name: "Types of support" }).getByRole("button", { name: "Feeling unsafe" }).click();
+  const fwCard = page
+    .getByRole("article")
+    .filter({ hasText: /Family Works Central/i })
+    .first();
+  await expect(fwCard).toBeVisible();
+  await expect(fwCard.getByText(/Social Workers in Schools/i)).toBeVisible();
+  await expect(fwCard.getByRole("button", { name: "See other services" })).toHaveCount(0);
+});
+
+test("org grouping — expanding a service row shows category labels with no chip", async ({
+  page,
+}) => {
+  await page.goto("/index.html#support");
+  const saCard = page
+    .getByRole("article")
+    .filter({ hasText: /The Salvation Army/i })
+    .first();
+  await expect(saCard).toBeVisible();
+  const toggle = saCard.getByRole("button", {
+    name: /Accommodation: Emergency — show details/i,
+  });
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  const detail = saCard.getByRole("listitem").filter({ hasText: /Accommodation: Emergency/i });
+  await expect(detail.getByText(/Categories:/i)).toBeVisible();
+  await expect(detail.getByText("Housing / a place to stay")).toBeVisible();
+  await expect(detail.getByText("Support and counselling")).toBeVisible();
+});
+
+test("org grouping — map popup stays compact without See other services", async ({
+  page,
+}) => {
+  await page.goto("/index.html#support");
+  await page.getByRole("button", { name: "Food / kai" }).click();
+  const card = page
+    .getByRole("article")
+    .filter({ hasText: /The Salvation Army/i })
+    .first();
+  await expect(card).toBeVisible();
+  await card.click({ position: { x: 8, y: 8 } });
+  const popup = page.locator(".leaflet-popup-content .map-popup");
+  await expect(popup).toBeVisible();
+  await expect(popup.getByRole("button", { name: "View in list" })).toBeVisible();
+  await expect(popup.getByRole("button", { name: "See other services" })).toHaveCount(0);
 });
 
 test("org grouping — map popup View in list focuses org card", async ({ page }) => {

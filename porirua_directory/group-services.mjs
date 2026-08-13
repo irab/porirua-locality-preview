@@ -168,6 +168,26 @@ export function orgServiceLinesForDisplay(org, activeNeeds) {
   return lines.filter((l) => lineMatchesNeed(l, activeNeeds));
 }
 
+/** True when the card is hiding sibling lines that a “See other services” control can reveal. */
+export function orgHasHiddenSiblingLines(org, activeNeeds) {
+  const all = org.services ?? [];
+  if (all.length <= 1) return false;
+  const visible = orgServiceLinesForDisplay(org, activeNeeds);
+  return visible.length > 0 && visible.length < all.length;
+}
+
+/**
+ * Rows to show on the org card. Matching need-filter lines stay first;
+ * `showOther` appends hidden siblings without changing expandNeedFilterLines.
+ */
+export function orgCardServiceLines(org, activeNeeds, showOther = false) {
+  const matching = orgServiceLinesForDisplay(org, activeNeeds);
+  if (!showOther) return matching;
+  const matchSet = new Set(matching);
+  const others = (org.services ?? []).filter((line) => !matchSet.has(line));
+  return [...matching, ...others];
+}
+
 export function lineMatchesSearch(line, org, query) {
   if (!query) return false;
   const q = query.trim().toLowerCase();

@@ -1,7 +1,7 @@
 # Organisation / service grouping — UX options
 
-**Date:** 10 August 2026  
-**Status:** Design + data analysis; **Option B MVP spike** on branch `feature/org-service-grouping-design` (runtime grouping in `group-services.mjs` + `directory.js`; not yet Phase 2 pipeline schema).  
+**Date:** 10 August 2026 (proposed sibling-row UX added 13 August 2026; **implemented** 13 August 2026)  
+**Status:** Design + data analysis; **Option B** grouping is in the directory UI (`group-services.mjs` + `directory.js`). **§12 “See other services” and labels on expand is implemented.**  
 **Audience:** Porirua Locality product, stakeholders, developers  
 
 **Related:** [Org / subservices deficit](../potential-changes-and-insights.md#org--subservices-deficit-highlight) · [FSD org plan](../plans/fsd-org-subservices-and-geo-filter.md) · Analysis artifact: [`porirua_directory/data/org-clusters-preview.json`](../porirua_directory/data/org-clusters-preview.json) · Script: `porirua_directory/scripts/analyze-org-clusters.mjs`
@@ -106,7 +106,7 @@ Name overlap between a community org and an FSD provider name in this snapshot: 
 | Works on mobile stack | SEO/snippet less granular per service |
 | One **Add to list** at org level is simple | Per-service call numbers hidden until expand |
 
-**Filter highlight (MVP implemented):** On chip select, orgs with a matching subservice stay in results; the card shows **only matching service rows**, each with a highlighted category pill (`.badge--need-match`). Non-matching rows are hidden (not dimmed). Search still uses row-level `.service-row--match` / `.service-row--dim` when no need chip is selected; need + search both apply to the same service line.
+**Filter highlight (MVP implemented):** Need chips are **multi-select union (OR)** — tap to add, tap again to remove that topic; several chips show listings that match **any** selected need. Orgs with a matching subservice stay in results; the card shows **only matching service rows**, each with a highlighted category pill (`.badge--need-match`) for selected needs on that line. Non-matching rows are hidden until **See other services** (only when sibling lines exist). Search still uses row-level `.service-row--match` / `.service-row--dim` when no need chip is selected; need + search both apply to the same service line. **Implemented:** [§12](#12-proposed-ux-see-other-services-and-labels-on-expand).
 
 ---
 
@@ -120,7 +120,7 @@ Name overlap between a community org and an FSD provider name in this snapshot: 
 | Filter chip can **glow** matching rows without hiding org | Requires **service-level titles** from FSD (`SERVICE_NAME`) in data |
 | My list can offer **org** + “add this service” on row | Layout work in **three-column** (narrow middle column) |
 
-**Filter highlight (MVP implemented):** Active need chip keeps the org if any line matches, shows **only matching rows**, and adds `.badge--need-match` on the active need pill. With no chip, all rows show without need pills. Search matches org name **or** any subservice title (`.service-row--match` / `.service-row--dim` when browsing all rows); combined need + search requires a line that satisfies both.
+**Filter highlight (MVP implemented):** Active need chips (multi-select **union**: listing matches **any** selected need) keep the org if any line matches, show **only matching rows**, and add `.badge--need-match` on pills for the selected needs on that line. **See other services** reveals hidden sibling lines on that card (omitted when nothing is hidden). With no chips, all rows show **without** need-category pills until a row is expanded. Search matches org name **or** any subservice title (`.service-row--match` / `.service-row--dim` when browsing all rows); combined need + search requires a line that satisfies both. **Implemented:** [§12](#12-proposed-ux-see-other-services-and-labels-on-expand) (sibling expand + labels on row open).
 
 **My list:** Default **add org**; optional row-level control stores `{ orgId, serviceLineId }` in session storage when ids exist.
 
@@ -179,15 +179,17 @@ flowchart LR
   Hi --> Rows
 ```
 
-| Event | Recommended behaviour (Option B) |
+| Event | Recommended behaviour (Option B) **today** |
 |-------|----------------------------------|
-| Select **Support and counselling** | Show org if **any** line has category; show **only** those lines with need pills |
-| Clear chips | Show all rows again without need pills |
-| Typing in search | Highlight lines matching query; org matches on name; with a need chip, keep only lines that match **both** |
+| One or more need chips (union / OR) | Show org if **any** line matches **any** selected need; show **only** those lines with matching need pills; **See other services** if sibling lines are hidden |
+| Clear chips | Show all rows again without need pills (until a row is opened) |
+| Typing in search | Highlight lines matching query; org matches on name; with chips on, a line counts as a match only if it satisfies **both** (need union **and** query) |
 | **Near me** + chip | Same rules on geo-filtered subset |
-| Map pin click | Popup lists lines; matching chip applies same highlight class |
+| Map pin click | Compact popup (teaser titles + **View in list**); matching chips do not expand the popup; no **See other services** in the popup |
 
 **Accessibility:** Highlight must not rely on colour alone (weight, icon, `aria-current` on row); expand state on `aria-expanded`; live region announces “N organisations, M matching services”.
+
+**Sibling expand + labels on row open:** [§12](#12-proposed-ux-see-other-services-and-labels-on-expand).
 
 ---
 
@@ -279,6 +281,8 @@ block-beta
 2. Card title: **org only** vs org + primary matching service when filtered?
 3. When community and FSD represent the same org in Phase 2, do FSD lines appear **under** the community card?
 4. Map: show pin if **any** service matches filter, or only when org HQ matches **near me**?
+5. **See other services** copy: “See other services” vs “Show N more services”?
+6. When search + need are both on, should revealed siblings that match the **query** (but not the need) get `.service-row--match`, or stay equally de-emphasised as “other”?
 
 ---
 
@@ -303,8 +307,57 @@ Compare `clustering.orgsWithSameNormalizedName2Plus` and top-of-list providers a
 | UI | `directory-data.js` expands lines for filters; `groupCatalogForDisplay` renders org cards from catalog. |
 | Favourites | Org-level `id` / `orgId`. |
 | Map | One pin per org; popup **View in list** focuses org card. **Find support** popups show need categories (and FSD badges) only — no Connections Map org-type or Assembly theme pills. **Community** popups show **org type** plus filter/category pills; Assembly **themes**, **initiatives**, and **label chips** from `communityMeta` are not shown (data retained for pipeline/filters). |
-| Need filter | Org in list if **any** line matches; card shows **only matching** lines with `.badge--need-match` (no sibling expand into the filter set). Status live region: “N organisations (M matching service lines)”. |
-| Service detail | Each row is a **toggle button** (`aria-expanded`) revealing `.service-row__detail` (description, line-specific contact when different from org, categories). Org **Call** unchanged; row clicks do not open the map popup. |
+| Need filter | Org in list if **any** line matches **any** selected need (union); card shows **only matching** lines with `.badge--need-match`. Filter pipeline does **not** pull sibling lines into the result set (`expandNeedFilterLines` / `orgServiceLinesForDisplay`). **See other services** on the card reveals hidden siblings (`orgCardServiceLines`, `orgHasHiddenSiblingLines`) without changing the filter. Status live region: “N organisations (M matching service lines)”. **Card control:** [§12](#12-proposed-ux-see-other-services-and-labels-on-expand). |
+| Service detail | Each row is a **toggle button** (`aria-expanded`) revealing `.service-row__detail` (description, line-specific contact when different from org). Opening a row shows **that line’s need-category labels** (with or without chips). With chips on, collapsed matching rows show highlighted pills for selected needs; revealed sibling rows show their category labels. Org **Call** unchanged; row clicks do not open the map popup. **Implemented:** [§12](#12-proposed-ux-see-other-services-and-labels-on-expand). |
 
 Matching rules: see [phase1 spec](../porirua-directory-phase1-spec.md) dedupe section and table in prior design review (exact name + geo/phone/address tie-break for community↔FSD).
+
+---
+
+## 12. Proposed UX: “See other services” and labels on expand
+
+**Status:** **Implemented** (13 August 2026) in `group-services.mjs` + `directory.js` (E2E in `e2e/directory.spec.js`). Builds on shipped Option B org cards and **multi-select union** need chips (tap to add, tap again to remove; several chips = listings matching **any** selected need). Applies to **org cards that have service rows** (FSD multi-line orgs in Find support), not community org-grain cards.
+
+**Filter pipeline (unchanged):** `orgServiceLinesForDisplay` shows all rows when no chips are on, and **only need-matching rows** when one or more chips are on. Collapsed rows get `.badge--need-match` pills only while chips are on (selected matching needs). Expanding a row (`service-row__toggle`) shows description/contact and **that line’s categories**. Map org popup stays compact (up to two teaser titles + **View in list**) — no **See other services** in the popup.
+
+### Problem
+
+Someone who finds **The Salvation Army — Porirua** via **Food** sees only the food line. Budgeting, counselling, and work training at the same org stay hidden until they **clear chips**. That breaks the “one org, several offerings” model the grouped card is meant to deliver.
+
+With **no** chips, every line is listed, but **need-category pills stay off the collapsed rows** so the default browse view stays short. Opening a row lists that line’s categories.
+
+### Proposal A — “See other services” (implemented)
+
+Keep the current filter pipeline: an org appears if **any** line matches **any** selected need; default visible rows are the **matches**, with **highlighted matching pills**.
+
+**Hard rule — omit the control unless something is hidden.** **“See other services”** appears **only** when that organisation has **more service lines than the ones already shown**. It is not a decorative footer on every org card.
+
+| Situation | Button? |
+|-----------|---------|
+| Org has a **single** service line | **No** — nothing to reveal |
+| One or more need chips on, and **every** line already matches (union) | **No** — nothing is hidden |
+| Chips on, and the org has sibling lines that are currently hidden | **Yes** |
+| No chips (all rows already shown) | **No** |
+
+Clicking the button reveals the remaining (currently hidden) lines **on that card only**. It must **not** add siblings into `expandNeedFilterLines` (that would let search hit a non-need sibling and then hide the need-matching row — see `group-services.mjs`). Collapsed label **See other services**; expanded **Hide other services**. Revealed rows should show **their category labels**. Matching rows stay at the top with highlighted matching pills.
+
+### Proposal B — always show all rows
+
+Always list every line; dim or de-emphasise non-matching ones (`.service-row--dim` or similar). No extra control. **Noisier** on 10–17 line orgs (Salvation Army, marae clinics) while a chip is on — called out as the weaker default.
+
+### Service row expand — show that line’s labels
+
+When the person **opens a service row** (`aria-expanded` on the existing toggle), show **that line’s need-category labels** (pills or the existing “Categories:” line). This should apply **with or without chips** — not only when a need filter is selected. With chips on, matching selected needs stay **highlighted** (`.badge--need-match`); other categories on the same line may still appear, unhighlighted.
+
+### Search
+
+Keep today’s rule for **what counts as a match:** with search **and** need chips both on, a line must match **both** (need union **and** query) for the org to stay in results and for default visible rows. **See other services** still reveals siblings at that org (subject to the omit rule above). Recommend applying existing search-dimming to revealed rows (`.service-row--match` / `.service-row--dim`); do not change which orgs appear.
+
+### Map popup
+
+Keep the org pin popup **compact** (teaser titles + **View in list**). Do **not** add **See other services** in the popup. The **full card** is the source of truth for sibling lines.
+
+### Accessibility
+
+The sibling control is a **`<button type="button">`**, not a fake link; set **`aria-expanded`**. Match vs other must not rely on colour alone (weight, labels, `aria-current` on matching rows — same bar as §5).
 

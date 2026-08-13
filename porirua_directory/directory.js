@@ -8,7 +8,8 @@ import {
   groupServicesByOrg,
   lineMatchesNeed,
   lineMatchesSearch,
-  orgServiceLinesForDisplay,
+  orgCardServiceLines,
+  orgHasHiddenSiblingLines,
   organizationEntryToDisplayOrg,
 } from "./group-services.mjs";
 import {
@@ -175,6 +176,24 @@ function serviceRowDetailId(lineId) {
   return `service-detail-${lineId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
 }
 
+function needCategoryBadgesHtml(line, highlight, { showAllCategories = false } = {}) {
+  const cats = line.categories ?? [];
+  const needOn = highlight.activeNeeds.size > 0;
+  const ids = showAllCategories
+    ? cats
+    : needOn
+      ? cats.filter((id) => highlight.activeNeeds.has(id))
+      : [];
+  return ids
+    .map((id) => {
+      const label = needLabelById[id];
+      if (!label) return "";
+      const match = needOn && highlight.activeNeeds.has(id);
+      return `<span class="badge badge--need${match ? " badge--need-match" : ""}">${esc(label)}</span>`;
+    })
+    .join("");
+}
+
 function renderServiceRowDetail(line, org, highlight) {
   const { description, phone, url } = serviceLineFields(line);
   const orgPhone = String(org.phone ?? "").trim();
@@ -200,20 +219,24 @@ function renderServiceRowDetail(line, org, highlight) {
     ? `<p class="service-row__detail-contact">${contactParts.join(" · ")}</p>`
     : "";
 
-  const catLabels = needOn
-    ? (line.categories ?? [])
-        .filter((id) => highlight.activeNeeds.has(id))
-        .map((id) => needLabelById[id])
-        .filter(Boolean)
-    : [];
-  const catBlock = catLabels.length
-    ? `<p class="service-row__detail-cats"><span class="service-row__detail-label">Categories:</span> ${catLabels.map((l) => esc(l)).join(", ")}</p>`
+  const catParts = (line.categories ?? [])
+    .map((id) => {
+      const label = needLabelById[id];
+      if (!label) return "";
+      const match = needOn && highlight.activeNeeds.has(id);
+      return match
+        ? `<span class="badge badge--need badge--need-match">${esc(label)}</span>`
+        : esc(label);
+    })
+    .filter(Boolean);
+  const catBlock = catParts.length
+    ? `<p class="service-row__detail-cats"><span class="service-row__detail-label">Categories:</span> ${catParts.join(", ")}</p>`
     : "";
 
   return `${descBlock}${contactBlock}${catBlock}`;
 }
 
-function renderServiceRow(line, org, highlight) {
+function renderServiceRow(line, org, highlight, { revealedSibling = false } = {}) {
   const needOn = highlight.activeNeeds.size > 0;
   const searchOn = Boolean(highlight.search.trim());
   const matchSearch = lineMatchesSearch(line, org, highlight.search);
@@ -222,26 +245,21 @@ function renderServiceRow(line, org, highlight) {
     org.name.toLowerCase().includes(highlight.search.trim().toLowerCase());
   const matchRow = searchOn && (matchSearch || orgNameMatch);
   const dim = searchOn && !matchRow;
+  const needMatch = needOn && lineMatchesNeed(line, highlight.activeNeeds);
 
   let rowClass = "service-row";
+  if (revealedSibling) rowClass += " service-row--other";
   if (matchRow) rowClass += " service-row--match is-highlighted";
   else if (dim) rowClass += " service-row--dim";
 
-  const catBadges = needOn
-    ? (line.categories ?? [])
-        .filter((id) => highlight.activeNeeds.has(id))
-        .map((id) => {
-          const label = needLabelById[id];
-          if (!label) return "";
-          return `<span class="badge badge--need badge--need-match">${esc(label)}</span>`;
-        })
-        .join("")
-    : "";
+  const catBadges = needCategoryBadgesHtml(line, highlight, {
+    showAllCategories: revealedSibling,
+  });
   const extraBadges = (line.badges ?? [])
     .map((b) => `<span class="badge">${esc(b)}</span>`)
     .join("");
 
-  const ariaCurrent = matchRow ? ' aria-current="true"' : "";
+  const ariaCurrent = matchRow || needMatch ? ' aria-current="true"' : "";
   const detailId = serviceRowDetailId(line.lineId);
   const detailHtml = renderServiceRowDetail(line, org, highlight);
 
@@ -304,9 +322,12 @@ function renderOrgCard(org, favoriteIds, highlight) {
     : `<span class="card__fav-text">Add to your list</span>`;
   const favBtn = `<button type="button" class="card__fav${onList ? " is-on-list" : ""}" data-fav-toggle="${esc(org.orgId)}" aria-pressed="${onList ? "true" : "false"}" aria-label="${esc(favAria)}">${favInner}</button>`;
 
-  const rows = orgServiceLinesForDisplay(org, highlight.activeNeeds)
+  const rows = orgCardServiceLines(org, highlight.activeNeeds, false)
     .map((line) => renderServiceRow(line, org, highlight))
     .join("");
+  const otherServicesBtn = orgHasHiddenSiblingLines(org, highlight.activeNeeds)
+    ? `<button type="button" class="card__other-services" aria-expanded="false">See other services</button>`
+    : "";
 
   const safeDomId = org.orgId.replace(/[^a-zA-Z0-9_-]/g, "_");
 
@@ -318,6 +339,7 @@ function renderOrgCard(org, favoriteIds, highlight) {
     <div class="card__meta">${orgBadges}${orgType}</div>
     ${address}
     <ul class="service-rows" aria-label="Services offered">${rows}</ul>
+    ${otherServicesBtn}
     ${callFooter}
   </article>`;
 }
@@ -641,6 +663,12 @@ async function main() {
     setSearchOpen(false);
   }
 
+  function clearAndCloseSearch() {
+    clearSearchField();
+    closeSearch();
+    refresh();
+  }
+
   function openSearch() {
     setBrowseChromeCollapsed(false);
     setSearchOpen(true);
@@ -802,10 +830,11 @@ async function main() {
   async function ensureMap() {
     if (map) return;
     const L = await waitForLeaflet();
-    map = L.map(mapEl, { scrollWheelZoom: false }).setView(
+    map = L.map(mapEl, { scrollWheelZoom: false, zoomControl: false }).setView(
       [mapDefaults.lat, mapDefaults.lng],
       mapDefaults.zoom
     );
+    L.control.zoom({ position: "bottomleft" }).addTo(map);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -1125,6 +1154,49 @@ async function main() {
     return true;
   }
 
+  function toggleOtherServices(button) {
+    const card = button.closest(".card--org");
+    const list = card?.querySelector(".service-rows");
+    if (!card || !list) return;
+    const expanded = button.getAttribute("aria-expanded") === "true";
+    if (expanded) {
+      card.querySelectorAll(".service-row--other").forEach((el) => el.remove());
+      button.setAttribute("aria-expanded", "false");
+      button.textContent = "See other services";
+      return;
+    }
+    const orgId = card.dataset.orgId;
+    const entry = catalogEntries.find(
+      (e) => e.kind === "organization" && e.id === orgId
+    );
+    if (!entry) return;
+    const org = organizationEntryToDisplayOrg(entry);
+    const highlight = {
+      activeNeeds: state.activeNeeds,
+      search: state.search,
+    };
+    const others = orgCardServiceLines(org, state.activeNeeds, true).filter(
+      (line) => !lineMatchesNeed(line, state.activeNeeds)
+    );
+    list.insertAdjacentHTML(
+      "beforeend",
+      others
+        .map((line) =>
+          renderServiceRow(line, org, highlight, { revealedSibling: true })
+        )
+        .join("")
+    );
+    button.setAttribute("aria-expanded", "true");
+    button.textContent = "Hide other services";
+  }
+
+  function handleOtherServicesClick(e) {
+    const btn = e.target.closest(".card__other-services");
+    if (!btn) return false;
+    toggleOtherServices(btn);
+    return true;
+  }
+
   function setMode(mode, { fromHash = false } = {}) {
     if (mode !== "support" && mode !== "community") {
       mode = null;
@@ -1334,12 +1406,8 @@ async function main() {
     const btn = e.target.closest("[data-need]");
     if (!btn) return;
     const id = btn.dataset.need;
-    if (state.activeNeeds.has(id)) {
-      state.activeNeeds.clear();
-    } else {
-      state.activeNeeds.clear();
-      state.activeNeeds.add(id);
-    }
+    if (state.activeNeeds.has(id)) state.activeNeeds.delete(id);
+    else state.activeNeeds.add(id);
     renderChips(needChips, needCategories, state.activeNeeds, "need");
     refresh();
   });
@@ -1369,7 +1437,7 @@ async function main() {
     searchInput.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        closeSearch();
+        clearAndCloseSearch();
       }
     });
   }
@@ -1377,7 +1445,7 @@ async function main() {
   if (searchToggle) {
     searchToggle.addEventListener("click", () => {
       if (browseSearch?.classList.contains("is-open")) {
-        closeSearch();
+        clearAndCloseSearch();
       } else {
         openSearch();
       }
@@ -1386,18 +1454,19 @@ async function main() {
 
   if (searchClose) {
     searchClose.addEventListener("click", () => {
-      closeSearch();
+      clearAndCloseSearch();
     });
   }
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || !browseSearch?.classList.contains("is-open")) return;
     if (e.target === searchInput) return;
-    closeSearch();
+    clearAndCloseSearch();
   });
 
   resultsEl.addEventListener("click", (e) => {
     if (handleFavClick(e)) return;
+    if (handleOtherServicesClick(e)) return;
     if (handleServiceRowInteraction(e)) return;
     if (e.target.closest(".card__call")) return;
     if (e.target.closest(".service-row")) return;
