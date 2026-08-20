@@ -314,13 +314,6 @@ body[data-view="landing"] .main {
   gap: 0.85rem;
 }
 
-@media (min-width: 640px) {
-  .landing-paths {
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-}
-
 .landing-path-card {
   display: flex;
   flex-direction: column;
