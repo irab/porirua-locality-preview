@@ -1,4 +1,10 @@
 import { loadServices } from "./directory-data.js";
+import {
+  BROWSE_CHROME_DURATION_MS,
+  BROWSE_CHROME_EXPAND_SCROLL_Y,
+  armBrowseChromeLock,
+  nextBrowseChromeFromScroll,
+} from "./browse-chrome.mjs";
 import { formatDescription } from "./format-description.mjs";
 import {
   buildOrgFromMembers,
@@ -598,16 +604,31 @@ async function main() {
   const demoLayoutSelect = document.getElementById("demo-layout-select");
   const browseChromeExpand = document.getElementById("browse-chrome-expand");
   const browseSidebarBody = document.querySelector(".browse-sidebar__body");
+  const siteTopnav = document.querySelector(".site-topnav");
 
-  const BROWSE_CHROME_EXPAND_SCROLL_Y = 56;
-  const BROWSE_CHROME_SCROLL_DELTA = 10;
-  const BROWSE_CHROME_DURATION_MS = 360;
+  function syncSiteTopnavStickyHeight() {
+    if (!siteTopnav) return;
+    const height = siteTopnav.getBoundingClientRect().height;
+    if (!height) return;
+    document.documentElement.style.setProperty(
+      "--site-topnav-sticky-height",
+      `${height}px`
+    );
+  }
+
+  syncSiteTopnavStickyHeight();
+  if (typeof ResizeObserver !== "undefined" && siteTopnav) {
+    new ResizeObserver(syncSiteTopnavStickyHeight).observe(siteTopnav);
+  }
+  document.fonts?.ready?.then(syncSiteTopnavStickyHeight);
+
   const threeColumnDesktopMq = window.matchMedia("(min-width: 1024px)");
   const browseChromeMotionMq = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
   );
   let browseChromeCollapsed = false;
   let browseChromeLastScrollY = 0;
+  let browseChromeLockUntil = 0;
   let browseChromeScrollScheduled = false;
 
   function isThreeColumnDesktopLayout() {
@@ -696,7 +717,7 @@ async function main() {
 
   function mapResizeAllowed() {
     if (!map || !mapBlock || mapBlock.hidden) return false;
-    if (document.body.dataset.browseChrome === "collapsed") return false;
+    if (document.body.dataset.browseMap === "collapsed") return false;
     return true;
   }
 
@@ -967,20 +988,15 @@ async function main() {
   function setBrowseChromeCollapsed(collapsed, { force = false } = {}) {
     if (collapsed && !isBrowseChromeScrollCollapseEnabled()) return;
     if (!force && browseChromeCollapsed === collapsed) return;
+    const changed = browseChromeCollapsed !== collapsed;
     browseChromeCollapsed = collapsed;
+    if (changed) {
+      browseChromeLockUntil = armBrowseChromeLock(performance.now());
+    }
     if (collapsed) {
       document.body.dataset.browseChrome = "collapsed";
-      setMapPaintSuppressed(true);
-      clearMapResizeAfterTransition();
-      if (mapResizeFrame != null) {
-        cancelAnimationFrame(mapResizeFrame);
-        mapResizeFrame = null;
-      }
     } else {
       delete document.body.dataset.browseChrome;
-      if (browseChromeMotionMq.matches || force) {
-        setMapPaintSuppressed(false);
-      }
     }
     if (browseChromeExpand) {
       browseChromeExpand.hidden = !collapsed;
@@ -989,14 +1005,36 @@ async function main() {
         collapsed ? "false" : "true"
       );
     }
+    syncBrowseMapCollapsed();
+  }
+
+  function syncBrowseMapCollapsed(mapCollapsed) {
+    const hideMap =
+      mapCollapsed ??
+      (isBrowseChromeScrollCollapseEnabled() &&
+        (browseChromeCollapsed ||
+          window.scrollY > BROWSE_CHROME_EXPAND_SCROLL_Y));
+    if (hideMap) {
+      document.body.dataset.browseMap = "collapsed";
+      setMapPaintSuppressed(true);
+      clearMapResizeAfterTransition();
+      if (mapResizeFrame != null) {
+        cancelAnimationFrame(mapResizeFrame);
+        mapResizeFrame = null;
+      }
+      return;
+    }
+    delete document.body.dataset.browseMap;
+    if (browseChromeMotionMq.matches) {
+      setMapPaintSuppressed(false);
+    }
     if (
-      !collapsed &&
       isBrowseChromeScrollCollapseEnabled() &&
       map &&
       mapBlock &&
       !mapBlock.hidden
     ) {
-      if (browseChromeMotionMq.matches || force) {
+      if (browseChromeMotionMq.matches) {
         scheduleMapResize();
       } else {
         scheduleMapResize({ afterTransition: true });
@@ -1006,30 +1044,26 @@ async function main() {
 
   function resetBrowseChrome() {
     browseChromeLastScrollY = window.scrollY;
+    browseChromeLockUntil = 0;
     setBrowseChromeCollapsed(false, { force: true });
+    syncBrowseMapCollapsed(false);
   }
 
   function updateBrowseChromeFromScroll() {
     browseChromeScrollScheduled = false;
     if (document.body.dataset.view !== "browse") return;
-    if (!isBrowseChromeScrollCollapseEnabled()) {
-      setBrowseChromeCollapsed(false);
-      browseChromeLastScrollY = window.scrollY;
-      return;
-    }
-    const y = window.scrollY;
-    const delta = y - browseChromeLastScrollY;
-    browseChromeLastScrollY = y;
-
-    if (y <= BROWSE_CHROME_EXPAND_SCROLL_Y) {
-      setBrowseChromeCollapsed(false);
-      return;
-    }
-    if (delta > BROWSE_CHROME_SCROLL_DELTA) {
-      setBrowseChromeCollapsed(true);
-    } else if (delta < -BROWSE_CHROME_SCROLL_DELTA) {
-      setBrowseChromeCollapsed(false);
-    }
+    const next = nextBrowseChromeFromScroll({
+      y: window.scrollY,
+      lastY: browseChromeLastScrollY,
+      collapsed: browseChromeCollapsed,
+      now: performance.now(),
+      lockUntil: browseChromeLockUntil,
+      collapseEnabled: isBrowseChromeScrollCollapseEnabled(),
+    });
+    browseChromeLastScrollY = next.lastY;
+    browseChromeLockUntil = next.lockUntil;
+    setBrowseChromeCollapsed(next.collapsed);
+    syncBrowseMapCollapsed(next.mapCollapsed);
   }
 
   function onBrowseWindowScroll() {

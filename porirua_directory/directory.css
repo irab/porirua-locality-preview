@@ -17,7 +17,8 @@
   --accent-soft: #f9d8d9;
   --font-heading: "Recoleta", "DM Serif Display", "Playfair Display", Georgia, serif;
   --font-body: "aktiv-grotesk", "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* Sticky chrome — tune to match rendered header/footer (see browse sticky panel). */
+  /* Sticky chrome — rem fallbacks for first paint; JS sets --site-topnav-sticky-height
+     from the live header height so the browse panel sits flush. */
   --crisis-strip-height: 5.5rem;
   --site-topnav-sticky-height: 5rem;
   --z-sticky-topnav: 400;
@@ -326,11 +327,7 @@ body[data-view="landing"] .main {
 }
 
 .landing-path-card {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  column-gap: 0.85rem;
-  row-gap: 0.35rem;
+  display: block;
   width: 100%;
   padding: 1rem 1.1rem;
   border: 2px solid var(--border-strong);
@@ -346,6 +343,20 @@ body[data-view="landing"] .main {
     box-shadow 0.2s ease,
     background-color 0.2s ease,
     transform 0.2s ease;
+}
+
+.landing-path-card__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.landing-path-card__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .landing-path-card:hover {
@@ -369,7 +380,6 @@ body[data-view="landing"] .main {
 }
 
 .landing-path-card__title {
-  grid-column: 1;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 1.1rem;
@@ -377,15 +387,14 @@ body[data-view="landing"] .main {
 }
 
 .landing-path-card__desc {
-  grid-column: 1;
   font-size: 0.95rem;
   line-height: 1.5;
   color: var(--muted);
 }
 
 .landing-path-card__go {
-  grid-column: 2;
-  grid-row: 1 / span 2;
+  flex: 0 0 auto;
+  margin-left: auto;
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1;
@@ -756,9 +765,15 @@ body[data-view="browse"] .map-block.map-block:not(.map-block--hidden) {
   }
 }
 
+body[data-view="browse"] #map-block {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
 body[data-view="browse"] .browse-sticky-panel {
   position: sticky;
-  top: var(--site-topnav-sticky-height);
+  top: calc(var(--site-topnav-sticky-height) - 1px);
   z-index: var(--z-sticky-browse-panel);
   align-self: start;
   max-height: calc(
@@ -771,7 +786,9 @@ body[data-view="browse"] .browse-sticky-panel {
   padding-bottom: 0;
   background: var(--bg);
   isolation: isolate;
-  box-shadow: 0 0.65rem 0 0.65rem var(--bg);
+  box-shadow:
+    0 -0.25rem 0 0.15rem var(--bg),
+    0 0.65rem 0 0.65rem var(--bg);
   transition: box-shadow var(--browse-chrome-duration, 0.36s)
     var(--browse-chrome-ease, cubic-bezier(0.33, 1, 0.68, 1));
 }
@@ -779,7 +796,9 @@ body[data-view="browse"] .browse-sticky-panel {
 body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sticky-panel {
   overflow-y: visible;
   overscroll-behavior: auto;
-  box-shadow: 0 0.35rem 0 0.35rem var(--bg);
+  box-shadow:
+    0 -0.25rem 0 0.15rem var(--bg),
+    0 0.35rem 0 0.35rem var(--bg);
 }
 
 body[data-view="browse"][data-browse-chrome="collapsed"] .view-browse .browse-toolbar {
@@ -841,6 +860,12 @@ body[data-view="browse"] {
   --browse-chrome-duration: 0.36s;
 }
 
+/* Collapsing filters/map changes document height. Viewport scroll
+   anchoring would synthesise an upward scroll and fight the hide. */
+html:has(body[data-view="browse"]) {
+  overflow-anchor: none;
+}
+
 body[data-view="browse"] .browse-sidebar__body,
 body[data-view="browse"] #map-block.map-block:not(.map-block--hidden) .map-block__panel {
   display: grid;
@@ -869,8 +894,11 @@ body[data-view="browse"] .map-block__map-inner {
   min-height: 0;
 }
 
-body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sidebar__body,
-body[data-view="browse"][data-browse-chrome="collapsed"]
+body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sidebar__body {
+  grid-template-rows: 0fr;
+}
+
+body[data-view="browse"][data-browse-map="collapsed"]
   #map-block.map-block:not(.map-block--hidden)
   .map-block__panel {
   grid-template-rows: 0fr;
@@ -881,13 +909,13 @@ body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sidebar__inner 
   pointer-events: none;
 }
 
-body[data-view="browse"][data-browse-chrome="collapsed"]
+body[data-view="browse"][data-browse-map="collapsed"]
   #map-block.map-block:not(.map-block--hidden)
   .map-block__panel-inner {
   pointer-events: none;
 }
 
-body[data-view="browse"][data-browse-chrome="collapsed"]
+body[data-view="browse"][data-browse-map="collapsed"]
   #map-block.map-block:not(.map-block--hidden) {
   margin-bottom: 0;
   pointer-events: none;
@@ -902,7 +930,7 @@ body[data-view="browse"][data-browse-chrome="collapsed"]
 @media (min-width: 1024px) {
   body[data-browse-layout="three-column"][data-view="browse"][data-browse-chrome="collapsed"]
     .browse-sidebar__body,
-  body[data-browse-layout="three-column"][data-view="browse"][data-browse-chrome="collapsed"]
+  body[data-browse-layout="three-column"][data-view="browse"][data-browse-map="collapsed"]
     #map-block.map-block:not(.map-block--hidden)
     .map-block__panel {
     grid-template-rows: 1fr;
@@ -916,7 +944,7 @@ body[data-view="browse"][data-browse-chrome="collapsed"]
 }
 
 body[data-view="browse"] .map-block.map-block--paint-suppressed .map-block__map-inner,
-body[data-view="browse"][data-browse-chrome="collapsed"]
+body[data-view="browse"][data-browse-map="collapsed"]
   #map-block.map-block:not(.map-block--hidden)
   .map-block__map-inner {
   visibility: hidden;
@@ -932,7 +960,7 @@ body[data-view="browse"][data-browse-chrome="collapsed"]
   }
 
   body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sidebar__body,
-  body[data-view="browse"][data-browse-chrome="collapsed"]
+  body[data-view="browse"][data-browse-map="collapsed"]
     #map-block.map-block:not(.map-block--hidden)
     .map-block__panel {
     grid-template-rows: 0fr;

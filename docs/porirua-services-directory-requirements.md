@@ -1,7 +1,7 @@
 # Porirua Services Directory — Requirements
 
-**Version:** 1.17 (draft)  
-**Date:** 13 August 2026  
+**Version:** 1.18 (draft)  
+**Date:** 21 August 2026  
 **Prepared for:** Porirua Locality / Te Wāhi Tiaki Tātou  
 **Timeline:** ~5–6 weeks total (MVP first, then iteration)  
 **Budget:** **Phase 1 (MVP):** ~50 hours / NZ$5,000 · **Phase 2:** ~50 hours / NZ$5,000 · **Total:** ~100 hours / NZ$10,000
@@ -145,7 +145,7 @@ When someone opens the directory they should be able to:
    - Work and learning
    - Everyday needs (clothes, showers, transport, etc.)
 5. **Search** — in browse, tap the **search icon** beside **Back**; the field expands to type what you need (sidebar keyword box removed). Results filter to Porirua-relevant services.
-6. **Browse layout (desktop)** — **filters left**, **results centre**, **map right** (three-column from **1024px** up). Filters and the side map **stay visible** while scrolling results on that layout (no map show/hide control on desktop three-column). On **narrow stacked** browse (below 1024px): filters, then map, then results. The map appears when listings have coordinates; there is **no manual Hide/Show map control** — on stacked layout only, scrolling **down** into the listing compacts filter chips and the map while **Back**, **Search**, and **Filters** stay in the sticky bar; scrolling up, opening search, or tapping **Filters** expands again. Legacy **map above results** remains available via `?layout=top` for comparison (same scroll behaviour on narrow viewports). Tap a marker for details.
+6. **Browse layout (desktop)** — **filters left**, **results centre**, **map right** (three-column from **1024px** up). Filters and the side map **stay visible** while scrolling results on that layout (no map show/hide control on desktop three-column). On **narrow stacked** browse (below 1024px): filters, then map, then results. The map appears when listings have coordinates; there is **no manual Hide/Show map control** — on stacked layout only, scrolling **down** into the listing compacts filter chips and the map while **Back**, **Search**, and **Filters** stay in the sticky bar; tapping **Filters** reopens chips only; scrolling back to the top brings the map back under the filters. Legacy **map above results** remains available via `?layout=top` for comparison (same scroll behaviour on narrow viewports). Tap a marker for details.
 7. **List of results** — on **Find support**, the full listing shows by default with **no category chips selected**; tap a chip to add that topic (tap again to remove only that topic); several chips on show listings that match **any** selected need. Search narrows further (need + search must both match a service line — sibling lines at the same org are not pulled in by the need filter alone). Multi-service FSD providers appear as **one org card** with expandable **service rows**: with **no chip selected**, all service lines show **without category badge pills** until a row is opened (then that line’s categories appear); with any chip selected, an org stays in the list if **any** line matches, and the card shows **only matching lines**, each with a highlighted category pill. **See other services** on that card reveals hidden sibling lines when any exist (label **Hide other services** when expanded); the control is omitted for single-line orgs and when every line already matches. The results status live region announces organisation count and **matching service line** count when listings are grouped.
 8. **My list** — **Add to your list** on each listing; saved **places and organisations** for this visit only (plain-language note that nothing is stored online); **Remove** on saved items; optional **Print list**.
 
@@ -527,6 +527,8 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 - [MVP implementation plan](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md)
 
 ---
+
+*Changes in v1.18: Scroll-collapse — lock chrome during the hide/show transition and disable viewport **scroll anchoring** so shrinking filters/map cannot bounce the page back open (fast flicker on mobile scroll-down). Sticky search/filters sit flush under the measured top nav (no peek-through seam). **Filters** reopens chips only while mid-list; the map stays compact until the page is back at the top (no map toggle; map cannot cover search). E2E asserts a single collapse while scrolling down, a closed header/panel join, and Filters + chip without map-over-search.*
 
 *Changes in v1.17: Org cards — **See other services** reveals hidden sibling service lines on that card only (omitted when nothing is hidden); opening a service row shows that line’s need-category labels even with no chip selected. Map popups stay compact (no sibling control).*
 

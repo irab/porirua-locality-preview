@@ -82,6 +82,24 @@ test("landing — welcome, path cards, no duplicate path choice, crisis footer, 
   await expect(page.locator("#map-block")).toBeHidden();
 });
 
+test("landing path card arrows sit on the right of each card", async ({ page }) => {
+  await page.goto("/index.html");
+  const cards = page.locator("#view-landing .landing-paths").getByRole("button");
+  await expect(cards).toHaveCount(2);
+
+  for (const name of [/Find support/i, /Connect with community/i]) {
+    const card = page.locator("#view-landing .landing-paths").getByRole("button", { name });
+    const arrow = card.getByText("→");
+    await expect(arrow).toBeVisible();
+    const cardBox = await card.boundingBox();
+    const arrowBox = await arrow.boundingBox();
+    expect(cardBox, `bounding box for ${name}`).toBeTruthy();
+    expect(arrowBox, `arrow bounding box for ${name}`).toBeTruthy();
+    expect(arrowBox.x).toBeGreaterThan(cardBox.x + cardBox.width * 0.55);
+    expect(arrowBox.x + arrowBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
+  }
+});
+
 test("about page — nav, copy, crisis footer", async ({ page }) => {
   await page.goto("/about.html");
   await expect(page.getByRole("heading", { name: "About Your Porirua Directory" })).toBeVisible();
@@ -200,6 +218,40 @@ test("support path — mobile three-column shows map between filters and results
   expect(order.map).toBeLessThan(order.main);
 });
 
+for (const width of [390, 600]) {
+  test(`browse sticky panel sits flush under the top nav at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/index.html#community");
+    await page.waitForSelector("#directory-results .card");
+    await page.evaluate(() => window.scrollTo(0, 800));
+    await expect
+      .poll(async () => page.locator("body").getAttribute("data-browse-chrome"))
+      .toBe("collapsed");
+
+    const seam = await page.evaluate(() => {
+      const nav = document.querySelector(".site-topnav");
+      const panel = document.querySelector("#view-browse .browse-sticky-panel");
+      if (!nav || !panel) return null;
+      const nr = nav.getBoundingClientRect();
+      const pr = panel.getBoundingClientRect();
+      const gap = pr.top - nr.bottom;
+      const x = pr.left + pr.width / 2;
+      const y = nr.bottom + Math.min(2, Math.max(0, gap / 2));
+      const el = document.elementFromPoint(x, y);
+      return {
+        gap,
+        peekCard: Boolean(el?.closest?.(".card")),
+      };
+    });
+
+    expect(seam).not.toBeNull();
+    expect(seam.gap).toBeLessThanOrEqual(1);
+    expect(seam.peekCard).toBe(false);
+  });
+}
+
 test("browse sticky panel masks scrolling result cards on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/index.html#support");
@@ -247,6 +299,88 @@ test("browse chrome collapses on scroll down and expands near top", async ({ pag
   await expect(browseSearch(page)).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
+});
+
+test("browse chrome stays collapsed while scrolling down (no flicker)", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html");
+  await pickCommunityPath(page);
+  await page.waitForSelector("#directory-results .card");
+
+  const result = await page.evaluate(async () => {
+    const flips = [];
+    let prev = document.body.dataset.browseChrome || "expanded";
+    const obs = new MutationObserver(() => {
+      const next = document.body.dataset.browseChrome || "expanded";
+      if (next !== prev) {
+        flips.push(next);
+        prev = next;
+      }
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ["data-browse-chrome"] });
+
+    window.scrollTo(0, 0);
+    await new Promise((r) => requestAnimationFrame(r));
+    for (let y = 0; y <= 720; y += 12) {
+      window.scrollTo(0, y);
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+    await new Promise((r) => setTimeout(r, 450));
+    obs.disconnect();
+
+    const expand = document.getElementById("browse-chrome-expand");
+    return {
+      flips,
+      final: document.body.dataset.browseChrome || "expanded",
+      expandVisible: Boolean(expand && !expand.hidden),
+    };
+  });
+
+  expect(result.final).toBe("collapsed");
+  expect(result.expandVisible).toBe(true);
+  expect(result.flips.filter((state) => state === "collapsed")).toHaveLength(1);
+  expect(result.flips.filter((state) => state === "expanded")).toHaveLength(0);
+});
+
+test("Filters reopen chips without laying the map over search", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 700 });
+  await page.goto("/index.html#community");
+  await page.waitForSelector("#directory-results .card");
+  await page.evaluate(() => window.scrollTo(0, 220));
+  await expect(page.locator("body")).toHaveAttribute("data-browse-chrome", "collapsed");
+  await page.getByRole("button", { name: "Filters" }).click();
+  await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
+  await page.getByRole("button", { name: /Councils and public agencies/i }).click();
+  await expect(page.getByRole("button", { name: /Councils and public agencies/i })).toHaveClass(/is-on/);
+
+  const search = browseSearch(page);
+  await expect(search).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Organisation type" })).toBeVisible();
+  await expect(page.locator("body")).toHaveAttribute("data-browse-map", "collapsed");
+  await expect
+    .poll(async () =>
+      page.evaluate(() => document.getElementById("map-block")?.getBoundingClientRect().height ?? 0)
+    )
+    .toBeLessThanOrEqual(8);
+
+  const overlap = await page.evaluate(() => {
+    const searchBox = document.getElementById("search-input");
+    const heading = document.getElementById("community-filters-heading");
+    const map = document.getElementById("map-block");
+    const sr = searchBox.getBoundingClientRect();
+    const hr = heading.getBoundingClientRect();
+    const mr = map.getBoundingClientRect();
+    const mid = sr.left + sr.width / 2;
+    const atSearch = document.elementFromPoint(mid, sr.top + sr.height / 2);
+    return {
+      searchCoveredByMap: Boolean(atSearch?.closest?.("#map-block, .leaflet-container")),
+      mapOverlapsSearch: mr.height > 8 && !(mr.bottom <= sr.top || mr.top >= sr.bottom),
+      headingAboveMap: hr.bottom <= mr.top + 1 || mr.height <= 8,
+    };
+  });
+  expect(overlap.searchCoveredByMap).toBe(false);
+  expect(overlap.mapOverlapsSearch).toBe(false);
+  expect(overlap.headingAboveMap).toBe(true);
 });
 
 test("browse chrome does not collapse on three-column desktop scroll", async ({ page }) => {
