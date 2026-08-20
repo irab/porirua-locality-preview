@@ -97,11 +97,14 @@
       <div class="mylist-layout">
         <div class="mylist-heading-row">
           <h1 id="mylist-heading" class="mylist-heading">My list</h1>
-          <button type="button" id="mylist-print" class="mylist-print" hidden disabled>Print list</button>
+          <div class="mylist-actions">
+            <button type="button" id="mylist-share" class="mylist-print" hidden disabled>Share list</button>
+            <button type="button" id="mylist-print" class="mylist-print" hidden disabled>Print list</button>
+          </div>
         </div>
         <p class="mylist-intro">Places and organisations you’ve saved for this visit.</p>
         <p class="mylist-disclaimer" role="note">
-          Your saved places stay on this device while you keep this page open. We don’t store them online, and they clear when you close the tab.
+          Your saved places stay on this device while you keep this page open. We don’t store them on a server, and they clear when you close the tab. If you share a link, anyone with that link can see those places.
         </p>
         <p id="mylist-status" class="status-line" role="status"></p>
         <div id="mylist-results" class="results" aria-live="polite"></div>

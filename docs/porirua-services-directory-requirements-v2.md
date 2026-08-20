@@ -129,7 +129,7 @@ When someone opens the directory they can:
 4. **Use the map** — see nearby services when locations are known
 5. **Reach crisis numbers** — always easy to find
 6. **Open a listing** — name, short description, address or suburb, phone, website, and opening hours if known
-7. **Save a short list for this visit** (optional) — nothing stored online; print if useful
+7. **Save a short list for this visit** (optional) — nothing stored on a server; print or share a link if useful (anyone with the link can see those places)
 
 People should not need to know which list a service came from.
 

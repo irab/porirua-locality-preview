@@ -34,6 +34,14 @@ import {
   mapDefaults,
   nearMeRadiusKm,
 } from "./config-directory.js";
+import {
+  buildShareCodebook,
+  buildShareUrl,
+  decodeShareParam,
+  encodeShareCodes,
+  favoritableIdsFromEntries,
+  parseShareParamFromHash,
+} from "./share-list.mjs";
 
 function esc(s) {
   return String(s ?? "")
@@ -487,9 +495,11 @@ function persistFavoriteIds(ids) {
 }
 
 function parseHash() {
-  const raw = location.hash.replace(/^#/, "").toLowerCase();
-  const routePart = raw.split(/[&?]/)[0];
-  if (routePart === "mylist") return { kind: "mylist" };
+  const raw = location.hash.replace(/^#/, "");
+  const routePart = raw.split(/[&?]/)[0].toLowerCase();
+  if (routePart === "mylist") {
+    return { kind: "mylist", share: parseShareParamFromHash(location.hash) };
+  }
   if (routePart === "support" || routePart === "community")
     return { kind: "browse", mode: routePart };
   return { kind: "landing" };
@@ -587,6 +597,7 @@ async function main() {
   const mylistStatus = document.getElementById("mylist-status");
   const mylistResults = document.getElementById("mylist-results");
   const mylistPrint = document.getElementById("mylist-print");
+  const mylistShare = document.getElementById("mylist-share");
   const backBtn = document.getElementById("back-to-landing");
   const mapBlock = document.getElementById("map-block");
   const supportFilters = document.getElementById("filters-support");
@@ -700,6 +711,9 @@ async function main() {
         "We couldn’t load the listings. Please refresh the page and try again.";
     }
   }
+
+  const shareCodebook = buildShareCodebook(favoritableIdsFromEntries(catalogEntries));
+  let shareLinkNote = "";
 
   let map = null;
   let markerLayer = null;
@@ -1119,6 +1133,10 @@ async function main() {
       mylistPrint.hidden = !hasItems;
       mylistPrint.disabled = !hasItems;
     }
+    if (mylistShare) {
+      mylistShare.hidden = !hasItems;
+      mylistShare.disabled = !hasItems;
+    }
     if (!hasItems) {
       if (mylistStatus) mylistStatus.textContent = "";
       mylistResults.innerHTML =
@@ -1126,7 +1144,9 @@ async function main() {
     } else {
       if (mylistStatus) {
         const n = items.length;
-        mylistStatus.textContent = `${n} ${n === 1 ? "place" : "places"} saved for this visit`;
+        let status = `${n} ${n === 1 ? "place" : "places"} saved for this visit`;
+        if (shareLinkNote) status += ` (${shareLinkNote})`;
+        mylistStatus.textContent = status;
       }
       mylistResults.innerHTML = items
         .map((item) => renderDisplayItem(item, favoriteIds, highlight))
@@ -1134,10 +1154,57 @@ async function main() {
     }
   }
 
+  function applyIncomingShare(shareParam) {
+    if (!shareParam) return;
+    const { ids, unknownCount } = decodeShareParam(shareParam, shareCodebook);
+    for (const id of ids) favoriteIds.add(id);
+    persistFavoriteIds(favoriteIds);
+    if (unknownCount > 0) {
+      shareLinkNote =
+        unknownCount === 1
+          ? "1 from the link is no longer listed"
+          : `${unknownCount} from the link are no longer listed`;
+    } else {
+      shareLinkNote = "";
+    }
+    if (parseShareParamFromHash(location.hash)) syncHash("mylist");
+  }
+
   function showMyList({ fromHash = false } = {}) {
+    if (fromHash) applyIncomingShare(parseShareParamFromHash(location.hash));
     setView("mylist");
     if (!fromHash) syncHash("mylist");
     renderMyList();
+  }
+
+  async function shareMyList() {
+    if (document.body.dataset.view !== "mylist") return;
+    const codes = encodeShareCodes([...favoriteIds], shareCodebook);
+    if (!codes) return;
+    const url = buildShareUrl({
+      origin: location.origin,
+      pathname: location.pathname,
+      codes,
+    });
+    const payload = {
+      title: "Your Porirua Directory",
+      text: "Places from Your Porirua Directory",
+      url,
+    };
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share(payload);
+        return;
+      }
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      if (mylistStatus) mylistStatus.textContent = "Link copied";
+    } catch {
+      if (mylistStatus) mylistStatus.textContent = url;
+    }
   }
 
   function toggleFavorite(id) {
@@ -1317,6 +1384,12 @@ async function main() {
       if (document.body.dataset.view !== "mylist") return;
       setPrintingMylist(true);
       window.print();
+    });
+  }
+
+  if (mylistShare) {
+    mylistShare.addEventListener("click", () => {
+      shareMyList();
     });
   }
 

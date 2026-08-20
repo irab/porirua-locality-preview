@@ -1497,6 +1497,13 @@ body[data-view="browse"] .results {
   margin: 0;
 }
 
+.mylist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .mylist-intro {
   margin: 0 0 0.75rem;
   font-size: 1rem;
@@ -1791,10 +1798,12 @@ body[data-view="about"] .page-foot .site-footer {
   }
 }
 
-/* My List print preview — footer links stay visible; icons hidden when printing */
+/* My List print preview — footer links stay visible; icons and list actions hidden */
 body.printing-mylist .card__call .link-phone-icon,
 body.printing-mylist .card__website .link-external-icon,
-body.printing-mylist .card__website .link-social-icon {
+body.printing-mylist .card__website .link-social-icon,
+body.printing-mylist .mylist-print,
+body.printing-mylist .mylist-actions {
   display: none !important;
 }
 
@@ -1833,6 +1842,7 @@ body.printing-mylist .card__website .link-social-icon {
 
   body.printing-mylist .mylist-disclaimer,
   body.printing-mylist .mylist-print,
+  body.printing-mylist .mylist-actions,
   body.printing-mylist .mylist-intro,
   body.printing-mylist #mylist-status,
   body.printing-mylist .card__fav {

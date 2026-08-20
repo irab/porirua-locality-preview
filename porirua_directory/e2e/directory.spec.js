@@ -1,4 +1,23 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { test, expect } from "@playwright/test";
+import {
+  buildShareCodebook,
+  encodeShareCodes,
+  favoritableIdsFromEntries,
+} from "../share-list.mjs";
+
+const catalogPath = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../data/services.json"
+);
+
+function shareHashForIds(ids) {
+  const raw = JSON.parse(readFileSync(catalogPath, "utf8"));
+  const codebook = buildShareCodebook(favoritableIdsFromEntries(raw.services ?? []));
+  return `#mylist?s=${encodeShareCodes(ids, codebook)}`;
+}
 
 const LOGO_ALT = "Te Wāhi Tiaki Tātou — Porirua Locality";
 const PRODUCT_TITLE = "Your Porirua Directory";
@@ -569,6 +588,7 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
   await expect(page.getByText(/Places and organisations you’ve saved/i)).toBeVisible();
   await expect(page.getByText(/stay on this device while you keep this page open/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Print list" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Share list" })).toBeVisible();
   await expect(page.locator("#mylist-results")).toContainText(serviceName ?? "");
   await expect(page.locator("#mylist-results .card").first().locator(".card__fav-icon")).toBeVisible();
 });
@@ -651,6 +671,85 @@ test("my list — print layout shows phone number in footer", async ({ page }) =
   expect(printLayout.callVisible).toBe(true);
   expect(printLayout.phoneText).toBe("021 130 9377");
   expect(printLayout.iconHidden).toBe(true);
+});
+
+test("my list — share is hidden when empty and shown with a saved place", async ({ page }) => {
+  await page.goto("/index.html#mylist");
+  await expect(page.getByRole("heading", { name: "My list" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Share list" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Print list" })).toBeHidden();
+
+  await page.goto("/index.html#support");
+  const firstCard = page.locator("#directory-results .card").first();
+  await expect(firstCard).toBeVisible();
+  const name = (await firstCard.locator(".card__title").textContent())?.trim() ?? "";
+  await firstCard.getByRole("button", { name: `Add ${name} to your list` }).click();
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" }).click();
+  await expect(page.getByRole("button", { name: "Share list" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Print list" })).toBeVisible();
+});
+
+test("my list — share list calls the share sheet with a compact url", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__shareCalls = [];
+    navigator.share = async (data) => {
+      window.__shareCalls.push(data);
+    };
+  });
+  await page.goto("/index.html#support");
+  await fillBrowseSearch(page, "Little People");
+  const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
+  const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
+  await card.getByRole("button", { name: `Add ${name} to your list` }).click();
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" }).click();
+  await page.getByRole("button", { name: "Share list" }).click();
+
+  const calls = await page.evaluate(() => window.__shareCalls);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].title).toBe("Your Porirua Directory");
+  expect(calls[0].text).toBe("Places from Your Porirua Directory");
+  expect(calls[0].url).toMatch(/^https?:\/\//);
+  expect(calls[0].url).toMatch(/#mylist\?s=[0-9a-z]+/);
+  expect(new URL(calls[0].url).search).toBe("");
+});
+
+test("my list — opening a share link shows those places", async ({ page }) => {
+  await page.goto(`/index.html${shareHashForIds(["fsd-335"])}`);
+  await expect(page.getByRole("heading", { name: "My list" })).toBeVisible();
+  await expect(page.locator("#mylist-results")).toContainText("Little People");
+  await expect(page).toHaveURL(/#mylist$/);
+});
+
+test("my list — opening a share link adds to places already saved", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await fillBrowseSearch(page, "Little People");
+  const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
+  const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
+  await card.getByRole("button", { name: `Add ${name} to your list` }).click();
+
+  await page.goto(`/index.html${shareHashForIds(["community-awatea-community-garden"])}`);
+  await expect(page.getByRole("heading", { name: "My list" })).toBeVisible();
+  await expect(page.locator("#mylist-results")).toContainText("Little People");
+  await expect(page.locator("#mylist-results")).toContainText("Awatea Community Garden");
+});
+
+test("my list — print layout hides share list", async ({ page }) => {
+  await page.goto("/index.html#support");
+  await fillBrowseSearch(page, "Little People");
+  const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
+  const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
+  await card.getByRole("button", { name: `Add ${name} to your list` }).click();
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" }).click();
+  await expect(page.getByRole("button", { name: "Share list" })).toBeVisible();
+
+  const shareHidden = await page.evaluate(() => {
+    document.body.classList.add("printing-mylist");
+    const share = document.getElementById("mylist-share");
+    const hidden = !share || getComputedStyle(share).display === "none";
+    document.body.classList.remove("printing-mylist");
+    return hidden;
+  });
+  expect(shareHidden).toBe(true);
 });
 
 test("support card shows phone link in footer when phone exists", async ({ page }) => {
