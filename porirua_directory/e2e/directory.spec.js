@@ -266,6 +266,7 @@ for (const width of [390, 600]) {
     });
 
     expect(seam).not.toBeNull();
+    expect(seam.gap).toBeGreaterThanOrEqual(-1);
     expect(seam.gap).toBeLessThanOrEqual(1);
     expect(seam.peekCard).toBe(false);
   });

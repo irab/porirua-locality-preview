@@ -794,15 +794,18 @@ body[data-view="browse"] .browse-sticky-panel {
 }
 
 body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sticky-panel {
-  overflow-x: visible;
-  overflow-y: visible;
+  overflow-x: clip;
+  overflow-y: clip;
   overscroll-behavior: auto;
+  padding-bottom: 0;
   box-shadow:
     0 -0.25rem 0 0.15rem var(--bg),
     0 0.35rem 0 0.35rem var(--bg);
 }
 
 body[data-view="browse"][data-browse-chrome="collapsed"] .view-browse .browse-toolbar {
+  position: relative;
+  top: auto;
   padding-bottom: 0.35rem;
   margin-bottom: 0.15rem;
 }
@@ -836,19 +839,18 @@ body[data-view="browse"] .browse-sidebar {
   justify-content: space-between;
   gap: 0.65rem;
   width: 100%;
-  margin: 0.15rem 0 0.35rem;
+  margin: 0.2rem 0 0;
   font: inherit;
   font-size: 0.92rem;
   font-weight: 600;
   line-height: 1.2;
   text-align: left;
-  padding: 0.5rem 0.85rem;
+  padding: 0.45rem 0.85rem;
   border-radius: 999px;
-  border: 2px solid var(--border-strong);
+  border: 1px solid var(--border);
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(96, 22, 76, 0.06);
 }
 
 .browse-chrome-expand__label {
@@ -866,9 +868,8 @@ body[data-view="browse"] .browse-sidebar {
 
 .browse-chrome-expand:hover,
 .browse-chrome-expand:focus-visible {
-  border-color: var(--ink);
+  border-color: var(--border-strong);
   background: var(--surface);
-  box-shadow: 0 3px 8px rgba(96, 22, 76, 0.12);
 }
 
 .browse-chrome-expand:focus-visible {

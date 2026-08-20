@@ -619,7 +619,7 @@ async function main() {
 
   function syncSiteTopnavStickyHeight() {
     if (!siteTopnav) return;
-    const height = siteTopnav.getBoundingClientRect().height;
+    const height = Math.ceil(siteTopnav.getBoundingClientRect().height);
     if (!height) return;
     document.documentElement.style.setProperty(
       "--site-topnav-sticky-height",
@@ -1115,6 +1115,7 @@ async function main() {
     }
     if (backBtn) backBtn.hidden = view !== "browse";
     updateNavMylistCurrent();
+    syncSiteTopnavStickyHeight();
   }
 
   function renderMyList() {
