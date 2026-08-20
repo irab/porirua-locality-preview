@@ -127,7 +127,7 @@ function renderCrisis(container, emphasis) {
         `<a class="crisis__link" href="${esc(c.href)}" title="${esc(c.description)}">${esc(c.label)}</a>`
     )
     .join("");
-  container.innerHTML = `<div class="crisis__inner"><span class="crisis__label">Crisis:</span>${links}</div>`;
+  container.innerHTML = `<div class="crisis__inner"><span class="crisis__label">Urgent help:</span>${links}</div>`;
 }
 
 function renderChips(container, items, activeSet, attr) {

@@ -146,10 +146,12 @@
             class="browse-chrome-expand"
             hidden
             aria-expanded="false"
+            aria-controls="browse-sidebar-body"
           >
-            Filters
+            <span class="browse-chrome-expand__label">Show filters</span>
+            <span class="browse-chrome-expand__chevron" aria-hidden="true"></span>
           </button>
-          <div class="browse-sidebar__body">
+          <div id="browse-sidebar-body" class="browse-sidebar__body">
           <div class="browse-sidebar__inner">
           <section id="filters-support" class="filters filters--hidden" aria-labelledby="support-filters-heading">
             <h2 id="support-filters-heading" class="section-title">Support with…</h2>
@@ -210,7 +212,7 @@
   </main>
 
   <div class="page-foot">
-    <footer id="crisis-strip" class="crisis" role="contentinfo" aria-label="Crisis and emergency numbers"></footer>
+    <footer id="crisis-strip" class="crisis" role="contentinfo" aria-label="Urgent help and emergency numbers"></footer>
   </div>
 
   <script type="module" src="directory.js"></script>

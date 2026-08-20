@@ -48,7 +48,7 @@ test("layout-induced upward jump after collapse does not expand while locked", (
   assert.equal(state.lastY, 18);
 });
 
-test("after the lock expires, a real upward scroll expands chrome", () => {
+test("after the lock expires, upward scroll stays collapsed until the top", () => {
   let state = {
     y: 0,
     lastY: 0,
@@ -61,7 +61,15 @@ test("after the lock expires, a real upward scroll expands chrome", () => {
   assert.equal(state.collapsed, true);
 
   state = step(state, 160, state.lockUntil + 1);
+  assert.equal(state.collapsed, true);
+  assert.equal(state.mapCollapsed, true);
+
+  state = step(state, 40, state.lockUntil + 1);
+  assert.equal(state.collapsed, true);
+
+  state = step(state, 0, state.lockUntil + 1);
   assert.equal(state.collapsed, false);
+  assert.equal(state.mapCollapsed, false);
 });
 
 test("while locked, scrolling to the true top still expands chrome", () => {
@@ -94,7 +102,7 @@ test("after the lock expires, a layout-clamped position near top stays collapsed
   assert.equal(state.collapsed, true);
 });
 
-test("map stays collapsed while scrolled even if filters expand", () => {
+test("near-top but not at the list top stays collapsed", () => {
   let state = {
     y: 0,
     lastY: 0,
@@ -105,10 +113,9 @@ test("map stays collapsed while scrolled even if filters expand", () => {
   };
   state = step(state, 200, 16);
   assert.equal(state.collapsed, true);
-  assert.equal(state.mapCollapsed, true);
 
-  state = step(state, 160, state.lockUntil + 1);
-  assert.equal(state.collapsed, false);
+  state = step(state, 12, state.lockUntil + 1);
+  assert.equal(state.collapsed, true);
   assert.equal(state.mapCollapsed, true);
 });
 

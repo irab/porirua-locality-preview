@@ -794,6 +794,7 @@ body[data-view="browse"] .browse-sticky-panel {
 }
 
 body[data-view="browse"][data-browse-chrome="collapsed"] .browse-sticky-panel {
+  overflow-x: visible;
   overflow-y: visible;
   overscroll-behavior: auto;
   box-shadow:
@@ -831,28 +832,52 @@ body[data-view="browse"] .browse-sidebar {
 
 .browse-chrome-expand {
   display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
   width: 100%;
-  margin: 0 0 0.35rem;
+  margin: 0.15rem 0 0.35rem;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 600;
+  line-height: 1.2;
   text-align: left;
-  padding: 0.45rem 0.65rem;
-  border-radius: 10px;
-  border: 1px solid var(--border-strong);
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  border: 2px solid var(--border-strong);
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(96, 22, 76, 0.06);
+}
+
+.browse-chrome-expand__label {
+  min-width: 0;
+}
+
+.browse-chrome-expand__chevron {
+  flex-shrink: 0;
+  width: 0.65rem;
+  height: 0.65rem;
+  background: currentColor;
+  opacity: 0.7;
+  clip-path: polygon(50% 75%, 0 25%, 100% 25%);
 }
 
 .browse-chrome-expand:hover,
 .browse-chrome-expand:focus-visible {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 3px 8px rgba(96, 22, 76, 0.12);
+}
+
+.browse-chrome-expand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 body[data-view="browse"][data-browse-chrome="collapsed"] .browse-chrome-expand:not([hidden]) {
-  display: block;
+  display: flex;
 }
 
 body[data-view="browse"] {

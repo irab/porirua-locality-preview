@@ -91,10 +91,10 @@ test("landing — welcome, path cards, no duplicate path choice, crisis footer, 
   await expect(page.locator("#site-subnav")).toBeHidden();
   await expect(page.getByText("I would like to…")).toBeHidden();
   await expect(page.getByRole("group", { name: "Choose a path" })).toHaveCount(0);
-  await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
-  await expect(
-    page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "Need to talk? 1737" })
-  ).toBeVisible();
+  const urgentHelp = page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" });
+  await expect(urgentHelp.getByText("Urgent help:")).toBeVisible();
+  await expect(urgentHelp.getByRole("link", { name: "111 Emergency" })).toBeVisible();
+  await expect(urgentHelp.getByRole("link", { name: "Need to talk? 1737" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("button", { name: "← Back" })).toHaveCount(0);
   await expect(page.locator("#search-input")).toBeHidden();
   await expect(page.locator(".leaflet-container")).toHaveCount(0);
@@ -126,7 +126,7 @@ test("about page — nav, copy, crisis footer", async ({ page }) => {
   await expect(page.locator(".site-product-title")).toHaveText(PRODUCT_TITLE);
   await expect(page.getByRole("link", { name: "Back to Your Porirua Directory" })).toBeVisible();
   await expect(
-    page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "Need to talk? 1737" })
+    page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" }).getByRole("link", { name: "Need to talk? 1737" })
   ).toBeVisible();
 });
 
@@ -135,7 +135,7 @@ test("support path — all listings by default, no chip selected", async ({ page
   await pickSupportPath(page);
   await expect(page.locator("#site-subnav")).toBeHidden();
   await expect(page.getByText("I would like to…")).toBeHidden();
-  await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
+  await expect(page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(0);
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
@@ -316,6 +316,9 @@ test("browse chrome collapses on scroll down and expands near top", async ({ pag
     )
     .toBe(true);
   await expect(browseSearch(page)).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 160));
+  await expect(page.locator("body")).toHaveAttribute("data-browse-chrome", "collapsed");
+  await expect(page.getByRole("button", { name: "Show filters" })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
 });
@@ -367,7 +370,7 @@ test("Filters reopen chips without laying the map over search", async ({ page })
   await page.waitForSelector("#directory-results .card");
   await page.evaluate(() => window.scrollTo(0, 220));
   await expect(page.locator("body")).toHaveAttribute("data-browse-chrome", "collapsed");
-  await page.getByRole("button", { name: "Filters" }).click();
+  await page.getByRole("button", { name: "Show filters" }).click();
   await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
   await page.getByRole("button", { name: /Councils and public agencies/i }).click();
   await expect(page.getByRole("button", { name: /Councils and public agencies/i })).toHaveClass(/is-on/);
@@ -420,7 +423,7 @@ test("browse chrome does not collapse on three-column desktop scroll", async ({ 
 test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
   await page.goto("/index.html");
   await pickCommunityPath(page);
-  await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
+  await expect(page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
   await page.getByRole("button", { name: /Marae and iwi/i }).click();
   await expect(page.locator("#directory-results")).toContainText(/Ngāti Toa/i);
 });
@@ -565,7 +568,7 @@ test("back control returns to landing", async ({ page }) => {
   await expect(page.locator("#site-subnav")).toBeHidden();
   await expect(page.getByText("I would like to…")).toBeHidden();
   await expect(page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i })).toBeVisible();
-  await expect(page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
+  await expect(page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
 });
 
 test("my list — add to list, view list, privacy note", async ({ page }) => {

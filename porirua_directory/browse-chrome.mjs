@@ -10,6 +10,8 @@ export function armBrowseChromeLock(now) {
 
 /**
  * Decide browse-chrome collapsed state from a scroll sample.
+ * Filters stay collapsed while scrolling back up; they reopen only at
+ * the true top of the list (or via the Show filters control).
  * While `now < lockUntil`, layout-induced scroll jumps are ignored.
  */
 export function nextBrowseChromeFromScroll({
@@ -49,8 +51,6 @@ export function nextBrowseChromeFromScroll({
     next = false;
   } else if (delta > BROWSE_CHROME_SCROLL_DELTA && y > BROWSE_CHROME_EXPAND_SCROLL_Y) {
     next = true;
-  } else if (delta < -BROWSE_CHROME_SCROLL_DELTA) {
-    next = false;
   }
 
   return {

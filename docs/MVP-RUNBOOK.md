@@ -114,7 +114,7 @@ CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes
 2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`).
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
-   - **Smoke:** landing **Find support** / **Connect with community** switch to browse; crisis footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
+   - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
 
 **Pin a SHA:** edit `deployment.yaml` image tag to `:sha` instead of `:latest` for reproducible rollouts.
 
@@ -129,7 +129,7 @@ Use this checklist when testing the MVP with help-seekers and the Porirua Locali
 | Browse entry | Is **Find support** vs **Connect with community** clear on landing (**I would like to…**)? |
 | Need categories | Are the nine support categories the right plain-language set? |
 | Community filters | Can people find marae, councils, and kai initiatives without schools crowding the view? |
-| Crisis footer | Sticky bar readable on mobile; links work from landing, browse, and About? |
+| Urgent help footer | Sticky bar labelled **Urgent help** readable on mobile; links work from landing, browse, and About? |
 | Browse layout | **Back** to change path (subnav hidden); filters left, optional map, results — quick on a phone? |
 | Search & map | Can people find a known service (name or suburb) on a phone? |
 | Trust | Do community org descriptions and org-type chips feel local and accurate? |
