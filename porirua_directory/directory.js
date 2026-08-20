@@ -588,10 +588,7 @@ async function main() {
   const needChips = document.getElementById("need-chips");
   const communityChips = document.getElementById("community-chips");
   const searchInput = document.getElementById("search-input");
-  const browseSearch = document.getElementById("browse-search");
-  const searchToggle = document.getElementById("search-toggle");
   const searchClose = document.getElementById("search-close");
-  const browseSearchField = document.getElementById("browse-search-field");
   const statusLine = document.getElementById("status-line");
   const resultsEl = document.getElementById("directory-results");
   const mapEl = document.getElementById("directory-map");
@@ -640,43 +637,20 @@ async function main() {
     nearMe: null,
   };
 
-  function setSearchOpen(open) {
-    if (!browseSearch || !searchToggle || !browseSearchField) return;
-    browseSearch.classList.toggle("is-open", open);
-    browseSearch.setAttribute("aria-expanded", open ? "true" : "false");
-    searchToggle.setAttribute("aria-expanded", open ? "true" : "false");
-    searchToggle.hidden = open;
-    browseSearchField.hidden = !open;
-    browseSearchField.setAttribute("aria-hidden", open ? "false" : "true");
-    if (searchInput) {
-      searchInput.tabIndex = open ? 0 : -1;
-    }
-    if (open && searchInput) {
-      window.requestAnimationFrame(() => searchInput.focus());
-    } else if (!open) {
-      searchToggle.hidden = false;
-      searchToggle.focus();
-    }
-  }
-
-  function closeSearch() {
-    setSearchOpen(false);
-  }
-
-  function clearAndCloseSearch() {
-    clearSearchField();
-    closeSearch();
-    refresh();
-  }
-
-  function openSearch() {
-    setBrowseChromeCollapsed(false);
-    setSearchOpen(true);
+  function syncSearchClearButton() {
+    if (!searchClose) return;
+    searchClose.hidden = !searchInput?.value;
   }
 
   function clearSearchField() {
     state.search = "";
     if (searchInput) searchInput.value = "";
+    syncSearchClearButton();
+  }
+
+  function clearSearch() {
+    clearSearchField();
+    refresh();
   }
 
   const favoriteIds = loadFavoriteIds();
@@ -1043,12 +1017,6 @@ async function main() {
       browseChromeLastScrollY = window.scrollY;
       return;
     }
-    if (browseSearch?.classList.contains("is-open")) {
-      setBrowseChromeCollapsed(false);
-      browseChromeLastScrollY = window.scrollY;
-      return;
-    }
-
     const y = window.scrollY;
     const delta = y - browseChromeLastScrollY;
     browseChromeLastScrollY = y;
@@ -1097,6 +1065,7 @@ async function main() {
     } else {
       browseChromeLastScrollY = window.scrollY;
     }
+    if (backBtn) backBtn.hidden = view !== "browse";
     updateNavMylistCurrent();
   }
 
@@ -1209,7 +1178,6 @@ async function main() {
       state.search = "";
       clearNearMe();
       clearSearchField();
-      closeSearch();
       setView("browse");
     } else {
       state.mode = null;
@@ -1218,7 +1186,6 @@ async function main() {
       state.search = "";
       clearNearMe();
       clearSearchField();
-      closeSearch();
       setView("landing");
       statusLine.textContent = "";
       resultsEl.innerHTML = "";
@@ -1428,41 +1395,29 @@ async function main() {
   });
 
   if (searchInput) {
-    searchInput.tabIndex = -1;
     searchInput.addEventListener("input", () => {
       state.search = searchInput.value;
+      syncSearchClearButton();
       refresh();
     });
 
     searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        clearAndCloseSearch();
-      }
-    });
-  }
-
-  if (searchToggle) {
-    searchToggle.addEventListener("click", () => {
-      if (browseSearch?.classList.contains("is-open")) {
-        clearAndCloseSearch();
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      if (searchInput.value) {
+        clearSearch();
       } else {
-        openSearch();
+        searchInput.blur();
       }
     });
   }
 
   if (searchClose) {
     searchClose.addEventListener("click", () => {
-      clearAndCloseSearch();
+      clearSearch();
+      searchInput?.focus();
     });
   }
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || !browseSearch?.classList.contains("is-open")) return;
-    if (e.target === searchInput) return;
-    clearAndCloseSearch();
-  });
 
   resultsEl.addEventListener("click", (e) => {
     if (handleFavClick(e)) return;

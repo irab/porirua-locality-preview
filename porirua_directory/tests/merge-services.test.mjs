@@ -85,4 +85,5 @@ test("parseCommunityCsv maps fixture rows", async () => {
   assert.equal(rows[0].source, "community");
   assert.deepEqual(rows[0].badges, []);
   assert.ok(rows[0].communityFilters.includes("marae_iwi"));
+  assert.ok(rows[1].communityFilters.includes("kai_initiatives"));
 });

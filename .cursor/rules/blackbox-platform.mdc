@@ -1,0 +1,14 @@
+---
+description: Require the blackbox-platform skill before deploy or ops on this cluster
+alwaysApply: true
+---
+
+# Blackbox platform
+
+If this task involves Kubernetes, ArgoCD, Loki, Tailscale cluster access, Cloudflare/DNS, secrets, tenants, or promoting to prod on Blackbox: **read the `blackbox-platform` skill before acting** (`~/.cursor/skills/blackbox-platform/SKILL.md`). Then open exactly one reference file the skill names.
+
+- Default to **dev**. Do not change `clusters/prod/**` or `prod-*` namespaces unless the user explicitly asked for production.
+- Tenant apps: change manifests in git. Do not `kubectl apply` / `kubectl edit` live tenant workloads — not even as a prod hotfix you will “git later.”
+- Live Kubernetes is for investigation (`get`, `logs`, `describe`, Loki) and for platform services (Loki, Alloy, Traefik, sslh, Kyverno, sealed-secrets, ExternalDNS).
+- Stay inside the current tenant namespace (`dev-<name>` / `prod-<name>`). No cross-tenant reads or writes.
+- Directory production host is `directory.bsky.nz`. Manifests live in the blackbox repo under `clusters/prod/tenants/porirua-directory/`.

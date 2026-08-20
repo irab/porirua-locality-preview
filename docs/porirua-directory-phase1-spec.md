@@ -122,7 +122,7 @@ No automated public/private business filter — team curates via overrides.
 | Community Group, Kaupapa Group | `community_groups` |
 | Council / Government | `councils` |
 | School / Kura | `schools` |
-| (labels: kai, pātaka, food) | add `kai_initiatives` |
+| (name, labels, or initiatives: kai, food, pātaka kai) | add `kai_initiatives` |
 | Other | `other_community` |
 
 ---

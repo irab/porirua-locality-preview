@@ -20,7 +20,8 @@
       "lng": 174.847582,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Community Group",
       "source": "community",
@@ -43,7 +44,8 @@
       "lng": 174.865594,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Community Group",
       "source": "community",
@@ -250,7 +252,8 @@
       "lng": 174.8411,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Kaupapa Group",
       "source": "community",
@@ -296,7 +299,8 @@
       "lng": 174.8448,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Community Group",
       "source": "community",
@@ -434,7 +438,8 @@
       "lng": null,
       "categories": [],
       "communityFilters": [
-        "other_community"
+        "other_community",
+        "kai_initiatives"
       ],
       "orgType": "Advocacy / Research",
       "source": "community",
@@ -779,7 +784,8 @@
       "lng": 174.842,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Community Group",
       "source": "community",
@@ -825,7 +831,8 @@
       "lng": 174.892929,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Community Group",
       "source": "community",
@@ -986,7 +993,8 @@
       "lng": 174.842,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Community Group",
       "source": "community",
@@ -1009,7 +1017,8 @@
       "lng": 174.8448,
       "categories": [],
       "communityFilters": [
-        "other_community"
+        "other_community",
+        "kai_initiatives"
       ],
       "orgType": "Social Enterprise",
       "source": "community",
@@ -1055,7 +1064,8 @@
       "lng": 174.8448,
       "categories": [],
       "communityFilters": [
-        "other_community"
+        "other_community",
+        "kai_initiatives"
       ],
       "orgType": "Not-for-Profit organisation",
       "source": "community",
@@ -1124,7 +1134,8 @@
       "lng": 174.8432,
       "categories": [],
       "communityFilters": [
-        "community_groups"
+        "community_groups",
+        "kai_initiatives"
       ],
       "orgType": "Community Group",
       "source": "community",

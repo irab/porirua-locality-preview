@@ -42,6 +42,7 @@
         aria-current="page"
       >Your Porirua Directory</a>
       <nav class="site-nav" aria-label="Site">
+        <button type="button" id="back-to-landing" class="site-nav__link site-nav__back" hidden>← Back</button>
         <a class="site-nav__link" href="#mylist" id="nav-mylist">My list</a>
         <a class="site-nav__link" href="about.html">About</a>
       </nav>
@@ -69,12 +70,14 @@
           <span class="landing-path-card__desc">
             Browse by topic or search — food, housing, health, and other help.
           </span>
+          <span class="landing-path-card__go" aria-hidden="true">→</span>
         </button>
         <button type="button" class="landing-path-card" data-mode="community">
           <span class="landing-path-card__title">Connect with community</span>
           <span class="landing-path-card__desc">
             Marae, groups, councils, and local initiatives.
           </span>
+          <span class="landing-path-card__go" aria-hidden="true">→</span>
         </button>
       </div>
     </section>
@@ -101,50 +104,27 @@
       <div class="browse-layout">
         <div class="browse-sticky-panel">
           <div class="browse-toolbar">
-            <button type="button" id="back-to-landing" class="back-link">← Back</button>
-            <div class="browse-toolbar__cluster">
-            <div class="browse-search" id="browse-search" aria-expanded="false">
-              <button
-                type="button"
-                id="search-toggle"
-                class="browse-search__toggle"
-                aria-expanded="false"
-                aria-controls="browse-search-field"
-              >
-                <svg class="browse-search__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
-                  <path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                <span class="browse-search__label">Search</span>
-              </button>
-              <div
-                class="browse-search__field"
-                id="browse-search-field"
-                role="search"
-                aria-hidden="true"
-                hidden
-              >
+            <div class="browse-search" id="browse-search">
+              <div class="browse-search__field" id="browse-search-field" role="search">
                 <span class="browse-search__prefix" aria-hidden="true">
                   <svg class="browse-search__icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
                     <path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                   </svg>
                 </span>
-                <label class="visually-hidden" for="search-input">Search listings</label>
+                <label class="visually-hidden" for="search-input">Search organisations</label>
                 <input
                   id="search-input"
                   type="text"
                   role="searchbox"
-                  placeholder="Search listings"
+                  placeholder="Search organisations…"
                   autocomplete="off"
                   enterkeyhint="search"
-                  tabindex="-1"
                 />
-                <button type="button" id="search-close" class="browse-search__close" aria-label="Close search">
+                <button type="button" id="search-close" class="browse-search__close" aria-label="Clear search" hidden>
                   <span aria-hidden="true">×</span>
                 </button>
               </div>
-            </div>
             </div>
           </div>
 

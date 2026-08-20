@@ -28,6 +28,7 @@ Each issue should include:
 
 | Issue | Status | Summary |
 |-------|--------|---------|
+| [fixed-community-kai-initiatives-empty-filter.md](./fixed-community-kai-initiatives-empty-filter.md) | Fixed | Community **Food / Pātaka Kai** chip matched nothing because `kai_initiatives` required empty `labels` |
 | [fixed-fsd-aranui-christchurch-filter.md](./fixed-fsd-aranui-christchurch-filter.md) | Fixed | FSD Porirua locality regex falsely matched Christchurch **Aranui** via **Rānui** token |
 | [fixed-fsd-locality-address-context-filter.md](./fixed-fsd-locality-address-context-filter.md) | Fixed | Suburb tokens matched Whitby/Rānui street names, Auckland Ranui, or wrong FSD Porirua district |
 | [fixed-fsd-ora-toa-respiratory-sea-marker.md](./fixed-fsd-ora-toa-respiratory-sea-marker.md) | Fixed | FSD row 4690 had empty address and offshore lat/lng; override to Ora Toa Health Unit, Takapūwāhia |

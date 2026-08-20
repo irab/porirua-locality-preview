@@ -30,13 +30,14 @@ export function mapCommunityRow(row) {
   const name = String(row.name ?? "").trim();
   const orgType = String(row.orgType ?? "").trim();
   const labels = String(row.labels ?? "").trim();
+  const initiatives = String(row.initiatives ?? "").trim();
   const venue = String(row.venue ?? "").trim();
   const address = String(row.address ?? "").trim();
   const fullAddress = address || venue;
 
   const communityFilters = [...communityFiltersFromOrgType(orgType)];
-  const labelLower = labels.toLowerCase();
-  if (/\bkai\b|pātaka|pataka|\bfood\b/.test(labelLower)) {
+  const kaiHay = `${name} ${labels} ${initiatives}`.toLowerCase();
+  if (/\b(?:kai|food|pātaka kai|pataka kai)\b/.test(kaiHay)) {
     if (!communityFilters.includes("kai_initiatives")) {
       communityFilters.push("kai_initiatives");
     }
@@ -61,7 +62,7 @@ export function mapCommunityRow(row) {
     communityMeta: {
       theme: String(row.theme ?? "").trim(),
       themes: String(row.themes ?? "").trim(),
-      initiatives: String(row.initiatives ?? "").trim(),
+      initiatives,
       labels,
     },
   };

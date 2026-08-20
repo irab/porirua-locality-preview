@@ -11,6 +11,16 @@ async function pickCommunityPath(page) {
   await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Connect with community/i }).click();
 }
 
+function browseSearch(page) {
+  return page.getByRole("searchbox", { name: "Search organisations" });
+}
+
+async function fillBrowseSearch(page, query) {
+  const input = browseSearch(page);
+  await expect(input).toBeVisible();
+  await input.fill(query);
+}
+
 /** Playwright context geolocation is unreliable with getCurrentPosition; stub in-page. */
 async function mockGeolocation(page, { latitude, longitude, accuracy = 10 }) {
   await page.addInitScript(
@@ -66,6 +76,7 @@ test("landing — welcome, path cards, no duplicate path choice, crisis footer, 
   await expect(
     page.getByRole("contentinfo", { name: "Crisis and emergency numbers" }).getByRole("link", { name: "Need to talk? 1737" })
   ).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Site" }).getByRole("button", { name: "← Back" })).toHaveCount(0);
   await expect(page.locator("#search-input")).toBeHidden();
   await expect(page.locator(".leaflet-container")).toHaveCount(0);
   await expect(page.locator("#map-block")).toBeHidden();
@@ -233,7 +244,7 @@ test("browse chrome collapses on scroll down and expands near top", async ({ pag
       { timeout: 8000 }
     )
     .toBe(true);
-  await expect(page.locator("#search-toggle")).toBeVisible();
+  await expect(browseSearch(page)).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
 });
@@ -261,94 +272,98 @@ test("community path — marae filter finds Ngāti Toa", async ({ page }) => {
   await expect(page.locator("#directory-results")).toContainText(/Ngāti Toa/i);
 });
 
+test("community path — Food / Pātaka Kai finds kai organisations", async ({ page }) => {
+  await page.goto("/index.html");
+  await pickCommunityPath(page);
+  await page.getByRole("button", { name: /Food \/ Pātaka Kai/i }).click();
+  await expect(page.locator("#directory-results")).toContainText(/Kai Kaupapa Group/i);
+  await expect(page.locator("#directory-results")).toContainText(/Te Umu ki Rangituhi/i);
+});
+
 test("search filters results on support path", async ({ page }) => {
   await page.goto("/index.html");
   await pickSupportPath(page);
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "true");
-  await page.locator("#search-input").fill("Wesley");
+  await fillBrowseSearch(page, "Wesley");
   await expect(page.locator("#directory-results")).toContainText(/Wesley/i);
 });
 
-test("browse search toggle shows the word Search until the field is open", async ({ page }) => {
+test("browse search field is visible without a toggle", async ({ page }) => {
   await page.goto("/index.html#support");
-  const toggle = page.getByRole("button", { name: "Search", exact: true });
-  await expect(toggle).toBeVisible();
-  await expect(toggle).toContainText("Search");
-  await toggle.click();
-  await expect(toggle).toBeHidden();
-  await expect(page.getByRole("searchbox", { name: "Search listings" })).toBeVisible();
-  await page.getByRole("button", { name: "Close search" }).click();
-  await expect(toggle).toBeVisible();
-  await expect(toggle).toContainText("Search");
+  await expect(page.getByRole("button", { name: "Search", exact: true })).toHaveCount(0);
+  const input = browseSearch(page);
+  await expect(input).toBeVisible();
+  await expect(input).toHaveAttribute("placeholder", "Search organisations…");
+  await expect(page.getByRole("button", { name: "Clear search" })).toHaveCount(0);
 });
 
-test("closing search clears the filter and restores listings", async ({ page }) => {
+test("clearing search restores listings", async ({ page }) => {
   await page.goto("/index.html#support");
   const cards = page.locator("#directory-results .card");
   await expect(cards.first()).toBeVisible();
   const initialCount = await cards.count();
 
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.getByRole("searchbox", { name: "Search listings" }).fill("zzzxnotaservice999");
+  await fillBrowseSearch(page, "zzzxnotaservice999");
   await expect(page.getByText(/We couldn’t find anything/i)).toBeVisible();
 
-  await page.getByRole("button", { name: "Close search" }).click();
-  await expect(page.getByRole("button", { name: "Search", exact: true })).toBeVisible();
-  await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "false");
+  await page.getByRole("button", { name: "Clear search" }).click();
+  await expect(browseSearch(page)).toBeVisible();
+  await expect(browseSearch(page)).toHaveValue("");
   await expect(cards.first()).toBeVisible();
   await expect(cards).toHaveCount(initialCount);
+});
 
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await expect(page.getByRole("searchbox", { name: "Search listings" })).toHaveValue("");
+test("Escape in search clears the query and keeps the field visible", async ({ page }) => {
+  await page.goto("/index.html#support");
+  const cards = page.locator("#directory-results .card");
+  await expect(cards.first()).toBeVisible();
+  const initialCount = await cards.count();
+
+  const input = browseSearch(page);
+  await input.fill("zzzxnotaservice999");
+  await expect(page.getByText(/We couldn’t find anything/i)).toBeVisible();
+
+  await input.press("Escape");
+  await expect(input).toBeVisible();
+  await expect(input).toHaveValue("");
+  await expect(page.getByRole("button", { name: "Clear search" })).toHaveCount(0);
+  await expect(cards).toHaveCount(initialCount);
 });
 
 test("browse search hides the native clear control while typing", async ({ page }) => {
   await page.goto("/index.html#support");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  const input = page.getByRole("searchbox", { name: "Search listings" });
+  const input = browseSearch(page);
   await expect(input).toBeVisible();
   await input.fill("asdas");
-  await expect(page.getByRole("button", { name: "Close search" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Clear search" })).toBeVisible();
   // type=search adds a second native × in Chrome/Safari that CSS cannot reliably hide.
   await expect(input).toHaveAttribute("type", "text");
 });
 
-test("browse search toggle stays in viewport on narrow screens", async ({ page }) => {
+test("browse search field stays in viewport on narrow screens", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/index.html");
   await pickSupportPath(page);
-  const toggle = page.locator("#search-toggle");
-  await expect(toggle).toBeVisible();
-  const box = await toggle.boundingBox();
+  const field = page.locator("#browse-search");
+  await expect(browseSearch(page)).toBeVisible();
+  const box = await field.boundingBox();
   expect(box).not.toBeNull();
   const { width: vw } = page.viewportSize();
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(vw + 0.5);
-  await toggle.click();
-  const search = page.locator("#browse-search");
-  await expect(search).toHaveAttribute("aria-expanded", "true");
-  const openBox = await search.boundingBox();
-  expect(openBox).not.toBeNull();
-  expect(openBox.x + openBox.width).toBeLessThanOrEqual(vw + 0.5);
 });
 
-test("browse search — expanded field fits placeholder on mobile", async ({ page }) => {
+test("browse search — field fits placeholder on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/index.html#support");
-  const toggle = page.getByRole("button", { name: "Search", exact: true });
-  await toggle.click();
-  await expect(page.locator("#browse-search")).toHaveAttribute("aria-expanded", "true");
-  const input = page.locator("#search-input");
+  const input = browseSearch(page);
   await expect(input).toBeVisible();
-  await expect(input).toHaveAttribute("placeholder", "Search listings");
+  await expect(input).toHaveAttribute("placeholder", "Search organisations…");
 
   const layout = await page.evaluate(() => {
     const inputEl = document.getElementById("search-input");
     const fieldEl = document.getElementById("browse-search-field");
-    const toggleEl = document.getElementById("search-toggle");
     const prefixEl = fieldEl?.querySelector(".browse-search__prefix");
-    if (!inputEl || !fieldEl || !toggleEl || !prefixEl) return null;
+    if (!inputEl || !fieldEl || !prefixEl) return null;
     const style = window.getComputedStyle(inputEl);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -360,7 +375,6 @@ test("browse search — expanded field fits placeholder on mobile", async ({ pag
     return {
       inputWidth: inputEl.clientWidth,
       placeholderWidth,
-      toggleHidden: toggleEl.hidden,
       prefixInsideField:
         prefixRect.left >= fieldRect.left - 1 &&
         prefixRect.right <= fieldRect.right + 1,
@@ -368,7 +382,6 @@ test("browse search — expanded field fits placeholder on mobile", async ({ pag
   });
   expect(layout).not.toBeNull();
   expect(layout.inputWidth).toBeGreaterThanOrEqual(layout.placeholderWidth);
-  expect(layout.toggleHidden).toBe(true);
   expect(layout.prefixInsideField).toBe(true);
 });
 
@@ -384,8 +397,18 @@ test("back control returns to landing", async ({ page }) => {
   await page.goto("/index.html");
   await pickSupportPath(page);
   await expect(page.locator("#site-subnav")).toBeHidden();
-  await page.getByRole("button", { name: "← Back" }).click();
+  const siteNav = page.getByRole("navigation", { name: "Site" });
+  const back = siteNav.getByRole("button", { name: "← Back" });
+  const myList = siteNav.getByRole("link", { name: "My list" });
+  await expect(back).toBeVisible();
+  const backBox = await back.boundingBox();
+  const myListBox = await myList.boundingBox();
+  expect(backBox).not.toBeNull();
+  expect(myListBox).not.toBeNull();
+  expect(backBox.x).toBeLessThan(myListBox.x);
+  await back.click();
   await expect(page.locator("#view-landing")).toBeVisible();
+  await expect(siteNav.getByRole("button", { name: "← Back" })).toHaveCount(0);
   await expect(page.locator("#site-subnav")).toBeHidden();
   await expect(page.getByText("I would like to…")).toBeHidden();
   await expect(page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i })).toBeVisible();
@@ -407,6 +430,8 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
 
   await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" }).click();
   await expect(page.getByRole("heading", { name: "My list" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Site" }).getByRole("button", { name: "← Back" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "← Back to start" })).toBeVisible();
   await expect(page.getByText(/Places and organisations you’ve saved/i)).toBeVisible();
   await expect(page.getByText(/stay on this device while you keep this page open/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Print list" })).toBeVisible();
@@ -416,8 +441,7 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
 
 test("my list — phone link in footer when saved service has phone", async ({ page }) => {
   await page.goto("/index.html#support");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.locator("#search-input").fill("Little People");
+  await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
   await card.getByRole("button", { name: `Add ${name} to your list` }).click();
@@ -469,8 +493,7 @@ test("my list — print list enables print mode without error", async ({ page })
 
 test("my list — print layout shows phone number in footer", async ({ page }) => {
   await page.goto("/index.html#support");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.locator("#search-input").fill("Little People");
+  await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
   await card.getByRole("button", { name: `Add ${name} to your list` }).click();
@@ -498,8 +521,7 @@ test("my list — print layout shows phone number in footer", async ({ page }) =
 
 test("support card shows phone link in footer when phone exists", async ({ page }) => {
   await page.goto("/index.html#support");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.locator("#search-input").fill("Little People");
+  await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   await expect(card).toBeVisible();
   await expect(card.getByRole("link", { name: "021 130 9377", exact: true })).toBeVisible();
@@ -516,8 +538,7 @@ test("support card shows phone link in footer when phone exists", async ({ page 
 
 test("Call link on card does not open map popup", async ({ page }) => {
   await page.goto("/index.html#support");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.locator("#search-input").fill("Little People");
+  await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   await card.locator(".card__call").click();
   await expect(page.locator(".leaflet-popup-content .map-popup")).toHaveCount(0);
@@ -716,8 +737,7 @@ test("org grouping — need chip + search does not keep org via non-matching sib
 }) => {
   await page.goto("/index.html#support");
   await page.locator("#need-chips").getByRole("button", { name: "Health" }).click();
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.locator("#search-input").fill("swis");
+  await fillBrowseSearch(page, "swis");
   await expect(
     page.locator("#directory-results .card--org").filter({ hasText: /Family Works Central/i })
   ).toHaveCount(0);
