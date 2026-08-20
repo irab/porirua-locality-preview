@@ -31,3 +31,10 @@ export const FSD_GEOCODE_FLAGS_JSON = path.join(
 );
 export const SERVICES_JSON = path.join(DATA_DIR, "services.json");
 export const OVERRIDES_JSON = path.join(DATA_DIR, "overrides.json");
+
+/** Postgres connection string. Required for bootstrap, publish, and the catalog API. */
+export const DATABASE_URL = process.env.DATABASE_URL || "";
+
+export const TEST_DATABASE_URL =
+  process.env.DATABASE_URL ||
+  "postgres://porirua:porirua@127.0.0.1:54329/porirua_test";

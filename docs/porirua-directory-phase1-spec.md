@@ -16,6 +16,8 @@
 | Connections + FSD merge | `porirua_directory/scripts/merge-services.mjs` |
 | Normalisation / dedupe | `porirua_directory/scripts/lib/normalize.mjs` |
 | Org grouping (Option B) | `porirua_directory/scripts/org-grouping.mjs` |
+| Catalog row mapping (Phase 2) | `porirua_directory/scripts/catalog-rows.mjs`, `catalog-envelope.mjs` |
+| Catalog schema / bootstrap / publish | `porirua_directory/scripts/db-schema.sql`, `db-import-from-json.mjs`, `publish-catalog.mjs` |
 | Published dataset | `porirua_directory/data/services.json` |
 | Manual curation | `porirua_directory/data/overrides.json` |
 | Public UI | `index.html`, `directory.js`, `config-directory.js`, `directory.css` |
@@ -84,7 +86,17 @@ Envelope:
 }
 ```
 
-(`published` = catalog cards, not raw FSD row count.)
+(`published` = catalog cards, not raw FSD row count. `community` / `fsd` / `duplicatesHidden` are merge **input** sizes.)
+
+### Catalog row mapping (Phase 2)
+
+Pure functions — no database. `catalogToRows(envelope, overrides)` decomposes the published catalog into `organizations`, `services`, and `overrides` rows; `buildCatalogEnvelope({ organizations, services })` rebuilds the Option B envelope. A committed-catalog round-trip is lossless except `generatedAt` (`tests/catalog-roundtrip.test.mjs`).
+
+**Grain is stored, not inferred.** `render_grain` is `'flat'` or `'organization'` copied from the existing entry (`kind`). Line count must not decide this. Re-running `applyOrgGrouping()` on read would change public ids and break saved My list entries.
+
+**Two FSD id columns** on each service row: `fsd_service_id` (CSV `SERVICE_ID`, the weekly-sync diff key) and `fsd_legacy_id` (CSV `FSD_ID`, emitted as `fsdServiceId`).
+
+**Unique `public_id` at bootstrap.** The committed JSON has two colliding card ids (`org-te-waka-whaiora-trust`, `community-te-wahi-tiaki-tatou`). `db-import-from-json.mjs` keeps the winner's bare id (most service lines, then lowest `line_id`, then `cluster_key`) and suffixes the other with `-<first 4 hex of sha256(cluster_key)>`. That is an id-uniqueness step only — editors merge duplicates later. `public_id` is `NOT NULL UNIQUE` in Postgres.
 
 ---
 
@@ -163,4 +175,4 @@ Applied at merge time. `hiddenIds` removes rows from published output entirely.
 
 ## Phase 2 pointer
 
-Admin workflows (review queue, publish/hide, weekly FSD) — see requirements §6 and architecture Phase 2 section. **Directus** recommended for non-technical editors updating field content only; **D1** optional if building custom admin on Cloudflare.
+Schema, bootstrap, and snapshot publish live in `porirua_directory/scripts/` (`db-schema.sql`, `db-import-from-json.mjs`, `publish-catalog.mjs`). Admin workflows (review queue, publish/hide, weekly FSD) — see requirements §6 and [architecture Phase 2](./architecture/porirua-directory-architecture.md#phase-2--catalog-store-in-repo-now). **Directus** is the editor UI; **D1** is an exit only.
