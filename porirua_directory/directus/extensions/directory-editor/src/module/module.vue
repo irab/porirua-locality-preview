@@ -260,9 +260,10 @@
 </template>
 
 <script>
-import { useStores } from "@directus/extensions-sdk";
+import { useApi, useStores } from "@directus/extensions-sdk";
 import ListingForm from "./listing-form.vue";
 import VerificationBar from "./verification-bar.vue";
+import { directoryEditorRequest } from "./directory-api.js";
 import {
   actionSuccessMessage,
   foldSearch,
@@ -313,6 +314,7 @@ function emptyForm() {
 export default {
   components: { ListingForm, VerificationBar },
   setup() {
+    const apiClient = useApi();
     let notifyStore = null;
     try {
       const { useNotificationsStore } = useStores();
@@ -320,7 +322,7 @@ export default {
     } catch {
       notifyStore = null;
     }
-    return { notifyStore };
+    return { notifyStore, apiClient };
   },
   data() {
     return {
@@ -451,13 +453,7 @@ export default {
     needsConfirmationGroupLabel,
     needConfirmationOnlyTitle,
     async api(path, options = {}) {
-      const response = await this.$api.transport.request({
-        method: options.method || "GET",
-        path: `/directory-editor${path}`,
-        data: options.body,
-        params: options.params,
-      });
-      return response?.raw || response;
+      return directoryEditorRequest(this.apiClient, path, options);
     },
     async refreshListings() {
       this.listLoading = true;
