@@ -83,7 +83,16 @@ function isOpenOverride(entry) {
 }
 
 function overrideType(entry) {
-  return String(entry?.type ?? entry?.kind ?? "").toLowerCase();
+  return String(entry?.action ?? entry?.type ?? entry?.kind ?? "").toLowerCase();
+}
+
+function lockedFieldsFromEntry(entry) {
+  if (entry?.field) return [entry.field];
+  const patch = entry?.patch;
+  if (patch && typeof patch === "object" && !Array.isArray(patch)) {
+    return Object.keys(patch);
+  }
+  return [];
 }
 
 function isHiddenLocked(dbRow) {
@@ -96,8 +105,7 @@ function isHiddenLocked(dbRow) {
 function lockedPatchFields(dbRow) {
   return (dbRow?.overrides ?? [])
     .filter((entry) => isOpenOverride(entry) && overrideType(entry) === "patch")
-    .map((entry) => entry.field)
-    .filter(Boolean);
+    .flatMap((entry) => lockedFieldsFromEntry(entry));
 }
 
 function incomingGeocodeFlag(row) {
@@ -138,11 +146,9 @@ export function isIncludedCountBelowSanityThreshold(
 /**
  * @param {object[]} collapsed  output of collapseFsdRows
  * @param {object[]} dbRows     catalog rows keyed by fsd_service_id = SERVICE_ID
- * @param {object} [opts]
  * @returns {object[]}
  */
-export function diffFsdCatalog(collapsed, dbRows, opts = {}) {
-  void opts;
+export function diffFsdCatalog(collapsed, dbRows) {
   const incoming = collapsed ?? [];
   const existing = dbRows ?? [];
   const dbByServiceId = new Map();

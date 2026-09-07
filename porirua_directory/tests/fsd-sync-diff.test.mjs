@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { catalogToRows } from "../scripts/catalog-rows.mjs";
 import { collapseFsdRows } from "../scripts/fsd-sync-collapse.mjs";
 import {
   diffFsdCatalog,
@@ -124,6 +125,77 @@ test("open overrides patch keeps the incoming field in proposed", () => {
   assert.equal(item.proposed.after.description, incoming.description);
   assert.deepEqual(item.proposed.locked_fields, ["description"]);
   assert.equal(existing.description, "Editor-approved wording");
+});
+
+test("catalogToRows patch rows lock every key on patch, not a type/field pair", () => {
+  const oraToa = {
+    FSD_ID: "4690",
+    SERVICE_ID: "2964",
+    PROVIDER_NAME: "Porirua Respiritory Support group - Ora Toa",
+    SERVICE_NAME: "Support group - Ora Toa",
+    SERVICE_DETAIL: "Respiratory support group.",
+    PUBLISHED_PHONE_1: "04 237 6892",
+    PHYSICAL_DISTRICT: "Porirua City",
+    PHYSICAL_ADDRESS: "",
+    LATITUDE: "-41.080194",
+    LONGITUDE: "174.760239",
+    LEVEL_1_CATEGORY: "Health",
+  };
+  const [incoming] = collapsedFrom([oraToa]);
+  const { overrides } = catalogToRows(
+    { services: [] },
+    {
+      patches: {
+        "fsd-2964": {
+          address: "22 Ngāti Toa Street, Takapūwāhia, Porirua",
+          lat: -41.1248,
+          lng: 174.835605,
+        },
+      },
+    }
+  );
+  assert.equal(overrides[0].action, "patch");
+  assert.equal(overrides[0].type, undefined);
+  assert.equal(overrides[0].field, undefined);
+
+  const existing = dbRow(incoming, {
+    address: "22 Ngāti Toa Street, Takapūwāhia, Porirua",
+    lat: -41.1248,
+    lng: 174.835605,
+    overrides,
+    raw_import: {
+      ...fingerprintFields(incoming),
+      address: "22 Ngāti Toa Street, Takapūwāhia, Porirua",
+      lat: -41.1248,
+      lng: 174.835605,
+    },
+  });
+  const items = diffFsdCatalog([incoming], [existing]);
+  const item = itemByService(items, "2964");
+  assert.equal(item.kind, "changed");
+  assert.deepEqual(
+    [...item.proposed.locked_fields].sort(),
+    ["address", "lat", "lng"]
+  );
+  assert.equal(item.proposed.after.address, incoming.address);
+  assert.equal(existing.address, "22 Ngāti Toa Street, Takapūwāhia, Porirua");
+});
+
+test("catalogToRows hide rows lock the same way as status=hidden", () => {
+  const [incoming] = collapsedFrom(SALVATION_ARMY_EMERGENCY_HOUSING);
+  const { overrides } = catalogToRows(
+    { services: [] },
+    { hiddenIds: ["fsd-37470"], patches: {} }
+  );
+  assert.equal(overrides[0].action, "hide");
+  const existing = dbRow(incoming, {
+    overrides,
+    raw_import: { ...fingerprintFields(incoming), phone: "04 000 0000" },
+  });
+  const items = diffFsdCatalog([incoming], [existing]);
+  const item = itemByService(items, "37470");
+  assert.equal(item.proposed.blocked_by_hidden, true);
+  assert.equal(item.proposed.auto_publish, false);
 });
 
 test("editor edits to live fields do not re-queue when raw_import is unchanged", () => {
