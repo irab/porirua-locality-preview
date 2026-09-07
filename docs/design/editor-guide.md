@@ -19,6 +19,7 @@ The status band at the top says how many government updates need a decision, and
 5. When you leave **Name**, we look for a similar organisation — including ones off the site, and names that only share a distinctive word (so **Whanau** warns about **Porirua Whānau Centre**). **Open the existing one** or **Create anyway**.
 6. Save writes the listing. It does **not** put a row on Review. The public site updates when you publish.
 7. Fields you already curated show **You set this earlier**. The weekly government feed will not overwrite those unless you accept a later change.
+8. The government feed misspells. **Porirua Respiritory Support group - Ora Toa** is how it arrives; you can correct the name (and the rest) yourself. That is why the editor exists.
 
 ## Review — government updates only
 
