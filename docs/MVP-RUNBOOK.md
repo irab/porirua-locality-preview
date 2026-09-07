@@ -24,7 +24,7 @@ This runs:
 
 **Hide FSD rows:** add ids to `porirua_directory/data/overrides.json` → re-run `npm run merge:services`.
 
-Commit `data/services.json` when ready to deploy.
+The public UI reads **`GET /api/catalog`** first (live snapshot; the API re-checks which snapshot is current on a 30-second TTL, so a publish reaches the site within about a minute with no restart). **`data/services.json`** is a **point-in-time copy** still shipped in the nginx image so the site stays up when Postgres is down. It is **not** the live catalog: it only changes when the image is rebuilt (nightly). Commit it when you intend to refresh that baked fallback, not as a substitute for publishing through the catalog API.
 
 ---
 
@@ -110,7 +110,7 @@ CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes
 
 ## Deploy
 
-1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the container image.
+1. Push to `main` with an updated baked `data/services.json` only when you intend to refresh the offline fallback — workflow builds and pushes the container image. Live listings come from `/api/catalog`; the static file is the nightly snapshot, not a second live source.
 2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`).
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
