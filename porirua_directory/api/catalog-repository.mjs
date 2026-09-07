@@ -20,10 +20,12 @@ function mapSnapshot(row) {
   };
 }
 
-export function createCatalogRepository(db = getPool()) {
+export function createCatalogRepository(db = null) {
+  const executor = () => db ?? getPool();
+
   return {
     async getCurrent() {
-      const result = await db.query(
+      const result = await executor().query(
         `SELECT ${SNAPSHOT_COLUMNS}
            FROM catalog_snapshots
           WHERE is_current
@@ -33,7 +35,7 @@ export function createCatalogRepository(db = getPool()) {
     },
 
     async getByVersion(version) {
-      const result = await db.query(
+      const result = await executor().query(
         `SELECT ${SNAPSHOT_COLUMNS}
            FROM catalog_snapshots
           WHERE version = $1`,
@@ -43,7 +45,7 @@ export function createCatalogRepository(db = getPool()) {
     },
 
     async ping() {
-      await db.query("SELECT 1");
+      await executor().query("SELECT 1");
     },
   };
 }

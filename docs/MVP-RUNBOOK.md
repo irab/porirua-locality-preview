@@ -125,16 +125,36 @@ The import CLI applies `scripts/db-schema.sql` when the tables are missing. A se
 
 Publish never includes `draft`, `hidden`, `pending_review`, or merged-away organizations. Exactly one snapshot has `is_current`. Rollback points that flag at an earlier `version`.
 
-The public site still reads `data/services.json` until the catalog API is wired. These commands do not deploy anything.
+The public site still reads `data/services.json` until the UI task wires `/api/catalog`. These commands do not deploy anything.
 
-CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes `ghcr.io/irab/porirua-directory:latest` on push to `main`.
+### Phase 2 catalog API (local)
+
+Same-origin public read service. It returns the current `catalog_snapshots` envelope unchanged (shape-identical to `data/services.json`, except bootstrap may disambiguate `org-te-waka-whaiora-trust` and `community-te-wahi-tiaki-tatou`).
+
+```bash
+cd porirua_directory
+npm run db:test:up
+export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54329/porirua_test
+npm run db:import
+npm run catalog:publish
+npm run start:api
+# GET http://127.0.0.1:3000/api/catalog
+# GET http://127.0.0.1:3000/api/catalog?version=1
+# GET http://127.0.0.1:3000/api/health
+```
+
+`ETag` is the snapshot version. Send `If-None-Match` for a 304. The process caches envelopes by version (repeat requests do not query Postgres) and keeps the last current snapshot if the database is briefly unreachable. With an empty cache and no database it returns `503` `{ "error": "catalog unavailable" }` — never a stack trace. After a new publish, restart the API process so it picks up the new `is_current` row.
+
+`Dockerfile` stays nginx-only. `Dockerfile.api` is the Node image (`ghcr.io/irab/porirua-directory-api`). Do not add Node to the static image.
+
+CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; on push to `main` it builds and pushes `ghcr.io/irab/porirua-directory` (nginx) and `ghcr.io/irab/porirua-directory-api` (catalog API).
 
 ---
 
 ## Deploy
 
-1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the container image.
-2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`).
+1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the nginx and catalog-api container images.
+2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`). The catalog API is not routed in that tenant until the gated prod-tenant task adds the Deployment, Service, `DATABASE_URL` secret, and Traefik `/api` path.
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
    - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).

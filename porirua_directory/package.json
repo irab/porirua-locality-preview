@@ -16,7 +16,8 @@
     "merge:services": "node scripts/merge-services.mjs",
     "build:data": "npm run import:fsd && npm run merge:services",
     "test:e2e": "playwright test",
-    "serve": "python3 -m http.server 5173"
+    "serve": "python3 -m http.server 5173",
+    "start:api": "node api/server.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",

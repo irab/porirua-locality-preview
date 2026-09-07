@@ -53,12 +53,17 @@ test("publish then GET /api/catalog never serves draft, hidden, pending_review, 
          ('svc-pending', 'fsd-2964', 'svc-pending', 'Pending line', 'fsd', 'pending_review')`
     );
 
-    await publishCatalog({ db: client, publishedBy: "api-test" });
+    const first = await publishCatalog({ db: client, publishedBy: "api-test" });
+    await client.query(
+      `UPDATE organizations SET name = 'Renamed For Api Version Pin' WHERE public_id = 'fsd-2964'`
+    );
+    const second = await publishCatalog({ db: client, publishedBy: "api-test-2" });
     const repository = createCatalogRepository(client);
 
     await withCatalogApi(t, { repository }, async ({ get }) => {
       const response = await get("/api/catalog");
       assert.equal(response.status, 200);
+      assert.equal(response.headers.get("etag"), `"${second.version}"`);
       const body = await response.json();
       const ids = catalogIds(body);
       for (const id of ["org-draft", "org-hidden", "org-merged", "svc-draft", "svc-hidden", "svc-merged", "svc-pending"]) {
@@ -66,6 +71,19 @@ test("publish then GET /api/catalog never serves draft, hidden, pending_review, 
       }
       assert.equal("generatedAt" in body, true);
       assert.equal(Array.isArray(body.services), true);
+      assert.equal(
+        body.services.some((entry) => entry.name === "Renamed For Api Version Pin"),
+        true
+      );
+
+      const pinned = await get(`/api/catalog?version=${first.version}`);
+      assert.equal(pinned.status, 200);
+      assert.equal(pinned.headers.get("etag"), `"${first.version}"`);
+      const older = await pinned.json();
+      assert.equal(
+        older.services.some((entry) => entry.name === "Renamed For Api Version Pin"),
+        false
+      );
     });
   });
 });

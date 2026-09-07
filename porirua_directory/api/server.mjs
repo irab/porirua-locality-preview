@@ -108,9 +108,17 @@ export function createCatalogServer({ repository, service } = {}) {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { createCatalogRepository } = await import("./catalog-repository.mjs");
+  const { closePool } = await import("../scripts/lib/db.mjs");
   const port = Number(process.env.PORT || 3000);
   const server = createCatalogServer({ repository: createCatalogRepository() });
   server.listen(port, "0.0.0.0", () => {
     console.log(`catalog api listening on ${port}`);
   });
+  const shutdown = () => {
+    server.close(async () => {
+      await closePool();
+    });
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }

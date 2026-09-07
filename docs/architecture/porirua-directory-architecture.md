@@ -1,6 +1,6 @@
 # Porirua Services Directory — Architecture
 
-**Status:** Phase 1 live at directory.bsky.nz. Phase 2 catalog store (schema, bootstrap, snapshot publish) is in this repo; the public site still reads the static file until the catalog API lands.  
+**Status:** Phase 1 live at directory.bsky.nz (nginx + baked JSON). Phase 2 catalog store and public read API are in this repo; the UI still reads the static file until the fallback task lands.  
 **Public URL (target):** [https://directory.bsky.nz](https://directory.bsky.nz)  
 **App code:** [`porirua_directory/`](../../porirua_directory/)  
 **Connections Map (parallel):** [`porirua_connections_map/`](../../porirua_connections_map/)
@@ -83,13 +83,15 @@ No admin database in Phase 1.
 | DNS / TLS edge | Cloudflare (`directory.bsky.nz`, proxied) |
 | Origin | blackbox `101.100.135.172:4443` → Traefik → Service → nginx |
 | App | Vanilla HTML/JS/CSS, Leaflet, OpenStreetMap tiles; ES modules (`*.mjs`) — nginx must serve them as `application/javascript` ([`infra/nginx.conf`](../../porirua_directory/infra/nginx.conf)) |
-| Data | `GET /data/services.json` (static file) |
+| Data | `GET /data/services.json` (static file, still the live UI source) |
 
 Traffic path (see blackbox `infra/cloudflare/bsky.nz/README.md`):
 
 ```
-Browser → https://directory.bsky.nz → Cloudflare → origin :4443 → Traefik → pod:8080
+Browser → https://directory.bsky.nz → Cloudflare → origin :4443 → Traefik → nginx:8080
 ```
+
+Phase 2 adds same-origin `GET /api/catalog` beside that path (Traefik `/api` → catalog API). The nginx image stays static-only.
 
 ExternalDNS on prod creates the `directory` record when Ingress is applied.
 
@@ -97,7 +99,7 @@ ExternalDNS on prod creates the `directory` record when Ingress is applied.
 
 ## Phase 2 — catalog store (in repo now)
 
-Public traffic still uses the Phase 1 nginx + `data/services.json` path until the catalog API and prod tenant tasks land. The **canonical model** is already implemented here:
+Public traffic still uses the Phase 1 nginx + `data/services.json` path until the UI fallback and prod-tenant routing tasks land. The **canonical model** and read API are already implemented here:
 
 | Piece | Path |
 |-------|------|
@@ -107,14 +109,18 @@ Public traffic still uses the Phase 1 nginx + `data/services.json` path until th
 | Bootstrap | `npm run db:import` — `db-import-from-json.mjs` |
 | Publish / rollback | `npm run catalog:publish` — `publish-catalog.mjs` |
 | Row ↔ envelope mapping | `catalog-rows.mjs`, `catalog-envelope.mjs` (pure; no clustering on read) |
+| Public read API | `porirua_directory/api/` — `GET /api/catalog`, `GET /api/health` (plain `node:http`) |
+| API image | `porirua_directory/Dockerfile.api` → `ghcr.io/irab/porirua-directory-api` |
 
 ```mermaid
 flowchart LR
   JSON[committed services.json + overrides.json]
   PG[(Postgres)]
   Snap[catalog_snapshots is_current]
+  API[catalog API]
   JSON -->|db:import| PG
   PG -->|published rows only| Snap
+  Snap -->|envelope jsonb| API
 ```
 
 **Publish** builds the Option B envelope from `status=published` rows (`draft`, `hidden`, `pending_review`, and `merged_into` are excluded), inserts a `catalog_snapshots` row, and flips `is_current` in one transaction. **Rollback** points `is_current` at an earlier version. Status changes alone do not go live.
@@ -125,7 +131,11 @@ flowchart LR
 
 **Tables:** `organizations`, `services`, `public_id_aliases`, `catalog_snapshots`, `overrides`, `import_runs`, `review_queue_items`. The last two ship complete for the sync task (`import_runs.stats` includes included/excluded/collapsed/queue counts; `review_queue_items.kind` is `new|changed|removed|geocode_flag`).
 
-**Not in this slice:** Kubernetes manifests, the catalog HTTP API, Directus, and the weekly CronJob. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, and later the API / Directus / sync images beside the existing nginx pod.
+**Public catalog API** serves `catalog_snapshots.envelope` as stored — no `applyOrgGrouping`, no join of `organizations` / `services` on the request path. `ETag` is the snapshot `version`; `If-None-Match` returns 304. `Cache-Control` is `public, max-age=60, s-maxage=86400`. `?version=N` pins a historical snapshot. Envelopes are cached in process by version so repeat reads do not query Postgres; the process keeps serving the last current snapshot if Postgres drops, and returns `{ "error": "catalog unavailable" }` (503) when it has nothing cached. `GET /api/health` reports `database: reachable|unreachable` without connection strings or driver errors.
+
+The static nginx pod and baked `data/services.json` stay as they are. The UI task wires `/api/catalog` with a static-file fallback.
+
+**Not in this slice:** Kubernetes manifests, Directus, and the weekly CronJob. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, the existing nginx Deployment, a second Deployment/Service for `porirua-directory-api` (port 3000), and Traefik path routing so `directory.bsky.nz/api` goes to the API while `/` stays on nginx.
 
 **Admin host** stays separate from `directory.bsky.nz` (e.g. `admin.directory.bsky.nz`). D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
 

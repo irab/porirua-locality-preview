@@ -15,6 +15,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE: ghcr.io/irab/porirua-directory
+  IMAGE_API: ghcr.io/irab/porirua-directory-api
 
 defaults:
   run:
@@ -69,3 +70,12 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./porirua_directory
+          file: ./porirua_directory/Dockerfile.api
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE_API }}:latest
+            ${{ env.IMAGE_API }}:${{ github.sha }}
