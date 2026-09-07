@@ -20,9 +20,14 @@ function ifNoneMatchHits(ifNoneMatch, etag) {
   });
 }
 
+export const CATALOG_CACHE_CONTROL = "public, max-age=60, s-maxage=86400";
+
 function sendCatalog(req, res, snapshot) {
   const etag = snapshotEtag(snapshot.version);
-  const headers = { etag };
+  const headers = {
+    etag,
+    "cache-control": CATALOG_CACHE_CONTROL,
+  };
   if (ifNoneMatchHits(req.headers["if-none-match"], etag)) {
     res.writeHead(304, headers);
     res.end();

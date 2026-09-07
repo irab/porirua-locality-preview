@@ -43,3 +43,25 @@ test("ETag is the snapshot version and a matching If-None-Match returns 304", as
     assert.equal(await cached.text(), "");
   });
 });
+
+test("GET /api/catalog sends shared cache headers for browsers and CDN", async (t) => {
+  const repository = fakeRepository({
+    current: snapshot(3, publishedEnvelope()),
+  });
+
+  await withCatalogApi(t, { repository }, async ({ get }) => {
+    const response = await get("/api/catalog");
+    assert.equal(response.status, 200);
+    assert.equal(
+      response.headers.get("cache-control"),
+      "public, max-age=60, s-maxage=86400"
+    );
+
+    const cached = await get("/api/catalog", { "If-None-Match": '"3"' });
+    assert.equal(cached.status, 304);
+    assert.equal(
+      cached.headers.get("cache-control"),
+      "public, max-age=60, s-maxage=86400"
+    );
+  });
+});
