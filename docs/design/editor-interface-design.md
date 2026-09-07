@@ -1,8 +1,9 @@
 # Directory editor — interface design
 
-**Status:** Design for review. Do not treat the current Directus module as the approved UI.  
-**Audience:** Moana (editor), Kahu (readiness walk), Aroha (product), the people who will approve this before more Vue is written.  
-**Not this doc:** sidecar contracts, the name matcher, clustering, the three-way lock rule, Kubernetes. Those stay as they are.
+**Status:** Design accepted 8 Sep 2026. Section 12 is decided. The Vue sketch is not the approved UI — rebuild it to this document.  
+**Audience:** Moana (editor), Kahu (readiness walk), Aroha (product).  
+**Not this doc:** sidecar contracts, the name matcher, clustering, the three-way lock rule, Kubernetes. Those stay as they are.  
+**Undo publish (7.5)** is designed here and is **not to be built** until that section is agreed. Everything else in this document is to be implemented.
 
 This is a design from **jobs**, not from the code already in the module. Where the current build should be changed or thrown away, this document says so.
 
@@ -32,17 +33,17 @@ Said plainly, so we do not rationalise it:
 | Job | Current module | This design |
 |-----|----------------|-------------|
 | See the change | Field diffs were added late; still no way to check the organisation’s own website without losing the queue | Verification bar on every change and every listing; new tab on purpose |
-| Decide later | Only Accept / Keep yours / Reject. Leaving the item means Reject or walking away with it still “new” | **I’ll come back to this** — stays pending, marked deferred, not a decision |
-| Government dropped a service | Only **Take it off the site**. That treats “gone from FSD” as “closed” | Two real options: take it off, or **keep it as a community listing** |
+| Decide later | Only Accept / Keep yours / Reject. Leaving the item means Reject or walking away with it still “new” | **Needs confirmation** — stays pending, marked deferred, not a decision |
+| Government dropped a service | Only **Take it off the site**. That treats “gone from FSD” as “closed” | Two **equal** options: take it off, or **keep it as a community listing** |
 | Nearly-right FSD change | Accept, then hunt the listing to fix it | **Use this, and I’ll correct it** — edit-then-accept in one movement |
 | Find a listing | Flat table of ~145 names (search was bolted on) | Search is the listings screen; results are the way in, not a filter on a spreadsheet |
 | Open a listing | Clicking a row opened the edit form, so “pick this org to add a line” dumped her into editing | Select and edit are different. Opening a listing shows the org, its lines, and the verification bar |
 | Archive | Browser `confirm`, then a later Directus dialog still tied to “the form you happen to be in” | Archive from listing detail, with a real choice about the organisation |
 | Finish the hour | Empty table + a banner she may not connect to the work | Count while she works; explicit finish that leads into Publish |
-| Publish | One button, no naming of what goes public | Confirmation that names the unpublished work |
+| Publish | One button, no naming of what goes public | Publishes immediately. **Undo publish** is the safety net (7.5) |
 | Login | Bootstrap hides Content, then Directus still opens Content | Land on Directory. Status band answers “what should I be doing?” |
 
-Contracts, matcher, and the lock rule stay. The Vue is a sketch. Approve this design, then rebuild the interface to match it.
+Contracts, matcher, and the lock rule stay. The Vue is a sketch. Rebuild the interface to match this document.
 
 ---
 
@@ -60,20 +61,20 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 | `geocode_flag` | **Check the map pin** |
 | `published` | **On the site** |
 | `hidden` / `draft` | **Off the site** |
-| Deferred pending item | **Come back to this** (badge on the row) |
+| Deferred pending item | **Needs confirmation** (badge on the row) |
 
 ### Review actions
 
 | Situation | Buttons |
 |-----------|---------|
-| Details changed | **Accept this change** · **Keep yours** (only if she set that field) · **Use this, and I’ll correct it** · **Don’t use this change** · **I’ll come back to this** |
-| New service | **Add this service** · **Don’t add this** · **I’ll come back to this** |
-| Gone from the government list | **Take it off the site** · **Keep it as a community listing** · **I’ll come back to this** |
-| Check the map pin | **The pin is fine** · **I’ll move the pin** · **I’ll come back to this** |
-| After any decision | **Undo** (on the toast) · **Next** (does not auto-expand; question 5) |
+| Details changed | **Accept this change** · **Keep yours** (only if she set that field) · **Use this, and I’ll correct it** · **Don’t use this change** · **Needs confirmation** |
+| New service | **Add this service** · **Don’t add this** · **Needs confirmation** |
+| Gone from the government list | **Take it off the site** · **Keep it as a community listing** — **equal weight, no visual hierarchy, no keyboard default** · **Needs confirmation** |
+| Check the map pin | **The pin is fine** · **I’ll move the pin** · **Needs confirmation** |
+| After any decision | **Undo** (on the toast) · **Next** (does not auto-expand) |
 
 **Don’t use this change** and **Don’t add this** are decisions: the government proposal is declined, that week’s value will not be asked again unless FSD moves again.  
-**I’ll come back to this** is not a decision: the item stays pending and marked. If next week’s proposal is the same, it stays in **Come back to these**. If the proposal itself changed, the mark dies and the row returns to the active list (7.1).
+**Needs confirmation** is not a decision: the item stays pending and marked. If next week’s proposal is the same, it stays in **Needs confirmation**. If the proposal itself changed, the mark dies and the row returns to the active list (7.1).
 
 ### Listings actions
 
@@ -101,15 +102,12 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 | After Don’t add this | **Not added. It will not go on the public site.** |
 | After Take it off the site | **Taken off the site. It will leave the public site when you publish.** |
 | After Keep it as a community listing | **Kept. This is now a community listing. Next week’s government feed will not take it off.** |
-| After I’ll come back to this | **Left for later. It stays in Review.** |
+| After Needs confirmation | **Needs confirmation. It stays in Review.** |
 | After Save | **Saved. It will go on the public site when you publish.** |
 | After restore | **Put back on the site. It will go on the public site when you publish.** |
 | Queue empty after work | **You’ve reviewed everything. Put 4 changes on the public site.** |
-| Publish confirmation title | **Put these changes on the public site?** |
-| Publish confirmation body | Names the organisations (and “4 government updates”) about to go live |
-| Publish confirm button | **Publish now** |
-| Publish cancel | **Not yet** |
-| After Publish | **Published. The public site is up to date.** |
+| After Publish | **Published. The public site is up to date.** **Undo publish** |
+| After Undo publish | **Publish undone. Those changes are waiting to go on the site again.** |
 | After any Review decision | Same sentence as above, plus **Undo** on the toast (see 7.4) |
 | Proposal changed under a defer | **This update changed since you set it aside.** (row returns to the active list) |
 | FSD listed a community-kept row again | **The government listed this again** |
@@ -130,11 +128,12 @@ Always visible at the top of Directory, both tabs.
 
 - Both parts are buttons.
 - **4 changes to review** opens Review (and scrolls to the first item that is not deferred).
-- **2 waiting to go on the site** opens the Publish confirmation.
+- **2 waiting to go on the site** publishes immediately (no confirmation). Disabled while a publish is in flight.
 - If a count is zero, show it subdued, still visible, not clickable: **Nothing to review** · **Nothing waiting to go on the site**.
+- While Undo publish is available (7.5), the band also shows **Undo last publish**.
 - This answers “what should I be doing?” without a home screen.
 
-**Implementation note (not free):** `/publish-status` today returns `{ unpublished: boolean, currentVersion, nextCounts }`. The band needs an integer (and the confirmation needs names). Extend that payload when this design is built — do not invent the count in the browser by guessing.
+**Implementation note (not free):** `/publish-status` today returns `{ unpublished: boolean, currentVersion, nextCounts }`. The band needs an integer. Extend that payload when this design is built — do not invent the count in the browser by guessing. Names are still useful for the finish copy and for Undo publish context; they are not a confirmation step.
 
 **Current build:** a warning banner only when something is unpublished, plus a Review tab label. Discard the “notice the banner” pattern.
 
@@ -170,6 +169,12 @@ One layout for **Add organisation**, **Add a service line**, and **Edit**. Same 
 
 Footer: **Save** · **Cancel**  
 On edit of a service line: also **Archive this service line**.
+
+When this form opens from **Use this, and I’ll correct it** (or **I’ll move the pin**):
+
+- Visually mark every field the proposal changed. The mark is text (**Changed in this update**) plus a non-colour cue (a left rule or icon). Colour alone is not enough (§14).  
+- Fields she has curated also keep **You set this earlier**. Both marks can appear on the same field.  
+- Scroll to the first changed field and place focus there, so the government change does not disappear into eight pre-filled boxes.
 
 Duplicate warning sits **in the form**, under Name, after she leaves the field. Not a separate screen.
 
@@ -208,8 +213,8 @@ For each screen: purpose, what is on it, what she can do, where each action lead
 - Status band  
 - Title: **4 changes to review** (or **1 change to review**)  
 - Lede: **These are government updates. Your own adds never appear here.**  
-- One row per item: organisation name, plain-words summary, deferred badge if any  
-- Deferred items sit in a second group under **Come back to these (2)**, still in Review, not a third tab  
+- One row per item: organisation name, plain-words summary, **Needs confirmation** badge if deferred  
+- Deferred items sit in a second group under **Needs confirmation (2)**, still in Review, not a third tab  
 
 Row summary examples (not the raw kind):
 
@@ -228,7 +233,7 @@ Row summary examples (not the raw kind):
 | Empty, she has not worked this session | **Nothing to review.** Status band still offers Publish if anything is waiting |
 | Empty, she just finished the last item | Finish state (section 8) |
 | Error | **Could not load Review.** **Try again** |
-| All remaining items deferred | Title becomes **2 to come back to**. Finish/Publish is offered as well: she may publish other work and leave these |
+| All remaining items deferred | Title becomes **2 need confirmation**. Finish/Publish is offered as well: she may publish other work and leave these |
 
 **Current build:** a table of name + kind-or-label + buttons, no defer group, no field summary on the closed row. Replace the closed-row content with the summary; keep in-place expand.
 
@@ -247,15 +252,15 @@ Row summary examples (not the raw kind):
 7. For a pin check or a moved pin: the map, no numbers  
 8. The actions for that kind (copy dictionary)
 
-**She can.** Verify in a new tab, accept, keep hers, correct-then-accept, decline, defer, or (on a pin) move the pin.
+**She can.** Verify in a new tab, accept, keep hers, correct-then-accept, decline, mark **Needs confirmation**, or (on a pin) move the pin. On a removal, **Take it off the site** and **Keep it as a community listing** are equal — neither is styled as the safe or default action, and neither is the keyboard default.
 
 **Leads to.**
 
 | Action | Next |
 |--------|------|
-| Accept / Add this / The pin is fine / Keep yours / Don’t use / Don’t add / Take it off / Keep as community | Toast with **Undo** (7.4). Row leaves the active list. The list does **not** auto-expand the next item (recommendation; question 5). An explicit **Next** is focused instead |
-| I’ll come back to this | Row moves to **Come back to these**. Same: toast, no auto-expand, **Next** is focused |
-| Use this, and I’ll correct it | Shared form, pre-filled with the government values she can edit. **Save** = accept the corrected values. Toast with **Undo** |
+| Accept / Add this / The pin is fine / Keep yours / Don’t use / Don’t add / Take it off / Keep as community | Toast with **Undo** (7.4). Row leaves the active list. The list does **not** auto-expand the next item. An explicit **Next** is focused instead |
+| Needs confirmation | Row moves to **Needs confirmation**. Same: toast, no auto-expand, **Next** is focused |
+| Use this, and I’ll correct it | Shared form, pre-filled with the government values she can edit. Changed fields are marked, scrolled to, and focused (4.3). **Save** = accept the corrected values. Toast with **Undo** |
 | I’ll move the pin | Same form, address + map, then Save = accept the pin |
 
 | State | What she sees |
@@ -336,24 +341,11 @@ Archived and merged names are included. Opening a match leaves the form and open
 
 **Current build:** this warning exists and should stay. It is a correctness feature, not a nicety.
 
-### 5.8 Publish confirmation
+### 5.8 Publish confirmation — removed
 
-**Purpose.** She knows what is about to go public.
+A named confirmation before Publish was proposed and **overruled**. The finish state’s **Publish now** and the status band both publish immediately. There is no screen 5.8.
 
-**On it.**
-
-- Title: **Put these changes on the public site?**  
-- A short list: organisation names she saved, plus **4 government updates** if Review work is unpublished  
-- **Publish now** · **Not yet**
-
-**Leads to.** Publish now → toast, status band zeros. Not yet → back, unpublished count unchanged.
-
-| State | What she sees |
-|-------|----------------|
-| Nothing unpublished | Band says **Nothing waiting**; the dialog does not open |
-| Error | **Could not publish. Try again.** |
-
-**Current build:** Publish with no naming. Replace.
+Safety after Publish is **Undo publish** (7.5). Do not reintroduce a confirmation dialog.
 
 ### 5.9 Archive dialog
 
@@ -394,23 +386,23 @@ flowchart TD
   decide -->|yes, her value is right| keep[Keep yours]
   decide -->|almost right| correct[Use this, and I'll correct it]
   decide -->|government value is wrong| decline[Don't use this change]
-  decide -->|needs a phone call| defer[I'll come back to this]
+  decide -->|needs a phone call| defer[Needs confirmation]
   accept --> toast[Toast with Undo]
   keep --> toast
-  correct --> form[Shared form pre-filled] --> saveAccept[Save = accept] --> toast
+  correct --> form[Shared form, changed fields marked] --> saveAccept[Save = accept] --> toast
   decline --> toast
-  defer --> deferred[Row moves to Come back to these] --> toast
+  defer --> deferred[Row moves to Needs confirmation] --> toast
   toast --> undo{Undo within the window?}
   undo -->|Undo| restore[Item returns, still expanded]
   undo -->|Next| next{More active items?}
   next -->|yes| open
-  next -->|only deferred left| later[Come back to these still listed]
+  next -->|only deferred left| later[Needs confirmation still listed]
   next -->|none left| finish[You've reviewed everything]
   later --> finish
   finish --> pub{Publish now?}
-  pub -->|Publish now| confirm[Publish confirmation]
+  pub -->|Publish now| live[Public site up to date]
   pub -->|Not yet| band
-  confirm --> done[Public site up to date]
+  live --> undoPub[Undo publish — 7.5]
 ```
 
 ### 6.2 Add
@@ -427,8 +419,8 @@ flowchart TD
   fields --> save[Save]
   save --> toast[Saved. It will go on the public site when you publish.]
   toast --> pub[Status band: waiting to go on the site]
-  pub --> confirm[Publish confirmation]
-  confirm --> live[Public card]
+  pub --> live[Publish immediately]
+  live --> undoPub[Undo publish — 7.5]
 ```
 
 Add a service line is the same form, started from listing detail, with the organisation already chosen.
@@ -442,7 +434,7 @@ flowchart TD
   verify --> edit[Edit the right line]
   edit --> form[Shared form]
   form --> save[Save]
-  save --> pub[Publish confirmation]
+  save --> pub[Status band publishes immediately]
 ```
 
 ### 6.4 Archive
@@ -468,14 +460,14 @@ flowchart TD
 
 Someone who cannot decide — she wants to ring the organisation first — has no safe exit today. Rejecting is a decision she has not made.
 
-**I’ll come back to this**
+**Needs confirmation**
 
 - Leaves the item `pending`  
 - Sets a deferred mark (`proposed.deferred_at` plus a fingerprint of the proposal she saw)  
-- Moves the row into **Come back to these**  
+- Moves the row into **Needs confirmation**  
 - Does not write live columns, does not refresh `raw_import`, does not hide  
 
-The queue with mixed work: active items first (still “4 changes to review”), then a headed group **Come back to these (2)**. Counts on the status band include both — not a third tab.
+The queue with mixed work: active items first (still “4 changes to review”), then a headed group **Needs confirmation (2)**. Counts on the status band include both — not a third tab. The button, the badge, the group heading, and the toast all use **Needs confirmation**.
 
 #### Weekly refresh vs defer (specified)
 
@@ -483,7 +475,7 @@ Hygiene stays: one pending row per entity+kind, refreshed in place. Defer is not
 
 | What Wednesday’s sync does | What she sees when she comes back |
 |----------------------------|-----------------------------------|
-| Same entity+kind, **same proposal fingerprint** as when she deferred | Still in **Come back to these**. Not a new card. No “it moved” notice |
+| Same entity+kind, **same proposal fingerprint** as when she deferred | Still in **Needs confirmation**. Not a new card. No “it moved” notice |
 | Same entity+kind, **proposal fingerprint changed** (FSD sent a different phone, or a removal became a change, or the other way around) | Deferred mark is **cleared**. Row returns to the **active** list. Banner on the card: **This update changed since you set it aside.** She must decide again |
 | Item would no longer be queued (FSD reverted, or three-way now skips) | Pending row is closed as skipped/superseded. It disappears. No ghost defer |
 
@@ -491,7 +483,7 @@ A deferred mark that survived a different proposal would be the silent-lock clas
 
 Fingerprint for this purpose is the same field set as the visible diff (and pin), not the entire `proposed` JSON (ignore `deferred_at`, `reviewable_fields`, import run ids).
 
-This flag is not enabled until the design is approved.
+This flag is part of the accepted design. Implement it.
 
 ### 7.2 “Gone from the government list” is not “closed”
 
@@ -499,8 +491,10 @@ The government dropping a service is evidence, not proof. The Thursday food bank
 
 | Action | What it means | While FSD stays away | If that `SERVICE_ID` comes back |
 |--------|----------------|----------------------|--------------------------------|
-| **Take it off the site** (primary) | Hide the service + hide override. Same path as today | Stays off unless she restores | Hide lock still wins: incoming is queued, not auto-published (today’s hidden lock) |
-| **Keep it as a community listing** (secondary, equally clear words) | Leave it **On the site**. Write an open override `action: community_owned` on that service. **Keep `fsd_service_id`.** Do not retag `source` so the diff engine forgets the id — that would mint a second card on reappearance | Diff **skips `removed`** for this id. She edits it like any community card. Unrelated FSD ids are unchanged | Diff **matches on `SERVICE_ID`**. Kind `changed` with `proposed.fsd_returned: true`. UI: **The government listed this again.** `community_owned` stays open until she **Accepts** (resume FSD: close the override, apply after, refresh `raw_import`) or **Keep yours** (stay community-owned; refresh `raw_import` to this week’s FSD so the same return is not re-queued). A later dropout is again suppressed as `removed`. A later field change while FSD lists it still queues as `changed` |
+| **Take it off the site** | Hide the service + hide override. Same path as today | Stays off unless she restores | Hide lock still wins: incoming is queued, not auto-published (today’s hidden lock) |
+| **Keep it as a community listing** | Leave it **On the site**. Write an open override `action: community_owned` on that service. **Keep `fsd_service_id`.** Do not retag `source` so the diff engine forgets the id — that would mint a second card on reappearance | Diff **skips `removed`** for this id. She edits it like any community card. Unrelated FSD ids are unchanged | Diff **matches on `SERVICE_ID`**. Kind `changed` with `proposed.fsd_returned: true`. UI: **The government listed this again.** `community_owned` stays open until she **Accepts** (resume FSD: close the override, apply after, refresh `raw_import`) or **Keep yours** (stay community-owned; refresh `raw_import` to this week’s FSD so the same return is not re-queued). A later dropout is again suppressed as `removed`. A later field change while FSD lists it still queues as `changed` |
+
+The two actions are **equal**. Neither may be styled as the safe or obvious one. Neither is the keyboard default — do not put implicit default focus on either button. She makes a real choice each time.
 
 Keeping it is **not** “Reject” and **not** “Accept”. Reject today would leave it pending or quietly decline without saying it is now ours. Accept-as-hide would take a live service off the site.
 
@@ -513,7 +507,7 @@ Keeping it is **not** “Reject” and **not** “Accept”. Reject today would 
 3. When an incoming collapsed row matches such an id, do **not** skip. Emit `changed` + `fsd_returned`. Three-way still applies to locked fields.  
 4. Do **not** drop `fsd_service_id` on keep. Identity stays `SERVICE_ID` so reappearance cannot look like `new`.
 
-This path is **not in the current sidecar**. Implement only after approval. Until then, do not ship a single button that pretends FSD removal equals closure.
+This path is **not in the current sidecar**. Implement it as part of this build. Do not ship a single button that pretends FSD removal equals closure.
 
 ### 7.3 Edit-then-accept
 
@@ -523,8 +517,9 @@ When the proposed change is nearly right (new phone, wrong extension), she shoul
 
 1. Opens the shared form  
 2. Fields filled from the government **after** values (the proposal), not from the stale live row  
-3. She edits  
-4. **Save** applies the corrected values, writes the sticky patch, refreshes `raw_import`, and closes the queue item  
+3. Mark every field the proposal changed (**Changed in this update** plus a non-colour cue). Keep **You set this earlier** on curated fields. Scroll to the first changed field and focus it  
+4. She edits  
+5. **Save** applies the corrected values, writes the sticky patch, refreshes `raw_import`, and closes the queue item  
 
 The sidecar already has edit-and-approve. The current module does not expose it. This design makes it a first-class review action.
 
@@ -541,10 +536,48 @@ Every Review decision is one click and applied immediately. Nothing is public un
 - Shown after every Review decision (including defer, decline, keep-as-community, keep yours).  
 - Lasts until she starts another decision, opens **Next**, or 20 seconds pass — whichever is first.  
 - Restores the queue item to `pending` (same entity+kind), restores live columns, overrides, and `raw_import` from a snapshot taken **before** the action. Accept-on-Ora-Toa must put her patch back.  
-- After Publish, undo is gone. The confirmation is the last chance.  
+- After Publish, Review-decision undo is gone. Safety after Publish is **Undo publish** (7.5), not a confirmation dialog.  
 - Focus after a decision: the toast’s **Undo**, then **Next** — never the next card’s primary button.
 
-**Auto-advance is not the default.** The previous draft expanded the next item under her cursor. That is how accidental decisions happen. Recommendation: after a decision the row leaves, the list stays still, and she presses **Next** (or opens another row). Question 5 is whether that extra click is worth the calm.
+**Auto-advance is not used.** After a decision the row leaves, the list stays still, and she presses **Next** (or opens another row).
+
+### 7.5 Undo publish — design, do not build until agreed
+
+Publish is now one click. Rollback today is an admin-only Flow Moana cannot reach. **Undo publish** is how she recovers. Do not put the confirmation dialog back.
+
+**What she sees**
+
+- Immediately after Publish: toast **Published. The public site is up to date.** with a prominent **Undo publish** button. Same toast rules as 7.4 (focus Undo first).  
+- After the toast expires (~20 seconds), **Undo last publish** stays on the status band for the rest of the window below.  
+- First-ever publish (no previous snapshot): no Undo publish. Toast without the button. Rolling back would unpublish the whole catalog.
+
+**How long it stays available**
+
+Until the **next Publish**, or **24 hours** after this Publish, whichever is first.
+
+- 20 seconds is only the toast. The band action is for “I published the wrong thing and noticed after I left the room.”  
+- 24 hours matches a 1–2 hour/month job: she may publish, close the laptop, and get a call the next morning.  
+- Forever is wrong: “undo last publish” from last month, after more unpublished work, is a different decision.  
+- A second Publish replaces the undo target. Only the most recent Publish can be undone.
+
+**What it does**
+
+Calls the existing sidecar rollback onto the snapshot that was current **immediately before** this Publish. She never picks a version number. `/publish-status` should expose `{ previousVersion, publishedAt, canUndoPublish }`. A new editor-gated `POST /undo-publish` (or `/rollback` with that previous version) is the write. Live listing rows, queue items, and overrides are **not** rewound — only the public catalog pointer.
+
+After undo: the public site is the previous snapshot. The work she just published is still in the database, so the status band shows it waiting again. Toast: **Publish undone. Those changes are waiting to go on the site again.** No undo-the-undo; she can Publish again.
+
+If she edited more **after** publishing, then undoes: those newer edits stay in the database and will go out with the next Publish, together with the undone work. Do not try to split them.
+
+**If the weekly sync runs during the window**
+
+The weekly sync **does not publish** and **does not close** the window.
+
+- Undo publish still restores the previous **public** snapshot.  
+- Queue rows and `pending_review` the sync wrote stay. Undo does not accept or reject them.  
+- If she then Publishes again, that new snapshot includes whatever is publishable in the database at that moment (her undone work plus anything she accepted after the sync).  
+- If the sync queued items while Undo publish is still available, the band may add a quiet note: **Government updates arrived after you published. Undo publish only changes the public site.**
+
+**Out of scope for this control:** restoring a snapshot older than “the one before last Publish”; exposing the admin Flow; a confirmation dialog.
 
 ---
 
@@ -559,10 +592,10 @@ When the last **active** item is decided:
 
 If deferred items remain:
 
-> **You’ve decided the ones you can. 2 are waiting until you come back.**  
-> **Publish the rest now** · **Keep reviewing later**
+> **You’ve decided the ones you can. 2 need confirmation.**  
+> **Publish now** · **Keep reviewing later**
 
-Publish always goes through the confirmation (5.8). The finish is a door into that confirmation, not a second empty table with a banner above it.
+**Publish now** publishes immediately. The finish is not a second empty table with a banner above it.
 
 **Current build:** empty table + banner. Replace.
 
@@ -579,7 +612,7 @@ That card must show:
 - `Address: 22 Ngāti Toa Street, Takapūwāhia, Porirua →` (incoming FSD address)  
 - The map, not a pair of numbers  
 - Verification bar (their website / phone)  
-- **Keep yours** as an obvious action, plus Accept / correct / defer  
+- **Keep yours** as an obvious action, plus Accept / correct / **Needs confirmation**  
 
 If the UI ships a queue row that is only a name and buttons, the rule has failed in the only place she will notice.
 
@@ -601,11 +634,10 @@ Job: update a community org’s phone and put it on the public site.
 | Check the website | 1 | New tab; she does not lose the listing |
 | **Edit** the line | 1 | Shared form |
 | Change Phone, **Save** | 1 | Toast |
-| Status band **waiting to go on the site** | 1 | Publish confirmation |
-| **Publish now** | 1 | Public site |
+| Status band **waiting to go on the site** | 1 | Publishes immediately |
 
-**Clicks: 5–6.**  
-The extra click versus “click the table row and you are already in the form” is **open listing detail**. It buys: the right line, verification, and not editing because she meant to add a line.
+**Clicks: 4–5.**  
+The extra click versus “click the table row and you are already in the form” is **open listing detail**. It buys: the right line, verification, and not editing because she meant to add a line. There is no confirmation click.
 
 **Fail the job if:** Save writes a Review row, or Save publishes by itself.
 
@@ -624,15 +656,14 @@ Assume 4 items, first already expanded, one is Ora Toa, one is a removal, she de
 | **Accept this change** | 1 | |
 | **Next** | 1 | |
 | Gone from the government list. She knows it still runs | 0 | |
-| **Keep it as a community listing** | 1 | Secondary, clearly worded — not “take it off” |
+| **Keep it as a community listing** | 1 | Equal to take-off — not a secondary |
 | **Next** | 1 | |
 | Last item: she wants to ring them | 0 | |
-| **I’ll come back to this** | 1 | |
-| Finish: **Publish the rest now** | 1 | Deferred remains |
-| **Publish now** | 1 | Confirmation that names the work |
+| **Needs confirmation** | 1 | |
+| Finish: **Publish now** | 1 | Publishes immediately; deferred remain |
 
-**Clicks: 10** for four items with one verify, one defer, and explicit **Next**.  
-Auto-advance would drop three Next clicks (back to ~7) and buy speed at the cost of reflow-under-the-cursor. Undo is required in either model. Website / defer / keep-as-community / named Publish each buy a decision she can stand behind.
+**Clicks: 9** for four items with one verify, one defer, and explicit **Next**.  
+Undo on every decision toast. Website / **Needs confirmation** / keep-as-community / immediate Publish each buy a decision she can stand behind. **Undo publish** is the recovery if that last click was wrong.
 
 **Fail the job if:** a removal’s only primary action takes a live service off the site, or Ora Toa has no before-and-after / no “You set this earlier”.
 
@@ -670,24 +701,21 @@ This design doc is the approval artifact. After implementation, the one-pager mu
 Approve the design first. Then, in the module:
 
 - **Keep:** Review / Listings split; landing on Directory; field-by-field diff lines; Leaflet map with no coordinates; name-blur duplicate warning; “Take it off the site” / “The pin is fine” / “Keep yours” as the quality bar for new copy; notifications that say what happens next.  
-- **Rewrite:** listings as search-first + listing detail (discard click-row-to-edit); Review closed-row summary; verification bar; defer; keep-as-community; edit-then-accept; Publish confirmation; session finish; undo on the toast; drop auto-advance unless the user chooses it.  
-- **Do not build more of:** N/S/E/W nudge, raw kind/status in the table, `window.confirm`, a Review table whose only information is the buttons, the `users.read` landing hook (§13).
-
-No further Vue until this document is accepted (or accepted with the decisions in section 12).
+- **Rewrite:** listings as search-first + listing detail (discard click-row-to-edit); Review closed-row summary; verification bar; **Needs confirmation** group; keep-as-community (equal actions); edit-then-accept with changed-field highlighting; immediate Publish; session finish; undo on the toast; explicit **Next**.  
+- **Do not build more of:** N/S/E/W nudge, raw kind/status in the table, `window.confirm`, a Review table whose only information is the buttons, the `users.read` landing hook (§13), a Publish confirmation dialog.  
+- **Do not build yet:** **Undo publish** (7.5) until that section is agreed.
 
 ---
 
-## 12. Decisions for the people who will use this
+## 12. Decisions — accepted 8 Sep 2026
 
-These change the screens. Recommendations below are for if you do not want to pick — they are yours to overrule.
-
-| # | Question | Recommendation |
-|---|----------|----------------|
-| 1 | Deferred items: own group, mixed with a badge, or hidden until asked? | **Own group** (`Come back to these`). She should not reread what she already set aside. |
-| 2 | Gone from the government list: equal buttons, take-off primary, or keep primary? | **Take it off the site** is primary. **Keep it as a community listing** is secondary and equally clearly worded. Removal usually is removal; keeping needs local knowledge. |
-| 3 | Almost-right change: shared form or inline on the card? | **Shared form**, pre-filled. One editing surface for create, update, and correct — as asked. |
-| 4 | Publish from the finish: named confirmation, immediate, or count only? | **Always the named confirmation.** Saving one click is not worth not seeing what goes live. |
-| 5 | After a decision: auto-expand the next item, or an explicit **Next**? | **Explicit Next.** Undo on the toast either way. Auto-advance is how the next click hits the wrong organisation. |
+| # | Question | Decided |
+|---|----------|---------|
+| 1 | Deferred items: own group, mixed with a badge, or hidden until asked? | **Own group**, named **Needs confirmation**. Same words on the button, the badge, the group heading, and the toast. |
+| 2 | Gone from the government list: equal buttons, take-off primary, or keep primary? | **Equal weighting.** **Take it off the site** and **Keep it as a community listing** have no visual hierarchy and no keyboard default. |
+| 3 | Almost-right change: shared form or inline on the card? | **Shared form**, pre-filled, with the field(s) the proposal changed marked, scrolled to, and focused. **You set this earlier** stays on curated fields. Not colour alone. |
+| 4 | Publish from the finish: named confirmation, immediate, or count only? | **Immediate.** No confirmation dialog. **Undo publish** (7.5) is the safety net — designed, not built until that section is agreed. |
+| 5 | After a decision: auto-expand the next item, or an explicit **Next**? | **Explicit Next.** Undo on every Review action toast. |
 
 ---
 
@@ -719,8 +747,8 @@ An admin for two people is lower stakes than the public directory. It is still a
 1. Status band (Review count, then Publish count)  
 2. Queue heading  
 3. Each closed row is a button (name + summary). Enter/Space expands  
-4. Inside an open card: verification bar (Website, phone, map container is skippable), field diffs, then actions left to right as labelled, then **I’ll come back to this**, then **Next** if shown  
-5. **Come back to these** group heading, then those rows  
+4. Inside an open card: verification bar (Website, phone, map container is skippable), field diffs, then actions left to right as labelled. On a removal, neither take-off nor keep-as-community is the default. Then **Needs confirmation**, then **Next** if shown  
+5. **Needs confirmation** group heading, then those rows  
 
 **After a decision**
 
@@ -732,14 +760,14 @@ An admin for two people is lower stakes than the public directory. It is still a
 
 - Every action in the copy dictionary is a real button, reachable, with a visible label (not icon-only).  
 - Expand/collapse is a button, not click-on-the-row-only.  
-- Dialogs (archive, publish): focus trap, Escape = Cancel / Not yet, first focus on the title.  
+- Dialogs (archive only — there is no Publish dialog): focus trap, Escape = Cancel, first focus on the title.  
 - Map: tab stops on the map container; arrow keys move the pin only when the marker is focused; the address field remains the way to set a place without the map.
 
 **Screen reader**
 
 - Row summary is the accessible name (`Porirua Whānau Centre, Phone and address changed`).  
 - Diff lines are text, not colour alone (`Phone: A → B`).  
-- **You set this earlier** is text on the field, not a colour flag.  
+- **You set this earlier** and **Changed in this update** are text on the field, not a colour flag.  
 - Toasts are `role="status"` (polite). Undo is a button inside the status, announced.  
 - Hidden Website button (no URL) is not in the tab order.
 
@@ -751,9 +779,10 @@ An admin for two people is lower stakes than the public directory. It is still a
 
 | Need | Today | When building this design |
 |------|--------|---------------------------|
-| Status band count + named Publish list | `/publish-status` → `{ unpublished: bool, currentVersion, nextCounts }` | Add an integer (and names or ids) — do not derive “2” in the browser |
+| Status band count | `/publish-status` → `{ unpublished: bool, currentVersion, nextCounts }` | Add an integer (and names or ids) — do not derive “2” in the browser |
 | Defer | No flag | `proposed.deferred_at` + proposal fingerprint; refresh rule in 7.1 |
-| Keep as community | No action | `overrides.action = community_owned` as in 7.2; diff skips `removed`, matches reappearance |
-| Undo | No snapshot of the last action | Server-side undo of the last Review write, or a short-lived undo token; must restore patches |
+| Keep as community | No action | `overrides.action = community_owned` as in 7.2; widen the action CHECK; diff skips `removed`, matches reappearance |
+| Review undo | No snapshot of the last action | Server-side undo of the last Review write, or a short-lived undo token; must restore patches |
+| Undo publish | Admin-only rollback Flow | **Do not build until 7.5 is agreed.** Then expose previous snapshot as **Undo publish** |
 | Landing | Bootstrap `last_page` only. The `users.read` hook is gone | Keep bootstrap; do not add a read hook (§13) |
 | Queue evidence | Runner writes `proposed.before` at queue time; Review still shows live | Keep both. Do not drop the stored snapshot |
