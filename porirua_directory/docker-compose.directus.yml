@@ -2,9 +2,9 @@
 # Do not use docker-compose.test.yml (host port 54329) — that file is shared
 # with the catalog API task and will collide or truncate tables mid-test.
 #
-#   docker compose -p porirua-directus-ojw13bd2 -f docker-compose.directus.yml up -d --wait
+#   docker compose -p porirua-directus -f docker-compose.directus.yml up -d --wait
 #   export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54341/porirua_directus
-name: porirua-directus-ojw13bd2
+name: porirua-directus
 services:
   postgres:
     image: postgres:16-alpine
@@ -48,7 +48,7 @@ services:
     ports:
       - "18055:8055"
     environment:
-      SECRET: directus-local-secret-ojw13bd2
+      SECRET: directus-local-secret
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: admin-local
       DB_CLIENT: pg

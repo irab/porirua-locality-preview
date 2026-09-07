@@ -1,6 +1,6 @@
 /**
  * Postgres harness for Directus-workspace tests.
- * Uses host port 54341 / compose project porirua-directus-ojw13bd2 so we never
+ * Uses host port 54341 / compose project porirua-directus so we never
  * share docker-compose.test.yml (54329) with the catalog API task.
  */
 
@@ -66,7 +66,7 @@ export async function withDirectusDatabase(t, fn) {
       /connect ECONNREFUSED|timeout|not reachable/i.test(String(error.message))
     ) {
       t.skip(
-        "Directus test database is not reachable; run docker compose -p porirua-directus-ojw13bd2 -f docker-compose.directus.yml up -d --wait"
+        "Directus test database is not reachable; run npm run directus:up"
       );
       return;
     }

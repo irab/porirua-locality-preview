@@ -15,11 +15,13 @@ Self-contained app: public **Your Porirua Directory** (need categories, search, 
 npm install
 npm run build:data    # fetch FSD + merge with Connections Map → data/services.json
 npm run serve         # http://localhost:5173/index.html
-npm test              # unit tests (import/merge/mapping). db-* tests skip without Postgres
+npm test              # unit files in parallel, then shared Directus files one at a time. db-* skip without Postgres
 npm run test:db       # catalog schema/bootstrap/publish (needs npm run db:test:up)
-npm run directus:up   # local Directus on :18055 against Postgres :54341 (not 54329)
+npm run directus:up   # local Directus on :18055 against Postgres :54341 (project porirua-directus, not 54329)
+npm run directus:down # stop and remove volumes (avoids a leftover admin user on the next up)
+npm run directus:reset
 npm run directus:bootstrap
-npm run test:directus # permissions, Flow effects, override/raw_import/purge contracts
+npm run test:directus # same sequential Directus path `npm test` runs second
 npm run sync:fsd      # weekly FSD review-queue job (needs DATABASE_URL; never publishes)
 npm run test:sync     # collapse/diff/runner (needs npm run db:sync-test:up — port 54339)
 npm run test:e2e      # Playwright (Chromium; see Browser testing below)

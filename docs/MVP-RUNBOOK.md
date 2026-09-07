@@ -104,7 +104,7 @@ npm test
 npm run test:e2e
 ```
 
-`npm test` is the unit suite. Database-backed tests (`tests/db-*.test.mjs`) **skip** when Postgres is not reachable, so CI and laptops without Docker stay green.
+`npm test` runs pure unit files in parallel, then the Directus-dependent files one at a time (`--test-concurrency=1`). Those files share one Directus and one Postgres and call `bootstrapDirectus()`, so a single parallel glob races them. Database-backed catalog tests (`tests/db-*.test.mjs`) **skip** when Postgres is not reachable, so CI and laptops without Docker stay green. Local Directus is compose project `porirua-directus`; `npm run directus:down` includes `-v`.
 
 ### Phase 2 catalog database (local)
 

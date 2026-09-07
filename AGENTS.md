@@ -46,7 +46,7 @@ cd porirua_directory
 npm install
 npm run build:data    # import FSD + merge → data/services.json
 npm run serve         # http://localhost:5173/index.html
-npm test              # unit tests (import/merge)
+npm test              # unit tests in parallel, then Directus-dependent files sequentially
 npm run sync:fsd      # weekly FSD review queue (DATABASE_URL; never publishes)
 npm run test:e2e      # Playwright
 ```

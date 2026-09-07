@@ -17,7 +17,7 @@ let bootstrapped = false;
 async function ensureWorkspace(t) {
   if (!(await probeDirectus()) || !(await probeOperations())) {
     t.skip(
-      "Directus or operations is not reachable; run docker compose -p porirua-directus-ojw13bd2 -f docker-compose.directus.yml up -d --wait"
+      "Directus or operations is not reachable; run npm run directus:up"
     );
     return false;
   }
