@@ -27,7 +27,7 @@
         <button
           v-if="canUndoPublish"
           type="button"
-          class="band"
+          class="band band-action"
           :disabled="undoingPublish"
           @click="undoLastPublish"
         >
@@ -70,8 +70,9 @@
 
       <section v-if="tab === 'review'" class="panel">
         <p class="lede">These are government updates. Your own adds never appear here.</p>
-        <h2 v-if="activeQueue.length" class="heading">{{ reviewCountLabel(activeQueue.length) }}</h2>
-        <h2 v-else-if="allDeferredOnArrival" class="heading">{{ needConfirmationOnlyTitle(deferredQueue.length) }}</h2>
+        <h2 v-if="!activeQueue.length && allDeferredOnArrival" class="heading">
+          {{ needConfirmationOnlyTitle(deferredQueue.length) }}
+        </h2>
         <p v-if="queueError" class="error">{{ queueError }}</p>
         <p v-if="queueLoading" class="hint">Looking for government updates…</p>
 
@@ -86,13 +87,6 @@
             </button>
             <div v-if="openId === item.id" class="review-body">
               <p v-if="item.fsdReturned" class="banner-note">{{ item.fsdReturnedLabel }}</p>
-              <verification-bar
-                :website="item.websiteUrl || item.after?.url"
-                :phone="item.phone || item.after?.phone"
-                :address="item.address || item.after?.address || item.before?.address"
-                :pin="item.pin"
-                :show-map="item.showPin"
-              />
               <p v-if="item.youSetThis?.length" class="hint">
                 You set this earlier: {{ item.youSetThis.map((row) => row.label).join(", ") }}
               </p>
@@ -107,6 +101,14 @@
                   <li v-for="row in item.otherRows" :key="row.field">{{ row.line }}</li>
                 </ul>
               </div>
+              <verification-bar
+                :website="item.websiteUrl || item.after?.url"
+                :phone="item.phone || item.after?.phone"
+                :address="item.currentAddress || item.before?.address"
+                :address-note="item.verifyAddressNote"
+                :pin="item.verifyPin || item.pin"
+                :show-map="item.showVerifyMap"
+              />
               <div class="actions" :class="{ equal: item.kind === 'removed' }">
                 <template v-if="item.kind === 'removed'">
                   <v-button small secondary type="button" @click="runQueue(item, '/hide', 'approve')">
@@ -844,6 +846,10 @@ export default {
   opacity: 0.6;
   cursor: default;
 }
+.band-action {
+  background: transparent;
+  border-style: dashed;
+}
 .toast {
   display: flex;
   gap: 12px;
@@ -937,9 +943,15 @@ export default {
 }
 .review-card {
   margin-bottom: 12px;
+  border: 1px solid var(--theme--border-color-subdued);
+  border-radius: 8px;
+}
+.review-card .review-row {
+  border: 0;
+  border-radius: 8px 8px 0 0;
 }
 .review-body {
-  padding: 8px 4px 0;
+  padding: 4px 12px 16px;
 }
 .kind,
 .line-status {

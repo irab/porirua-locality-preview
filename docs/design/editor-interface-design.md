@@ -145,7 +145,7 @@ On every expanded Review item and every listing detail.
 |---------|-----------|
 | **Website** | Opens the organisation website in a **new tab**. Uses the government URL if present, otherwise the live listing URL. Hidden if neither exists. |
 | Phone | `tel:` link, shown as the number she already understands |
-| Address | Shown as the address text **and**, when coordinates exist, a map (Leaflet, same as the public site). Never show latitude or longitude. On Review, the map is the before/after pin when the pin moved; otherwise the current pin. |
+| Address | On Review, the **current** listing address, labelled **On the site now**. The proposed address lives only in the diff. A map (Leaflet, same OSM tiles as the public site) shows the current pin, or the proposed pin on a pin-check. Never show latitude or longitude. If tiles cannot load, hide the map — do not leave an empty box. |
 
 The address text is a complete path. The map is a check and a nudge, not the only way to set a place (see 4.3 and §14).
 
@@ -249,7 +249,7 @@ Row summary examples (not the raw kind):
 4. **You set this earlier** on curated fields (Ora Toa address / pin is the first live case)  
 5. Only fields that moved, each as `Phone: 04 237 7749 → 04 237 9608`  
 6. One line for the rest: **Other details are unchanged. Show them** (collapsed)  
-7. For a pin check or a moved pin: the map, no numbers  
+7. Verification bar (Website, phone, **On the site now** address, map). The change comes first; the bar is evidence.  
 8. The actions for that kind (copy dictionary)
 
 **She can.** Verify in a new tab, accept, keep hers, correct-then-accept, decline, mark **Needs confirmation**, or (on a pin) move the pin. On a removal, **Take it off the site** and **Keep it as a community listing** are equal — neither is styled as the safe or default action, and neither is the keyboard default.
@@ -750,7 +750,7 @@ An admin for two people is lower stakes than the public directory. It is still a
 1. Status band (Review count, then Publish count)  
 2. Queue heading  
 3. Each closed row is a button (name + summary). Enter/Space expands  
-4. Inside an open card: verification bar (Website, phone, map container is skippable), field diffs, then actions left to right as labelled. On a removal, neither take-off nor keep-as-community is the default. Then **Needs confirmation**, then **Next** if shown  
+4. Inside an open card: the before-and-after first, then the verification bar (Website, phone, current address, map is skippable), then actions left to right as labelled. On a removal, neither take-off nor keep-as-community is the default. Then **Needs confirmation**, then **Next** if shown  
 5. **Needs confirmation** group heading, then those rows  
 
 **After a decision**

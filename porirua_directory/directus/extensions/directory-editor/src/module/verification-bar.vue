@@ -8,8 +8,11 @@
       rel="noopener noreferrer"
     >Website</a>
     <a v-if="phone" class="verify-link" :href="'tel:' + phone">{{ phone }}</a>
-    <p v-if="address" class="verify-address">{{ address }}</p>
-    <pin-map v-if="showMap && pin" :lat="pin.lat" :lng="pin.lng" />
+    <p v-if="address" class="verify-address">
+      <span v-if="addressNote" class="verify-note">{{ addressNote }}</span>
+      {{ address }}
+    </p>
+    <pin-map v-if="showMap && pin && !tilesFailed" :lat="pin.lat" :lng="pin.lng" @tiles-failed="tilesFailed = true" />
   </div>
 </template>
 
@@ -22,8 +25,17 @@ export default {
     website: { type: String, default: "" },
     phone: { type: String, default: "" },
     address: { type: String, default: "" },
+    addressNote: { type: String, default: "" },
     pin: { type: Object, default: null },
     showMap: { type: Boolean, default: false },
+  },
+  data() {
+    return { tilesFailed: false };
+  },
+  watch: {
+    pin() {
+      this.tilesFailed = false;
+    },
   },
 };
 </script>
@@ -34,7 +46,7 @@ export default {
   flex-wrap: wrap;
   gap: 8px 16px;
   align-items: center;
-  margin: 8px 0 12px;
+  margin: 12px 0 4px;
 }
 .verify-link {
   color: var(--theme--primary);
@@ -42,5 +54,10 @@ export default {
 .verify-address {
   margin: 0;
   width: 100%;
+}
+.verify-note {
+  display: block;
+  color: var(--theme--foreground-subdued);
+  font-size: 0.85rem;
 }
 </style>

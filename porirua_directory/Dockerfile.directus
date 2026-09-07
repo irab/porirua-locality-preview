@@ -12,3 +12,6 @@ USER root
 COPY --from=extension-build /ext/package.json /directus/extensions/directus-extension-directory-editor/package.json
 COPY --from=extension-build /ext/dist /directus/extensions/directus-extension-directory-editor/dist
 USER node
+# Leaflet OSM tiles. Default img-src is GitHub avatars only, so the Review map
+# reserved a blank box. Keep the stock hosts and add the public-site tile hosts.
+ENV CONTENT_SECURITY_POLICY_DIRECTIVES__IMG_SRC="array:'self',data:,blob:,https://raw.githubusercontent.com,https://avatars.githubusercontent.com,https://*.tile.openstreetmap.org,https://tile.openstreetmap.org,https://*.basemaps.cartocdn.com"

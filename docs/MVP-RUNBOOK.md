@@ -277,7 +277,7 @@ Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet gi
    gh workflow run directory.yml --ref <branch>
    ```
 
-   That job tags `ghcr.io/irab/porirua-directory`, `-api`, `-sync`, `-operations`, and `-directus` with the git SHA. Pin every container in the tenant to that SHA (not `:dev` or `:latest`).
+   That job tags `ghcr.io/irab/porirua-directory`, `-api`, `-sync`, `-operations`, and `-directus` with the git SHA. Pin every container in the tenant to that SHA (not `:dev` or `:latest`). The Directus image must allow OpenStreetMap tiles in `img-src` or the Review map is an empty box.
 2. Push the tenant directory to blackbox `main`. After the first sync creates `dev-porirua-directory`, copy `ghcr-io` from `dev-polis`. SealedSecrets cannot unseal until that namespace exists.
 3. **Do not call the pin done until someone has signed in as Editor after the roll** (fresh private window or hard reload) and seen the Directory module — Review / Listings — not Directus “Page Not Found”. The module script (`/extensions/sources/index.js`) is cookie-auth only; a leftover session cookie from the previous pod 401s it and no module registers. Tests and sidecar checks do not catch that.
 4. Catalog-bootstrap Job: `db-import-from-json.mjs` from committed `data/services.json` + `data/overrides.json`, then the first `catalog:publish` (real Cloudflare purge — do not set `CATALOG_SKIP_PURGE`). Expect two colliding public ids to become `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`.

@@ -256,6 +256,9 @@ test("queue DTO fills before from the live listing when weekly sync omitted it",
   assert.ok(dto.diffRows.some((row) => row.line === "Phone: 04 237 7749 → 04 237 9608"));
   assert.equal(dto.showPin, true);
   assert.deepEqual(dto.pin, { lat: -41.2, lng: 174.9 });
+  assert.equal(dto.currentAddress, "Old Street");
+  assert.equal(dto.verifyAddressNote, "On the site now");
+  assert.deepEqual(dto.verifyPin, { lat: -41.1, lng: 174.8 });
 });
 
 test("new items do not treat the already-inserted live row as a before side", () => {
@@ -269,6 +272,7 @@ test("new items do not treat the already-inserted live row as a before side", ()
   assert.deepEqual(dto.before, {});
   assert.deepEqual(dto.queuedBefore, {});
   assert.ok(dto.diffRows.some((row) => row.line === "Name: Brand new"));
+  assert.equal(dto.verifyAddressNote, "");
 });
 
 test("success copy says what happens next", () => {

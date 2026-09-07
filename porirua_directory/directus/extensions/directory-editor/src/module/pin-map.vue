@@ -23,7 +23,7 @@ export default {
     lng: { type: [Number, String], default: null },
     draggable: { type: Boolean, default: false },
   },
-  emits: ["move"],
+  emits: ["move", "tiles-failed"],
   data() {
     return {
       map: null,
@@ -61,17 +61,26 @@ export default {
       this.point ? [this.point.lat, this.point.lng] : [PORIRUA.lat, PORIRUA.lng],
       this.point ? 16 : PORIRUA.zoom
     );
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap",
       maxZoom: 18,
-    }).addTo(this.map);
+    });
+    let tileErrors = 0;
+    tiles.on("tileerror", () => {
+      tileErrors += 1;
+      if (tileErrors >= 3) this.$emit("tiles-failed");
+    });
+    tiles.addTo(this.map);
     this.syncMarker();
     if (this.draggable) {
       this.map.on("click", (event) => {
         this.$emit("move", { lat: event.latlng.lat, lng: event.latlng.lng });
       });
     }
-    this.$nextTick(() => this.map.invalidateSize());
+    this.$nextTick(() => {
+      this.map.invalidateSize();
+      requestAnimationFrame(() => this.map?.invalidateSize());
+    });
   },
   beforeUnmount() {
     this.map?.remove();
@@ -121,10 +130,19 @@ export default {
 </style>
 
 <style scoped>
+.pin-map {
+  width: 100%;
+}
 .pin-map-canvas {
-  height: 240px;
+  width: 100%;
+  height: 160px;
   border-radius: 8px;
   z-index: 1;
+  background: var(--theme--background-normal, #f0f0f0);
+}
+.pin-map-canvas :deep(.leaflet-container) {
+  width: 100%;
+  height: 160px;
 }
 .sr-only {
   position: absolute;

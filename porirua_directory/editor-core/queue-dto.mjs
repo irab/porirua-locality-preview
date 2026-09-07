@@ -309,6 +309,8 @@ export function queueItemDto(item = {}, live = null) {
   const diffRows = queueDiffRows({ kind: item.kind, before, after });
   const youSetThis = youSetThisFields(locked, reviewable, diffRows, showPin);
   const otherRows = otherUnchangedRows({ kind: item.kind, before, after, diffRows });
+  const currentAddress = before.address || (item.kind === "new" ? after.address || "" : "");
+  const verifyPin = item.kind === "geocode_flag" ? pin : queuePin(before, {});
   return {
     id: item.id,
     kind: item.kind,
@@ -318,6 +320,10 @@ export function queueItemDto(item = {}, live = null) {
     entityId: item.entity_id ?? item.entityId,
     name: after.name || before.name || "",
     address: after.address || before.address || "",
+    currentAddress,
+    verifyAddressNote: currentAddress && item.kind !== "new" ? "On the site now" : "",
+    verifyPin,
+    showVerifyMap: Boolean(verifyPin) && (showPin || item.kind === "geocode_flag"),
     primaryActionLabel: primaryActionLabel(item.kind),
     rejectActionLabel: rejectActionLabel(item.kind),
     deferActionLabel: deferActionLabel(),
