@@ -26,7 +26,7 @@ flowchart TB
   subgraph editors [Editors]
     Directus[Directus admin-directory-dev.bsky.nz]
     Ops[operations sidecar ClusterIP]
-    Sheet[Google Sheet Connections Map]
+    Module[Directory module Review and Listings]
   end
   subgraph external [External data]
     FSD[FSD CSV data.govt.nz]
@@ -42,7 +42,7 @@ flowchart TB
     Nginx[nginx static + baked fallback]
     UI[directory UI]
   end
-  Sheet --> PG
+  Module --> Directus
   FSD --> Sync[weekly CronJob suspended in dev]
   Sync --> PG
   Directus --> Ops --> PG
@@ -65,7 +65,7 @@ flowchart TB
 |----------|------|
 | `porirua-locality-preview` | Directory MVP, merge scripts, docs, Connections Map |
 | `blackbox` | K8s tenant, Ingress `directory.bsky.nz`, [bsky.nz DNS](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md) |
-| Porirua Locality Google Sheet | Community org inventory (shared with Connections Map) |
+| Porirua Locality Google Sheet | Connections Map only. Directory community listings are edited in Data Studio → Directory |
 
 ---
 
@@ -75,12 +75,11 @@ flowchart TB
 2. **`npm run merge:services`** — Load Connections Map CSV (sheet URL or repo fallback), merge with FSD, apply `data/overrides.json`, dedupe (prefer community copy), write `data/services.json`.
 3. **Deploy** — Docker image includes static assets + `services.json`; served at `directory.bsky.nz`.
 
-Editors in MVP:
+Editors (current):
 
-- Change community orgs in the **Google Sheet** (same as Connections Map).
-- Hide or patch FSD rows via **`data/overrides.json`** (re-run merge after FSD import).
-
-No admin database in Phase 1.
+- Change community listings in Data Studio → **Directory** (Listings tab). Creates are published rows with **no** review-queue item. The public site updates on **Publish**.
+- Review FSD proposals on the **Review** tab. A removed row’s primary action is **Take it off the site** (hide + override), not Accept.
+- Near-name check on create: `scripts/lib/name-match.mjs`. Do not change `normalizedOrgName` / clustering here — see [open-duplicate-org-cards](../issues/open-duplicate-org-cards.md).
 
 ---
 
@@ -147,11 +146,11 @@ The static nginx pod and baked `data/services.json` stay as the UI fallback when
 
 The weekly runner is `porirua_directory/scripts/fsd-sync-run.mjs` (`npm run sync:fsd`, image `Dockerfile.sync`). Kubernetes CronJob manifests live in the blackbox tenant. Approve, hide, and reject share `scripts/approve-review.mjs` (`approveReviewItem`) with the Directus sidecar. List-view multi-select is real for those three: the sidecar loops every `body.keys` item, keeps earlier successes when a later item fails, and returns per-item counts (HTTP 409 when any fail). Edit-and-approve and Roll back stay single-item and **400** if the trigger carries more than one key — they never truncate to `keys[0]`. Approve records no actor (no `approved_by` on `review_queue_items` yet) — a handover gap when Locality asks who signed off a change.
 
-**Directus (editor workspace):** collections, Interfaces, Editor role, Review queue preset, and Flows are version-controlled under `porirua_directory/directus/`. The editor inbox is **`review_queue_items`** (sidebar + a `status = pending` bookmark). Do not register the `pending_review` SQL view as a collection — Directus cannot inspect a plain view, so `/items` 403s and a visible sidebar entry is a dead end. The view stays in Postgres for queries. Queue rows show `kind`, the related listing (`entity_id` → services), and a generated `change_summary` so editors are not reading raw `proposed` JSON. The Editor policy includes `directus_flows` read — without it, Data Studio hides every manual Flow (Publish, Roll back, Approve / Hide / Reject). Approve / Hide / Reject are `location: both` on `review_queue_items`. Edit-and-approve and Roll back are `location: item`. Publish stays `collection` with `requireSelection: false`. Organizations expose related `service_lines` as a read-only O2M alias on `services.organization_id` (text join to `organizations.id`). Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Grain / `public_id` changes are Admin-only and write `public_id_aliases`.
+**Directus (editor workspace):** the Editor-facing UI is the **Directory module** (`directus/extensions/directory-editor/`) — one sidebar item, Review | Listings. Raw `organizations`, `services`, `review_queue_items`, and `catalog_snapshots` are hidden from the nav. The Editor policy does **not** read `directus_flows`. The custom endpoint `/directory-editor` is the only authorisation gate (Editor or Admin) before proxying to the unauthenticated sidecar. A removed queue item archives via the hide path. Creates go through the sidecar (`scripts/listings.mjs`) and never insert `review_queue_items`. Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Keep-yours refreshes `raw_import` without overwriting live columns. Grain / `public_id` changes stay Admin-only. The fifth image is `ghcr.io/irab/porirua-directory-directus:<sha>` (dev pin only).
 
-**Operations sidecar:** `directus/operations/server.mjs` is the deployable the Flows call for sticky save, approve/hide/reject, publish, rollback, and public-id alias. It can publish the catalog, accept queue items, and rewrite `raw_import`. Keep it **cluster-internal with no Ingress** — local compose publishes `18790` only so tests can reach it. Publish needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` for the edge purge. Never set `CATALOG_SKIP_PURGE` on a tenant.
+**Operations sidecar:** `directus/operations/server.mjs` remains ClusterIP-only (no Ingress, no auth). The module never calls it from the browser. Routes now include listings CRUD, name-matches, geocode, queue DTOs, keep-curation, and the existing review/publish endpoints. Local compose publishes `18790` only so tests can reach it. Publish needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` for the edge purge. Never set `CATALOG_SKIP_PURGE` on a tenant.
 
-**Dev tenant** (this stack): `https://directory-dev.bsky.nz` (nginx + `/api`) and `https://admin-directory-dev.bsky.nz` (Directus). Manifests: blackbox `clusters/dev/tenants/porirua-directory/`. Images are pinned to an immutable app-repo SHA (`ghcr.io/irab/porirua-directory{,-api,-sync,-operations}:<sha>`), never a floating `:dev`. `CATALOG_CURRENT_TTL_MS` is `5000` in dev. `/api` is a separate Traefik Ingress (priority 200) so it is not stolen by the site `/` router. The operations Service is ClusterIP-only; a NetworkPolicy allows Directus → operations:8790 and operations → Postgres, and excludes operations from the tenant-wide same-namespace and Traefik allow lists. Never set `CATALOG_SKIP_PURGE` on the tenant. Prod must copy Editor `directus_flows` read or the portal has no publish/rollback/review buttons. Prod must also copy the bulk Approve / Hide / Reject sidecar (and keep Edit-and-approve / Roll back item-only) — a `both` button that still reads `keys[0]` silently drops the rest of a list selection. Prod must unhide `review_queue_items` as the inbox and must not leave `pending_review` visible in Data Studio.
+**Dev tenant** (this stack): `https://directory-dev.bsky.nz` (nginx + `/api`) and `https://admin-directory-dev.bsky.nz` (Directus). Manifests: blackbox `clusters/dev/tenants/porirua-directory/`. Images are pinned to an immutable app-repo SHA (`ghcr.io/irab/porirua-directory{,-api,-sync,-operations,-directus}:<sha>`), never a floating `:dev`. `CATALOG_CURRENT_TTL_MS` is `5000` in dev. `/api` is a separate Traefik Ingress (priority 200) so it is not stolen by the site `/` router. The operations Service is ClusterIP-only; a NetworkPolicy allows Directus → operations:8790 and operations → Postgres, and excludes operations from the tenant-wide same-namespace and Traefik allow lists. Never set `CATALOG_SKIP_PURGE` on the tenant. Prod is out of scope for this editor change.
 
 **Admin host** stays separate from the public directory host. Production will choose its own admin hostname in a gated prod task. D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
 

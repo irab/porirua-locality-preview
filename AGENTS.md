@@ -34,6 +34,8 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 | [`docs/porirua-directory-phase1-spec.md`](docs/porirua-directory-phase1-spec.md) | Data model, FSD rules, merge, overrides |
 | [`docs/fsd-porirua-filter-rationale.md`](docs/fsd-porirua-filter-rationale.md) | FSD geo filter rationale, exclusion audit |
 | [`docs/MVP-RUNBOOK.md`](docs/MVP-RUNBOOK.md) | Rebuild data, deploy, test |
+| [`docs/design/admin-testing-personas.md`](docs/design/admin-testing-personas.md) | Admin / editor personas and JTBD for design + Directory module review |
+| [`docs/design/editor-guide.md`](docs/design/editor-guide.md) | Short editor one-pager |
 | [`porirua_directory/README.md`](porirua_directory/README.md) | Directory app layout & npm scripts |
 | [`porirua_connections_map/README.md`](porirua_connections_map/README.md) | Map embed & sheet |
 

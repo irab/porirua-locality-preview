@@ -28,6 +28,10 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [issues/README.md](./issues/README.md) | Developers | **Issues directory** (fixed & recurring bugs) |
 | [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Developers | FSD Salvation Army duplicates, org→service roadmap |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |
+| [design/admin-testing-personas.md](./design/admin-testing-personas.md) | Locality testers, Coshop | Admin / editor personas and jobs to be done — Directory module + public design |
+| [design/editor-guide.md](./design/editor-guide.md) | Moana, Kahu | Short editor one-pager |
+| [design/README.md](./design/README.md) | Team | Design folder index |
+| [issues/open-duplicate-org-cards.md](./issues/open-duplicate-org-cards.md) | Developers | Four live duplicate org cards; merge-tool seed backlog |
 | [human-services-directory-examples-overview.md](./human-services-directory-examples-overview.md) | Team, stakeholders | Comparable directories (Ask Izzy, 211, FSD, etc.) |
 | [human-services-directory-examples-overview.pdf](./human-services-directory-examples-overview.pdf) | Same (print/PDF) | Export of examples overview |
 | [slides/directory-mvp-walkthrough.html](./slides/directory-mvp-walkthrough.html) | Stakeholders | Reveal.js MVP walkthrough (live directory embeds) |

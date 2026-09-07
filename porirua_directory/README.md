@@ -4,8 +4,9 @@ Self-contained app: public **Your Porirua Directory** (need categories, search, 
 
 **Data sources:**
 
-- [`../porirua_connections_map/`](../porirua_connections_map/) — community organisations (Google Sheet / CSV)
-- **NZ Family Services Directory** — imported via `npm run import:fsd`, filtered to Porirua
+- **Directory editor** (Data Studio → Directory) — community listings. See [editor one-pager](../docs/design/editor-guide.md).
+- **NZ Family Services Directory** — weekly sync into the review queue; editors never write those queue rows themselves.
+- [`../porirua_connections_map/`](../porirua_connections_map/) — Connections Map still uses the Google Sheet / CSV.
 
 **Docs:** [docs/README.md](../docs/README.md) · [Architecture](../docs/architecture/porirua-directory-architecture.md) · [Phase 1 spec](../docs/porirua-directory-phase1-spec.md) · [Runbook](../docs/MVP-RUNBOOK.md)
 

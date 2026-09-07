@@ -118,6 +118,8 @@ npm run test:e2e:dev
 
 That runs `directory.spec.js`, `catalog-fetch.spec.js`, and `e2e/dev-deployment.spec.js` against the live host (no local `webServer`). It does not need Directus credentials.
 
+For structured admin / editor testing (personas + jobs), use [design/admin-testing-personas.md](./design/admin-testing-personas.md). Editors use the [Directory one-pager](./design/editor-guide.md). Public journeys remain [Ana](./design/persona-journey-ana-support.html) and [Sam](./design/persona-journey-sam-community.html).
+
 A Data Studio approve + publish + rollback cycle is **opt-in** (mutates the shared review queue and snapshots, then cleans up):
 
 ```bash
