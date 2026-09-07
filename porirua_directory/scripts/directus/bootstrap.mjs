@@ -66,6 +66,7 @@ const EDITOR_ORG_UPDATE_FIELDS = [
   "community_filters",
   "status",
   "source_primary",
+  // service_lines is a read-only O2M alias — omitted so Editors cannot re-parent.
 ];
 
 const EDITOR_SERVICE_UPDATE_FIELDS = [
@@ -249,16 +250,65 @@ async function ensureAliasField(token, collection, field, meta) {
 }
 
 async function ensureRelation(token, relation) {
-  const existing = await request(
-    `${DIRECTUS_URL}/relations?filter[collection][_eq]=${relation.collection}&filter[field][_eq]=${relation.field}`,
-    { token }
-  );
-  if ((existing.data ?? []).length > 0) return;
+  let current = null;
+  try {
+    const existing = await request(
+      `${DIRECTUS_URL}/relations/${relation.collection}/${relation.field}`,
+      { token }
+    );
+    current = existing.data ?? existing;
+  } catch (error) {
+    if (error.status !== 403 && error.status !== 404) throw error;
+  }
+  if (current?.meta?.one_field && current.meta.one_field === relation.meta?.one_field) {
+    return;
+  }
+  if (current) {
+    // Schema-only FKs already appear on GET /relations (meta: null). POST then
+    // 400s. PATCH must send top-level collection/field — otherwise Directus
+    // inserts directus_relations with many_collection null.
+    await request(`${DIRECTUS_URL}/relations/${relation.collection}/${relation.field}`, {
+      token,
+      method: "PATCH",
+      body: {
+        collection: relation.collection,
+        field: relation.field,
+        related_collection: relation.related_collection,
+        meta: relation.meta,
+      },
+    });
+    return;
+  }
   try {
     await request(`${DIRECTUS_URL}/relations`, { token, method: "POST", body: relation });
   } catch (error) {
-    if (!/already exists|duplicate/i.test(String(error.message))) throw error;
+    if (!/already exists|duplicate|associated relationship/i.test(String(error.message))) throw error;
   }
+}
+
+async function ensureOrganizationServiceLines(token) {
+  await ensureRelation(token, {
+    collection: "services",
+    field: "organization_id",
+    related_collection: "organizations",
+    meta: {
+      one_field: "service_lines",
+      one_deselect_action: "nullify",
+      sort_field: "sort_key",
+    },
+  });
+  await ensureAliasField(token, "organizations", "service_lines", {
+    special: ["o2m"],
+    interface: "list-o2m",
+    options: { template: "{{title}}" },
+    display: "related-values",
+    display_options: { template: "{{title}}" },
+    readonly: true,
+    hidden: false,
+    sort: 30,
+    width: "full",
+    note: "Related service lines. Open a line to edit it. Editors cannot re-parent from this form.",
+  });
 }
 
 async function findByName(token, path, name) {
@@ -539,6 +589,7 @@ async function configureCollections(token) {
     display: "labels",
     width: "full",
     required: true,
+    sort: 1,
     translations: null,
     note: "Status is prominent. Changing it does not go public until Publish directory runs.",
   });
@@ -589,6 +640,7 @@ async function configureCollections(token) {
     width: "full",
     note: "Parent organisation. Open it to edit related lines together.",
   });
+  await ensureOrganizationServiceLines(token);
 }
 
 function editorPermissions(policyNote) {
@@ -684,7 +736,7 @@ async function configurePresets(token, editorRoleId) {
     layout: "tabular",
     layout_query: {
       tabular: {
-        fields: ["name", "status", "render_grain", "public_id", "source_primary"],
+        fields: ["name", "status", "render_grain", "public_id", "source_primary", "service_lines"],
       },
     },
     layout_options: {

@@ -54,6 +54,7 @@ test("Editor update permission fields omit public_id and render_grain", async (t
   const fields = permissions.data.data[0]?.fields ?? [];
   assert.equal(fields.includes("public_id"), false);
   assert.equal(fields.includes("render_grain"), false);
+  assert.equal(fields.includes("service_lines"), false);
   assert.equal(fields.includes("name"), true);
   assert.equal(fields.includes("status"), true);
 });

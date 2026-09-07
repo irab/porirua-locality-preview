@@ -558,7 +558,7 @@ fields:
             value: hidden
       readonly: false
       required: true
-      sort: null
+      sort: 1
       special: null
       translations: null
       validation: null
@@ -1108,6 +1108,32 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  -
+    collection: organizations
+    field: service_lines
+    type: alias
+    meta:
+      collection: organizations
+      conditions: null
+      display: related-values
+      display_options:
+        template: "{{title}}"
+      field: service_lines
+      group: null
+      hidden: false
+      interface: list-o2m
+      note: Related service lines. Open a line to edit it. Editors cannot re-parent from this form.
+      options:
+        template: "{{title}}"
+      readonly: true
+      required: false
+      sort: 30
+      special:
+        - o2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
   -
     collection: organizations
     field: id
@@ -2497,6 +2523,28 @@ relations:
       on_delete: NO ACTION
   -
     collection: services
+    field: organization_id
+    related_collection: organizations
+    meta:
+      junction_field: null
+      many_collection: services
+      many_field: organization_id
+      one_allowed_collections: null
+      one_collection: organizations
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: service_lines
+      sort_field: sort_key
+    schema:
+      table: services
+      column: organization_id
+      foreign_key_table: organizations
+      foreign_key_column: id
+      constraint_name: services_organization_id_fkey
+      on_update: NO ACTION
+      on_delete: NO ACTION
+  -
+    collection: services
     field: duplicate_of
     related_collection: services
     meta: null
@@ -2506,19 +2554,6 @@ relations:
       foreign_key_table: services
       foreign_key_column: id
       constraint_name: services_duplicate_of_fkey
-      on_update: NO ACTION
-      on_delete: NO ACTION
-  -
-    collection: services
-    field: organization_id
-    related_collection: organizations
-    meta: null
-    schema:
-      table: services
-      column: organization_id
-      foreign_key_table: organizations
-      foreign_key_column: id
-      constraint_name: services_organization_id_fkey
       on_update: NO ACTION
       on_delete: NO ACTION
 roles:
@@ -2559,31 +2594,6 @@ permissions:
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
     collection: organizations
-    action: read
-    fields:
-      - "*"
-    permissions: {}
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: organizations
-    action: update
-    fields:
-      - name
-      - description
-      - phone
-      - url
-      - email
-      - address
-      - lat
-      - lng
-      - org_type
-      - community_filters
-      - status
-      - source_primary
-    permissions: {}
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: organizations
     action: update
     fields:
       - name
@@ -2605,30 +2615,6 @@ permissions:
     action: read
     fields:
       - "*"
-    permissions: {}
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: services
-    action: read
-    fields:
-      - "*"
-    permissions: {}
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: services
-    action: update
-    fields:
-      - title
-      - service_name
-      - description
-      - phone
-      - url
-      - address
-      - lat
-      - lng
-      - categories
-      - badges
-      - status
     permissions: {}
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
@@ -2659,36 +2645,6 @@ permissions:
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
     collection: review_queue_items
-    action: read
-    fields:
-      - "*"
-    permissions: {}
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: pending_review
-    action: read
-    fields:
-      - "*"
-    permissions:
-      status:
-        _eq: pending
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: review_queue_items
-    action: read
-    fields:
-      - "*"
-    permissions: {}
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: catalog_snapshots
-    action: read
-    fields:
-      - "*"
-    permissions: {}
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
-    collection: directus_files
     action: read
     fields:
       - "*"
@@ -2921,6 +2877,7 @@ presets:
           - render_grain
           - public_id
           - source_primary
+          - service_lines
     filter: null
   -
     bookmark: Review queue

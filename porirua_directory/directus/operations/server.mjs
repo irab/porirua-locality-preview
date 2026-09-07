@@ -1,6 +1,9 @@
 /**
  * Sidecar used by committed Directus Flows. Keep Flow JSON thin; logic lives here
  * so tests can call the same functions without clicking the Data Studio.
+ *
+ * Can publish, approve, and rewrite raw_import. Deploy cluster-internal only —
+ * ClusterIP, no Ingress. Local compose binds 18790 for tests, not as a public API.
  */
 
 import { createServer } from "node:http";

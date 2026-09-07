@@ -156,12 +156,13 @@ Configuration is in git, not clicked-in state:
 |------|------------|
 | `porirua_directory/directus/snapshot.yaml` | Collections, fields, Interfaces, relations, plus roles / permissions / presets exported with the running instance |
 | `porirua_directory/directus/flows/` | Sticky curation, Publish directory, Roll back, review actions, failure notification |
+| `porirua_directory/directus/operations/` | Sidecar the Flows POST to (sticky, approve, hide, reject, publish, rollback, alias). Can publish, approve, and rewrite `raw_import`. **Cluster-internal only — no Ingress.** Local compose binds host `18790` for tests. |
 | `porirua_directory/scripts/directus/bootstrap.mjs` | Applies the workspace to a fresh Directus |
 
 ### Editor daily path
 
 1. Sign in as **Editor**.
-2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line).
+2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line). Related **service lines** are on the organisation record (read-only). Open a line to edit it; do not re-parent from the organisation form.
 3. Edit ordinary fields (address, phone, description). On an FSD-sourced record, saving triggers **Sticky curation on save**, which upserts one `overrides` row `{target_type, target_id, action: "patch", patch}` and merges keys into that row. You never type patch JSON.
 4. Open the **Review queue** preset on `pending_review`. Use **Approve**, **Edit-and-approve**, **Hide**, or **Reject**. Approve applies `proposed.after`, sets status, **refreshes `raw_import`**, and marks the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week.
 5. Status changes stay in Postgres. They do **not** go public until you publish.

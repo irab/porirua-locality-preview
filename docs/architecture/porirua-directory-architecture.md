@@ -127,9 +127,11 @@ flowchart LR
 
 **Tables:** `organizations`, `services`, `public_id_aliases`, `catalog_snapshots`, `overrides`, `import_runs`, `review_queue_items`. The last two ship complete for the sync task (`import_runs.stats` includes included/excluded/collapsed/queue counts; `review_queue_items.kind` is `new|changed|removed|geocode_flag`).
 
-**Directus (local editor, this slice):** collections, Interfaces, Editor role, Review queue preset, and Flows are version-controlled under `porirua_directory/directus/`. Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Grain / `public_id` changes are Admin-only and write `public_id_aliases`. Nothing here deploys a tenant.
+**Directus (local editor, this slice):** collections, Interfaces, Editor role, Review queue preset, and Flows are version-controlled under `porirua_directory/directus/`. Organizations expose related `service_lines` as a read-only O2M alias on `services.organization_id` (text join to `organizations.id`). Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Grain / `public_id` changes are Admin-only and write `public_id_aliases`. Nothing here deploys a tenant.
 
-**Not in this slice:** Kubernetes manifests, the catalog HTTP API, and the weekly CronJob. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, and later the API / Directus / sync images beside the existing nginx pod.
+**Operations sidecar:** `directus/operations/server.mjs` is a new deployable the Flows call for sticky save, approve/hide/reject, publish, rollback, and public-id alias. It can publish the catalog, accept queue items, and rewrite `raw_import`. Keep it **cluster-internal with no Ingress** — local compose publishes `18790` only so tests can reach it. A tenant brief also needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` for the publish purge.
+
+**Not in this slice:** Kubernetes manifests, the catalog HTTP API, and the weekly CronJob. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, the operations sidecar as a ClusterIP-only Service, and later the API / Directus / sync images beside the existing nginx pod.
 
 **Admin host** stays separate from `directory.bsky.nz` (e.g. `admin.directory.bsky.nz`). D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
 

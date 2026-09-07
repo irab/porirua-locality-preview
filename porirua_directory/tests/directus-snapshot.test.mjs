@@ -21,4 +21,6 @@ test("committed snapshot.yaml includes collections, Editor RBAC, and the Review 
   assert.match(text, /field: public_id/);
   assert.match(text, /field: render_grain/);
   assert.match(text, /field: status/);
+  assert.match(text, /field: service_lines/);
+  assert.match(text, /one_field: service_lines/);
 });
