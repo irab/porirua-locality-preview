@@ -2,19 +2,28 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   actionSuccessMessage,
+  deferActionLabel,
+  keepAsCommunityLabel,
   kindLabel,
+  needsConfirmationGroupLabel,
   primaryActionLabel,
   queueDiffRows,
   queueItemDto,
+  queueSummaryLabel,
   rejectActionLabel,
   reviewCountLabel,
+  reviewDeferredFinishLabel,
   reviewFinishedLabel,
   statusLabel,
+  waitingCountLabel,
 } from "../editor-core/queue-dto.mjs";
 
 test("removed items use Take it off the site, not Accept", () => {
   assert.equal(primaryActionLabel("removed"), "Take it off the site");
-  assert.equal(primaryActionLabel("changed"), "Accept");
+  assert.equal(primaryActionLabel("changed"), "Accept this change");
+  assert.equal(keepAsCommunityLabel(), "Keep it as a community listing");
+  assert.equal(deferActionLabel(), "Needs confirmation");
+  assert.equal(needsConfirmationGroupLabel(2), "Needs confirmation (2)");
   assert.equal(queueItemDto({ kind: "removed", id: "q1" }).primaryActionLabel, "Take it off the site");
 });
 
@@ -39,11 +48,36 @@ test("kind and status never stay as raw enums", () => {
   assert.equal(kindLabel("changed"), "Details changed");
   assert.equal(kindLabel("new"), "New service");
   assert.equal(kindLabel("removed"), "Gone from the government list");
-  assert.equal(kindLabel("geocode_flag"), "Check the pin");
+  assert.equal(kindLabel("geocode_flag"), "Check the map pin");
   assert.equal(statusLabel("published"), "On the site");
   assert.equal(statusLabel("hidden"), "Off the site");
   assert.equal(statusLabel("draft"), "Off the site");
-  assert.equal(queueItemDto({ kind: "geocode_flag" }).kindLabel, "Check the pin");
+  assert.equal(queueItemDto({ kind: "geocode_flag" }).kindLabel, "Check the map pin");
+});
+
+test("closed-row summary names the fields that moved", () => {
+  assert.equal(queueSummaryLabel({ kind: "new" }), "New service");
+  assert.equal(queueSummaryLabel({ kind: "removed" }), "Gone from the government list");
+  assert.equal(
+    queueSummaryLabel({
+      kind: "changed",
+      diffRows: [
+        { field: "phone", label: "Phone" },
+        { field: "address", label: "Address" },
+      ],
+    }),
+    "Phone and address changed"
+  );
+  assert.equal(
+    queueItemDto({
+      kind: "changed",
+      proposed: {
+        before: { phone: "04 1", address: "Old" },
+        after: { phone: "04 2", address: "New" },
+      },
+    }).summaryLabel,
+    "Phone and address changed"
+  );
 });
 
 test("reject copy is kind-specific", () => {
@@ -171,6 +205,14 @@ test("success copy says what happens next", () => {
     actionSuccessMessage({ action: "approve", kind: "changed" }),
     "Accepted. It will go on the public site when you publish."
   );
+  assert.equal(actionSuccessMessage({ action: "defer" }), "Needs confirmation. It stays in Review.");
+  assert.equal(
+    actionSuccessMessage({ action: "keep-community" }),
+    "Kept. This is now a community listing. Next week's government feed will not take it off."
+  );
+  assert.equal(actionSuccessMessage({ action: "keep" }), "Kept your details. They stay as you set them.");
+  assert.equal(reviewDeferredFinishLabel(2), "You've decided the ones you can. 2 need confirmation.");
+  assert.equal(waitingCountLabel(2), "2 waiting to go on the site");
   assert.equal(
     actionSuccessMessage({ action: "reject", kind: "new" }),
     "Not added. It will not go on the public site."

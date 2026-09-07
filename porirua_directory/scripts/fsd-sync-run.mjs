@@ -14,8 +14,10 @@ import {
   buildFsdFingerprint,
   diffFsdCatalog,
   fingerprintsEqualIgnoringFields,
+  isCommunityOwned,
   isIncludedCountBelowSanityThreshold,
 } from "./fsd-sync-diff.mjs";
+import { proposalFingerprint } from "../editor-core/proposal-fingerprint.mjs";
 import { closePool, getPool, mapServiceRow, withTransaction } from "./lib/db.mjs";
 import { publicServiceId } from "./lib/listing-identity.mjs";
 import { slugId } from "./lib/normalize.mjs";
@@ -353,6 +355,26 @@ async function loadRuledGeocodeCodes(db, entityId) {
   return new Set(result.rows.map((row) => geocodeFlagCodeOf(row.proposed)).filter(Boolean));
 }
 
+function withDeferRefresh(item, pending) {
+  const existing = pending?.proposed && typeof pending.proposed === "object" ? pending.proposed : {};
+  if (!existing.deferred_at) return item;
+  const incoming = item.proposed && typeof item.proposed === "object" ? { ...item.proposed } : {};
+  const same =
+    proposalFingerprint({ kind: item.kind, proposed: existing }) ===
+    proposalFingerprint({ kind: item.kind, proposed: incoming });
+  if (same) {
+    incoming.deferred_at = existing.deferred_at;
+    incoming.deferred_fingerprint =
+      existing.deferred_fingerprint ?? proposalFingerprint({ kind: item.kind, proposed: existing });
+    delete incoming.changed_since_deferred;
+  } else {
+    delete incoming.deferred_at;
+    delete incoming.deferred_fingerprint;
+    incoming.changed_since_deferred = true;
+  }
+  return { ...item, proposed: incoming };
+}
+
 async function refreshQueueItem(db, pendingId, importRunId, item) {
   const updated = await db.query(
     `UPDATE review_queue_items
@@ -364,16 +386,40 @@ async function refreshQueueItem(db, pendingId, importRunId, item) {
   return updated.rows[0];
 }
 
+async function supersedePending(db, entityId, kind) {
+  if (!entityId || !kind) return;
+  await db.query(
+    `UPDATE review_queue_items
+        SET status = 'superseded', updated_at = now()
+      WHERE entity_type = 'service' AND entity_id = $1 AND kind = $2 AND status = 'pending'`,
+    [entityId, kind]
+  );
+}
+
+async function markCommunityOwnedAwaitingReturn(db, dbRows, incomingIds) {
+  for (const row of dbRows) {
+    if (!isCommunityOwned(row)) continue;
+    if (incomingIds.has(String(row.fsd_service_id ?? ""))) continue;
+    await db.query(
+      `UPDATE overrides
+          SET patch = COALESCE(patch, '{}'::jsonb) || '{"awaiting_return": true}'::jsonb
+        WHERE target_type = 'service' AND target_id = $1 AND action = 'community_owned' AND status = 'open'`,
+      [row.id]
+    );
+  }
+}
+
 async function upsertQueueItem(db, importRunId, item, entityId) {
   const pending = await findPendingQueueItem(db, entityId, item.kind);
   const ruledGeocodeCodes =
     item.kind === "geocode_flag" ? await loadRuledGeocodeCodes(db, entityId) : new Set();
   const decision = decideQueueWrite(item, { pending, ruledGeocodeCodes });
   if (decision === "skip") return { queued: false, skipped: true };
+  const next = pending ? withDeferRefresh(item, pending) : item;
   if (decision === "refresh") {
-    return { queued: true, refreshed: true, queueItem: await refreshQueueItem(db, pending.id, importRunId, item) };
+    return { queued: true, refreshed: true, queueItem: await refreshQueueItem(db, pending.id, importRunId, next) };
   }
-  return { queued: true, refreshed: false, queueItem: await insertQueueItem(db, importRunId, item, entityId) };
+  return { queued: true, refreshed: false, queueItem: await insertQueueItem(db, importRunId, next, entityId) };
 }
 
 function openPatchFromRow(dbRow) {
@@ -436,6 +482,7 @@ async function applyDiffItem(db, importRunId, item, dbByServiceId, collapsedBySe
   const dbRow = dbByServiceId.get(item.serviceId);
   const patch = openPatchFromRow(dbRow);
   if (!shouldQueueDiffItemThreeWay(item, dbRow, patch)) {
+    if (dbRow?.id) await supersedePending(db, dbRow.id, item.kind);
     return { queued: false };
   }
   item = withQueuedBefore(withReviewableFields(item, dbRow, patch), dbRow);
@@ -599,6 +646,7 @@ export async function runFsdSync({
           queued.push(applied.queueItem);
         }
       }
+      await markCommunityOwnedAwaitingReturn(tx, dbRows, new Set(collapsed.map((row) => serviceIdOf(row))));
     }, db);
 
     stats = { ...stats, ...kinds, queued: queued.length };

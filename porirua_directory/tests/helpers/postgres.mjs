@@ -22,6 +22,7 @@ const SCHEMA_PATH = path.join(
 );
 
 const CATALOG_TABLES = [
+  "editor_undo",
   "review_queue_items",
   "import_runs",
   "overrides",
@@ -68,6 +69,7 @@ export async function resetTestDatabase(client) {
   await applySchema(client);
   await client.query(
     `TRUNCATE TABLE
+       editor_undo,
        review_queue_items,
        import_runs,
        overrides,

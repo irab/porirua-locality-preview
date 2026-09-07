@@ -432,7 +432,13 @@ export async function getListing({ db, organizationId } = {}) {
     `SELECT * FROM services WHERE organization_id = $1 ORDER BY sort_key ASC, title ASC`,
     [organizationId]
   );
-  return { organization: org.rows[0], services: services.rows };
+  return {
+    organization: {
+      ...org.rows[0],
+      statusLabel: statusLabel(org.rows[0].status),
+    },
+    services: services.rows.map((row) => ({ ...row, statusLabel: statusLabel(row.status) })),
+  };
 }
 
 export async function updateListing({ db, organizationId, serviceId, payload = {}, createdBy } = {}) {
@@ -520,9 +526,33 @@ export async function listQueueItems({ db } = {}) {
         ...dto,
         name: row.organization_name || dto.name,
         title: row.title ?? "",
+        websiteUrl: live.url || dto.after.url || "",
+        phone: live.phone || dto.after.phone || "",
       };
     }),
   };
+}
+
+export function unpublishedWork(currentBody, nextBody) {
+  if (JSON.stringify(currentBody ?? null) === JSON.stringify(nextBody ?? null)) {
+    return { unpublishedCount: 0, unpublishedNames: [] };
+  }
+  const previous = new Map((currentBody?.services ?? []).map((entry) => [entry.id, entry]));
+  const names = [];
+  const seen = new Set();
+  const addName = (entry) => {
+    const name = entry?.name || entry?.id;
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    names.push(name);
+  };
+  for (const entry of nextBody?.services ?? []) {
+    const before = previous.get(entry.id);
+    if (!before || JSON.stringify(before) !== JSON.stringify(entry)) addName(entry);
+    previous.delete(entry.id);
+  }
+  for (const gone of previous.values()) addName(gone);
+  return { unpublishedCount: names.length, unpublishedNames: names };
 }
 
 export async function publishStatus({ db } = {}) {
@@ -536,9 +566,21 @@ export async function publishStatus({ db } = {}) {
   const nextBody = { ...next };
   delete nextBody.generatedAt;
   const unpublished = JSON.stringify(currentBody) !== JSON.stringify(nextBody);
+  const work = unpublishedWork(currentBody, nextBody);
+  const previous = await db.query(
+    `SELECT version, generated_at FROM catalog_snapshots
+      WHERE is_current = false
+      ORDER BY version DESC
+      LIMIT 1`
+  );
   return {
     unpublished,
+    unpublishedCount: work.unpublishedCount,
+    unpublishedNames: work.unpublishedNames,
     currentVersion: current?.version ?? null,
+    previousVersion: previous.rows[0]?.version ?? null,
+    publishedAt: current?.envelope?.generatedAt ?? null,
+    canUndoPublish: false,
     nextCounts: next.counts,
   };
 }

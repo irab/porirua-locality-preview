@@ -23,7 +23,7 @@ test("pooled client reads DATABASE_URL via config.mjs", async (t) => {
     await applySchema(pool);
     await pool.query(
       `TRUNCATE TABLE
-         review_queue_items, import_runs, overrides, catalog_snapshots,
+         editor_undo, review_queue_items, import_runs, overrides, catalog_snapshots,
          public_id_aliases, services, organizations
        RESTART IDENTITY CASCADE`
     );

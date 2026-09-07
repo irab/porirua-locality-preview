@@ -4,6 +4,7 @@ import { columnNames, tableNames, withTestDatabase } from "./helpers/postgres.mj
 
 const REQUIRED_TABLES = [
   "catalog_snapshots",
+  "editor_undo",
   "import_runs",
   "organizations",
   "overrides",
@@ -89,7 +90,7 @@ const REVIEW_QUEUE_COLUMNS = [
   "change_summary",
 ];
 
-test("schema creates the seven catalog tables with sync-ready columns", async (t) => {
+test("schema creates the catalog tables with sync-ready columns", async (t) => {
   await withTestDatabase(t, async (client) => {
     const tables = await tableNames(client);
     for (const table of REQUIRED_TABLES) {

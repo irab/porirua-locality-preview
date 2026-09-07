@@ -76,6 +76,37 @@ test("fingerprint differing from raw_import is changed with incoming values in p
   assert.equal(existing.phone, "04 000 0000");
 });
 
+test("community_owned skips removed and flags a returning SERVICE_ID", () => {
+  const [incoming] = collapsedFrom([SINGLETON_FOODBANK]);
+  const owned = dbRow(incoming, {
+    fsd_service_id: "gone-then-back",
+    overrides: [{ action: "community_owned", status: "open", patch: { awaiting_return: true } }],
+  });
+  const removed = diffFsdCatalog([], [owned]);
+  assert.equal(
+    removed.some((item) => item.serviceId === "gone-then-back"),
+    false
+  );
+
+  const returned = dbRow(incoming, {
+    overrides: [{ action: "community_owned", status: "open", patch: { awaiting_return: true } }],
+  });
+  const items = diffFsdCatalog([incoming], [returned]);
+  const item = itemByService(items, incoming.SERVICE_ID);
+  assert.equal(item.kind, "changed");
+  assert.equal(item.proposed.fsd_returned, true);
+});
+
+test("community_owned after keep-yours does not re-queue an unchanged return", () => {
+  const [incoming] = collapsedFrom([SINGLETON_FOODBANK]);
+  const existing = dbRow(incoming, {
+    overrides: [{ action: "community_owned", status: "open", patch: { awaiting_return: false } }],
+  });
+  const items = diffFsdCatalog([incoming], [existing]);
+  const item = itemByService(items, incoming.SERVICE_ID);
+  assert.equal(item.kind, "unchanged");
+});
+
 test("database row absent upstream is removed and never auto-hidden", () => {
   const [incoming] = collapsedFrom([SINGLETON_FOODBANK]);
   const orphan = dbRow(incoming, { fsd_service_id: "gone-service" });

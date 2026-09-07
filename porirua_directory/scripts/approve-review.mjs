@@ -10,6 +10,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { closePool, getPool, withTransaction } from "./lib/db.mjs";
+import { closeCommunityOwned, markCommunityOwnedRuledOn } from "./review-actions.mjs";
 import { FSD_FINGERPRINT_FIELDS } from "./fsd-sync-collapse.mjs";
 
 /**
@@ -211,6 +212,9 @@ export async function approveReviewItem({ db, queueItemId, payload, createdBy } 
     }
     const accepted = { ...proposedAfter(item), ...(payload ?? {}) };
     const lockedFields = item.proposed?.locked_fields ?? [];
+    if (item.proposed?.fsd_returned) {
+      await closeCommunityOwned(tx, item.entity_id);
+    }
     await applyAcceptedService(tx, item.entity_id, accepted, lockedFields);
     await markQueue(tx, queueItemId, "accepted");
     return { queueItemId, entityId: item.entity_id, accepted };
@@ -256,6 +260,9 @@ export async function keepCurationReviewItem({ db, queueItemId } = {}) {
       `UPDATE services SET raw_import = $2::jsonb, updated_at = now() WHERE id = $1`,
       [item.entity_id, JSON.stringify(rawImport)]
     );
+    if (item.proposed?.fsd_returned) {
+      await markCommunityOwnedRuledOn(tx, item.entity_id);
+    }
     await markQueue(tx, queueItemId, "accepted");
     return { queueItemId, entityId: item.entity_id, kept: true };
   }, db);

@@ -112,6 +112,19 @@ function isHiddenLocked(dbRow) {
   );
 }
 
+export function isCommunityOwned(dbRow) {
+  return (dbRow?.overrides ?? []).some(
+    (entry) => isOpenOverride(entry) && overrideType(entry) === "community_owned"
+  );
+}
+
+export function communityOwnedAwaitingReturn(dbRow) {
+  return (dbRow?.overrides ?? []).some((entry) => {
+    if (!isOpenOverride(entry) || overrideType(entry) !== "community_owned") return false;
+    return entry.patch?.awaiting_return !== false;
+  });
+}
+
 function lockedPatchFields(dbRow) {
   return (dbRow?.overrides ?? [])
     .filter((entry) => isOpenOverride(entry) && overrideType(entry) === "patch")
@@ -183,6 +196,8 @@ export function diffFsdCatalog(collapsed, dbRows) {
     const hiddenLock = dbRow ? isHiddenLocked(dbRow) : false;
     const lockedFields = dbRow ? lockedPatchFields(dbRow) : [];
     const flag = geocodeFlagOf(row, dbRow);
+    const communityOwned = dbRow ? isCommunityOwned(dbRow) : false;
+    const awaitingReturn = dbRow ? communityOwnedAwaitingReturn(dbRow) : false;
 
     if (!dbRow) {
       items.push({
@@ -211,6 +226,21 @@ export function diffFsdCatalog(collapsed, dbRows) {
           ...(hiddenLock
             ? { blocked_by_hidden: true, auto_publish: false }
             : {}),
+          ...(lockedFields.length ? { locked_fields: lockedFields } : {}),
+          ...(flag ? { geocode_flag: flag } : {}),
+        },
+      });
+      continue;
+    }
+
+    if (communityOwned && awaitingReturn) {
+      items.push({
+        kind: "changed",
+        serviceId,
+        proposed: {
+          after,
+          fsd_returned: true,
+          ...(hiddenLock ? { blocked_by_hidden: true, auto_publish: false } : {}),
           ...(lockedFields.length ? { locked_fields: lockedFields } : {}),
           ...(flag ? { geocode_flag: flag } : {}),
         },
@@ -248,6 +278,8 @@ export function diffFsdCatalog(collapsed, dbRows) {
     .sort((a, b) => a.localeCompare(b, "en"));
 
   for (const serviceId of removedIds) {
+    const existing = dbByServiceId.get(serviceId);
+    if (isCommunityOwned(existing)) continue;
     items.push({
       kind: "removed",
       serviceId,

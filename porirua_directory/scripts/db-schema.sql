@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS overrides (
   id text PRIMARY KEY,
   target_type text NOT NULL,
   target_id text NOT NULL,
-  action text NOT NULL CHECK (action IN ('hide', 'patch', 'link_duplicate')),
+  action text NOT NULL CHECK (action IN ('hide', 'patch', 'link_duplicate', 'community_owned')),
   patch jsonb,
   reason text,
   status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS review_queue_items (
   kind text NOT NULL CHECK (kind IN ('new', 'changed', 'removed', 'geocode_flag')),
   proposed jsonb NOT NULL DEFAULT '{}'::jsonb,
   status text NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending', 'accepted', 'rejected')),
+    CHECK (status IN ('pending', 'accepted', 'rejected', 'superseded')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -173,3 +173,18 @@ $$;
 ALTER TABLE review_queue_items
   ADD COLUMN IF NOT EXISTS change_summary text
   GENERATED ALWAYS AS (review_queue_change_summary(kind, proposed)) STORED;
+
+ALTER TABLE overrides DROP CONSTRAINT IF EXISTS overrides_action_check;
+ALTER TABLE overrides ADD CONSTRAINT overrides_action_check
+  CHECK (action IN ('hide', 'patch', 'link_duplicate', 'community_owned'));
+
+ALTER TABLE review_queue_items DROP CONSTRAINT IF EXISTS review_queue_items_status_check;
+ALTER TABLE review_queue_items ADD CONSTRAINT review_queue_items_status_check
+  CHECK (status IN ('pending', 'accepted', 'rejected', 'superseded'));
+
+CREATE TABLE IF NOT EXISTS editor_undo (
+  id uuid PRIMARY KEY,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  action text NOT NULL,
+  snapshot jsonb NOT NULL
+);

@@ -27,6 +27,7 @@ export const DIRECTUS_TEST_FILES = [
   "tests/operations-bulk.test.mjs",
   "tests/directus-review-inbox.test.mjs",
   "tests/listings.test.mjs",
+  "tests/review-actions.test.mjs",
   "tests/directory-editor-auth.test.mjs",
 ];
 
