@@ -14,7 +14,7 @@ import {
 } from "./lib/listing-identity.mjs";
 import { withTransaction } from "./lib/db.mjs";
 import { upsertStickyOverride } from "./directus/sticky-curation.mjs";
-import { queueItemDto } from "../editor-core/queue-dto.mjs";
+import { queueItemDto, statusLabel } from "../editor-core/queue-dto.mjs";
 import { buildCatalogEnvelope } from "./catalog-envelope.mjs";
 import {
   getCurrentSnapshot,
@@ -90,12 +90,14 @@ async function loadServicesForOrg(db, organizationId) {
 export async function nameMatches({ db, name, organizationId } = {}) {
   if (!db) throw new Error("nameMatches requires db");
   const queryName = String(name ?? "").trim();
+  const withStatus = (matches) =>
+    matches.map((row) => ({ ...row, statusLabel: statusLabel(row.status) }));
   if (organizationId) {
     const services = await loadServicesForOrg(db, organizationId);
-    return { matches: findServiceLineNameMatches(queryName, services) };
+    return { matches: withStatus(findServiceLineNameMatches(queryName, services)) };
   }
   const organizations = await loadOrganizations(db);
-  return { matches: findOrganisationNameMatches(queryName, organizations) };
+  return { matches: withStatus(findOrganisationNameMatches(queryName, organizations)) };
 }
 
 async function insertOrganization(tx, org) {
@@ -413,7 +415,12 @@ export async function listListings({ db } = {}) {
        FROM organizations o
       ORDER BY o.name ASC, o.id ASC`
   );
-  return { listings: result.rows };
+  return {
+    listings: result.rows.map((row) => ({
+      ...row,
+      statusLabel: statusLabel(row.status),
+    })),
+  };
 }
 
 export async function getListing({ db, organizationId } = {}) {
@@ -471,7 +478,23 @@ export async function updateListing({ db, organizationId, serviceId, payload = {
 export async function listQueueItems({ db } = {}) {
   if (!db) throw new Error("listQueueItems requires db");
   const result = await db.query(
-    `SELECT q.*, s.title, o.name AS organization_name
+    `SELECT q.*,
+            s.title,
+            s.service_name,
+            s.description AS service_description,
+            s.phone AS service_phone,
+            s.url AS service_url,
+            s.address AS service_address,
+            s.lat AS service_lat,
+            s.lng AS service_lng,
+            s.categories AS service_categories,
+            o.name AS organization_name,
+            o.description AS organization_description,
+            o.phone AS organization_phone,
+            o.url AS organization_url,
+            o.address AS organization_address,
+            o.lat AS organization_lat,
+            o.lng AS organization_lng
        FROM review_queue_items q
        LEFT JOIN services s ON s.id = q.entity_id
        LEFT JOIN organizations o ON o.id = s.organization_id
@@ -479,11 +502,26 @@ export async function listQueueItems({ db } = {}) {
       ORDER BY q.created_at ASC`
   );
   return {
-    items: result.rows.map((row) => ({
-      ...queueItemDto(row),
-      name: row.organization_name || queueItemDto(row).name,
-      title: row.title ?? "",
-    })),
+    items: result.rows.map((row) => {
+      const live = {
+        name: row.organization_name,
+        title: row.title,
+        serviceName: row.service_name,
+        description: row.service_description || row.organization_description,
+        phone: row.service_phone || row.organization_phone,
+        url: row.service_url || row.organization_url,
+        address: row.service_address || row.organization_address,
+        lat: row.service_lat ?? row.organization_lat,
+        lng: row.service_lng ?? row.organization_lng,
+        categories: row.service_categories ?? [],
+      };
+      const dto = queueItemDto(row, live);
+      return {
+        ...dto,
+        name: row.organization_name || dto.name,
+        title: row.title ?? "",
+      };
+    }),
   };
 }
 

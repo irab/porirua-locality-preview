@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   archiveListing,
   createListing,
+  listListings,
+  listQueueItems,
   ListingError,
   nameMatches,
   queueItemCount,
@@ -154,5 +156,73 @@ test("archive hides the service and writes a hide override; restore reverses it"
     await restoreListing({ db: client, serviceId: "community-archive-me" });
     const restored = await client.query(`SELECT status FROM services WHERE id = 'community-archive-me'`);
     assert.equal(restored.rows[0].status, "published");
+  });
+});
+
+test("listListings uses On the site / Off the site, not raw status enums", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, { id: "community-status-words", name: "Status Words" });
+    const { listings } = await listListings({ db: client });
+    const row = listings.find((item) => item.id === "community-status-words");
+    assert.equal(row.status, "published");
+    assert.equal(row.statusLabel, "On the site");
+  });
+});
+
+test("listQueueItems fills a before/after diff when weekly sync omitted before", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, { id: "community-diff-me", name: "Diff Me" });
+    await client.query(
+      `UPDATE services SET phone = '04 237 7749', address = '1 Old Street' WHERE id = 'community-diff-me'`
+    );
+    const run = await client.query(
+      `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
+    );
+    await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES ($1, 'service', 'community-diff-me', 'changed', $2::jsonb, 'pending')`,
+      [
+        run.rows[0].id,
+        JSON.stringify({ after: { phone: "04 237 9608", address: "9 New Street", name: "Diff Me" } }),
+      ]
+    );
+    const { items } = await listQueueItems({ db: client });
+    const item = items.find((row) => row.entityId === "community-diff-me");
+    assert.equal(item.kindLabel, "Details changed");
+    assert.equal(item.rejectActionLabel, "Don't use this change");
+    assert.ok(item.diffRows.some((row) => row.line === "Phone: 04 237 7749 → 04 237 9608"));
+    assert.ok(item.diffRows.some((row) => row.line === "Address: 1 Old Street → 9 New Street"));
+    assert.equal(item.diffRows.some((row) => /lat|lng|-41/.test(row.line)), false);
+  });
+});
+
+test("listQueueItems shows the live listing and keeps the queued before snapshot", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, { id: "community-queued-before", name: "Queued Before" });
+    await client.query(
+      `UPDATE services SET phone = '04 237 7749', address = '1 Live Street' WHERE id = 'community-queued-before'`
+    );
+    const run = await client.query(
+      `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
+    );
+    await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES ($1, 'service', 'community-queued-before', 'changed', $2::jsonb, 'pending')`,
+      [
+        run.rows[0].id,
+        JSON.stringify({
+          before: { phone: "04 111 0000", address: "9 Queued Street", name: "Queued Before" },
+          after: { phone: "04 237 9608", address: "9 New Street", name: "Queued Before" },
+        }),
+      ]
+    );
+    const { items } = await listQueueItems({ db: client });
+    const item = items.find((row) => row.entityId === "community-queued-before");
+    assert.equal(item.before.phone, "04 237 7749");
+    assert.equal(item.before.address, "1 Live Street");
+    assert.equal(item.queuedBefore.phone, "04 111 0000");
+    assert.equal(item.queuedBefore.address, "9 Queued Street");
   });
 });
