@@ -35,7 +35,7 @@ Said plainly, so we do not rationalise it:
 | See the change | Field diffs were added late; still no way to check the organisation’s own website without losing the queue | Verification bar on every change and every listing; new tab on purpose |
 | Decide later | Only Accept / Keep yours / Reject. Leaving the item means Reject or walking away with it still “new” | **Needs confirmation** — stays pending, marked deferred, not a decision |
 | Government dropped a service | Only **Take it off the site**. That treats “gone from FSD” as “closed” | Two **equal** options: take it off, or **keep it as a community listing** |
-| Nearly-right FSD change | Accept, then hunt the listing to fix it | **Use this, and I’ll correct it** — edit-then-accept in one movement |
+| Nearly-right FSD change | Accept, then hunt the listing to fix it | **Accept and edit** — accept the government version, then edit it before it goes live |
 | Find a listing | Flat table of ~145 names (search was bolted on) | Search is the listings screen; results are the way in, not a filter on a spreadsheet |
 | Open a listing | Clicking a row opened the edit form, so “pick this org to add a line” dumped her into editing | Select and edit are different. Opening a listing shows the org, its lines, and the verification bar |
 | Archive | Browser `confirm`, then a later Directus dialog still tied to “the form you happen to be in” | Archive from listing detail, with a real choice about the organisation |
@@ -67,13 +67,13 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 
 | Situation | Buttons |
 |-----------|---------|
-| Details changed | **Accept this change** · **Keep yours** (only if she set that field) · **Use this, and I’ll correct it** · **Don’t use this change** · **Needs confirmation** |
-| New service | **Add this service** · **Don’t add this** · **Needs confirmation** |
+| Details changed | **Accept** · **Keep yours** (only if she set that field) · **Accept and edit** · **Reject** · **Needs confirmation** |
+| New service | **Accept** · **Reject** · **Needs confirmation** |
 | Gone from the government list | **Take it off the site** · **Keep it as a community listing** — **equal weight, no visual hierarchy, no keyboard default** · **Needs confirmation** |
 | Check the map pin | **The pin is fine** · **I’ll move the pin** · **Needs confirmation** |
 | After any decision | **Undo** (on the toast). The next active item opens on its own. |
 
-**Don’t use this change** and **Don’t add this** are decisions: the government proposal is declined, that week’s value will not be asked again unless FSD moves again.  
+**Reject** is a decision: the government proposal is declined, that week’s value will not be asked again unless FSD moves again. On a new service the toast says it will not go on the public site.  
 **Needs confirmation** is not a decision: the item stays pending and marked. If next week’s proposal is the same, it stays in **Needs confirmation**. If the proposal itself changed, the mark dies and the row returns to the active list (7.1).
 
 ### Listings actions
@@ -96,13 +96,13 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 |--------|--------|
 | Status band, review | **4 changes to review** |
 | Status band, unpublished | **2 waiting to go on the site** |
-| After Accept | **Accepted. It will go on the public site when you publish.** |
-| After Keep yours | **Kept your details. They stay as you set them.** |
-| After Don’t use this change | **Change declined. The listing stays as it is.** |
-| After Don’t add this | **Not added. It will not go on the public site.** |
-| After Take it off the site | **Taken off the site. It will leave the public site when you publish.** |
-| After Keep it as a community listing | **Kept. This is now a community listing. Next week’s government feed will not take it off.** |
-| After Needs confirmation | **Needs confirmation. It stays in Review.** |
+| After Accept | **Accepted {name}. It will go on the public site when you publish.** |
+| After Keep yours | **Kept your details on {name}. They stay as you set them.** |
+| After Reject (changed) | **Rejected the change to {name}. The listing stays as it is.** |
+| After Reject (new) | **Rejected {name}. It will not go on the public site.** |
+| After Take it off the site | **Took {name} off the site. It will leave the public site when you publish.** |
+| After Keep it as a community listing | **Kept {name} as a community listing. Next week’s government feed will not take it off.** |
+| After Needs confirmation | **Needs confirmation. {name} is waiting on the Needs confirmation tab.** |
 | After Save | **Saved. It will go on the public site when you publish.** |
 | After restore | **Put back on the site. It will go on the public site when you publish.** |
 | Queue empty after work | **You’ve reviewed everything. Put 4 changes on the public site.** |
@@ -170,7 +170,7 @@ One layout for **Add organisation**, **Add a service line**, and **Edit**. Same 
 Footer: **Save** · **Cancel**  
 On edit of a service line: also **Archive this service line**.
 
-When this form opens from **Use this, and I’ll correct it** (or **I’ll move the pin**):
+When this form opens from **Accept and edit** (or **I’ll move the pin**):
 
 - It sits **inside the originating card**, replacing that card’s actions. Other cards stay visible but cannot be acted on. The heading names the record (**Correcting {name}** / **Moving the pin for {name}**), not the button label.  
 - Visually mark every field the proposal changed. The mark is text (**Changed in this update**) plus a non-colour cue (a left rule or icon). Colour alone is not enough (§14).  
@@ -261,7 +261,7 @@ Row summary examples (not the raw kind):
 |--------|------|
 | Accept / Add this / The pin is fine / Keep yours / Don’t use / Don’t add / Take it off / Keep as community | Toast with **Undo** (7.4). Row leaves the active list. The next active item opens on its own. Do not auto-open a Needs confirmation item. |
 | Needs confirmation | Row moves to the **Needs confirmation** tab. Toast, next **active** item opens. If only deferred items remain, Review shows the finish state; **Keep reviewing later** opens that tab. |
-| Use this, and I’ll correct it | Shared form **inside that card**, heading **Correcting {name}**. Changed fields marked, scrolled to, and focused (4.3). Other cards cannot be acted on. **Save** = accept the corrected values. Toast with **Undo** |
+| Accept and edit | Shared form **inside that card**, heading **Correcting {name}**. Changed fields marked, scrolled to, and focused (4.3). Other cards cannot be acted on. **Save** = accept the corrected values. Toast with **Undo** |
 | I’ll move the pin | Same, heading **Moving the pin for {name}** |
 
 | State | What she sees |
@@ -383,10 +383,10 @@ flowchart TD
   queue --> open[Open item in place]
   open --> verify[Verification bar: website / phone / map]
   verify --> decide{Can she decide now?}
-  decide -->|yes, government value is right| accept[Accept this change]
+  decide -->|yes, government value is right| accept[Accept]
   decide -->|yes, her value is right| keep[Keep yours]
-  decide -->|almost right| correct[Use this, and I'll correct it]
-  decide -->|government value is wrong| decline[Don't use this change]
+  decide -->|almost right| correct[Accept and edit]
+  decide -->|government value is wrong| decline[Reject]
   decide -->|needs a phone call| defer[Needs confirmation]
   accept --> toast[Toast with Undo]
   keep --> toast
@@ -405,6 +405,8 @@ flowchart TD
   pub -->|Not yet| band
   live --> undoPub[Undo publish — 7.5]
 ```
+
+On a Review card, emphasis follows: organisation, then service line, then what changed, then the change itself, then verification, then actions. Nothing she needs to read is faded grey. Inactive tabs and timestamps stay readable; they get smaller or lighter weight, not a low-contrast colour.
 
 ### 6.2 Add
 
@@ -514,7 +516,7 @@ This path is **not in the current sidecar**. Implement it as part of this build.
 
 When the proposed change is nearly right (new phone, wrong extension), she should not Accept and then hunt the record.
 
-**Use this, and I’ll correct it**
+**Accept and edit**
 
 1. Opens the shared form  
 2. Fields filled from the government **after** values (the proposal), not from the stale live row  
@@ -578,8 +580,7 @@ The weekly sync **does not publish** and **does not close** the window.
 
 - Undo publish still restores the previous **public** snapshot.  
 - Queue rows and any new `pending_review` inserts the sync wrote stay. Undo does not accept or reject them.  
-- If she then Publishes again, that new snapshot includes whatever is publishable in the database at that moment (her undone work plus anything she accepted after the sync).  
-- If the sync queued items while Undo publish is still available, the band may add a quiet note: **Government updates arrived after you published. Undo publish only changes the public site.**
+- If she then Publishes again, that new snapshot includes whatever is publishable in the database at that moment (her undone work plus anything she accepted after the sync).
 
 **Out of scope for this control:** restoring a snapshot older than “the one before last Publish”; exposing the admin Flow; a confirmation dialog.
 
@@ -616,7 +617,7 @@ That card must show:
 - `Address: 22 Ngāti Toa Street, Takapūwāhia, Porirua →` (incoming FSD address)  
 - The map, not a pair of numbers  
 - Verification bar (their website / phone)  
-- **Keep yours** as an obvious action, plus Accept / correct / **Needs confirmation**  
+- **Keep yours** as an obvious action, plus Accept / Accept and edit / **Needs confirmation**  
 
 If the UI ships a queue row that is only a name and buttons, the rule has failed in the only place she will notice.
 
@@ -656,7 +657,7 @@ Assume 4 items, first already expanded, one is Ora Toa, one is a removal, she de
 | Lands on Review | 0 | Status band: 4 to review |
 | Read Ora Toa, open website | 1 | Buys: she can keep her pin on purpose |
 | **Keep yours** | 1 | Toast with **Undo**; next card opens |
-| **Accept this change** | 1 | |
+| **Accept** | 1 | |
 | Gone from the government list. She knows it still runs | 0 | |
 | **Keep it as a community listing** | 1 | Equal to take-off — not a secondary |
 | Last item: she wants to ring them | 0 | |
@@ -756,7 +757,7 @@ An admin for two people is lower stakes than the public directory. It is still a
 **After a decision**
 
 - Open the next active item.  
-- Move focus to that card’s **heading button**, not **Accept this change**. Enter must not accept by accident.  
+- Move focus to that card’s **heading button**, not **Accept**. Enter must not accept by accident.  
 - Leave the confirmation toast in place (`role="status"`). Undo is the first control in the toast, immediately above the list.
 
 **Keyboard**

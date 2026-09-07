@@ -292,7 +292,7 @@ export async function rejectReviewItem({ db, queueItemId } = {}) {
     if (service.rowCount === 0) throw new Error(`service ${item.entity_id} not found`);
     const current = service.rows[0];
     if (item.kind === "new") {
-      // Don't add this: off the site, and the hide lock is the same
+      // Reject a new service: off the site, and the hide lock is the same
       // suppression removals use so next week's sync cannot resurrect it.
       await archiveServiceWithHideOverride(tx, {
         entityType: item.entity_type,

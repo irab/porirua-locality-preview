@@ -65,8 +65,9 @@ export default {
 }
 .verify-note {
   display: block;
-  color: var(--theme--foreground-subdued);
+  color: var(--theme--foreground);
   font-size: 0.85rem;
+  font-weight: 600;
 }
 .verify :deep(.pin-map) {
   flex: 1 1 100%;

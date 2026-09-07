@@ -192,7 +192,7 @@ test("listQueueItems fills a before/after diff when weekly sync omitted before",
     const { items } = await listQueueItems({ db: client });
     const item = items.find((row) => row.entityId === "community-diff-me");
     assert.equal(item.kindLabel, "Details changed");
-    assert.equal(item.rejectActionLabel, "Don't use this change");
+    assert.equal(item.rejectActionLabel, "Reject");
     assert.ok(item.diffRows.some((row) => row.line === "Phone: 04 237 7749 → 04 237 9608"));
     assert.ok(item.diffRows.some((row) => row.line === "Address: 1 Old Street → 9 New Street"));
     assert.equal(item.diffRows.some((row) => /lat|lng|-41/.test(row.line)), false);

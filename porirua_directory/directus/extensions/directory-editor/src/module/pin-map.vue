@@ -280,7 +280,7 @@ export default {
   gap: 8px 16px;
   margin: 6px 0 0;
   font-size: 0.85rem;
-  color: var(--theme--foreground-subdued);
+  color: var(--theme--foreground);
 }
 .sr-only {
   position: absolute;

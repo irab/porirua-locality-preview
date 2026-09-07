@@ -325,8 +325,8 @@ These jobs **pass** when Kahu can do them in the Directory module. They **fail**
 
 | What she sees | Primary actions |
 |---------------|-----------------|
-| Details changed | Accept, Keep yours (when she already set that field), Don't use this change |
-| New service | Accept, Don't add this |
+| Details changed | Accept, Keep yours (when she already set that field), Accept and edit, Reject |
+| New service | Accept, Reject |
 | Gone from the government list | **Take it off the site** (archives; not labelled Accept) |
 | Check the pin | The pin is fine, I'll move the pin, Needs confirmation |
 

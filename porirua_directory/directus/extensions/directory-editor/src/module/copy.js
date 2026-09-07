@@ -1,28 +1,61 @@
 /** Keep aligned with porirua_directory/editor-core/queue-dto.mjs — the image build cannot import that file. */
 
-export function actionSuccessMessage({ action, kind, unpublished = true } = {}) {
+export function actionSuccessMessage({ action, kind, unpublished = true, name } = {}) {
+  const who = String(name || "").trim();
   const publishNext = unpublished ? " It will go on the public site when you publish." : "";
   if (action === "publish") return "Published. The public site is up to date.";
   if (action === "undo-publish") {
     return "Publish undone. Those changes are waiting to go on the site again.";
   }
-  if (action === "defer") return "Needs confirmation. It's waiting on the Needs confirmation tab.";
+  if (action === "defer") {
+    return who
+      ? `Needs confirmation. ${who} is waiting on the Needs confirmation tab.`
+      : "Needs confirmation. It's waiting on the Needs confirmation tab.";
+  }
   if (action === "keep-community") {
-    return "Kept. This is now a community listing. Next week's government feed will not take it off.";
+    return who
+      ? `Kept ${who} as a community listing. Next week's government feed will not take it off.`
+      : "Kept. This is now a community listing. Next week's government feed will not take it off.";
   }
-  if (action === "keep") return "Kept your details. They stay as you set them.";
-  if (action === "restore") return `Put back on the site.${publishNext}`;
-  if (action === "archive") return "Taken off the site. It will leave the public site when you publish.";
-  if (action === "save") return `Saved.${publishNext}`;
+  if (action === "keep") {
+    return who
+      ? `Kept your details on ${who}. They stay as you set them.`
+      : "Kept your details. They stay as you set them.";
+  }
+  if (action === "restore") {
+    return who ? `Put ${who} back on the site.${publishNext}` : `Put back on the site.${publishNext}`;
+  }
+  if (action === "archive") {
+    return who
+      ? `Took ${who} off the site. It will leave the public site when you publish.`
+      : "Taken off the site. It will leave the public site when you publish.";
+  }
+  if (action === "save") return who ? `Saved ${who}.${publishNext}` : `Saved.${publishNext}`;
   if (action === "reject") {
-    if (kind === "new") return "Not added. It will not go on the public site.";
-    if (kind === "geocode_flag") return "Pin check skipped. The listing stays as it is.";
-    return "Change declined. The listing stays as it is.";
+    if (kind === "new") {
+      return who
+        ? `Rejected ${who}. It will not go on the public site.`
+        : "Rejected. It will not go on the public site.";
+    }
+    if (kind === "geocode_flag") {
+      return who
+        ? `Skipped the pin check for ${who}. The listing stays as it is.`
+        : "Pin check skipped. The listing stays as it is.";
+    }
+    return who
+      ? `Rejected the change to ${who}. The listing stays as it is.`
+      : "Rejected. The listing stays as it is.";
   }
-  if (kind === "removed") return "Taken off the site. It will leave the public site when you publish.";
-  if (kind === "geocode_flag") return `Pin kept.${publishNext}`;
-  if (kind === "new") return `Added.${publishNext}`;
-  return `Accepted.${publishNext}`;
+  if (kind === "removed") {
+    return who
+      ? `Took ${who} off the site. It will leave the public site when you publish.`
+      : "Taken off the site. It will leave the public site when you publish.";
+  }
+  if (kind === "geocode_flag") {
+    return who ? `Kept the pin for ${who}.${publishNext}` : `Pin kept.${publishNext}`;
+  }
+  if (kind === "new") return who ? `Added ${who}.${publishNext}` : `Added.${publishNext}`;
+  return who ? `Accepted ${who}.${publishNext}` : `Accepted.${publishNext}`;
 }
 
 export function finishedDecisionLabel({ action, kind, status } = {}) {
@@ -105,13 +138,13 @@ export function queueLineLabel({ name, lineTitle } = {}) {
   return line;
 }
 
-function namedHeading(item, fallback = "this listing") {
+export function queueItemHeading(item, fallback = "this listing") {
   const name = item?.name || fallback;
   return item?.lineLabel ? `${name} — ${item.lineLabel}` : name;
 }
 
 export function correctHeading(item) {
-  const who = namedHeading(item);
+  const who = queueItemHeading(item);
   if (item?.kind === "geocode_flag") return `Moving the pin for ${who}`;
   return `Correcting ${who}`;
 }

@@ -36,7 +36,7 @@ If you cannot decide yet, **Needs confirmation**. That item moves to the **Needs
 
 If a service has gone from the government list, **Take it off the site** and **Keep it as a community listing** are equal choices. Neither is the default.
 
-If a change is almost right, **Use this, and I'll correct it** opens the form on that card, headed **Correcting {name}**. The field that changed is marked.
+If a change is almost right, **Accept and edit** opens the form on that card, headed **Correcting {name}**. The field that changed is marked. **Accept** and **Reject** stay short; the toast names what happened and to what.
 
 After every decision: **Undo** on the toast, and the next active card opens on its own.
 

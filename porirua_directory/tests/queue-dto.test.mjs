@@ -15,6 +15,7 @@ import {
   primaryActionLabel,
   queueDiffRows,
   queueItemDto,
+  queueItemHeading,
   queueSummaryLabel,
   recentQueueItemDto,
   rejectActionLabel,
@@ -27,14 +28,17 @@ import {
   waitingCountLabel,
 } from "../editor-core/queue-dto.mjs";
 import {
+  actionSuccessMessage as moduleActionSuccessMessage,
   correctHeading as moduleCorrectHeading,
   landingTab as moduleLandingTab,
+  queueItemHeading as moduleQueueItemHeading,
   queueLineLabel as moduleQueueLineLabel,
 } from "../directus/extensions/directory-editor/src/module/copy.js";
 
 test("removed items use Take it off the site, not Accept", () => {
   assert.equal(primaryActionLabel("removed"), "Take it off the site");
-  assert.equal(primaryActionLabel("changed"), "Accept this change");
+  assert.equal(primaryActionLabel("changed"), "Accept");
+  assert.equal(primaryActionLabel("new"), "Accept");
   assert.equal(keepAsCommunityLabel(), "Keep it as a community listing");
   assert.equal(deferActionLabel(), "Needs confirmation");
   assert.equal(needsConfirmationGroupLabel(2), "Needs confirmation (2)");
@@ -133,8 +137,8 @@ test("landing opens Needs confirmation when only deferred work remains", () => {
 });
 
 test("reject copy is kind-specific", () => {
-  assert.equal(rejectActionLabel("new"), "Don't add this");
-  assert.equal(rejectActionLabel("changed"), "Don't use this change");
+  assert.equal(rejectActionLabel("new"), "Reject");
+  assert.equal(rejectActionLabel("changed"), "Reject");
   assert.equal(rejectActionLabel("geocode_flag"), "Skip this pin check");
   assert.equal(showRejectAction("geocode_flag"), false);
   assert.equal(showRejectAction("changed"), true);
@@ -336,8 +340,20 @@ test("success copy says what happens next", () => {
     "Accepted. It will go on the public site when you publish."
   );
   assert.equal(
+    actionSuccessMessage({
+      action: "approve",
+      kind: "changed",
+      name: "Workmates Supported Employment Agency — Supported Employment Service",
+    }),
+    "Accepted Workmates Supported Employment Agency — Supported Employment Service. It will go on the public site when you publish."
+  );
+  assert.equal(
     actionSuccessMessage({ action: "defer" }),
     "Needs confirmation. It's waiting on the Needs confirmation tab."
+  );
+  assert.equal(
+    actionSuccessMessage({ action: "defer", name: "Workmates Supported Employment Agency" }),
+    "Needs confirmation. Workmates Supported Employment Agency is waiting on the Needs confirmation tab."
   );
   assert.equal(needsConfirmationTabLabel(0), "Needs confirmation");
   assert.equal(needsConfirmationTabLabel(2), "Needs confirmation (2)");
@@ -371,7 +387,27 @@ test("success copy says what happens next", () => {
   assert.equal(waitingCountLabel(2), "2 waiting to go on the site");
   assert.equal(
     actionSuccessMessage({ action: "reject", kind: "new" }),
-    "Not added. It will not go on the public site."
+    "Rejected. It will not go on the public site."
+  );
+  assert.equal(
+    actionSuccessMessage({ action: "reject", kind: "new", name: "New Hub" }),
+    "Rejected New Hub. It will not go on the public site."
+  );
+  assert.equal(
+    actionSuccessMessage({ action: "reject", kind: "changed", name: "Workmates Supported Employment Agency" }),
+    "Rejected the change to Workmates Supported Employment Agency. The listing stays as it is."
+  );
+  assert.equal(
+    moduleActionSuccessMessage({ action: "reject", kind: "new", name: "New Hub" }),
+    "Rejected New Hub. It will not go on the public site."
+  );
+  assert.equal(
+    queueItemHeading({ name: "Workmates Supported Employment Agency", lineLabel: "Supported Employment Service" }),
+    "Workmates Supported Employment Agency — Supported Employment Service"
+  );
+  assert.equal(
+    moduleQueueItemHeading({ name: "Workmates Supported Employment Agency", lineLabel: "Supported Employment Service" }),
+    "Workmates Supported Employment Agency — Supported Employment Service"
   );
   assert.equal(reviewCountLabel(4), "4 changes to review");
   assert.equal(

@@ -174,10 +174,11 @@ export default {
 }
 .mark {
   font-size: 0.85rem;
-  color: var(--theme--foreground-subdued);
+  color: var(--theme--foreground);
+  font-weight: 600;
 }
 .hint {
-  color: var(--theme--foreground-subdued);
+  color: var(--theme--foreground);
   margin: 0;
 }
 .error {

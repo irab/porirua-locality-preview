@@ -34,9 +34,6 @@
           Undo last publish
         </button>
       </div>
-      <p v-if="canUndoPublish && queue.length" class="hint sync-note">
-        Government updates arrived after you published. Undo publish only changes the public site.
-      </p>
 
       <div class="editor-tabs" role="tablist">
         <button
@@ -167,7 +164,7 @@
                       secondary
                       @click="startCorrect(item)"
                     >
-                      {{ item.kind === 'geocode_flag' ? "I'll move the pin" : "Use this, and I'll correct it" }}
+                      {{ item.kind === 'geocode_flag' ? "I'll move the pin" : "Accept and edit" }}
                     </v-button>
                     <v-button
                       v-if="item.showRejectAction"
@@ -376,6 +373,7 @@ import {
   actionSuccessMessage,
   correctHeading,
   foldSearch,
+  queueItemHeading,
   landingTab,
   needsConfirmationTabLabel,
   reviewCountLabel,
@@ -683,7 +681,12 @@ export default {
         this.reviewedThisSession += 1;
         this.correcting = null;
         this.showToast({
-          message: actionSuccessMessage({ action, kind: item.kind, unpublished: true }),
+          message: actionSuccessMessage({
+            action,
+            kind: item.kind,
+            unpublished: true,
+            name: queueItemHeading(item, ""),
+          }),
           undoId: queueActionUndoId(result),
         });
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
@@ -754,7 +757,11 @@ export default {
         });
         this.reviewedThisSession += 1;
         this.showToast({
-          message: actionSuccessMessage({ action: "approve", kind: this.correcting.kind }),
+          message: actionSuccessMessage({
+            action: "approve",
+            kind: this.correcting.kind,
+            name: queueItemHeading(this.correcting, ""),
+          }),
           undoId: queueActionUndoId(result),
         });
         this.correcting = null;
@@ -926,7 +933,7 @@ export default {
           });
         }
         this.formOpen = false;
-        this.showToast({ message: actionSuccessMessage({ action: "save" }) });
+        this.showToast({ message: actionSuccessMessage({ action: "save", name: this.form.name }) });
         await Promise.all([this.refreshListings(), this.refreshPublish()]);
         if (this.detail) await this.openDetail(this.detail.organization.id);
       } catch (error) {
@@ -955,13 +962,21 @@ export default {
         body: { serviceId: this.archiveServiceId, alsoArchiveOrganization },
       });
       this.formOpen = false;
-      this.showToast({ message: actionSuccessMessage({ action: "archive" }) });
+      const archived = this.detail?.services?.find((row) => row.id === this.archiveServiceId);
+      this.showToast({
+        message: actionSuccessMessage({
+          action: "archive",
+          name: archived?.title || archived?.name || this.detail?.organization?.name,
+        }),
+      });
       await Promise.all([this.refreshListings(), this.refreshPublish()]);
       if (this.detail) await this.openDetail(this.detail.organization.id);
     },
     async restoreLine(line) {
       await this.api("/listings/restore", { method: "POST", body: { serviceId: line.id } });
-      this.showToast({ message: actionSuccessMessage({ action: "restore" }) });
+      this.showToast({
+        message: actionSuccessMessage({ action: "restore", name: line.title || line.name }),
+      });
       await Promise.all([this.refreshListings(), this.refreshPublish()]);
       if (this.detail) await this.openDetail(this.detail.organization.id);
     },
@@ -1017,7 +1032,7 @@ export default {
   margin: 8px 0 16px;
 }
 .hint {
-  color: var(--theme--foreground-subdued);
+  color: var(--theme--foreground);
 }
 .recent {
   margin: 28px 0 8px;
@@ -1067,10 +1082,11 @@ export default {
   border-bottom: 2px solid transparent;
   padding: 10px 2px 8px;
   cursor: pointer;
-  color: var(--theme--foreground-subdued);
+  color: var(--theme--foreground);
+  font-weight: 400;
 }
 .editor-tabs button.active {
-  color: var(--theme--foreground);
+  font-weight: 600;
   border-bottom-color: var(--theme--primary);
 }
 .search {
@@ -1128,19 +1144,38 @@ export default {
 }
 .review-card {
   margin-bottom: 12px;
-  border: 1px solid var(--theme--border-color-subdued);
+  border: 1px solid var(--theme--border-color, var(--theme--border-color-subdued));
   border-radius: 8px;
 }
 .review-card .review-row {
   border: 0;
   border-radius: 8px 8px 0 0;
+  background: var(--theme--background-normal);
+}
+.review-row strong {
+  font-size: 1.1rem;
+}
+.review-row .line-name {
+  font-size: 1rem;
+  font-weight: 500;
+}
+.review-row .kind {
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 .review-body {
-  padding: 4px 12px 16px;
+  padding: 8px 12px 16px;
+}
+.review-body .diff {
+  font-weight: 500;
 }
 .kind,
 .line-status {
-  color: var(--theme--foreground-subdued);
+  color: var(--theme--foreground);
+}
+.recent .kind {
+  font-size: 0.85rem;
+  font-weight: 400;
 }
 .line-name {
   color: var(--theme--foreground);

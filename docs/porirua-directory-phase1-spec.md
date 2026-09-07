@@ -205,7 +205,7 @@ The runner keeps **one pending** `review_queue_items` row per entity+kind (refre
 | `fsd-sync-run` `kind=changed` | nothing | Yes — must not touch status |
 | `approveReviewItem` | `published` unless already `hidden`; draft org → `published` | Yes — accept puts it on the site; a hide stays off |
 | `approveReviewItem` / `hideReviewItem` on `removed` | service `hidden` + hide override | Yes — take it off the site |
-| `rejectReviewItem` on `new` | service `hidden` + hide override | Yes — “Don't add this” |
+| `rejectReviewItem` on `new` | service `hidden` + hide override | Yes — Reject; the toast says it will not go on the public site |
 | `rejectReviewItem` on other kinds | does not write status | Yes |
 | `keepAsCommunityReviewItem` | `pending_review` → `published` unless already `hidden` | Yes — keep a live row on the site; a hide stays off. Reachable: a hidden FSD row that drops from the feed still queues `removed`. |
 | `listings` create | community org/service `published` | Yes — editor-created listings are on the site (public after Publish) |

@@ -25,7 +25,7 @@ function beforeValue(before, field) {
 }
 
 /**
- * Fields the shared form should mark when opened from Use this, and I'll correct it.
+ * Fields the shared form should mark when opened from Accept and edit.
  * `changed` is the government proposal vs live.
  * `youSetThis` is curated ∩ changed, or every curated field when `alwaysMarkLocked`.
  */
