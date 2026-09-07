@@ -3,7 +3,14 @@
 export function actionSuccessMessage({ action, kind, unpublished = true } = {}) {
   const publishNext = unpublished ? " It will go on the public site when you publish." : "";
   if (action === "publish") return "Published. The public site is up to date.";
-  if (action === "keep") return `Kept your details.${publishNext}`;
+  if (action === "undo-publish") {
+    return "Publish undone. Those changes are waiting to go on the site again.";
+  }
+  if (action === "defer") return "Needs confirmation. It stays in Review.";
+  if (action === "keep-community") {
+    return "Kept. This is now a community listing. Next week's government feed will not take it off.";
+  }
+  if (action === "keep") return "Kept your details. They stay as you set them.";
   if (action === "restore") return `Put back on the site.${publishNext}`;
   if (action === "archive") return "Taken off the site. It will leave the public site when you publish.";
   if (action === "save") return `Saved.${publishNext}`;
@@ -20,13 +27,37 @@ export function actionSuccessMessage({ action, kind, unpublished = true } = {}) 
 
 export function reviewCountLabel(count) {
   const n = Number(count) || 0;
+  if (n === 0) return "Nothing to review";
   return n === 1 ? "1 change to review" : `${n} changes to review`;
+}
+
+export function waitingCountLabel(count) {
+  const n = Number(count) || 0;
+  if (n === 0) return "Nothing waiting to go on the site";
+  return n === 1 ? "1 waiting to go on the site" : `${n} waiting to go on the site`;
 }
 
 export function reviewFinishedLabel(count) {
   const n = Number(count) || 0;
   if (n === 1) return "You've reviewed everything. Put 1 change on the public site.";
   return `You've reviewed everything. Put ${n} changes on the public site.`;
+}
+
+export function reviewDeferredFinishLabel(count) {
+  const n = Number(count) || 0;
+  return n === 1
+    ? "You've decided the ones you can. 1 needs confirmation."
+    : `You've decided the ones you can. ${n} need confirmation.`;
+}
+
+export function needsConfirmationGroupLabel(count) {
+  const n = Number(count) || 0;
+  return n === 1 ? "Needs confirmation (1)" : `Needs confirmation (${n})`;
+}
+
+export function needConfirmationOnlyTitle(count) {
+  const n = Number(count) || 0;
+  return n === 1 ? "1 needs confirmation" : `${n} need confirmation`;
 }
 
 export function foldSearch(text) {

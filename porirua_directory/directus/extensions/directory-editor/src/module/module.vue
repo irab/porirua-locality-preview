@@ -5,9 +5,33 @@
     </template>
 
     <div class="directory-editor">
-      <div v-if="publishStatus.unpublished && !reviewFinished" class="banner">
-        Changes are not on the public site yet.
-        <v-button small :loading="publishing" @click="publishCatalog">Publish</v-button>
+      <div class="status-band" role="navigation" aria-label="Directory status">
+        <button
+          type="button"
+          class="band"
+          :class="{ zero: !queue.length }"
+          :disabled="!queue.length"
+          @click="openReview"
+        >
+          {{ reviewBandLabel }}
+        </button>
+        <button
+          type="button"
+          class="band"
+          :class="{ zero: !hasUnpublished }"
+          :disabled="!hasUnpublished || publishing"
+          @click="publishCatalog"
+        >
+          {{ waitingBandLabel }}
+        </button>
+      </div>
+
+      <div v-if="toast" class="toast" role="status">
+        <v-button v-if="toast.undoId" small ref="undoBtn" @click="undoLast">Undo</v-button>
+        <span>{{ toast.message }}</span>
+        <v-button v-if="toast.showNext && nextActiveItem" small secondary ref="nextBtn" @click="openNext">
+          Next
+        </v-button>
       </div>
 
       <v-tabs v-model="tab">
@@ -16,171 +40,192 @@
       </v-tabs>
 
       <section v-if="tab === 'review'" class="panel">
-        <p class="lede">These are government (FSD) proposals only. Your own adds never appear here.</p>
-        <h2 v-if="queue.length" class="heading">{{ reviewHeading }}</h2>
+        <p class="lede">These are government updates. Your own adds never appear here.</p>
+        <h2 v-if="activeQueue.length" class="heading">{{ reviewCountLabel(activeQueue.length) }}</h2>
+        <h2 v-else-if="allDeferredOnArrival" class="heading">{{ needConfirmationOnlyTitle(deferredQueue.length) }}</h2>
         <p v-if="queueError" class="error">{{ queueError }}</p>
+        <p v-if="queueLoading" class="hint">Looking for government updates…</p>
 
-        <div v-if="queue.length" class="review-list">
-          <article v-for="item in queue" :key="item.id" class="review-card">
-            <header class="review-head">
-              <div>
-                <strong>{{ item.name || item.title || item.entityId }}</strong>
-                <div class="kind">{{ item.kindLabel }}</div>
-                <div v-if="item.youSetThis?.length" class="hint">
-                  You set {{ item.youSetThis.map((row) => row.label).join(", ") }}
-                </div>
+        <div v-for="group in reviewGroups" :key="group.key" :class="group.deferred ? 'deferred' : 'review-list'">
+          <h3 v-if="group.deferred" class="heading">{{ needsConfirmationGroupLabel(group.items.length) }}</h3>
+          <article v-for="item in group.items" :key="item.id" class="review-card">
+            <button type="button" class="review-row" :aria-expanded="openId === item.id" @click="toggleOpen(item)">
+              <strong>{{ item.name || item.title }}</strong>
+              <span class="kind">{{ item.summaryLabel || item.kindLabel }}</span>
+              <span v-if="item.changedSinceDeferred" class="badge">{{ item.changedSinceDeferredLabel }}</span>
+              <span v-if="item.deferred" class="badge">Needs confirmation</span>
+            </button>
+            <div v-if="openId === item.id" class="review-body">
+              <p v-if="item.fsdReturned" class="banner-note">{{ item.fsdReturnedLabel }}</p>
+              <verification-bar
+                :website="item.websiteUrl || item.after?.url"
+                :phone="item.phone || item.after?.phone"
+                :address="item.address || item.after?.address || item.before?.address"
+                :pin="item.pin"
+                :show-map="item.showPin"
+              />
+              <p v-if="item.youSetThis?.length" class="hint">
+                You set this earlier: {{ item.youSetThis.map((row) => row.label).join(", ") }}
+              </p>
+              <ul v-if="item.diffRows?.length" class="diff">
+                <li v-for="row in item.diffRows" :key="row.field">{{ row.line }}</li>
+              </ul>
+              <div v-if="item.otherRows?.length" class="other">
+                <button type="button" class="other-toggle" @click="toggleOther(item.id)">
+                  {{ shownOther.has(item.id) ? "Hide unchanged details" : "Other details are unchanged. Show them" }}
+                </button>
+                <ul v-if="shownOther.has(item.id)" class="diff">
+                  <li v-for="row in item.otherRows" :key="row.field">{{ row.line }}</li>
+                </ul>
               </div>
-              <div class="actions">
-                <v-button small @click="runQueue(item, primaryPath(item), { keys: [item.id] }, 'approve')">
-                  {{ item.primaryActionLabel }}
-                </v-button>
-                <v-button
-                  v-if="item.kind === 'changed'"
-                  small
-                  secondary
-                  @click="runQueue(item, '/keep-curation', { keys: [item.id] }, 'keep')"
-                >
-                  Keep yours
-                </v-button>
-                <v-button
-                  v-if="item.kind !== 'removed'"
-                  small
-                  secondary
-                  @click="runQueue(item, '/reject', { keys: [item.id] }, 'reject')"
-                >
-                  {{ item.rejectActionLabel }}
+              <div class="actions" :class="{ equal: item.kind === 'removed' }">
+                <template v-if="item.kind === 'removed'">
+                  <v-button small secondary @click="runQueue(item, '/hide', 'approve')">
+                    Take it off the site
+                  </v-button>
+                  <v-button small secondary @click="runQueue(item, '/keep-community', 'keep-community')">
+                    {{ item.keepAsCommunityLabel }}
+                  </v-button>
+                </template>
+                <template v-else>
+                  <v-button small @click="runQueue(item, primaryPath(item), 'approve')">
+                    {{ item.primaryActionLabel }}
+                  </v-button>
+                  <v-button
+                    v-if="item.kind === 'changed' && item.youSetThis?.length"
+                    small
+                    secondary
+                    @click="runQueue(item, '/keep-curation', 'keep')"
+                  >
+                    Keep yours
+                  </v-button>
+                  <v-button
+                    v-if="item.kind === 'changed' || item.kind === 'geocode_flag'"
+                    small
+                    secondary
+                    @click="startCorrect(item)"
+                  >
+                    {{ item.kind === 'geocode_flag' ? "I'll move the pin" : "Use this, and I'll correct it" }}
+                  </v-button>
+                  <v-button small secondary @click="runQueue(item, '/reject', 'reject')">
+                    {{ item.rejectActionLabel }}
+                  </v-button>
+                </template>
+                <v-button v-if="!item.deferred" small secondary @click="runQueue(item, '/defer', 'defer')">
+                  {{ item.deferActionLabel }}
                 </v-button>
               </div>
-            </header>
-            <ul v-if="item.diffRows?.length" class="diff">
-              <li v-for="row in item.diffRows" :key="row.field">{{ row.line }}</li>
-            </ul>
-            <pin-map v-if="item.showPin && item.pin" :lat="item.pin.lat" :lng="item.pin.lng" />
+            </div>
           </article>
         </div>
 
-        <div v-else-if="reviewFinished" class="finish">
+        <div v-if="reviewFinished" class="finish">
           <h2 class="heading">{{ finishHeading }}</h2>
-          <v-button :loading="publishing" @click="publishCatalog">Publish</v-button>
+          <v-button :loading="publishing" :disabled="!hasUnpublished" @click="publishCatalog">
+            Publish now
+          </v-button>
+          <v-button v-if="deferredQueue.length" secondary @click="tab = 'listings'">Keep reviewing later</v-button>
         </div>
-        <p v-else class="hint">Nothing waiting.</p>
+        <p v-else-if="!queue.length && !queueLoading" class="hint">Nothing to review.</p>
+
+        <listing-form
+          v-if="correcting"
+          :title="correctTitle"
+          v-model="form"
+          :matches="[]"
+          :geo-results="geoResults"
+          :help-types="helpTypes"
+          :community-groups="communityGroups"
+          :highlight="formHighlight"
+          :saving="saving"
+          :error="formError"
+          @lookup-address="lookupAddress"
+          @apply-geo="applyGeo"
+          @pin-move="onPinMove"
+          @save="saveCorrection"
+          @cancel="correcting = null"
+        />
       </section>
 
       <section v-else class="panel">
-        <div class="toolbar">
+        <div v-if="!detail && !formOpen">
           <label class="search">
             Find an organisation
-            <input v-model="listingSearch" type="search" placeholder="Porirua Whānau Centre" />
+            <input ref="searchInput" v-model="listingSearch" type="search" placeholder="Porirua Whānau Centre" />
           </label>
           <label class="check">
             <input type="checkbox" v-model="showArchived" />
             Show listings that are off the site
           </label>
-        </div>
-        <div class="toolbar">
-          <v-button small @click="startCreate('organization')">Add organisation</v-button>
-          <v-button small secondary @click="startCreate('serviceLine')" :disabled="!selectedId">
-            Add service line
-          </v-button>
-        </div>
-        <p v-if="selectedId" class="hint">
-          Selected: {{ selectedName }}. Add a service line, or Edit to change details.
-        </p>
-        <p v-if="listError" class="error">{{ listError }}</p>
-        <table class="table listings-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Address</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in visibleListings"
-              :key="row.id"
-              :class="{ selected: selectedId === row.id }"
-              @click="selectListing(row.id)"
-            >
-              <td>{{ row.name }}</td>
-              <td>{{ row.address }}</td>
-              <td>{{ row.statusLabel }}</td>
-              <td class="actions" @click.stop>
-                <v-button small secondary @click="openListing(row.id)">Edit</v-button>
-                <v-button v-if="row.status !== 'published'" small @click="restoreRow(row)">
-                  Put it back on the site
-                </v-button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-if="!visibleListings.length" class="hint">No organisations match that search.</p>
-
-        <div v-if="formOpen" class="form">
-          <h2>{{ formTitle }}</h2>
-          <label>
-            Name
-            <input v-model="form.name" @blur="checkName" />
-          </label>
-          <div v-if="matches.length" class="matches">
-            <p>An organisation with a similar name is already in the directory.</p>
-            <ul>
-              <li v-for="match in matches" :key="match.id">
-                <strong>{{ match.name }}</strong>
-                <span>{{ match.address }} {{ match.phone }}</span>
-                <span v-if="match.status !== 'published'">{{ match.statusLabel }}</span>
-                <v-button small @click="openListing(match.id)">Open the existing one</v-button>
-              </li>
-            </ul>
-            <v-button small secondary @click="confirmAnyway = true">Create anyway</v-button>
+          <div class="toolbar">
+            <v-button small @click="startCreate('organization')">Add organisation</v-button>
           </div>
-          <label>
-            Description
-            <textarea v-model="form.description" rows="4" />
-          </label>
-          <label>
-            Address
-            <input v-model="form.address" @blur="lookupAddress" />
-          </label>
-          <ul v-if="geoResults.length" class="matches">
-            <li v-for="result in geoResults" :key="result.label">
-              <button type="button" @click="applyGeo(result)">{{ result.label }}</button>
+          <p v-if="listError" class="error">{{ listError }}</p>
+          <p v-if="listLoading" class="hint">Loading organisations…</p>
+          <ul class="results">
+            <li v-for="row in visibleListings" :key="row.id">
+              <button type="button" class="result" @click="openDetail(row.id)">
+                <strong>{{ row.name }}</strong>
+                <span>{{ row.address }}</span>
+                <span>{{ row.statusLabel }}</span>
+              </button>
             </li>
           </ul>
-          <pin-map :lat="form.lat" :lng="form.lng" draggable @move="onPinMove" />
-          <p class="hint">Search an address, then drag the pin if the place is wrong.</p>
-          <label>
-            Phone
-            <input v-model="form.phone" />
-          </label>
-          <label>
-            Website
-            <input v-model="form.url" />
-          </label>
-          <fieldset>
-            <legend>Help types</legend>
-            <label v-for="option in helpTypes" :key="option.id" class="check">
-              <input type="checkbox" :value="option.id" v-model="form.categories" />
-              {{ option.label }}
-            </label>
-          </fieldset>
-          <fieldset>
-            <legend>Community groups</legend>
-            <label v-for="option in communityGroups" :key="option.id" class="check">
-              <input type="checkbox" :value="option.id" v-model="form.communityFilters" />
-              {{ option.label }}
-            </label>
-          </fieldset>
-          <div class="actions">
-            <v-button :loading="saving" @click="saveForm">Save</v-button>
-            <v-button v-if="editingServiceId && formKind === 'edit'" secondary @click="askArchive">
-              Archive this service line
-            </v-button>
-            <v-button secondary @click="formOpen = false">Close</v-button>
-          </div>
-          <p v-if="formError" class="error">{{ formError }}</p>
+          <p v-if="!visibleListings.length && !listLoading" class="hint">
+            No organisation matches that name.
+          </p>
         </div>
+
+        <div v-else-if="detail && !formOpen">
+          <v-button small secondary @click="closeDetail">Back</v-button>
+          <h2 class="heading">{{ detail.organization.name }}</h2>
+          <p class="hint">{{ detail.organization.statusLabel }}</p>
+          <verification-bar
+            :website="detail.organization.url"
+            :phone="detail.organization.phone"
+            :address="detail.organization.address"
+            :pin="detailPin"
+            :show-map="Boolean(detailPin)"
+          />
+          <ul class="lines">
+            <li v-for="line in detail.services" :key="line.id">
+              <strong>{{ line.title || line.service_name }}</strong>
+              <span>{{ line.statusLabel }}</span>
+              <div class="actions">
+                <v-button small secondary @click="editLine(line)">Edit</v-button>
+                <v-button v-if="line.status === 'published'" small secondary @click="askArchive(line)">
+                  Archive this service line
+                </v-button>
+                <v-button v-else small @click="restoreLine(line)">Put it back on the site</v-button>
+              </div>
+            </li>
+          </ul>
+          <div class="toolbar">
+            <v-button small @click="startCreate('serviceLine')">Add a service line</v-button>
+            <v-button small secondary @click="editOrganisation">Edit organisation</v-button>
+          </div>
+        </div>
+
+        <listing-form
+          v-if="formOpen"
+          :title="formTitle"
+          v-model="form"
+          :matches="matches"
+          :geo-results="geoResults"
+          :help-types="helpTypes"
+          :community-groups="communityGroups"
+          :highlight="formHighlight"
+          :saving="saving"
+          :error="formError"
+          @check-name="checkName"
+          @lookup-address="lookupAddress"
+          @apply-geo="applyGeo"
+          @pin-move="onPinMove"
+          @save="saveForm"
+          @cancel="closeForm"
+          @open-existing="openDetail"
+          @create-anyway="confirmAnyway = true"
+        />
       </section>
     </div>
 
@@ -188,8 +233,8 @@
       <v-card>
         <v-card-title>Take this service off the public site?</v-card-title>
         <v-card-text>
-          <p>People will not see this service line after you publish.</p>
-          <p v-if="archiveAlsoOrg">This is the only public service. You can also take the organisation off the site.</p>
+          <p>People will not see this service after you publish.</p>
+          <p v-if="archiveAlsoOrg">This is the only public service. Also take the organisation off the site?</p>
         </v-card-text>
         <v-card-actions>
           <v-button secondary @click="archiveOpen = false">Cancel</v-button>
@@ -203,8 +248,19 @@
 
 <script>
 import { useStores } from "@directus/extensions-sdk";
-import PinMap from "./pin-map.vue";
-import { actionSuccessMessage, foldSearch, reviewCountLabel, reviewFinishedLabel } from "./copy.js";
+import ListingForm from "./listing-form.vue";
+import VerificationBar from "./verification-bar.vue";
+import {
+  actionSuccessMessage,
+  foldSearch,
+  needConfirmationOnlyTitle,
+  needsConfirmationGroupLabel,
+  reviewCountLabel,
+  reviewDeferredFinishLabel,
+  reviewFinishedLabel,
+  waitingCountLabel,
+} from "./copy.js";
+import { formHighlightFields } from "./form-highlight.js";
 
 const HELP_TYPES = [
   { id: "food", label: "Food / kai" },
@@ -242,7 +298,7 @@ function emptyForm() {
 }
 
 export default {
-  components: { PinMap },
+  components: { ListingForm, VerificationBar },
   setup() {
     let notifyStore = null;
     try {
@@ -251,27 +307,25 @@ export default {
     } catch {
       notifyStore = null;
     }
-    return {
-      toast(title, type = "success") {
-        notifyStore?.add?.({ title, type });
-      },
-    };
+    return { notifyStore };
   },
   data() {
     return {
       tab: "listings",
       listings: [],
       queue: [],
-      publishStatus: { unpublished: false },
+      publishStatus: { unpublished: false, unpublishedCount: 0 },
       publishing: false,
       listError: "",
       queueError: "",
-      selectedId: null,
+      listLoading: false,
+      queueLoading: false,
       listingSearch: "",
       showArchived: false,
       formOpen: false,
       formKind: "organization",
       form: emptyForm(),
+      formHighlight: { changed: [], youSetThis: [], focusField: null },
       matches: [],
       confirmAnyway: false,
       geoResults: [],
@@ -280,31 +334,71 @@ export default {
       editingServiceId: null,
       archiveOpen: false,
       archiveAlsoOrg: false,
+      archiveServiceId: null,
       reviewedThisSession: 0,
       helpTypes: HELP_TYPES,
       communityGroups: COMMUNITY_GROUPS,
+      openId: null,
+      detail: null,
+      toast: null,
+      toastTimer: null,
+      correcting: null,
+      shownOther: new Set(),
     };
   },
   computed: {
-    formTitle() {
-      if (this.formKind === "serviceLine") return "Add a service line";
-      if (this.formKind === "edit") return "Edit listing";
-      return "Add organisation";
+    unpublishedCount() {
+      if (typeof this.publishStatus.unpublishedCount === "number") return this.publishStatus.unpublishedCount;
+      return this.publishStatus.unpublished ? null : 0;
     },
-    reviewHeading() {
+    reviewBandLabel() {
       return reviewCountLabel(this.queue.length);
+    },
+    waitingBandLabel() {
+      if (this.unpublishedCount == null) return "Changes waiting to go on the site";
+      return waitingCountLabel(this.unpublishedCount);
+    },
+    hasUnpublished() {
+      return this.unpublishedCount == null ? Boolean(this.publishStatus.unpublished) : this.unpublishedCount > 0;
     },
     reviewTabLabel() {
       return this.queue.length ? `Review (${this.queue.length})` : "Review";
     },
+    activeQueue() {
+      return this.queue.filter((item) => !item.deferred);
+    },
+    deferredQueue() {
+      return this.queue.filter((item) => item.deferred);
+    },
+    reviewGroups() {
+      const groups = [];
+      if (this.activeQueue.length) groups.push({ key: "active", items: this.activeQueue, deferred: false });
+      if (this.deferredQueue.length) {
+        groups.push({ key: "deferred", items: this.deferredQueue, deferred: true });
+      }
+      return groups;
+    },
+    allDeferredOnArrival() {
+      return this.activeQueue.length === 0 && this.deferredQueue.length > 0 && this.reviewedThisSession === 0;
+    },
+    nextActiveItem() {
+      return this.activeQueue[0] || null;
+    },
     reviewFinished() {
-      return this.queue.length === 0 && this.reviewedThisSession > 0;
+      return this.activeQueue.length === 0 && this.reviewedThisSession > 0;
     },
     finishHeading() {
-      return reviewFinishedLabel(this.reviewedThisSession);
+      if (this.deferredQueue.length) return reviewDeferredFinishLabel(this.deferredQueue.length);
+      return reviewFinishedLabel(this.publishStatus.unpublishedCount || this.reviewedThisSession);
     },
-    selectedName() {
-      return this.listings.find((row) => row.id === this.selectedId)?.name || "";
+    formTitle() {
+      if (this.correcting) return "Use this, and I'll correct it";
+      if (this.formKind === "serviceLine") return "Add a service line";
+      if (this.formKind === "edit") return "Edit listing";
+      return "Add organisation";
+    },
+    correctTitle() {
+      return this.correcting?.kind === "geocode_flag" ? "I'll move the pin" : "Use this, and I'll correct it";
     },
     visibleListings() {
       const needle = foldSearch(this.listingSearch);
@@ -314,12 +408,24 @@ export default {
         .slice()
         .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "en", { sensitivity: "base" }));
     },
+    detailPin() {
+      const org = this.detail?.organization;
+      if (org?.lat == null || org?.lng == null) return null;
+      return { lat: org.lat, lng: org.lng };
+    },
   },
   async mounted() {
     await Promise.all([this.refreshListings(), this.refreshQueue(), this.refreshPublish()]);
-    if (this.queue.length) this.tab = "review";
+    if (this.queue.length) {
+      this.tab = "review";
+      this.openId = this.activeQueue[0]?.id || this.queue[0]?.id || null;
+    }
+    this.$nextTick(() => this.$refs.searchInput?.focus?.());
   },
   methods: {
+    reviewCountLabel,
+    needsConfirmationGroupLabel,
+    needConfirmationOnlyTitle,
     async api(path, options = {}) {
       const response = await this.$api.transport.request({
         method: options.method || "GET",
@@ -330,89 +436,223 @@ export default {
       return response?.raw || response;
     },
     async refreshListings() {
+      this.listLoading = true;
       try {
         const data = await this.api("/listings");
         this.listings = data.listings || [];
         this.listError = "";
       } catch (error) {
-        this.listError = error.message || "Could not load listings";
+        this.listError = error.message || "Could not load listings.";
+      } finally {
+        this.listLoading = false;
       }
     },
     async refreshQueue() {
+      this.queueLoading = true;
       try {
         const data = await this.api("/queue");
         this.queue = data.items || [];
         this.queueError = "";
       } catch (error) {
-        this.queueError = error.message || "Could not load review";
+        this.queueError = error.message || "Could not load Review.";
+      } finally {
+        this.queueLoading = false;
       }
     },
     async refreshPublish() {
       try {
         this.publishStatus = await this.api("/publish-status");
       } catch {
-        this.publishStatus = { unpublished: false };
+        this.publishStatus = { unpublished: false, unpublishedCount: 0 };
       }
+    },
+    openReview() {
+      this.tab = "review";
+      const first = this.activeQueue[0];
+      if (first) this.openId = first.id;
+    },
+    toggleOpen(item) {
+      this.openId = this.openId === item.id ? null : item.id;
+    },
+    toggleOther(id) {
+      const next = new Set(this.shownOther);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      this.shownOther = next;
     },
     primaryPath(item) {
       return item.kind === "removed" ? "/hide" : "/approve";
     },
-    async runQueue(item, path, body, action) {
-      await this.api(path, { method: "POST", body });
-      this.reviewedThisSession += 1;
-      this.toast(actionSuccessMessage({ action, kind: item.kind, unpublished: true }));
+    showToast({ message, undoId = null, showNext = false }) {
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toast = { message, undoId, showNext };
+      this.notifyStore?.add?.({ title: message, type: "success" });
+      this.$nextTick(() => {
+        const undo = this.$refs.undoBtn;
+        const next = this.$refs.nextBtn;
+        const undoEl = undo?.$el || undo;
+        const nextEl = next?.$el || next;
+        if (typeof undoEl?.focus === "function") undoEl.focus();
+        else if (typeof nextEl?.focus === "function") nextEl.focus();
+      });
+      this.toastTimer = setTimeout(() => {
+        if (this.toast) this.toast.undoId = null;
+        this.$nextTick(() => {
+          const next = this.$refs.nextBtn;
+          (next?.$el || next)?.focus?.();
+        });
+      }, 20000);
+    },
+    async runQueue(item, path, action) {
+      try {
+        const result = await this.api(path, { method: "POST", body: { keys: [item.id] } });
+        this.reviewedThisSession += 1;
+        this.correcting = null;
+        this.showToast({
+          message: actionSuccessMessage({ action, kind: item.kind, unpublished: true }),
+          undoId: result.undoId || null,
+          showNext: true,
+        });
+        await Promise.all([this.refreshQueue(), this.refreshPublish()]);
+        if (this.openId === item.id) this.openId = null;
+      } catch (error) {
+        this.queueError = error.message || "Could not save that decision. Try again.";
+      }
+    },
+    openNext() {
+      const next = this.nextActiveItem;
+      this.toast = null;
+      if (next) this.openId = next.id;
+    },
+    async undoLast() {
+      if (!this.toast?.undoId) return;
+      await this.api("/review-undo", { method: "POST", body: { undoId: this.toast.undoId } });
+      this.toast = null;
+      this.reviewedThisSession = Math.max(0, this.reviewedThisSession - 1);
       await Promise.all([this.refreshQueue(), this.refreshPublish()]);
     },
+    startCorrect(item) {
+      this.correcting = item;
+      const after = item.after || {};
+      this.form = {
+        name: after.name || item.name || "",
+        description: after.description || "",
+        address: after.address || "",
+        phone: after.phone || "",
+        url: after.url || "",
+        lat: after.lat ?? item.pin?.lat ?? null,
+        lng: after.lng ?? item.pin?.lng ?? null,
+        categories: after.categories || [],
+        communityFilters: [],
+      };
+      this.formHighlight = formHighlightFields({
+        before: item.before || {},
+        after,
+        locked: (item.youSetThis || []).map((row) => row.field),
+      });
+      this.formError = "";
+      this.tab = "review";
+    },
+    async saveCorrection() {
+      if (!this.correcting) return;
+      this.saving = true;
+      try {
+        const result = await this.api("/edit-and-approve", {
+          method: "POST",
+          body: { keys: [this.correcting.id], payload: this.form },
+        });
+        this.reviewedThisSession += 1;
+        this.showToast({
+          message: actionSuccessMessage({ action: "approve", kind: this.correcting.kind }),
+          undoId: result.undoId || null,
+          showNext: true,
+        });
+        this.correcting = null;
+        await Promise.all([this.refreshQueue(), this.refreshPublish()]);
+      } catch (error) {
+        this.formError = error.message || "Could not save that decision. Try again.";
+      } finally {
+        this.saving = false;
+      }
+    },
     async publishCatalog() {
+      if (!this.unpublishedCount) return;
       this.publishing = true;
       try {
         await this.api("/publish", { method: "POST", body: {} });
         this.reviewedThisSession = 0;
-        this.toast(actionSuccessMessage({ action: "publish" }));
+        this.showToast({ message: actionSuccessMessage({ action: "publish" }) });
         await this.refreshPublish();
+      } catch (error) {
+        this.queueError = error.message || "Could not publish. Try again.";
       } finally {
         this.publishing = false;
       }
     },
-    selectListing(id) {
-      this.selectedId = this.selectedId === id ? null : id;
-      this.formOpen = false;
-    },
     startCreate(kind) {
       this.formKind = kind;
       this.form = emptyForm();
+      this.formHighlight = { changed: [], youSetThis: [], focusField: null };
       this.matches = [];
       this.confirmAnyway = false;
       this.editingServiceId = null;
       this.formOpen = true;
-      if (kind !== "serviceLine") this.selectedId = null;
     },
-    async openListing(id) {
-      this.selectedId = id;
-      this.formKind = "edit";
+    closeForm() {
+      this.formOpen = false;
+      this.formError = "";
+    },
+    closeDetail() {
+      this.detail = null;
+      this.formOpen = false;
+    },
+    async openDetail(id) {
+      this.formOpen = false;
+      this.tab = "listings";
       const data = await this.api(`/listings/${encodeURIComponent(id)}`);
-      const org = data.organization || {};
-      const service = (data.services || []).find((row) => row.status === "published") || data.services?.[0] || {};
-      this.editingServiceId = service.id || null;
+      this.detail = data;
+    },
+    editOrganisation() {
+      const org = this.detail.organization;
+      this.formKind = "edit";
+      this.editingServiceId = null;
       this.form = {
+        ...emptyForm(),
         name: org.name || "",
-        description: org.description || service.description || "",
-        address: org.address || service.address || "",
-        phone: org.phone || service.phone || "",
-        url: org.url || service.url || "",
-        lat: org.lat ?? service.lat ?? null,
-        lng: org.lng ?? service.lng ?? null,
-        categories: service.categories || [],
+        description: org.description || "",
+        address: org.address || "",
+        phone: org.phone || "",
+        url: org.url || "",
+        lat: org.lat ?? null,
+        lng: org.lng ?? null,
+        communityFilters: org.community_filters || org.communityFilters || [],
+      };
+      this.formHighlight = { changed: [], youSetThis: [], focusField: null };
+      this.formOpen = true;
+    },
+    editLine(line) {
+      const org = this.detail.organization;
+      this.formKind = "edit";
+      this.editingServiceId = line.id;
+      this.form = {
+        name: line.title || line.service_name || org.name || "",
+        description: line.description || "",
+        address: line.address || org.address || "",
+        phone: line.phone || org.phone || "",
+        url: line.url || org.url || "",
+        lat: line.lat ?? org.lat ?? null,
+        lng: line.lng ?? org.lng ?? null,
+        categories: line.categories || [],
         communityFilters: org.community_filters || [],
       };
-      this.matches = [];
+      this.formHighlight = { changed: [], youSetThis: [], focusField: null };
       this.formOpen = true;
     },
     async checkName() {
       if (!this.form.name || this.formKind === "edit") return;
       const path =
-        this.formKind === "serviceLine"
-          ? `/listings/name-matches?name=${encodeURIComponent(this.form.name)}&organizationId=${encodeURIComponent(this.selectedId)}`
+        this.formKind === "serviceLine" && this.detail
+          ? `/listings/name-matches?name=${encodeURIComponent(this.form.name)}&organizationId=${encodeURIComponent(this.detail.organization.id)}`
           : `/listings/name-matches?name=${encodeURIComponent(this.form.name)}`;
       const data = await this.api(path);
       this.matches = data.matches || [];
@@ -448,7 +688,7 @@ export default {
             body: {
               ...this.form,
               kind: "serviceLine",
-              organizationId: this.selectedId,
+              organizationId: this.detail.organization.id,
               title: this.form.name,
               confirmCreateAnyway: this.confirmAnyway || this.matches.length === 0,
             },
@@ -457,15 +697,16 @@ export default {
           await this.api("/listings/update", {
             method: "POST",
             body: {
-              organizationId: this.selectedId,
+              organizationId: this.detail.organization.id,
               serviceId: this.editingServiceId,
               payload: this.form,
             },
           });
         }
         this.formOpen = false;
-        this.toast(actionSuccessMessage({ action: "save" }));
+        this.showToast({ message: actionSuccessMessage({ action: "save" }) });
         await Promise.all([this.refreshListings(), this.refreshPublish()]);
+        if (this.detail) await this.openDetail(this.detail.organization.id);
       } catch (error) {
         if (error.status === 409 || error.response?.status === 409) {
           this.matches = error.data?.matches || error.response?.data?.matches || this.matches;
@@ -477,33 +718,30 @@ export default {
         this.saving = false;
       }
     },
-    askArchive() {
-      const listing = this.listings.find((row) => row.id === this.selectedId);
-      this.archiveAlsoOrg = Boolean(listing && listing.public_line_count <= 1);
+    askArchive(line) {
+      const service = line || this.detail?.services?.find((row) => row.id === this.editingServiceId);
+      this.archiveServiceId = service?.id || this.editingServiceId;
+      const published = (this.detail?.services || []).filter((row) => row.status === "published");
+      this.archiveAlsoOrg = published.length <= 1;
       this.archiveOpen = true;
     },
     async confirmArchive(alsoArchiveOrganization) {
-      if (!this.editingServiceId) return;
+      if (!this.archiveServiceId) return;
       this.archiveOpen = false;
       await this.api("/listings/archive", {
         method: "POST",
-        body: { serviceId: this.editingServiceId, alsoArchiveOrganization },
+        body: { serviceId: this.archiveServiceId, alsoArchiveOrganization },
       });
       this.formOpen = false;
-      this.toast(actionSuccessMessage({ action: "archive" }));
+      this.showToast({ message: actionSuccessMessage({ action: "archive" }) });
       await Promise.all([this.refreshListings(), this.refreshPublish()]);
+      if (this.detail) await this.openDetail(this.detail.organization.id);
     },
-    async restoreRow(row) {
-      const data = await this.api(`/listings/${encodeURIComponent(row.id)}`);
-      const service =
-        (data.services || []).find((item) => item.status === "hidden") || data.services?.[0];
-      if (!service?.id) return;
-      await this.api("/listings/restore", {
-        method: "POST",
-        body: { serviceId: service.id },
-      });
-      this.toast(actionSuccessMessage({ action: "restore" }));
+    async restoreLine(line) {
+      await this.api("/listings/restore", { method: "POST", body: { serviceId: line.id } });
+      this.showToast({ message: actionSuccessMessage({ action: "restore" }) });
       await Promise.all([this.refreshListings(), this.refreshPublish()]);
+      if (this.detail) await this.openDetail(this.detail.organization.id);
     },
   },
 };
@@ -514,14 +752,33 @@ export default {
   padding: 16px 24px 48px;
   max-width: 960px;
 }
-.banner {
-  background: var(--warning-alt);
-  padding: 12px 16px;
-  border-radius: 8px;
+.status-band {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
+}
+.band {
+  border: 1px solid var(--theme--border-color-subdued);
+  background: var(--theme--background-normal);
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.band:disabled,
+.band.zero {
+  opacity: 0.6;
+  cursor: default;
+}
+.toast {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+  background: var(--theme--background-normal);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 .panel {
   margin-top: 16px;
@@ -537,22 +794,6 @@ export default {
 .error {
   color: var(--danger);
 }
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.table th,
-.table td {
-  text-align: left;
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--theme--border-color-subdued);
-}
-.listings-table tbody tr {
-  cursor: pointer;
-}
-.listings-table tr.selected {
-  background: var(--theme--background-normal);
-}
 .toolbar,
 .actions {
   display: flex;
@@ -561,71 +802,58 @@ export default {
   flex-wrap: wrap;
   align-items: center;
 }
+.actions.equal {
+  align-items: stretch;
+}
 .search {
   display: grid;
   gap: 4px;
-  flex: 1;
-  min-width: 220px;
+  max-width: 420px;
 }
 .search input {
-  padding: 8px;
-}
-.form {
-  margin-top: 24px;
-  display: grid;
-  gap: 12px;
-}
-.form label,
-.form fieldset {
-  display: grid;
-  gap: 4px;
-}
-.form input,
-.form textarea {
   padding: 8px;
 }
 .check {
   display: flex;
   gap: 8px;
   align-items: center;
+  margin: 12px 0;
 }
-.matches {
-  background: var(--theme--background-normal);
-  padding: 12px;
-  border-radius: 8px;
-}
-.matches button {
-  background: none;
-  border: 0;
-  color: var(--theme--primary);
-  cursor: pointer;
-  text-align: left;
-}
-.review-list {
+.results,
+.lines,
+.diff {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: grid;
-  gap: 16px;
+  gap: 8px;
 }
-.review-card {
+.result,
+.review-row {
+  width: 100%;
+  text-align: left;
+  background: none;
   border: 1px solid var(--theme--border-color-subdued);
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 12px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
 }
-.review-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
+.review-card {
+  margin-bottom: 12px;
+}
+.review-body {
+  padding: 8px 4px 0;
 }
 .kind {
   color: var(--theme--foreground-subdued);
-  margin-top: 2px;
 }
-.diff {
-  margin: 12px 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 4px;
+.badge {
+  font-size: 0.85rem;
+}
+.banner-note {
+  font-weight: 600;
 }
 .finish {
   margin-top: 24px;
@@ -635,5 +863,16 @@ export default {
   display: grid;
   gap: 12px;
   justify-items: start;
+}
+.deferred {
+  margin-top: 32px;
+}
+.other-toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--theme--primary);
+  cursor: pointer;
+  text-align: left;
 }
 </style>
