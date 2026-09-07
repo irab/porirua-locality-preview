@@ -251,7 +251,7 @@ Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet gi
 3. Catalog-bootstrap Job: `db-import-from-json.mjs` from committed `data/services.json` + `data/overrides.json`, then the first `catalog:publish` (real Cloudflare purge — do not set `CATALOG_SKIP_PURGE`). Expect two colliding public ids to become `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`.
 4. Directus-bootstrap Job (Argo wave 3, before Ingress) applies `directus/snapshot.yaml`, Flows, Editor role, and the pending-review view. Do not put that hook after the Ingress wave — Traefik never writes Ingress ADDRESS, and Argo will sit on “waiting for healthy Ingress”. The Job image must be able to finish without writing the committed snapshot (it exports to `DIRECTUS_SNAPSHOT_OUT` or `/tmp` when `/app/directus` is read-only).
 5. Public routing: `/api` must be its **own** Ingress with a higher Traefik `router.priority` than `/`. A shared priority on one Ingress lets nginx answer `/api/catalog` with HTML.
-6. Weekly FSD CronJob is **suspended** in dev. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
+6. Weekly FSD CronJob is **suspended** in dev. The Job waits for Postgres (busybox init, same as catalog-bootstrap) before connecting. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
 
 `CATALOG_CURRENT_TTL_MS=5000` in dev so a publish is visible without waiting 30s. Publishing does not require rolling the API pod.
 
