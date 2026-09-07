@@ -148,6 +148,18 @@ async function applyPendingReviewView() {
   }
 }
 
+async function dropAccidentalEntityIdForeignKey() {
+  const client = new Client({ connectionString: DIRECTUS_DATABASE_URL });
+  await client.connect();
+  try {
+    await client.query(
+      `ALTER TABLE review_queue_items DROP CONSTRAINT IF EXISTS review_queue_items_entity_id_foreign`
+    );
+  } finally {
+    await client.end();
+  }
+}
+
 async function adoptCollectionMeta(collection, meta) {
   const client = new Client({ connectionString: DIRECTUS_DATABASE_URL });
   await client.connect();
@@ -399,18 +411,20 @@ async function ensureUser(token, { email, password, role, firstName }) {
 
 async function ensurePreset(token, preset) {
   const filter = new URLSearchParams({
-    "filter[collection][_eq]": preset.collection,
     "filter[bookmark][_eq]": preset.bookmark,
-    limit: "1",
+    limit: "5",
   });
+  if (preset.role) filter.set("filter[role][_eq]", preset.role);
   const existing = await request(`${DIRECTUS_URL}/presets?${filter}`, { token });
-  if ((existing.data ?? []).length > 0) {
-    await request(`${DIRECTUS_URL}/presets/${existing.data[0].id}`, {
+  const rows = existing.data ?? [];
+  const match = rows.find((row) => row.collection === preset.collection) ?? rows[0];
+  if (match) {
+    await request(`${DIRECTUS_URL}/presets/${match.id}`, {
       token,
       method: "PATCH",
       body: preset,
     });
-    return existing.data[0];
+    return match;
   }
   const created = await request(`${DIRECTUS_URL}/presets`, {
     token,
@@ -418,6 +432,31 @@ async function ensurePreset(token, preset) {
     body: preset,
   });
   return created.data;
+}
+
+async function removePendingReviewCollection(token) {
+  const presets = await request(
+    `${DIRECTUS_URL}/presets?filter[collection][_eq]=pending_review&limit=-1`,
+    { token }
+  );
+  for (const row of presets.data ?? []) {
+    await request(`${DIRECTUS_URL}/presets/${row.id}`, { token, method: "DELETE" });
+  }
+  try {
+    await request(`${DIRECTUS_URL}/collections/pending_review`, { token, method: "DELETE" });
+  } catch (error) {
+    if (error.status === 404) return;
+    try {
+      await request(`${DIRECTUS_URL}/collections/pending_review`, {
+        token,
+        method: "PATCH",
+        body: { meta: { hidden: true } },
+      });
+    } catch (hideError) {
+      if (hideError.status !== 403 && hideError.status !== 404) throw hideError;
+    }
+    if (error.status !== 403) throw error;
+  }
 }
 
 async function importFlows(token) {
@@ -541,22 +580,11 @@ async function configureCollections(token) {
     note: "Service lines. FSD saves write an overrides patch behind the editor.",
   });
   await ensureCollection(token, "review_queue_items", {
-    icon: "inbox",
-    display_template: "{{kind}} {{entity_id}}",
-    hidden: true,
-    note: "Weekly sync queue. Use the Review queue preset on pending_review.",
+    icon: "rate_review",
+    display_template: "{{kind}} — {{change_summary}}",
+    hidden: false,
+    note: "Editor inbox. Pending FSD changes. Approve, hide, or reject — then Publish directory.",
   });
-  await ensureCollection(
-    token,
-    "pending_review",
-    {
-      icon: "rate_review",
-      display_template: "{{kind}} {{entity_id}}",
-      hidden: false,
-      note: "Review inbox: pending_review joined to review_queue_items.",
-    },
-    { existingRelation: true }
-  );
   await ensureCollection(token, "catalog_snapshots", {
     icon: "history",
     display_template: "v{{version}}",
@@ -642,6 +670,86 @@ async function configureCollections(token) {
     note: "Parent organisation. Open it to edit related lines together.",
   });
   await ensureOrganizationServiceLines(token);
+  await configureReviewQueueFields(token);
+  await dropAccidentalEntityIdForeignKey();
+  await removePendingReviewCollection(token);
+}
+
+async function configureReviewQueueFields(token) {
+  await ensureRelation(token, {
+    collection: "review_queue_items",
+    field: "entity_id",
+    related_collection: "services",
+    schema: null,
+    meta: {
+      one_deselect_action: "nullify",
+    },
+  });
+  await patchField(token, "review_queue_items", "kind", {
+    interface: "select-dropdown",
+    options: {
+      choices: [
+        { text: "New", value: "new" },
+        { text: "Changed", value: "changed" },
+        { text: "Removed", value: "removed" },
+        { text: "Geocode flag", value: "geocode_flag" },
+      ],
+    },
+    display: "labels",
+    width: "half",
+    readonly: true,
+    sort: 1,
+  });
+  await patchField(token, "review_queue_items", "entity_id", {
+    interface: "select-dropdown-m2o",
+    special: ["m2o"],
+    options: { template: "{{title}} · {{organization_id.name}}" },
+    display: "related-values",
+    display_options: { template: "{{title}} · {{organization_id.name}}" },
+    width: "full",
+    readonly: true,
+    sort: 2,
+    note: "The listing this queue item is about.",
+  });
+  await patchField(token, "review_queue_items", "change_summary", {
+    interface: "input-multiline",
+    readonly: true,
+    width: "full",
+    sort: 3,
+    note: "What changed, in words. The raw proposal stays on the item for Edit-and-approve.",
+  });
+  await patchField(token, "review_queue_items", "status", {
+    interface: "select-dropdown",
+    options: {
+      choices: [
+        { text: "Pending", value: "pending" },
+        { text: "Accepted", value: "accepted" },
+        { text: "Rejected", value: "rejected" },
+      ],
+    },
+    display: "labels",
+    readonly: true,
+    width: "half",
+    sort: 4,
+  });
+  await patchField(token, "review_queue_items", "created_at", {
+    interface: "datetime",
+    readonly: true,
+    width: "half",
+    sort: 5,
+  });
+  await patchField(token, "review_queue_items", "proposed", {
+    interface: "input-code",
+    options: { language: "json" },
+    display: "formatted-json-value",
+    readonly: true,
+    width: "full",
+    sort: 20,
+    note: "Raw proposal. Use Edit-and-approve to change fields, not this JSON.",
+  });
+  for (const field of ["import_run_id", "entity_type", "updated_at"]) {
+    await patchField(token, "review_queue_items", field, { hidden: true, readonly: true });
+  }
 }
 
 export function editorPermissions(policyNote) {
@@ -672,13 +780,6 @@ export function editorPermissions(policyNote) {
       action: "update",
       fields: EDITOR_SERVICE_UPDATE_FIELDS,
       permissions: {},
-      validation: {},
-    },
-    {
-      collection: "pending_review",
-      action: "read",
-      fields: ["*"],
-      permissions: { status: { _eq: "pending" } },
       validation: {},
     },
     {
@@ -755,12 +856,13 @@ async function configurePresets(token, editorRoleId) {
   });
   await ensurePreset(token, {
     bookmark: "Review queue",
-    collection: "pending_review",
+    collection: "review_queue_items",
     role: editorRoleId,
     layout: "tabular",
     layout_query: {
       tabular: {
-        fields: ["kind", "entity_type", "entity_id", "status", "service_status", "created_at"],
+        fields: ["kind", "entity_id", "change_summary", "created_at"],
+        sort: ["created_at"],
       },
     },
     filter: {
@@ -808,7 +910,9 @@ async function exportWorkspace(token) {
     })),
   };
   const yaml = stringifyYaml(workspace);
-  const preferred = process.env.DIRECTUS_SNAPSHOT_OUT || SNAPSHOT_PATH;
+  const preferred =
+    process.env.DIRECTUS_SNAPSHOT_OUT ||
+    (process.env.NODE_TEST_CONTEXT ? path.join(os.tmpdir(), "directus-snapshot.yaml") : SNAPSHOT_PATH);
   try {
     await fs.writeFile(preferred, yaml);
     return preferred;

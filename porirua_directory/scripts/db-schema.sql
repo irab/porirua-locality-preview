@@ -135,3 +135,41 @@ CREATE TABLE IF NOT EXISTS review_queue_items (
 CREATE INDEX IF NOT EXISTS review_queue_items_run_idx ON review_queue_items (import_run_id);
 CREATE INDEX IF NOT EXISTS review_queue_items_status_idx ON review_queue_items (status);
 CREATE INDEX IF NOT EXISTS review_queue_items_entity_idx ON review_queue_items (entity_type, entity_id);
+
+-- Readable inbox column. Directus cannot inspect the pending_review view, so
+-- the editor-facing list is this table plus this summary instead of raw JSON.
+CREATE OR REPLACE FUNCTION review_queue_change_summary(kind text, proposed jsonb)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT CASE
+    WHEN kind = 'new' THEN 'New listing from FSD'
+    WHEN kind = 'removed' THEN 'No longer in the FSD feed'
+    WHEN kind = 'geocode_flag' THEN COALESCE(
+      NULLIF(proposed->'geocode_flag'->>'detail', ''),
+      NULLIF(proposed->'geocode_flag'->>'code', ''),
+      'Geocode flag'
+    )
+    WHEN kind = 'changed' THEN (
+      SELECT COALESCE('Changing ' || string_agg(key, ', ' ORDER BY key), 'Changed fields')
+      FROM (
+        SELECT a.key
+        FROM jsonb_object_keys(COALESCE(proposed->'after', '{}'::jsonb)) AS a(key)
+        WHERE a.key IN (
+          'name', 'serviceName', 'title', 'address', 'phone', 'url',
+          'description', 'lat', 'lng', 'categories', 'email'
+        )
+          AND COALESCE(proposed->'before', '{}'::jsonb) -> a.key
+              IS DISTINCT FROM proposed->'after' -> a.key
+        ORDER BY a.key
+        LIMIT 8
+      ) changed
+    )
+    ELSE initcap(replace(kind, '_', ' '))
+  END
+$$;
+
+ALTER TABLE review_queue_items
+  ADD COLUMN IF NOT EXISTS change_summary text
+  GENERATED ALWAYS AS (review_queue_change_summary(kind, proposed)) STORED;

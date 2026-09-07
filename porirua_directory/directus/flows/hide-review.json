@@ -7,7 +7,7 @@
   "accountability": "all",
   "trigger": "manual",
   "options": {
-    "collections": ["pending_review", "review_queue_items"],
+    "collections": ["review_queue_items"],
     "requireSelection": true,
     "location": "both"
   },

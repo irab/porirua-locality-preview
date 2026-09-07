@@ -14,10 +14,13 @@ test("committed snapshot.yaml includes collections, Editor RBAC, and the Review 
   assert.match(text, /^version: 1/m);
   assert.match(text, /collection: organizations/);
   assert.match(text, /collection: services/);
-  assert.match(text, /collection: pending_review/);
+  assert.match(text, /collection: review_queue_items/);
   assert.match(text, /collection: catalog_snapshots/);
   assert.match(text, /name: Editor/);
   assert.match(text, /bookmark: Review queue/);
+  assert.match(text, /change_summary/);
+  assert.doesNotMatch(text, /bookmark: Review queue\n    collection: pending_review/);
+  assert.doesNotMatch(text, /collection: pending_review\n    action: read/);
   assert.match(text, /field: public_id/);
   assert.match(text, /field: render_grain/);
   assert.match(text, /field: status/);
@@ -29,6 +32,15 @@ test("committed snapshot.yaml includes collections, Editor RBAC, and the Review 
 test("Editor policy reads directus_flows so Data Studio can list manual flows", () => {
   const rows = editorPermissions("policy");
   assert.ok(rows.some((row) => row.collection === "directus_flows" && row.action === "read"));
+  assert.ok(rows.some((row) => row.collection === "review_queue_items" && row.action === "read"));
+  assert.equal(rows.some((row) => row.collection === "pending_review"), false);
+});
+
+test("review Flows target the reachable review_queue_items collection only", async () => {
+  for (const name of ["approve-review.json", "edit-and-approve.json", "hide-review.json", "reject-review.json"]) {
+    const flow = JSON.parse(await fs.readFile(path.join(flowsDir, name), "utf8"));
+    assert.deepEqual(flow.options.collections, ["review_queue_items"], name);
+  }
 });
 
 test("Publish is collection; rollback and edit-and-approve are item; bulk review is both", async () => {

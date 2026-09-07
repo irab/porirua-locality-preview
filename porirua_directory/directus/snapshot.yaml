@@ -103,29 +103,6 @@ collections:
     schema:
       name: overrides
   -
-    collection: pending_review
-    meta:
-      accountability: all
-      archive_app_filter: true
-      archive_field: null
-      archive_value: null
-      collapse: open
-      collection: pending_review
-      color: null
-      display_template: "{{kind}} {{entity_id}}"
-      group: null
-      hidden: false
-      icon: rate_review
-      item_duplication_fields: null
-      note: "Review inbox: pending_review joined to review_queue_items."
-      preview_url: null
-      singleton: false
-      sort: null
-      sort_field: null
-      translations: null
-      unarchive_value: null
-      versioning: false
-  -
     collection: public_id_aliases
     meta:
       accountability: all
@@ -160,12 +137,12 @@ collections:
       collapse: open
       collection: review_queue_items
       color: null
-      display_template: "{{kind}} {{entity_id}}"
+      display_template: "{{kind}} — {{change_summary}}"
       group: null
-      hidden: true
-      icon: inbox
+      hidden: false
+      icon: rate_review
       item_duplication_fields: null
-      note: Weekly sync queue. Use the Review queue preset on pending_review.
+      note: Editor inbox. Pending FSD changes. Approve, hide, or reject — then Publish directory.
       preview_url: null
       singleton: false
       sort: null
@@ -2635,15 +2612,6 @@ permissions:
     permissions: {}
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
-    collection: pending_review
-    action: read
-    fields:
-      - "*"
-    permissions:
-      status:
-        _eq: pending
-    policy: b0b7aad5-e707-4a0b-b564-496c35039518
-  -
     collection: review_queue_items
     action: read
     fields:
@@ -2888,16 +2856,16 @@ presets:
     filter: null
   -
     bookmark: Review queue
-    collection: pending_review
+    collection: review_queue_items
     layout: tabular
     layout_query:
       tabular:
         fields:
           - kind
-          - entity_type
           - entity_id
-          - status
-          - service_status
+          - change_summary
+          - created_at
+        sort:
           - created_at
     filter:
       status:

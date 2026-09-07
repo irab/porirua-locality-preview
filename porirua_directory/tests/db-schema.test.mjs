@@ -86,6 +86,7 @@ const REVIEW_QUEUE_COLUMNS = [
   "status",
   "created_at",
   "updated_at",
+  "change_summary",
 ];
 
 test("schema creates the seven catalog tables with sync-ready columns", async (t) => {
@@ -142,5 +143,43 @@ test("public_id uniqueness and organization_id are enforced", async (t) => {
         ),
       /organization_id/
     );
+  });
+});
+
+test("change_summary names the listing fields that actually moved", async (t) => {
+  await withTestDatabase(t, async (client) => {
+    const run = await client.query(
+      `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
+    );
+    const changed = await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES (
+         $1, 'service', 'fsd-1', 'changed', $2::jsonb, 'pending'
+       ) RETURNING change_summary`,
+      [
+        run.rows[0].id,
+        JSON.stringify({
+          before: { address: "1 Old Street", phone: "04 111", name: "Same" },
+          after: { address: "9 New Street", phone: "04 999", name: "Same", SERVICE_ID: "1" },
+        }),
+      ]
+    );
+    assert.equal(changed.rows[0].change_summary, "Changing address, phone");
+
+    const flag = await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES (
+         $1, 'service', 'fsd-2', 'geocode_flag', $2::jsonb, 'pending'
+       ) RETURNING change_summary`,
+      [
+        run.rows[0].id,
+        JSON.stringify({
+          geocode_flag: { code: "GEOCODE_OUTSIDE_PORIRUA_BOUNDS", detail: "Coordinates outside the box" },
+        }),
+      ]
+    );
+    assert.equal(flag.rows[0].change_summary, "Coordinates outside the box");
   });
 });

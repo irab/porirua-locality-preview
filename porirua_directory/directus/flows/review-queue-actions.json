@@ -2,7 +2,7 @@
   "name": "Review queue actions",
   "icon": "rule",
   "color": "#5B2D8E",
-  "description": "Approve, edit-and-approve, hide, or reject a pending_review / review_queue_items row.",
+  "description": "Approve, edit-and-approve, hide, or reject a review_queue_items row.",
   "status": "active",
   "accountability": "all",
   "trigger": "webhook",
