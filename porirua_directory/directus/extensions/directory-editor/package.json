@@ -25,6 +25,9 @@
   "scripts": {
     "build": "directus-extension build"
   },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
   "devDependencies": {
     "@directus/extensions-sdk": "^13.1.1"
   }

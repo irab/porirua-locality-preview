@@ -5,82 +5,117 @@
     </template>
 
     <div class="directory-editor">
-      <div v-if="publishStatus.unpublished" class="banner">
+      <div v-if="publishStatus.unpublished && !reviewFinished" class="banner">
         Changes are not on the public site yet.
         <v-button small :loading="publishing" @click="publishCatalog">Publish</v-button>
       </div>
 
       <v-tabs v-model="tab">
-        <v-tab value="review">Review</v-tab>
+        <v-tab value="review">{{ reviewTabLabel }}</v-tab>
         <v-tab value="listings">Listings</v-tab>
       </v-tabs>
 
       <section v-if="tab === 'review'" class="panel">
         <p class="lede">These are government (FSD) proposals only. Your own adds never appear here.</p>
+        <h2 v-if="queue.length" class="heading">{{ reviewHeading }}</h2>
         <p v-if="queueError" class="error">{{ queueError }}</p>
-        <table v-if="queue.length" class="table">
-          <thead>
-            <tr>
-              <th>Organisation</th>
-              <th>Kind</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in queue" :key="item.id">
-              <td>
+
+        <div v-if="queue.length" class="review-list">
+          <article v-for="item in queue" :key="item.id" class="review-card">
+            <header class="review-head">
+              <div>
                 <strong>{{ item.name || item.title || item.entityId }}</strong>
+                <div class="kind">{{ item.kindLabel }}</div>
                 <div v-if="item.youSetThis?.length" class="hint">
                   You set {{ item.youSetThis.map((row) => row.label).join(", ") }}
                 </div>
-              </td>
-              <td>{{ item.kind }}</td>
-              <td class="actions">
-                <v-button small @click="runQueue(item, primaryPath(item), { keys: [item.id] })">
+              </div>
+              <div class="actions">
+                <v-button small @click="runQueue(item, primaryPath(item), { keys: [item.id] }, 'approve')">
                   {{ item.primaryActionLabel }}
                 </v-button>
-                <v-button v-if="item.kind === 'changed'" small secondary @click="runQueue(item, '/keep-curation', { keys: [item.id] })">
+                <v-button
+                  v-if="item.kind === 'changed'"
+                  small
+                  secondary
+                  @click="runQueue(item, '/keep-curation', { keys: [item.id] }, 'keep')"
+                >
                   Keep yours
                 </v-button>
-                <v-button v-if="item.kind !== 'removed'" small secondary @click="runQueue(item, '/reject', { keys: [item.id] })">
-                  Reject
+                <v-button
+                  v-if="item.kind !== 'removed'"
+                  small
+                  secondary
+                  @click="runQueue(item, '/reject', { keys: [item.id] }, 'reject')"
+                >
+                  {{ item.rejectActionLabel }}
                 </v-button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </header>
+            <ul v-if="item.diffRows?.length" class="diff">
+              <li v-for="row in item.diffRows" :key="row.field">{{ row.line }}</li>
+            </ul>
+            <pin-map v-if="item.showPin && item.pin" :lat="item.pin.lat" :lng="item.pin.lng" />
+          </article>
+        </div>
+
+        <div v-else-if="reviewFinished" class="finish">
+          <h2 class="heading">{{ finishHeading }}</h2>
+          <v-button :loading="publishing" @click="publishCatalog">Publish</v-button>
+        </div>
         <p v-else class="hint">Nothing waiting.</p>
       </section>
 
       <section v-else class="panel">
+        <div class="toolbar">
+          <label class="search">
+            Find an organisation
+            <input v-model="listingSearch" type="search" placeholder="Porirua Whānau Centre" />
+          </label>
+          <label class="check">
+            <input type="checkbox" v-model="showArchived" />
+            Show listings that are off the site
+          </label>
+        </div>
         <div class="toolbar">
           <v-button small @click="startCreate('organization')">Add organisation</v-button>
           <v-button small secondary @click="startCreate('serviceLine')" :disabled="!selectedId">
             Add service line
           </v-button>
         </div>
+        <p v-if="selectedId" class="hint">
+          Selected: {{ selectedName }}. Add a service line, or Edit to change details.
+        </p>
         <p v-if="listError" class="error">{{ listError }}</p>
-        <table class="table">
+        <table class="table listings-table">
           <thead>
             <tr>
               <th>Name</th>
               <th>Address</th>
               <th>Status</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="row in listings"
+              v-for="row in visibleListings"
               :key="row.id"
               :class="{ selected: selectedId === row.id }"
-              @click="openListing(row.id)"
+              @click="selectListing(row.id)"
             >
               <td>{{ row.name }}</td>
               <td>{{ row.address }}</td>
-              <td>{{ row.status }}</td>
+              <td>{{ row.statusLabel }}</td>
+              <td class="actions" @click.stop>
+                <v-button small secondary @click="openListing(row.id)">Edit</v-button>
+                <v-button v-if="row.status !== 'published'" small @click="restoreRow(row)">
+                  Put it back on the site
+                </v-button>
+              </td>
             </tr>
           </tbody>
         </table>
+        <p v-if="!visibleListings.length" class="hint">No organisations match that search.</p>
 
         <div v-if="formOpen" class="form">
           <h2>{{ formTitle }}</h2>
@@ -94,7 +129,7 @@
               <li v-for="match in matches" :key="match.id">
                 <strong>{{ match.name }}</strong>
                 <span>{{ match.address }} {{ match.phone }}</span>
-                <span v-if="match.status !== 'published'">{{ match.status }}</span>
+                <span v-if="match.status !== 'published'">{{ match.statusLabel }}</span>
                 <v-button small @click="openListing(match.id)">Open the existing one</v-button>
               </li>
             </ul>
@@ -113,13 +148,8 @@
               <button type="button" @click="applyGeo(result)">{{ result.label }}</button>
             </li>
           </ul>
-          <p v-if="form.lat != null" class="hint">
-            Pin {{ form.lat }}, {{ form.lng }}
-            <button type="button" @click="nudge(0, 0.0003)">N</button>
-            <button type="button" @click="nudge(0, -0.0003)">S</button>
-            <button type="button" @click="nudge(-0.0003, 0)">W</button>
-            <button type="button" @click="nudge(0.0003, 0)">E</button>
-          </p>
+          <pin-map :lat="form.lat" :lng="form.lng" draggable @move="onPinMove" />
+          <p class="hint">Search an address, then drag the pin if the place is wrong.</p>
           <label>
             Phone
             <input v-model="form.phone" />
@@ -144,7 +174,7 @@
           </fieldset>
           <div class="actions">
             <v-button :loading="saving" @click="saveForm">Save</v-button>
-            <v-button v-if="editingServiceId" secondary @click="archiveCurrent">
+            <v-button v-if="editingServiceId && formKind === 'edit'" secondary @click="askArchive">
               Archive this service line
             </v-button>
             <v-button secondary @click="formOpen = false">Close</v-button>
@@ -153,10 +183,29 @@
         </div>
       </section>
     </div>
+
+    <v-dialog :model-value="archiveOpen" @update:model-value="archiveOpen = $event">
+      <v-card>
+        <v-card-title>Take this service off the public site?</v-card-title>
+        <v-card-text>
+          <p>People will not see this service line after you publish.</p>
+          <p v-if="archiveAlsoOrg">This is the only public service. You can also take the organisation off the site.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-button secondary @click="archiveOpen = false">Cancel</v-button>
+          <v-button @click="confirmArchive(false)">Take this service off the site</v-button>
+          <v-button v-if="archiveAlsoOrg" @click="confirmArchive(true)">Take the organisation off too</v-button>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </private-view>
 </template>
 
 <script>
+import { useStores } from "@directus/extensions-sdk";
+import PinMap from "./pin-map.vue";
+import { actionSuccessMessage, foldSearch, reviewCountLabel, reviewFinishedLabel } from "./copy.js";
+
 const HELP_TYPES = [
   { id: "food", label: "Food / kai" },
   { id: "housing", label: "Housing / a place to stay" },
@@ -193,6 +242,21 @@ function emptyForm() {
 }
 
 export default {
+  components: { PinMap },
+  setup() {
+    let notifyStore = null;
+    try {
+      const { useNotificationsStore } = useStores();
+      notifyStore = useNotificationsStore();
+    } catch {
+      notifyStore = null;
+    }
+    return {
+      toast(title, type = "success") {
+        notifyStore?.add?.({ title, type });
+      },
+    };
+  },
   data() {
     return {
       tab: "listings",
@@ -203,6 +267,8 @@ export default {
       listError: "",
       queueError: "",
       selectedId: null,
+      listingSearch: "",
+      showArchived: false,
       formOpen: false,
       formKind: "organization",
       form: emptyForm(),
@@ -212,6 +278,9 @@ export default {
       saving: false,
       formError: "",
       editingServiceId: null,
+      archiveOpen: false,
+      archiveAlsoOrg: false,
+      reviewedThisSession: 0,
       helpTypes: HELP_TYPES,
       communityGroups: COMMUNITY_GROUPS,
     };
@@ -219,7 +288,31 @@ export default {
   computed: {
     formTitle() {
       if (this.formKind === "serviceLine") return "Add a service line";
-      return this.selectedId && !this.formKind ? "Edit listing" : "Add organisation";
+      if (this.formKind === "edit") return "Edit listing";
+      return "Add organisation";
+    },
+    reviewHeading() {
+      return reviewCountLabel(this.queue.length);
+    },
+    reviewTabLabel() {
+      return this.queue.length ? `Review (${this.queue.length})` : "Review";
+    },
+    reviewFinished() {
+      return this.queue.length === 0 && this.reviewedThisSession > 0;
+    },
+    finishHeading() {
+      return reviewFinishedLabel(this.reviewedThisSession);
+    },
+    selectedName() {
+      return this.listings.find((row) => row.id === this.selectedId)?.name || "";
+    },
+    visibleListings() {
+      const needle = foldSearch(this.listingSearch);
+      return this.listings
+        .filter((row) => (this.showArchived ? true : row.status === "published"))
+        .filter((row) => !needle || foldSearch(row.name).includes(needle))
+        .slice()
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "en", { sensitivity: "base" }));
     },
   },
   async mounted() {
@@ -264,18 +357,26 @@ export default {
     primaryPath(item) {
       return item.kind === "removed" ? "/hide" : "/approve";
     },
-    async runQueue(item, path, body) {
+    async runQueue(item, path, body, action) {
       await this.api(path, { method: "POST", body });
+      this.reviewedThisSession += 1;
+      this.toast(actionSuccessMessage({ action, kind: item.kind, unpublished: true }));
       await Promise.all([this.refreshQueue(), this.refreshPublish()]);
     },
     async publishCatalog() {
       this.publishing = true;
       try {
         await this.api("/publish", { method: "POST", body: {} });
+        this.reviewedThisSession = 0;
+        this.toast(actionSuccessMessage({ action: "publish" }));
         await this.refreshPublish();
       } finally {
         this.publishing = false;
       }
+    },
+    selectListing(id) {
+      this.selectedId = this.selectedId === id ? null : id;
+      this.formOpen = false;
     },
     startCreate(kind) {
       this.formKind = kind;
@@ -328,9 +429,9 @@ export default {
       this.form.lng = result.lng;
       this.geoResults = [];
     },
-    nudge(dx, dy) {
-      this.form.lat = Number(this.form.lat) + dy;
-      this.form.lng = Number(this.form.lng) + dx;
+    onPinMove({ lat, lng }) {
+      this.form.lat = lat;
+      this.form.lng = lng;
     },
     async saveForm() {
       this.saving = true;
@@ -363,6 +464,7 @@ export default {
           });
         }
         this.formOpen = false;
+        this.toast(actionSuccessMessage({ action: "save" }));
         await Promise.all([this.refreshListings(), this.refreshPublish()]);
       } catch (error) {
         if (error.status === 409 || error.response?.status === 409) {
@@ -375,18 +477,32 @@ export default {
         this.saving = false;
       }
     },
-    async archiveCurrent() {
-      if (!this.editingServiceId) return;
+    askArchive() {
       const listing = this.listings.find((row) => row.id === this.selectedId);
-      const also =
-        listing && listing.public_line_count <= 1
-          ? window.confirm("This is the only public service. Also take the organisation off the public site?")
-          : false;
+      this.archiveAlsoOrg = Boolean(listing && listing.public_line_count <= 1);
+      this.archiveOpen = true;
+    },
+    async confirmArchive(alsoArchiveOrganization) {
+      if (!this.editingServiceId) return;
+      this.archiveOpen = false;
       await this.api("/listings/archive", {
         method: "POST",
-        body: { serviceId: this.editingServiceId, alsoArchiveOrganization: also },
+        body: { serviceId: this.editingServiceId, alsoArchiveOrganization },
       });
       this.formOpen = false;
+      this.toast(actionSuccessMessage({ action: "archive" }));
+      await Promise.all([this.refreshListings(), this.refreshPublish()]);
+    },
+    async restoreRow(row) {
+      const data = await this.api(`/listings/${encodeURIComponent(row.id)}`);
+      const service =
+        (data.services || []).find((item) => item.status === "hidden") || data.services?.[0];
+      if (!service?.id) return;
+      await this.api("/listings/restore", {
+        method: "POST",
+        body: { serviceId: service.id },
+      });
+      this.toast(actionSuccessMessage({ action: "restore" }));
       await Promise.all([this.refreshListings(), this.refreshPublish()]);
     },
   },
@@ -410,6 +526,10 @@ export default {
 .panel {
   margin-top: 16px;
 }
+.heading {
+  font-size: 1.15rem;
+  margin: 8px 0 16px;
+}
 .lede,
 .hint {
   color: var(--theme--foreground-subdued);
@@ -427,17 +547,28 @@ export default {
   padding: 8px 6px;
   border-bottom: 1px solid var(--theme--border-color-subdued);
 }
-.table tr.selected {
-  background: var(--theme--background-normal);
-}
-.table tbody tr {
+.listings-table tbody tr {
   cursor: pointer;
+}
+.listings-table tr.selected {
+  background: var(--theme--background-normal);
 }
 .toolbar,
 .actions {
   display: flex;
   gap: 8px;
   margin: 12px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.search {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 220px;
+}
+.search input {
+  padding: 8px;
 }
 .form {
   margin-top: 24px;
@@ -469,5 +600,40 @@ export default {
   color: var(--theme--primary);
   cursor: pointer;
   text-align: left;
+}
+.review-list {
+  display: grid;
+  gap: 16px;
+}
+.review-card {
+  border: 1px solid var(--theme--border-color-subdued);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.review-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+.kind {
+  color: var(--theme--foreground-subdued);
+  margin-top: 2px;
+}
+.diff {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+.finish {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--theme--background-normal);
+  display: grid;
+  gap: 12px;
+  justify-items: start;
 }
 </style>
