@@ -50,7 +50,11 @@ test("bootstrap then publish reproduces the committed catalog except generatedAt
   await withTestDatabase(t, async (client) => {
     const { envelope, overrides } = await loadCommitted();
     await bootstrapFromJson({ envelope, overrides, db: client });
-    const { envelope: published } = await publishCatalog({ db: client, publishedBy: "test" });
+    const { envelope: published } = await publishCatalog({
+      db: client,
+      publishedBy: "test",
+      purge: async () => {},
+    });
 
     const truancyKey = orgClusterKey({
       name: "Te Waka Whaiora Trust",
@@ -113,7 +117,10 @@ test("draft, hidden, pending_review, and merged_into content never reach a snaps
       `UPDATE services SET status = 'pending_review' WHERE id = 'fsd-2964'`
     );
 
-    const { envelope: published } = await publishCatalog({ db: client });
+    const { envelope: published } = await publishCatalog({
+      db: client,
+      purge: async () => {},
+    });
     const ids = published.services.map((entry) => entry.id);
     assert.equal(ids.includes("org-draft"), false);
     assert.equal(ids.includes("org-hidden"), false);
@@ -128,9 +135,17 @@ test("publish is atomic with one is_current snapshot and rollback restores the o
     const { envelope, overrides } = await loadCommitted();
     await bootstrapFromJson({ envelope, overrides, db: client });
 
-    const first = await publishCatalog({ db: client, publishedBy: "v1" });
+    const first = await publishCatalog({
+      db: client,
+      publishedBy: "v1",
+      purge: async () => {},
+    });
     await client.query(`UPDATE organizations SET name = 'Renamed For Snapshot Two' WHERE public_id = 'fsd-2964'`);
-    const second = await publishCatalog({ db: client, publishedBy: "v2" });
+    const second = await publishCatalog({
+      db: client,
+      publishedBy: "v2",
+      purge: async () => {},
+    });
 
     const currentCount = await client.query(
       `SELECT count(*)::int AS n FROM catalog_snapshots WHERE is_current`
@@ -141,7 +156,11 @@ test("publish is atomic with one is_current snapshot and rollback restores the o
       second.envelope.services.some((entry) => entry.name === "Renamed For Snapshot Two")
     );
 
-    const rolled = await rollbackCatalog({ db: client, version: first.version });
+    const rolled = await rollbackCatalog({
+      db: client,
+      version: first.version,
+      purge: async () => {},
+    });
     const current = await getCurrentSnapshot(client);
     assert.equal(Number(current.version), first.version);
     assert.deepEqual(withoutGeneratedAt(rolled.envelope), withoutGeneratedAt(first.envelope));

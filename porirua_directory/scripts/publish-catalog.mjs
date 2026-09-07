@@ -12,6 +12,7 @@ import {
   mapServiceRow,
   withTransaction,
 } from "./lib/db.mjs";
+import { purgeCatalogCache } from "./lib/edge-cache.mjs";
 
 export function isSnapshotOrganization(organization) {
   return (
@@ -91,8 +92,38 @@ async function insertCurrentSnapshot(tx, envelope, publishedBy) {
   return Number(inserted.rows[0].version);
 }
 
-export async function publishCatalog({ db, publishedBy } = {}) {
+async function finishWithPurge(purge) {
+  if (typeof purge !== "function" && process.env.CATALOG_SKIP_PURGE === "1") {
+    return;
+  }
+  try {
+    await purgeCatalogCache(typeof purge === "function" ? { purge } : {});
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      /cache purge failed/i.test(message) ? message : `catalog cache purge failed: ${message}`
+    );
+  }
+}
+
+async function restorePreviousCurrent(db, previous) {
+  if (previous?.version != null) {
+    await withTransaction(async (tx) => {
+      await tx.query(`UPDATE catalog_snapshots SET is_current = false WHERE is_current`);
+      await tx.query(`UPDATE catalog_snapshots SET is_current = true WHERE version = $1`, [
+        previous.version,
+      ]);
+    }, db);
+    return;
+  }
+  await withTransaction(async (tx) => {
+    await tx.query(`UPDATE catalog_snapshots SET is_current = false WHERE is_current`);
+  }, db);
+}
+
+export async function publishCatalog({ db, publishedBy, purge } = {}) {
   const executor = db ?? getPool();
+  const previous = await getCurrentSnapshot(executor);
   const rows = await loadPublishedRows(executor);
   const counts = await loadSourceCounts(executor);
   const envelope = buildCatalogEnvelope({ ...rows, counts });
@@ -100,12 +131,18 @@ export async function publishCatalog({ db, publishedBy } = {}) {
     (tx) => insertCurrentSnapshot(tx, envelope, publishedBy),
     db
   );
+  try {
+    await finishWithPurge(purge);
+  } catch (error) {
+    await restorePreviousCurrent(db, previous);
+    throw error;
+  }
   return { version, envelope };
 }
 
-export async function rollbackCatalog({ db, version, publishedBy } = {}) {
+export async function rollbackCatalog({ db, version, publishedBy, purge } = {}) {
   if (version == null) throw new Error("rollback requires a snapshot version");
-  return withTransaction(async (tx) => {
+  const result = await withTransaction(async (tx) => {
     const found = await tx.query(
       `SELECT version, envelope FROM catalog_snapshots WHERE version = $1`,
       [version]
@@ -125,6 +162,8 @@ export async function rollbackCatalog({ db, version, publishedBy } = {}) {
       envelope: found.rows[0].envelope,
     };
   }, db);
+  await finishWithPurge(purge);
+  return result;
 }
 
 async function ensureSchema(db) {
