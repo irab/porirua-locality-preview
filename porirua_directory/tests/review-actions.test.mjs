@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { hideReviewItem } from "../scripts/approve-review.mjs";
+import { approveReviewItem, hideReviewItem } from "../scripts/approve-review.mjs";
 import { listQueueItems } from "../scripts/listings.mjs";
 import {
   deferQueueItem,
@@ -111,5 +111,32 @@ test("review undo restores a take-off and the hide override", async (t) => {
       `SELECT status FROM overrides WHERE target_id = 'community-undo-me' AND action = 'hide'`
     );
     assert.equal(hide.rowCount === 0 || hide.rows[0].status !== "open", true);
+  });
+});
+
+test("review undo restores an accepted change that has json categories", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    const item = await seedQueue(client, {
+      id: "community-undo-cats",
+      kind: "changed",
+      proposed: {
+        before: { categories: ["health"], name: "Review Act" },
+        after: { categories: ["health", "work"], name: "Review Act" },
+      },
+    });
+    await client.query(
+      `UPDATE services SET categories = '["health"]'::jsonb WHERE id = 'community-undo-cats'`
+    );
+    const { wrapReviewUndo } = await import("../scripts/review-actions.mjs");
+    const accepted = await wrapReviewUndo(client, item.id, "approve", () =>
+      approveReviewItem({ db: client, queueItemId: item.id })
+    );
+    const after = await client.query(`SELECT categories FROM services WHERE id = 'community-undo-cats'`);
+    assert.deepEqual(after.rows[0].categories, ["health", "work"]);
+    await undoReviewDecision({ db: client, undoId: accepted.undoId });
+    const restored = await client.query(`SELECT categories FROM services WHERE id = 'community-undo-cats'`);
+    assert.deepEqual(restored.rows[0].categories, ["health"]);
+    const queue = await client.query(`SELECT status FROM review_queue_items WHERE id = $1`, [item.id]);
+    assert.equal(queue.rows[0].status, "pending");
   });
 });

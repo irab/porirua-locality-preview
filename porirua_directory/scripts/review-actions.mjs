@@ -40,10 +40,18 @@ export async function recordReviewUndo(db, snapshot, action) {
 
 const GENERATED_COLUMNS = new Set(["change_summary"]);
 
+function restoreValue(value) {
+  if (value instanceof Date) return value;
+  if (Array.isArray(value) || (value && typeof value === "object")) {
+    return JSON.stringify(value);
+  }
+  return value;
+}
+
 async function restoreRow(tx, table, row) {
   if (!row) return;
   const columns = Object.keys(row).filter((column) => !GENERATED_COLUMNS.has(column));
-  const values = columns.map((column) => row[column]);
+  const values = columns.map((column) => restoreValue(row[column]));
   const placeholders = columns.map((_, index) => `$${index + 1}`);
   const updates = columns
     .filter((column) => column !== "id")
