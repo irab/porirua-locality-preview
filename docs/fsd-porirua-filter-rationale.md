@@ -3,6 +3,7 @@
 **Audience:** Developers and data editors refreshing the NZ Family Services Directory (FSD) slice  
 **Implementation:** `porirua_directory/scripts/fsd-porirua-rules.mjs`  
 **Pipeline:** `npm run import:fsd` → `data/fsd-porirua.raw.json` + **`data/fsd-porirua-excluded.json`** (geo filter audit) + **`data/fsd-porirua-geocode-flags.json`** (coordinate QA on included rows)  
+**Weekly sync:** `npm run sync:fsd` (`scripts/fsd-sync-run.mjs`) reuses `buildFsdImportReport` unchanged — same include/exclude and geocode QA — then collapses **included** rows only before diffing.  
 **Summary spec:** [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) § FSD inclusion rules  
 **Operational steps:** [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) § FSD import audit
 
@@ -62,7 +63,18 @@ flowchart TD
 
 **Coordinates** — DIA supplies `LATITUDE` / `LONGITUDE` on each CSV row. Import copies them via `mapFsdRowToService` (no geocoder in this repo). **Geocode QA** runs on **included** rows only; see [Geocode QA (included rows)](#geocode-qa-included-rows).
 
-**Public/private or quality** — not filtered in code; use `data/overrides.json` at merge time.
+**Public/private or quality** — not filtered in code; use `data/overrides.json` at merge time. Weekly sync reads the same hide/patch rows from Postgres (`overrides.action` + `patch` keys) as locks and does not auto-hide removals.
+
+### Weekly sync (same filter, included rows only)
+
+`buildFsdImportReport` remains the source of truth for fetch, Porirua inclusion, and geocode QA. The runner then:
+
+1. Attaches `SERVICE_ID` and `FSD_ID` from the CSV onto each mapped included row (do not treat `fsdServiceId` / FSD_ID as the weekly identity). Rows missing `SERVICE_ID` are counted as warnings on `import_runs.stats.missingServiceIdCount`.
+2. Collapses duplicate SERVICE_ID groups (`collapseFsdRows`) — categories are unioned.
+3. Diffs against database FSD rows keyed on `fsd_service_id`. Excluded national rows never enter the diff; feeding the whole CSV would queue hundreds of false new/removed items.
+4. Aborts if `includedCount` is strictly below 75% of the last successful FSD run.
+
+Geocode flags on included rows still do not drop the service; they become `review_queue_items.kind='geocode_flag'`. Operational steps: [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) § Weekly FSD sync.
 
 ---
 
@@ -174,6 +186,7 @@ Named cities/towns used to veto suburb-token matches on the **same line**. Exten
 
 | Date | Change | Issue write-up |
 |------|--------|----------------|
+| **2026-09-08** | Weekly sync runner uses this filter unchanged; collapse/diff only the included slice; 75% included-count sanity abort | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) § Weekly FSD sync |
 | **2026-08-10** | Geocode QA flags on import (`fsd-porirua-geocode-flags.json`, marine + bounds reason codes) | [fixed-fsd-ora-toa-respiratory-sea-marker.md](./issues/fixed-fsd-ora-toa-respiratory-sea-marker.md) |
 | **2026-08-10** | Rānui regex: `(?<![a-z])r[āa]nui\b` — stop matching Christchurch **Aranui** | [fixed-fsd-aranui-christchurch-filter.md](./issues/fixed-fsd-aranui-christchurch-filter.md) |
 | **2026-08** | `NON_PORIRUA_ADDRESS_LOCALITY_PATTERN` + `isPoriruaAddressContext` — Whitby Street / Ranui Auckland / Kerikeri Ranui Ave | [fixed-fsd-locality-address-context-filter.md](./issues/fixed-fsd-locality-address-context-filter.md) |

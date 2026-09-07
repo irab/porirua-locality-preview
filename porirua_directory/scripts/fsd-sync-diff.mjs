@@ -51,6 +51,16 @@ export function fingerprintsEqual(a, b) {
   return JSON.stringify(buildFsdFingerprint(a)) === JSON.stringify(buildFsdFingerprint(b));
 }
 
+export function fingerprintsEqualIgnoringFields(a, b, fields = []) {
+  const left = buildFsdFingerprint(a);
+  const right = buildFsdFingerprint(b);
+  for (const field of fields) {
+    delete left[field];
+    delete right[field];
+  }
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function incomingSnapshot(row) {
   const after = {
     id: row.id,

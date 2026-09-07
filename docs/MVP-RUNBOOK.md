@@ -127,6 +127,34 @@ Publish never includes `draft`, `hidden`, `pending_review`, or merged-away organ
 
 The public site still reads `data/services.json` until the catalog API is wired. These commands do not deploy anything.
 
+### Weekly FSD sync (Phase 2 runner)
+
+`npm run sync:fsd` fetches the national CSV, applies the same Porirua filter and geocode QA as `import:fsd` (`buildFsdImportReport`), attaches `SERVICE_ID` / `FSD_ID` from the CSV, collapses duplicate SERVICE_ID groups, and diffs against `services.raw_import`. It writes **one** `import_runs` row and `review_queue_items` for new, changed, removed, and geocode-flag rows. It **never** creates a `catalog_snapshots` row or changes the live catalog.
+
+```bash
+cd porirua_directory
+export DATABASE_URL=postgres://…   # catalog Postgres
+npm run sync:fsd                   # node scripts/fsd-sync-run.mjs
+```
+
+Worker image: `Dockerfile.sync` (Node; installs `csv-parse` even though it is a devDependency). The CronJob manifest lives in the blackbox tenant task, not this repo.
+
+**Sanity abort:** if this week's `includedCount` is strictly below 75% of the last successful FSD run, the job finishes `import_runs.status='failed'`, writes **zero** removal queue rows, and raises an alert (`stats.alert`, `error_message`). A missing or zero baseline does not trip the guard.
+
+**Locks:** `status=hidden` and open `overrides` rows (`action=hide|patch`, locked fields = keys on `patch`) stay on the published columns. The curated Ngāti Toa Street patch on `fsd-2964` must not be proposed for reversion.
+
+**Approval:** `scripts/fsd-sync-approve.mjs` applies `proposed.after`, sets `published`, and **refreshes `raw_import`**. Without that refresh the same change re-queues every week. Then `npm run catalog:publish` materialises a new snapshot. Draft organisations created for unmatched SERVICE_IDs stay out of snapshots until that approval.
+
+**Expected first run** (bootstrapped catalog vs current feed): 162 collapsed SERVICE_IDs; most lines unchanged; about 17 category enrichments (collapse unions categories the Phase 1 pipeline drops); `fsd-2964` locked; plus standalone geocode-flag items. If every line is `changed`, SERVICE_ID matching is broken.
+
+Isolated runner tests use a **separate** compose project so they do not share port 54329 with other worktrees:
+
+```bash
+npm run db:sync-test:up    # host port 54339, project weekly-fsd-sync-l2yyxlzr
+npm run test:sync
+npm run db:sync-test:down
+```
+
 CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes `ghcr.io/irab/porirua-directory:latest` on push to `main`.
 
 ---
