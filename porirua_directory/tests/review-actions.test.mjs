@@ -9,7 +9,7 @@ import {
 } from "../scripts/review-actions.mjs";
 import { withDirectusDatabase } from "./helpers/directus-postgres.mjs";
 
-async function seedQueue(client, { id = "community-review-act", kind = "removed", proposed = {} } = {}) {
+async function seedQueue(client, { id = "community-review-act", kind = "removed", proposed = {}, status = "published" } = {}) {
   await client.query(
     `INSERT INTO organizations (id, public_id, render_grain, name, cluster_key, status, source_primary)
      VALUES ($1, $1, 'flat', 'Review Act', $2, 'published', 'fsd')`,
@@ -17,8 +17,8 @@ async function seedQueue(client, { id = "community-review-act", kind = "removed"
   );
   await client.query(
     `INSERT INTO services (id, organization_id, line_id, title, source, status, fsd_service_id, phone)
-     VALUES ($1, $1, $1, 'Review Act', 'fsd', 'published', 'sid-act', '04 237 7749')`,
-    [id]
+     VALUES ($1, $1, $1, 'Review Act', 'fsd', $2, 'sid-act', '04 237 7749')`,
+    [id, status]
   );
   const run = await client.query(
     `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
@@ -72,6 +72,22 @@ test("keep as community writes community_owned and leaves the listing on the sit
     assert.equal(override.rowCount, 1);
     assert.equal(override.rows[0].status, "open");
     assert.equal(override.rows[0].patch.awaiting_return, true);
+    const queue = await client.query(`SELECT status FROM review_queue_items WHERE id = $1`, [item.id]);
+    assert.equal(queue.rows[0].status, "accepted");
+  });
+});
+
+test("keep as community on a hidden service leaves it hidden", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    const item = await seedQueue(client, { id: "community-keep-hidden", status: "hidden" });
+    await keepAsCommunityReviewItem({ db: client, queueItemId: item.id, createdBy: "moana" });
+    const service = await client.query(`SELECT status FROM services WHERE id = 'community-keep-hidden'`);
+    assert.equal(service.rows[0].status, "hidden");
+    const override = await client.query(
+      `SELECT action, status FROM overrides WHERE target_id = 'community-keep-hidden' AND action = 'community_owned'`
+    );
+    assert.equal(override.rowCount, 1);
+    assert.equal(override.rows[0].status, "open");
     const queue = await client.query(`SELECT status FROM review_queue_items WHERE id = $1`, [item.id]);
     assert.equal(queue.rows[0].status, "accepted");
   });

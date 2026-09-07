@@ -120,7 +120,9 @@ export async function keepAsCommunityReviewItem({ db, queueItemId, createdBy } =
         createdBy ?? null,
       ]
     );
-    if (snapshot.service?.status === "pending_review") {
+    // status means on the public site. A hidden row stays hidden; only an
+    // unreviewed pending_review row becomes published.
+    if (snapshot.service?.status !== "hidden" && snapshot.service?.status === "pending_review") {
       await tx.query(`UPDATE services SET status = 'published', updated_at = now() WHERE id = $1`, [
         item.entity_id,
       ]);

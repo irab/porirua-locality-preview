@@ -207,7 +207,7 @@ The runner keeps **one pending** `review_queue_items` row per entity+kind (refre
 | `approveReviewItem` / `hideReviewItem` on `removed` | service `hidden` + hide override | Yes — take it off the site |
 | `rejectReviewItem` on `new` | service `hidden` + hide override | Yes — “Don't add this” |
 | `rejectReviewItem` on other kinds | does not write status | Yes |
-| `keepAsCommunityReviewItem` | `pending_review` → `published` | Yes — keep it on the site |
+| `keepAsCommunityReviewItem` | `pending_review` → `published` unless already `hidden` | Yes — keep a live row on the site; a hide stays off. Reachable: a hidden FSD row that drops from the feed still queues `removed`. |
 | `listings` create | community org/service `published` | Yes — editor-created listings are on the site (public after Publish) |
 | `listings` archive / restore | `hidden` / `published` (+ hide override) | Yes — Listings take-off / put-back |
 | `db-import-from-json` bootstrap | copies envelope `status` | Yes — seed the catalog as committed |
