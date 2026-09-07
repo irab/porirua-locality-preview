@@ -10,15 +10,55 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { closePool, getPool, withTransaction } from "./lib/db.mjs";
+import { FSD_FINGERPRINT_FIELDS } from "./fsd-sync-collapse.mjs";
 
-const SERVICE_COLUMNS = [
-  "description",
-  "phone",
-  "url",
-  "address",
-  "lat",
-  "lng",
-  "categories",
+/**
+ * Last-accepted baseline the weekly differ compares against.
+ * Merge payload keys onto the previous raw_import, then fill missing
+ * fingerprint keys. An absent key must never overwrite a known value.
+ */
+const RAW_IMPORT_DEFAULTS = {
+  name: "",
+  serviceName: "",
+  description: "",
+  phone: "",
+  url: "",
+  address: "",
+  lat: null,
+  lng: null,
+  categories: [],
+  fsd_service_id: null,
+  fsd_legacy_id: null,
+};
+
+const RAW_IMPORT_ALIASES = {
+  name: ["name"],
+  serviceName: ["serviceName", "service_name", "title"],
+  description: ["description"],
+  phone: ["phone"],
+  url: ["url"],
+  address: ["address"],
+  lat: ["lat"],
+  lng: ["lng"],
+  categories: ["categories"],
+  fsd_service_id: ["fsd_service_id", "SERVICE_ID"],
+  fsd_legacy_id: ["fsd_legacy_id", "FSD_ID"],
+};
+
+const LIVE_COLUMNS = [
+  { column: "description", aliases: ["description"], lockedAs: ["description"] },
+  { column: "phone", aliases: ["phone"], lockedAs: ["phone"] },
+  { column: "url", aliases: ["url"], lockedAs: ["url"] },
+  { column: "address", aliases: ["address"], lockedAs: ["address"] },
+  { column: "lat", aliases: ["lat"], lockedAs: ["lat"] },
+  { column: "lng", aliases: ["lng"], lockedAs: ["lng"] },
+  { column: "categories", aliases: ["categories"], lockedAs: ["categories"], jsonb: true },
+  { column: "service_name", aliases: ["service_name", "serviceName"], lockedAs: ["service_name", "serviceName"] },
+  {
+    column: "title",
+    aliases: ["title", "service_name", "serviceName"],
+    lockedAs: ["title", "service_name", "serviceName"],
+  },
 ];
 
 function proposedAfter(item) {
@@ -27,22 +67,51 @@ function proposedAfter(item) {
   return after;
 }
 
-function rawImportFromAccepted(currentRaw, accepted) {
-  const previous = currentRaw && typeof currentRaw === "object" ? currentRaw : {};
-  return {
-    ...previous,
-    name: accepted.name ?? previous.name ?? "",
-    serviceName: accepted.serviceName ?? previous.serviceName ?? "",
-    description: accepted.description ?? previous.description ?? "",
-    phone: accepted.phone ?? previous.phone ?? "",
-    url: accepted.url ?? previous.url ?? "",
-    address: accepted.address ?? previous.address ?? "",
-    lat: accepted.lat ?? previous.lat ?? null,
-    lng: accepted.lng ?? previous.lng ?? null,
-    categories: accepted.categories ?? previous.categories ?? [],
-    fsd_service_id: accepted.fsd_service_id ?? accepted.SERVICE_ID ?? previous.fsd_service_id ?? null,
-    fsd_legacy_id: accepted.fsd_legacy_id ?? accepted.FSD_ID ?? previous.fsd_legacy_id ?? null,
-  };
+function firstPresent(object, keys) {
+  if (!object || typeof object !== "object" || Array.isArray(object)) {
+    return { present: false };
+  }
+  for (const key of keys) {
+    if (Object.hasOwn(object, key)) return { present: true, value: object[key] };
+  }
+  return { present: false };
+}
+
+function overlayFromAccepted(accepted) {
+  const overlay = {};
+  for (const [canonical, aliases] of Object.entries(RAW_IMPORT_ALIASES)) {
+    const found = firstPresent(accepted, aliases);
+    if (found.present) overlay[canonical] = found.value;
+  }
+  return overlay;
+}
+
+export function rawImportFromAccepted(currentRaw, accepted) {
+  const previous =
+    currentRaw && typeof currentRaw === "object" && !Array.isArray(currentRaw) ? currentRaw : {};
+  const merged = { ...previous, ...overlayFromAccepted(accepted) };
+  const result = { ...merged };
+  for (const key of [...FSD_FINGERPRINT_FIELDS, "fsd_service_id", "fsd_legacy_id"]) {
+    if (!Object.hasOwn(result, key) || result[key] === undefined) {
+      result[key] = RAW_IMPORT_DEFAULTS[key];
+    }
+  }
+  return result;
+}
+
+function isLocked(locked, names) {
+  return names.some((name) => locked.has(name));
+}
+
+function liveValuesDiffer(column, live, expected) {
+  if (column === "categories") {
+    return JSON.stringify(live ?? []) !== JSON.stringify(expected ?? []);
+  }
+  if (column === "lat" || column === "lng") {
+    if (live == null && expected == null) return false;
+    return Number(live) !== Number(expected);
+  }
+  return String(live ?? "") !== String(expected ?? "");
 }
 
 async function loadQueueItem(db, queueItemId) {
@@ -64,18 +133,13 @@ async function applyAcceptedService(tx, entityId, accepted, lockedFields) {
   const sets = ["status = 'published'", "raw_import = $2::jsonb", "updated_at = now()"];
   const values = [entityId, JSON.stringify(rawImport)];
 
-  if (!locked.has("serviceName") && Object.hasOwn(accepted, "serviceName")) {
-    values.push(accepted.serviceName ?? "");
-    sets.push(`service_name = $${values.length}`);
-    values.push(accepted.serviceName ?? accepted.name ?? "");
-    sets.push(`title = $${values.length}`);
-  }
-  for (const column of SERVICE_COLUMNS) {
-    if (locked.has(column)) continue;
-    if (!Object.hasOwn(accepted, column)) continue;
-    values.push(column === "categories" ? JSON.stringify(accepted[column] ?? []) : accepted[column]);
+  for (const spec of LIVE_COLUMNS) {
+    if (isLocked(locked, spec.lockedAs)) continue;
+    const found = firstPresent(accepted, spec.aliases);
+    if (!found.present) continue;
+    values.push(spec.jsonb ? JSON.stringify(found.value ?? []) : found.value);
     sets.push(
-      column === "categories" ? `${column} = $${values.length}::jsonb` : `${column} = $${values.length}`
+      spec.jsonb ? `${spec.column} = $${values.length}::jsonb` : `${spec.column} = $${values.length}`
     );
   }
 
@@ -110,6 +174,10 @@ async function markQueue(tx, queueItemId, status) {
 /**
  * Apply proposed.after, publish the service, promote a draft organisation,
  * refresh raw_import, and mark the queue item accepted.
+ *
+ * Known gap: no actor is recorded. review_queue_items has no approved_by
+ * column; do not invent one here. Locality will eventually need "who
+ * approved this" on the handover.
  */
 export async function approveReviewItem({ db, queueItemId, payload } = {}) {
   if (!db) throw new Error("approveReviewItem requires db");
@@ -167,24 +235,27 @@ export async function rejectReviewItem({ db, queueItemId } = {}) {
     const values = [item.entity_id];
     if (current.status === "pending_review") {
       sets.push(`status = 'published'`);
-      for (const column of SERVICE_COLUMNS) {
-        if (!Object.hasOwn(raw, column)) continue;
-        values.push(column === "categories" ? JSON.stringify(raw[column] ?? []) : raw[column]);
-        sets.push(
-          column === "categories" ? `${column} = $${values.length}::jsonb` : `${column} = $${values.length}`
-        );
-      }
-      if (Object.hasOwn(raw, "serviceName")) {
-        values.push(raw.serviceName ?? "");
-        sets.push(`service_name = $${values.length}`);
-      }
+    }
+    for (const spec of LIVE_COLUMNS) {
+      const fromRaw = firstPresent(raw, spec.aliases);
+      if (!fromRaw.present) continue;
+      if (!liveValuesDiffer(spec.column, current[spec.column], fromRaw.value)) continue;
+      values.push(spec.jsonb ? JSON.stringify(fromRaw.value ?? []) : fromRaw.value);
+      sets.push(
+        spec.jsonb ? `${spec.column} = $${values.length}::jsonb` : `${spec.column} = $${values.length}`
+      );
     }
     await tx.query(`UPDATE services SET ${sets.join(", ")} WHERE id = $1`, values);
-    if (Object.hasOwn(raw, "name") && current.organization_id && current.status === "pending_review") {
-      await tx.query(`UPDATE organizations SET name = $2, updated_at = now() WHERE id = $1`, [
+    if (current.organization_id && Object.hasOwn(raw, "name")) {
+      const org = await tx.query(`SELECT name FROM organizations WHERE id = $1`, [
         current.organization_id,
-        raw.name,
       ]);
+      if (liveValuesDiffer("name", org.rows[0]?.name, raw.name)) {
+        await tx.query(`UPDATE organizations SET name = $2, updated_at = now() WHERE id = $1`, [
+          current.organization_id,
+          raw.name,
+        ]);
+      }
     }
     await markQueue(tx, queueItemId, "rejected");
     return { queueItemId, entityId: item.entity_id };

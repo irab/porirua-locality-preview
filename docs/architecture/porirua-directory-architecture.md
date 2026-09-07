@@ -127,7 +127,7 @@ flowchart LR
 
 **Tables:** `organizations`, `services`, `public_id_aliases`, `catalog_snapshots`, `overrides`, `import_runs`, `review_queue_items`. The last two ship complete for the sync task (`import_runs.stats` includes included/excluded/collapsed/queue counts; `review_queue_items.kind` is `new|changed|removed|geocode_flag`).
 
-The weekly runner is `porirua_directory/scripts/fsd-sync-run.mjs` (`npm run sync:fsd`, image `Dockerfile.sync`). Kubernetes CronJob manifests stay in the blackbox tenant task. Approve, hide, and reject share `scripts/approve-review.mjs` (`approveReviewItem`) with the Directus sidecar.
+The weekly runner is `porirua_directory/scripts/fsd-sync-run.mjs` (`npm run sync:fsd`, image `Dockerfile.sync`). Kubernetes CronJob manifests stay in the blackbox tenant task. Approve, hide, and reject share `scripts/approve-review.mjs` (`approveReviewItem`) with the Directus sidecar. Approve records no actor (no `approved_by` on `review_queue_items` yet) — a handover gap when Locality asks who signed off a change.
 
 **Directus (local editor, this slice):** collections, Interfaces, Editor role, Review queue preset, and Flows are version-controlled under `porirua_directory/directus/`. Organizations expose related `service_lines` as a read-only O2M alias on `services.organization_id` (text join to `organizations.id`). Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Grain / `public_id` changes are Admin-only and write `public_id_aliases`. Nothing here deploys a tenant.
 

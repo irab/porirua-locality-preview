@@ -471,7 +471,7 @@ test("sanity abort below 75% writes one failed import_runs row and zero removals
 test("exactly one import_runs row per run, including on failure, and the job never publishes", async (t) => {
   await withSyncDatabase(t, async (client) => {
     await insertFsdService(client, { csvRow: PORIRUA_FOOD });
-    await publishCatalog({ db: client, publishedBy: "test" });
+    await publishCatalog({ db: client, publishedBy: "test", purge: async () => {} });
     const currentBefore = await getCurrentSnapshot(client);
     assert.ok(currentBefore);
 
@@ -508,7 +508,7 @@ test("sync then approve then publish moves a change live and approval refreshes 
       categories: ["food"],
       rawImport: { ...raw, categories: ["food"] },
     });
-    await publishCatalog({ db: client, publishedBy: "seed" });
+    await publishCatalog({ db: client, publishedBy: "seed", purge: async () => {} });
     const before = await getCurrentSnapshot(client);
 
     const withHealth = {
@@ -528,7 +528,7 @@ test("sync then approve then publish moves a change live and approval refreshes 
     assert.ok(service.rows[0].categories.includes("health"));
     assert.ok(service.rows[0].raw_import.categories.includes("health"));
 
-    const published = await publishCatalog({ db: client, publishedBy: "editor" });
+    const published = await publishCatalog({ db: client, publishedBy: "editor", purge: async () => {} });
     assert.notEqual(Number(published.version), Number(before.version));
     const live = published.envelope.services.find((entry) => entry.id === "fsd-9001-line-a" || entry.services);
     const line =
@@ -639,7 +639,7 @@ test("approving a new SERVICE_ID publishes its draft organization into the snaps
     await approveReviewItem({ db: client, queueItemId: queue.rows[0].id });
     const orgAfter = await client.query(`SELECT status FROM organizations WHERE id = 'fsd-9003-clinic'`);
     assert.equal(orgAfter.rows[0].status, "published");
-    const published = await publishCatalog({ db: client, publishedBy: "editor" });
+    const published = await publishCatalog({ db: client, publishedBy: "editor", purge: async () => {} });
     const found = published.envelope.services.some(
       (entry) =>
         entry.id === "fsd-9003-clinic" ||

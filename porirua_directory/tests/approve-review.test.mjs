@@ -5,7 +5,9 @@ import {
   editAndApproveReviewItem,
   hideReviewItem,
   rejectReviewItem,
+  rawImportFromAccepted,
 } from "../scripts/approve-review.mjs";
+import { diffFsdCatalog } from "../scripts/fsd-sync-diff.mjs";
 import { withDirectusDatabase } from "./helpers/directus-postgres.mjs";
 
 const RAW_BEFORE = {
@@ -25,7 +27,37 @@ const PROPOSED_AFTER = {
   description: "Updated blurb",
 };
 
-async function seedPendingReview(client, proposedAfter = PROPOSED_AFTER) {
+const CANONICAL_EMPTY = {
+  serviceName: "",
+  url: "",
+  categories: [],
+  fsd_service_id: null,
+  fsd_legacy_id: null,
+};
+
+const PARTIAL_BASELINE = {
+  name: "Old Name",
+  serviceName: "Support",
+  description: "Old blurb",
+  phone: "04 111 2222",
+  url: "https://example.org/keep-me",
+  address: "1 Old Street",
+  lat: -41.13,
+  lng: 174.84,
+  categories: ["food", "health"],
+  fsd_service_id: "2964",
+  fsd_legacy_id: "2964",
+};
+
+async function seedReview(client, {
+  proposedAfter = PROPOSED_AFTER,
+  rawImport = RAW_BEFORE,
+  status = "pending_review",
+  address = "1 Old Street",
+  title = "Support",
+  serviceName = "Support",
+  fsdServiceId = null,
+} = {}) {
   await client.query(
     `INSERT INTO organizations (id, public_id, render_grain, name, cluster_key, status, source_primary)
      VALUES ('org-fsd', 'fsd-2964', 'flat', 'Old Name', 'key-fsd', 'published', 'fsd')`
@@ -33,13 +65,13 @@ async function seedPendingReview(client, proposedAfter = PROPOSED_AFTER) {
   await client.query(
     `INSERT INTO services (
        id, organization_id, line_id, title, service_name, address, phone, lat, lng,
-       source, status, raw_import, description
+       source, status, raw_import, description, fsd_service_id, fsd_legacy_id
      ) VALUES (
-       'fsd-2964', 'org-fsd', 'fsd-2964', 'Support', 'Support',
-       '1 Old Street', '04 111 2222', -41.13, 174.84,
-       'fsd', 'pending_review', $1::jsonb, 'Old blurb'
+       'fsd-2964', 'org-fsd', 'fsd-2964', $3, $4,
+       $5, '04 111 2222', -41.13, 174.84,
+       'fsd', $2, $1::jsonb, 'Old blurb', $6, $6
      )`,
-    [JSON.stringify(RAW_BEFORE)]
+    [JSON.stringify(rawImport), status, title, serviceName, address, fsdServiceId]
   );
   const run = await client.query(
     `INSERT INTO import_runs (source, status)
@@ -51,7 +83,7 @@ async function seedPendingReview(client, proposedAfter = PROPOSED_AFTER) {
        import_run_id, entity_type, entity_id, kind, proposed, status
      ) VALUES ($1, 'service', 'fsd-2964', 'changed', $2::jsonb, 'pending')
      RETURNING id`,
-    [run.rows[0].id, JSON.stringify({ before: RAW_BEFORE, after: proposedAfter })]
+    [run.rows[0].id, JSON.stringify({ before: rawImport, after: proposedAfter })]
   );
   return { queueItemId: queue.rows[0].id };
 }
@@ -68,7 +100,7 @@ async function readQueue(client, id) {
 
 test("approve applies proposed.after, publishes, and refreshes raw_import so weekly sync will not re-queue", async (t) => {
   await withDirectusDatabase(t, async (client) => {
-    const { queueItemId } = await seedPendingReview(client);
+    const { queueItemId } = await seedReview(client);
     await approveReviewItem({ db: client, queueItemId });
 
     const service = await readService(client);
@@ -78,9 +110,14 @@ test("approve applies proposed.after, publishes, and refreshes raw_import so wee
     assert.equal(service.description, "Updated blurb");
     assert.equal(Number(service.lat), -41.14);
     assert.equal(Number(service.lng), 174.85);
+    assert.deepEqual(
+      service.raw_import,
+      rawImportFromAccepted(RAW_BEFORE, PROPOSED_AFTER)
+    );
     assert.deepEqual(service.raw_import, {
       ...RAW_BEFORE,
       ...PROPOSED_AFTER,
+      ...CANONICAL_EMPTY,
     });
 
     const queue = await readQueue(client, queueItemId);
@@ -88,9 +125,46 @@ test("approve applies proposed.after, publishes, and refreshes raw_import so wee
   });
 });
 
+test("a partial address approve keeps previous url and categories so the next sync is unchanged", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    const { queueItemId } = await seedReview(client, {
+      rawImport: PARTIAL_BASELINE,
+      proposedAfter: { address: "9 New Street" },
+      fsdServiceId: "2964",
+    });
+    await approveReviewItem({ db: client, queueItemId });
+
+    const service = await readService(client);
+    assert.equal(service.address, "9 New Street");
+    assert.equal(service.raw_import.address, "9 New Street");
+    assert.equal(service.raw_import.url, "https://example.org/keep-me");
+    assert.deepEqual(service.raw_import.categories, ["food", "health"]);
+    assert.equal(service.raw_import.serviceName, "Support");
+    assert.equal(service.raw_import.fsd_service_id, "2964");
+
+    const incoming = {
+      SERVICE_ID: "2964",
+      name: PARTIAL_BASELINE.name,
+      serviceName: PARTIAL_BASELINE.serviceName,
+      description: PARTIAL_BASELINE.description,
+      phone: PARTIAL_BASELINE.phone,
+      url: PARTIAL_BASELINE.url,
+      address: "9 New Street",
+      lat: PARTIAL_BASELINE.lat,
+      lng: PARTIAL_BASELINE.lng,
+      categories: PARTIAL_BASELINE.categories,
+    };
+    const items = diffFsdCatalog(
+      [incoming],
+      [{ fsd_service_id: "2964", status: "published", raw_import: service.raw_import }]
+    );
+    assert.equal(items[0].kind, "unchanged");
+  });
+});
+
 test("edit-and-approve applies the editor payload then refreshes raw_import", async (t) => {
   await withDirectusDatabase(t, async (client) => {
-    const { queueItemId } = await seedPendingReview(client);
+    const { queueItemId } = await seedReview(client);
     const edited = { ...PROPOSED_AFTER, address: "Editor-corrected Street" };
     await editAndApproveReviewItem({ db: client, queueItemId, payload: edited });
 
@@ -102,9 +176,32 @@ test("edit-and-approve applies the editor payload then refreshes raw_import", as
   });
 });
 
+test("edit-and-approve with database-style keys updates live columns and raw_import", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    const { queueItemId } = await seedReview(client, { proposedAfter: {} });
+    await editAndApproveReviewItem({
+      db: client,
+      queueItemId,
+      payload: {
+        service_name: "Clinic line",
+        title: "Clinic line title",
+        address: "12 Database Street",
+      },
+    });
+
+    const service = await readService(client);
+    assert.equal(service.service_name, "Clinic line");
+    assert.equal(service.title, "Clinic line title");
+    assert.equal(service.address, "12 Database Street");
+    assert.equal(service.raw_import.serviceName, "Clinic line");
+    assert.equal(service.raw_import.address, "12 Database Street");
+    assert.equal((await readQueue(client, queueItemId)).status, "accepted");
+  });
+});
+
 test("hide writes a hide override, hides the service, and accepts the queue item", async (t) => {
   await withDirectusDatabase(t, async (client) => {
-    const { queueItemId } = await seedPendingReview(client);
+    const { queueItemId } = await seedReview(client);
     await hideReviewItem({ db: client, queueItemId, createdBy: "editor-1" });
 
     const service = await readService(client);
@@ -123,11 +220,29 @@ test("hide writes a hide override, hides the service, and accepts the queue item
 
 test("reject leaves the stored record on raw_import and marks the queue item rejected", async (t) => {
   await withDirectusDatabase(t, async (client) => {
-    const { queueItemId } = await seedPendingReview(client);
+    const { queueItemId } = await seedReview(client);
     await rejectReviewItem({ db: client, queueItemId });
 
     const service = await readService(client);
     assert.equal(service.status, "published");
+    assert.equal(service.address, "1 Old Street");
+    assert.deepEqual(service.raw_import, RAW_BEFORE);
+    assert.equal((await readQueue(client, queueItemId)).status, "rejected");
+  });
+});
+
+test("rejecting a proposal against a hidden record leaves it hidden", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    const { queueItemId } = await seedReview(client, {
+      status: "hidden",
+      address: "9 Proposed Street",
+      rawImport: RAW_BEFORE,
+      proposedAfter: { address: "9 Proposed Street" },
+    });
+    await rejectReviewItem({ db: client, queueItemId });
+
+    const service = await readService(client);
+    assert.equal(service.status, "hidden");
     assert.equal(service.address, "1 Old Street");
     assert.deepEqual(service.raw_import, RAW_BEFORE);
     assert.equal((await readQueue(client, queueItemId)).status, "rejected");
