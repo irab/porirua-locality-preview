@@ -13,6 +13,7 @@ import {
   needsConfirmationGroupLabel,
   needsConfirmationTabLabel,
   primaryActionLabel,
+  queueDiffHighlight,
   queueDiffRows,
   queueItemDto,
   queueItemHeading,
@@ -229,6 +230,82 @@ test("changed rows skip a field when after is missing that key", () => {
   assert.equal(
     rows.some((row) => /Supported Employment|→ —/.test(row.line)),
     false
+  );
+});
+
+test("help type diffs mark only the types that were added or removed", () => {
+  const rows = queueDiffRows({
+    kind: "changed",
+    before: { categories: ["health", "work"] },
+    after: { categories: ["health", "work", "support"] },
+  });
+  assert.equal(
+    rows[0].line,
+    "Help types: Health, Work and learning → Health, Work and learning, Support and counselling"
+  );
+  assert.deepEqual(
+    rows[0].highlight.after.filter((part) => part.mark === "added").map((part) => part.text),
+    ["Support and counselling"]
+  );
+  assert.equal(
+    rows[0].highlight.before.some((part) => part.mark === "removed"),
+    false
+  );
+  assert.equal(rows[0].highlight.kind, "list");
+});
+
+test("help type diffs mark a type that left as well as a type that arrived", () => {
+  const rows = queueDiffRows({
+    kind: "changed",
+    before: { categories: ["health", "legal"] },
+    after: { categories: ["health", "support"] },
+  });
+  assert.deepEqual(
+    rows[0].highlight.before.filter((part) => part.mark === "removed").map((part) => part.text),
+    ["Legal advice"]
+  );
+  assert.deepEqual(
+    rows[0].highlight.after.filter((part) => part.mark === "added").map((part) => part.text),
+    ["Support and counselling"]
+  );
+});
+
+test("scalar diffs mark the whole before and after instead of guessing a word delta", () => {
+  const rows = queueDiffRows({
+    kind: "changed",
+    before: { phone: "04 237 7749" },
+    after: { phone: "04 237 9608" },
+  });
+  assert.deepEqual(rows[0].highlight, {
+    kind: "replace",
+    before: [{ text: "04 237 7749", mark: "removed" }],
+    after: [{ text: "04 237 9608", mark: "added" }],
+  });
+});
+
+test("a category value that is not a list gets no guessed highlight", () => {
+  assert.equal(
+    queueDiffHighlight({
+      field: "categories",
+      beforeValue: "health, work",
+      afterValue: ["health", "work", "support"],
+      beforeText: "health, work",
+      afterText: "Health, Work and learning, Support and counselling",
+    }),
+    null
+  );
+});
+
+test("same help types in a different order do not invent a membership delta", () => {
+  assert.equal(
+    queueDiffHighlight({
+      field: "categories",
+      beforeValue: ["health", "work"],
+      afterValue: ["work", "health"],
+      beforeText: "Health, Work and learning",
+      afterText: "Work and learning, Health",
+    }),
+    null
   );
 });
 

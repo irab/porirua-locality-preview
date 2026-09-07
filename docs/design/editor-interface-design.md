@@ -248,7 +248,7 @@ Row summary examples (not the raw kind):
 2. Organisation name  
 3. Kind in plain words  
 4. **You set this earlier** on curated fields (Ora Toa address / pin is the first live case)  
-5. Only fields that moved, each as `Phone: 04 237 7749 → 04 237 9608`  
+5. Only fields that moved, each as `Phone: 04 237 7749 → 04 237 9608`, with the added and removed values marked so the delta is findable without reading the whole line  
 6. One line for the rest: **Other details are unchanged. Show them** (collapsed)  
 7. Verification bar (Website, phone, **On the site now** address, map). The change comes first; the bar is evidence.  
 8. The actions for that kind (copy dictionary)
@@ -406,7 +406,9 @@ flowchart TD
   live --> undoPub[Undo publish — 7.5]
 ```
 
-On a Review card, emphasis follows: organisation, then service line, then what changed, then the change itself, then verification, then actions. Nothing she needs to read is faded grey. Inactive tabs and timestamps stay readable; they get smaller or lighter weight, not a low-contrast colour.
+On a Review card, emphasis follows: organisation, then service line, then what changed, then the change itself, then verification, then actions. The summary is lighter than the service line. Nothing she needs to read is faded grey. Inactive tabs and timestamps stay readable; they get smaller or lighter weight, not a low-contrast colour.
+
+On a changed field, keep the before → after sentence. Mark what was added and what was removed so she can find the delta without reading the whole line. Help types are a set difference. Free text marks the whole before and the whole after — do not guess a word delta. A highlight the code cannot compute reliably is omitted; the sentence still reads. Do not carry the mark on colour alone.
 
 ### 6.2 Add
 

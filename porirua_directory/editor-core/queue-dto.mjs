@@ -343,6 +343,65 @@ export function formatDiffLine(row, kind) {
   return `${row.label}: ${row.before} → ${row.after}`;
 }
 
+function asIdList(value) {
+  if (!Array.isArray(value)) return null;
+  const ids = [];
+  for (const item of value) {
+    if (item == null || item === "") continue;
+    if (typeof item !== "string" && typeof item !== "number") return null;
+    ids.push(String(item));
+  }
+  return ids;
+}
+
+function joinMarkedParts(items) {
+  const parts = [];
+  items.forEach((item, index) => {
+    if (index) parts.push({ text: ", " });
+    parts.push(item);
+  });
+  return parts;
+}
+
+function listDiffHighlight(beforeValue, afterValue) {
+  const beforeIds = asIdList(beforeValue);
+  const afterIds = asIdList(afterValue);
+  if (!beforeIds || !afterIds) return null;
+  const beforeSet = new Set(beforeIds);
+  const afterSet = new Set(afterIds);
+  const before = joinMarkedParts(
+    beforeIds.map((id) => ({
+      text: helpTypeLabel(id),
+      mark: afterSet.has(id) ? "same" : "removed",
+    }))
+  );
+  const after = joinMarkedParts(
+    afterIds.map((id) => ({
+      text: helpTypeLabel(id),
+      mark: beforeSet.has(id) ? "same" : "added",
+    }))
+  );
+  const hasDelta = before.some((part) => part.mark === "removed") || after.some((part) => part.mark === "added");
+  if (!hasDelta) return null;
+  if (before.some((part) => part.mark && !String(part.text || "").trim())) return null;
+  if (after.some((part) => part.mark && !String(part.text || "").trim())) return null;
+  return { kind: "list", before, after };
+}
+
+function replaceDiffHighlight(beforeText, afterText) {
+  if (isBlank(beforeText) || isBlank(afterText)) return null;
+  return {
+    kind: "replace",
+    before: [{ text: beforeText, mark: "removed" }],
+    after: [{ text: afterText, mark: "added" }],
+  };
+}
+
+export function queueDiffHighlight({ field, beforeValue, afterValue, beforeText, afterText } = {}) {
+  if (field === "categories") return listDiffHighlight(beforeValue, afterValue);
+  return replaceDiffHighlight(beforeText, afterText);
+}
+
 function queuedBeforeOf(item) {
   const proposed = item.proposed && typeof item.proposed === "object" ? item.proposed : {};
   return proposed.before && typeof proposed.before === "object" ? proposed.before : {};
@@ -392,6 +451,10 @@ export function queueDiffRows({ kind, before = {}, after = {} } = {}) {
     };
     row.line = formatDiffLine(row, kind);
     if (!row.line) continue;
+    row.highlight =
+      kind === "changed"
+        ? queueDiffHighlight({ field, beforeValue, afterValue, beforeText, afterText })
+        : null;
     seenLabels.add(label);
     rows.push(row);
   }

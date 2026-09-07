@@ -117,7 +117,24 @@
                 You set this earlier: {{ item.youSetThis.map((row) => row.label).join(", ") }}
               </p>
               <ul v-if="item.diffRows?.length" class="diff">
-                <li v-for="row in item.diffRows" :key="row.field">{{ row.line }}</li>
+                <li v-for="row in item.diffRows" :key="row.field">
+                  <template v-if="row.highlight">
+                    <span class="sr-only">{{ row.line }}</span>
+                    <span aria-hidden="true" class="diff-visual">
+                      <span class="diff-label">{{ row.label }}:</span>
+                      <template v-for="(part, index) in row.highlight.before" :key="'b-' + index">
+                        <span v-if="part.mark === 'removed'" class="diff-removed">{{ part.text }}</span>
+                        <span v-else>{{ part.text }}</span>
+                      </template>
+                      <span class="diff-arrow"> → </span>
+                      <template v-for="(part, index) in row.highlight.after" :key="'a-' + index">
+                        <span v-if="part.mark === 'added'" class="diff-added">{{ part.text }}</span>
+                        <span v-else>{{ part.text }}</span>
+                      </template>
+                    </span>
+                  </template>
+                  <template v-else>{{ row.line }}</template>
+                </li>
               </ul>
               <div v-if="item.otherRows?.length" class="other">
                 <button type="button" class="other-toggle" @click="toggleOther(item.id)">
@@ -1163,8 +1180,8 @@ export default {
   font-weight: 500;
 }
 .review-row .kind {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 400;
 }
 .review-body {
   padding: 8px 12px 16px;
@@ -1173,6 +1190,28 @@ export default {
   font-size: 1.05rem;
   font-weight: 500;
   color: #2a2f3d;
+}
+.diff-label {
+  margin-right: 0.35em;
+}
+.diff-removed {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  background: #eceff3;
+}
+.diff-added {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  background: #e8e4f8;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 .kind,
 .line-status {
