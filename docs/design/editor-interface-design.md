@@ -3,7 +3,7 @@
 **Status:** Design accepted 8 Sep 2026. Section 12 is decided. The Vue sketch is not the approved UI — rebuild it to this document.  
 **Audience:** Moana (editor), Kahu (readiness walk), Aroha (product).  
 **Not this doc:** sidecar contracts, the name matcher, clustering, the three-way lock rule, Kubernetes. Those stay as they are.  
-**Undo publish (7.5)** is designed here and is **not to be built** until that section is agreed. Everything else in this document is to be implemented.
+**Undo publish (7.5)** is agreed (8 Sep 2026) and is to be built with the two-editor version guard and a persist-only audit of who published and who undid.
 
 This is a design from **jobs**, not from the code already in the module. Where the current build should be changed or thrown away, this document says so.
 
@@ -541,7 +541,7 @@ Every Review decision is one click and applied immediately. Nothing is public un
 
 **Auto-advance is not used.** After a decision the row leaves, the list stays still, and she presses **Next** (or opens another row).
 
-### 7.5 Undo publish — design, do not build until agreed
+### 7.5 Undo publish — agreed 8 Sep 2026
 
 Publish is now one click. Rollback today is an admin-only Flow Moana cannot reach. **Undo publish** is how she recovers. Do not put the confirmation dialog back.
 
@@ -562,7 +562,9 @@ Until the **next Publish**, or **24 hours** after this Publish, whichever is fir
 
 **What it does**
 
-Calls the existing sidecar rollback onto the snapshot that was current **immediately before** this Publish. She never picks a version number. `/publish-status` should expose `{ previousVersion, publishedAt, canUndoPublish }`. A new editor-gated `POST /undo-publish` (or `/rollback` with that previous version) is the write. Live listing rows, queue items, and overrides are **not** rewound — only the public catalog pointer.
+Calls the existing sidecar rollback onto the snapshot that was current **immediately before** this Publish. She never picks a version number. `/publish-status` exposes `{ previousVersion, publishedAt, canUndoPublish }` from the **server** on every check — not from a client-side 24-hour timer. `POST /undo-publish` is editor-gated and must carry the snapshot version this tab believes it is undoing. If that version is no longer current, the server refuses: **Someone else has published since. Your undo would remove their changes too.** Live listing rows, queue items, and overrides are **not** rewound — only the public catalog pointer. `rollbackCatalog` must keep purging the edge cache; an undo that leaves the withdrawn catalog in cache is undo in name only.
+
+Who published and who undid is written to `catalog_publish_events` (actor, timestamp, snapshot version). It is not shown in the module yet.
 
 After undo: the public site is the previous snapshot. The work she just published is still in the database, so the status band shows it waiting again. Toast: **Publish undone. Those changes are waiting to go on the site again.** No undo-the-undo; she can Publish again.
 
@@ -703,7 +705,7 @@ Approve the design first. Then, in the module:
 - **Keep:** Review / Listings split; landing on Directory; field-by-field diff lines; Leaflet map with no coordinates; name-blur duplicate warning; “Take it off the site” / “The pin is fine” / “Keep yours” as the quality bar for new copy; notifications that say what happens next.  
 - **Rewrite:** listings as search-first + listing detail (discard click-row-to-edit); Review closed-row summary; verification bar; **Needs confirmation** group; keep-as-community (equal actions); edit-then-accept with changed-field highlighting; immediate Publish; session finish; undo on the toast; explicit **Next**.  
 - **Do not build more of:** N/S/E/W nudge, raw kind/status in the table, `window.confirm`, a Review table whose only information is the buttons, the `users.read` landing hook (§13), a Publish confirmation dialog.  
-- **Do not build yet:** **Undo publish** (7.5) until that section is agreed.
+- **Build:** **Undo publish** (7.5) as agreed — server-derived availability, expected-version guard, persist-only audit, purge on rollback.
 
 ---
 
@@ -714,7 +716,7 @@ Approve the design first. Then, in the module:
 | 1 | Deferred items: own group, mixed with a badge, or hidden until asked? | **Own group**, named **Needs confirmation**. Same words on the button, the badge, the group heading, and the toast. |
 | 2 | Gone from the government list: equal buttons, take-off primary, or keep primary? | **Equal weighting.** **Take it off the site** and **Keep it as a community listing** have no visual hierarchy and no keyboard default. |
 | 3 | Almost-right change: shared form or inline on the card? | **Shared form**, pre-filled, with the field(s) the proposal changed marked, scrolled to, and focused. **You set this earlier** stays on curated fields. Not colour alone. |
-| 4 | Publish from the finish: named confirmation, immediate, or count only? | **Immediate.** No confirmation dialog. **Undo publish** (7.5) is the safety net — designed, not built until that section is agreed. |
+| 4 | Publish from the finish: named confirmation, immediate, or count only? | **Immediate.** No confirmation dialog. **Undo publish** (7.5) is the safety net. Agreed 8 Sep 2026: 24-hour-or-next-publish window; first-ever publish has no undo; live rows stay; expected version must match or the server refuses; record who published and who undid. |
 | 5 | After a decision: auto-expand the next item, or an explicit **Next**? | **Explicit Next.** Undo on every Review action toast. |
 
 ---
@@ -783,6 +785,6 @@ An admin for two people is lower stakes than the public directory. It is still a
 | Defer | No flag | `proposed.deferred_at` + proposal fingerprint; refresh rule in 7.1 |
 | Keep as community | No action | `overrides.action = community_owned` as in 7.2; widen the action CHECK; diff skips `removed`, matches reappearance |
 | Review undo | No snapshot of the last action | Server-side undo of the last Review write, or a short-lived undo token; must restore patches |
-| Undo publish | Admin-only rollback Flow | **Do not build until 7.5 is agreed.** Then expose previous snapshot as **Undo publish** |
+| Undo publish | Admin-only rollback Flow | Editor-gated `POST /undo-publish` with `expectedVersion`; `canUndoPublish` from last publish event + 24h window |
 | Landing | Bootstrap `last_page` only. The `users.read` hook is gone | Keep bootstrap; do not add a read hook (§13) |
 | Queue evidence | Runner writes `proposed.before` at queue time; Review still shows live | Keep both. Do not drop the stored snapshot |

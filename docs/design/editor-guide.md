@@ -36,7 +36,7 @@ If a change is almost right, **Use this, and I'll correct it** opens the form wi
 
 After every decision: **Undo** on the toast, then **Next**. The next card does not open by itself.
 
-When the last active item is done: **Publish now** puts the work on the public site immediately.
+When the last active item is done: **Publish now** puts the work on the public site immediately. **Undo publish** is on the toast, then **Undo last publish** on the status band, until the next publish or 24 hours. If someone else has published since, undo is refused.
 
 ## Take a service off the site from Listings
 
