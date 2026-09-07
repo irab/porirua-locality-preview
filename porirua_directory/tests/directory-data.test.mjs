@@ -2,12 +2,48 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { loadServices } from "../directory-data.js";
 
-function jsonResponse(body, { ok = true, status = 200 } = {}) {
+function headers(contentType) {
+  return {
+    get(name) {
+      return String(name).toLowerCase() === "content-type" ? contentType : null;
+    },
+  };
+}
+
+function jsonResponse(body, { ok = true, status = 200, contentType = "application/json" } = {}) {
   return {
     ok,
     status,
+    headers: headers(contentType),
     json: async () => structuredClone(body),
   };
+}
+
+function htmlResponse() {
+  return {
+    ok: true,
+    status: 200,
+    headers: headers("text/html; charset=utf-8"),
+    json: async () => {
+      throw new SyntaxError("Unexpected token '<'");
+    },
+  };
+}
+
+function abortError() {
+  const err = new Error("The operation was aborted");
+  err.name = "AbortError";
+  return err;
+}
+
+function neverSettles(signal) {
+  return new Promise((_, reject) => {
+    if (signal?.aborted) {
+      reject(abortError());
+      return;
+    }
+    signal?.addEventListener("abort", () => reject(abortError()), { once: true });
+  });
 }
 
 function envelope(name, extra = {}) {
@@ -150,4 +186,60 @@ test("API rejection does not surface as an unhandledRejection", async (t) => {
 
   assert.equal(calls.filter(isCatalogUrl).length, 1);
   assert.equal(unhandled.length, 0);
+});
+
+test("loadServices falls back when a 200 response is HTML, not the catalog", async (t) => {
+  const calls = stubFetch(t, (url) => {
+    if (isCatalogUrl(url)) return htmlResponse();
+    if (isStaticUrl(url)) return jsonResponse(envelope("From Static File"));
+    throw new Error(`unexpected fetch: ${url}`);
+  });
+
+  const loaded = await loadServices();
+
+  assert.equal(loaded.entries[0].name, "From Static File");
+  assert.equal(calls.filter(isCatalogUrl).length, 1);
+  assert.equal(calls.filter(isStaticUrl).length, 1);
+});
+
+test("loadServices falls back when a 200 JSON body is not a catalog envelope", async (t) => {
+  const calls = stubFetch(t, (url) => {
+    if (isCatalogUrl(url)) return jsonResponse({ error: "not a catalog", ok: true });
+    if (isStaticUrl(url)) return jsonResponse(envelope("From Static File"));
+    throw new Error(`unexpected fetch: ${url}`);
+  });
+
+  const loaded = await loadServices();
+
+  assert.equal(loaded.entries[0].name, "From Static File");
+  assert.ok(loaded.entries.length > 0);
+  assert.equal(calls.filter(isCatalogUrl).length, 1);
+  assert.equal(calls.filter(isStaticUrl).length, 1);
+});
+
+test("loadServices falls back when the catalog request never settles", { timeout: 2000 }, async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+
+  const calls = stubFetch(t, (url, init) => {
+    if (isCatalogUrl(url)) return neverSettles(init?.signal);
+    if (isStaticUrl(url)) return jsonResponse(envelope("From Static File"));
+    throw new Error(`unexpected fetch: ${url}`);
+  });
+
+  const pending = loadServices();
+  await Promise.resolve();
+
+  assert.equal(calls.filter(isCatalogUrl).length, 1);
+  assert.equal(calls.filter(isStaticUrl).length, 0);
+
+  t.mock.timers.tick(2999);
+  await Promise.resolve();
+  assert.equal(calls.filter(isStaticUrl).length, 0);
+
+  t.mock.timers.tick(2001);
+  const loaded = await pending;
+
+  assert.equal(loaded.entries[0].name, "From Static File");
+  assert.equal(calls.filter(isCatalogUrl).length, 1);
+  assert.equal(calls.filter(isStaticUrl).length, 1);
 });

@@ -80,6 +80,28 @@ test("browse falls back to the baked file when the catalog API is unreachable", 
   expect(seen.staticFile).toHaveLength(1);
 });
 
+test("browse falls back when /api/catalog returns 200 HTML", async ({ page }) => {
+  const seen = catalogRequests(page);
+
+  await page.route("**/api/catalog", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<!DOCTYPE html><html><body><h1>index</h1></body></html>",
+    });
+  });
+
+  await page.goto("/index.html");
+  await pickSupportPath(page);
+
+  await expect(page.getByText(/We couldn’t load the listings/i)).toHaveCount(0);
+  await expect(page.getByRole("article").first()).toBeVisible();
+  await page.getByRole("searchbox", { name: "Search organisations" }).fill(STATIC_KNOWN_NAME);
+  await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toBeVisible();
+  expect(seen.api).toHaveLength(1);
+  expect(seen.staticFile).toHaveLength(1);
+});
+
 test("browse falls back to the baked file when the catalog API returns 503", async ({
   page,
 }) => {
