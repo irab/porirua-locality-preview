@@ -171,3 +171,49 @@ test("a second request for the same version does not query Postgres again", asyn
     assert.equal(repository.queryCount(), 2);
   });
 });
+
+test("serves the last known snapshot when Postgres becomes unreachable", async (t) => {
+  const envelope = publishedEnvelope();
+  const repository = fakeRepository({
+    current: snapshot(9, envelope),
+  });
+
+  await withCatalogApi(t, { repository }, async ({ get }) => {
+    const first = await get("/api/catalog");
+    assert.equal(first.status, 200);
+    repository.setUnreachable(true);
+
+    const stale = await get("/api/catalog");
+    assert.equal(stale.status, 200);
+    assert.equal(stale.headers.get("etag"), '"9"');
+    const text = await stale.text();
+    assertNoStackLeak(text);
+    assert.deepEqual(JSON.parse(text), envelope);
+  });
+});
+
+function assertNoStackLeak(text) {
+  assert.equal(/ECONNREFUSED|at createCatalog|password=/i.test(text), false, text);
+}
+
+test("returns 503 without a stack trace when there is nothing to serve", async (t) => {
+  const repository = fakeRepository({ unreachable: true });
+
+  await withCatalogApi(t, { repository }, async ({ get }) => {
+    const response = await get("/api/catalog");
+    assert.equal(response.status, 503);
+    const text = await response.text();
+    assertNoStackLeak(text);
+    assert.deepEqual(JSON.parse(text), { error: "catalog unavailable" });
+  });
+});
+
+test("returns 503 when the database is up but no snapshot has been published", async (t) => {
+  const repository = fakeRepository({ current: null });
+
+  await withCatalogApi(t, { repository }, async ({ get }) => {
+    const response = await get("/api/catalog");
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { error: "catalog unavailable" });
+  });
+});

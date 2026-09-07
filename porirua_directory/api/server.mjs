@@ -70,34 +70,39 @@ export function createCatalogServer({ repository, service } = {}) {
   }
 
   return createServer(async (req, res) => {
-    const url = new URL(req.url ?? "/", "http://127.0.0.1");
-    if (req.method === "GET" && url.pathname === "/api/health") {
-      const health = await catalog.health();
-      sendJson(res, health.ok ? 200 : 503, health, {
-        "cache-control": "no-store",
-      });
-      return;
-    }
-
-    if (req.method === "GET" && url.pathname === "/api/catalog") {
-      const requested = parseRequestedVersion(url.searchParams.get("version"));
-      if (!requested.ok) {
-        sendJson(res, 400, { error: "invalid version" });
-        return;
-      }
-      const snapshot = await catalog.getCatalog({ version: requested.version });
-      if (!snapshot) {
-        sendJson(res, requested.version ? 404 : 503, {
-          error: requested.version ? "snapshot not found" : "catalog unavailable",
+    try {
+      const url = new URL(req.url ?? "/", "http://127.0.0.1");
+      if (req.method === "GET" && url.pathname === "/api/health") {
+        const health = await catalog.health();
+        sendJson(res, health.ok ? 200 : 503, health, {
+          "cache-control": "no-store",
         });
         return;
       }
-      sendCatalog(req, res, snapshot);
-      return;
-    }
 
-    res.writeHead(404, { "content-type": "application/json; charset=utf-8" });
-    res.end(JSON.stringify({ error: "not found" }));
+      if (req.method === "GET" && url.pathname === "/api/catalog") {
+        const requested = parseRequestedVersion(url.searchParams.get("version"));
+        if (!requested.ok) {
+          sendJson(res, 400, { error: "invalid version" });
+          return;
+        }
+        const snapshot = await catalog.getCatalog({ version: requested.version });
+        if (!snapshot) {
+          sendJson(res, requested.version ? 404 : 503, {
+            error: requested.version ? "snapshot not found" : "catalog unavailable",
+          });
+          return;
+        }
+        sendCatalog(req, res, snapshot);
+        return;
+      }
+
+      sendJson(res, 404, { error: "not found" });
+    } catch {
+      if (!res.headersSent) {
+        sendJson(res, 503, { error: "catalog unavailable" });
+      }
+    }
   });
 }
 

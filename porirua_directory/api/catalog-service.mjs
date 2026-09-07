@@ -2,6 +2,13 @@
  * In-memory snapshot cache keyed by version. Repeat reads do not touch Postgres.
  */
 
+export class CatalogUnavailableError extends Error {
+  constructor() {
+    super("catalog unavailable");
+    this.name = "CatalogUnavailableError";
+  }
+}
+
 export function createCatalogService({ repository } = {}) {
   if (!repository) {
     throw new Error("createCatalogService requires a snapshot repository");
@@ -23,10 +30,19 @@ export function createCatalogService({ repository } = {}) {
     async getCatalog({ version } = {}) {
       if (version != null) {
         if (byVersion.has(version)) return byVersion.get(version);
-        return remember(await repository.getByVersion(version));
+        try {
+          return remember(await repository.getByVersion(version));
+        } catch {
+          throw new CatalogUnavailableError();
+        }
       }
       if (lastCurrent) return lastCurrent;
-      return remember(await repository.getCurrent(), { asCurrent: true });
+      try {
+        return remember(await repository.getCurrent(), { asCurrent: true });
+      } catch {
+        if (lastCurrent) return lastCurrent;
+        throw new CatalogUnavailableError();
+      }
     },
 
     async health() {
