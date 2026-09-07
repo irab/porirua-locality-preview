@@ -52,6 +52,7 @@ porirua_directory/
   directory.js            # UI logic
   group-services.mjs      # runtime FSD org clustering (Option B spike)
   directory.css
+  editor-core/            # shared editor DTOs (sidecar + weekly sync images copy this)
   scripts/                # FSD import + merge + Phase 2 catalog (schema, bootstrap, publish, weekly sync)
   directus/               # snapshot, Flows, operations sidecar (cluster-internal; no Ingress)
   data/services.json      # baked snapshot shipped in the nginx image (offline fallback; not the live catalog)

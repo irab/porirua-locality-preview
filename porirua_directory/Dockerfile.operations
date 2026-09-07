@@ -8,6 +8,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY scripts ./scripts
+COPY editor-core ./editor-core
+COPY config-directory.js ./config-directory.js
 COPY directus ./directus
 COPY data/services.json data/overrides.json ./data/
 

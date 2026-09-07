@@ -8,6 +8,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --include=dev
 
 COPY scripts ./scripts
+COPY editor-core ./editor-core
+COPY config-directory.js ./config-directory.js
 
 ENV NODE_ENV=production
 USER node
