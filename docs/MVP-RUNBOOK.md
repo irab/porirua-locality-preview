@@ -249,8 +249,9 @@ Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet gi
    That job tags `ghcr.io/irab/porirua-directory`, `-api`, `-sync`, and `-operations` with the git SHA. Pin every container in the tenant to that SHA (not `:dev` or `:latest`).
 2. Push the tenant directory to blackbox `main`. After the first sync creates `dev-porirua-directory`, copy `ghcr-io` from `dev-polis`. SealedSecrets cannot unseal until that namespace exists.
 3. Catalog-bootstrap Job: `db-import-from-json.mjs` from committed `data/services.json` + `data/overrides.json`, then the first `catalog:publish` (real Cloudflare purge — do not set `CATALOG_SKIP_PURGE`). Expect two colliding public ids to become `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`.
-4. Directus-bootstrap Job applies `directus/snapshot.yaml`, Flows, Editor role, and the pending-review view.
-5. Weekly FSD CronJob is **suspended** in dev. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
+4. Directus-bootstrap Job (Argo wave 3, before Ingress) applies `directus/snapshot.yaml`, Flows, Editor role, and the pending-review view. Do not put that hook after the Ingress wave — Traefik never writes Ingress ADDRESS, and Argo will sit on “waiting for healthy Ingress”.
+5. Public routing: `/api` must be its **own** Ingress with a higher Traefik `router.priority` than `/`. A shared priority on one Ingress lets nginx answer `/api/catalog` with HTML.
+6. Weekly FSD CronJob is **suspended** in dev. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
 
 `CATALOG_CURRENT_TTL_MS=5000` in dev so a publish is visible without waiting 30s. Publishing does not require rolling the API pod.
 
