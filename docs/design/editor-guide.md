@@ -32,7 +32,7 @@ Your own creates never appear here.
 
 If you cannot decide yet, **Needs confirmation**. That item moves to the **Needs confirmation** tab. It is not a decision. You can come back to it from that tab.
 
-**Recently finished** sits under the queue. It is a reference after the Undo window, not the thing you walk through to reach the next card.
+**Recently finished** sits under the Review queue. It is a reference after the Undo window, not the thing you walk through to reach the next card, and it does not appear on Needs confirmation.
 
 If a service has gone from the government list, **Take it off the site** and **Keep it as a community listing** are equal choices. Neither is the default.
 

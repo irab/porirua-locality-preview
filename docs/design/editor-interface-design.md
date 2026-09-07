@@ -215,7 +215,7 @@ For each screen: purpose, what is on it, what she can do, where each action lead
 - Title: **4 changes to review** (or **1 change to review**)  
 - One row per item: organisation name, plain-words summary  
 - Deferred items live only on the **Needs confirmation** tab (first tab, always present; count in the label when non-zero). They are not copied at the bottom of Review.  
-- **Recently finished** below the remaining cards: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter. It is a reference she consults after the work, not something she reads on the way to every decision.  
+- **Recently finished** below the Review queue only: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter. It is a record of decisions, so it does not appear on Needs confirmation. It is a reference she consults after the work, not something she reads on the way to every decision.  
 
 Row summary examples (not the raw kind):
 
@@ -541,7 +541,7 @@ Every Review decision is one click and applied immediately. Nothing is public un
 - Do not auto-open a Needs confirmation item. When only deferred items remain, or the queue is empty, land on the finish state.  
 - Focus after a decision: the **heading button** of the newly open card (organisation name + summary). Enter toggles the card; it does not Accept. The toast stays `role="status"` so the confirmation is still announced. Undo sits immediately above the list, so Shift+Tab from that heading reaches Undo without walking the card. When the last active item is done, focus the finish heading.
 
-**Recently finished** (below the work) is the recovery path after the Undo window: what it was, what she decided, when, and **Open listing**.
+**Recently finished** (below the Review queue only) is the recovery path after the Undo window: what it was, what she decided, when, and **Open listing**. It does not appear on Needs confirmation.
 
 ### 7.5 Undo publish — agreed 8 Sep 2026
 

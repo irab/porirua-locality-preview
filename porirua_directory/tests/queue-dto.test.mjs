@@ -25,6 +25,7 @@ import {
   statusLabel,
   waitingCountLabel,
 } from "../editor-core/queue-dto.mjs";
+import { landingTab as moduleLandingTab } from "../directus/extensions/directory-editor/src/module/copy.js";
 
 test("removed items use Take it off the site, not Accept", () => {
   assert.equal(primaryActionLabel("removed"), "Take it off the site");
@@ -86,6 +87,13 @@ test("closed-row summary names the fields that moved", () => {
     }).summaryLabel,
     "Phone and address changed"
   );
+});
+
+test("landing opens Needs confirmation when only deferred work remains", () => {
+  assert.equal(landingTab({ activeCount: 0, deferredCount: 3 }), "needs");
+  assert.equal(moduleLandingTab({ activeCount: 0, deferredCount: 3 }), "needs");
+  assert.equal(landingTab({ activeCount: 2, deferredCount: 1 }), "review");
+  assert.equal(landingTab({ activeCount: 0, deferredCount: 0 }), "listings");
 });
 
 test("reject copy is kind-specific", () => {
@@ -302,9 +310,6 @@ test("success copy says what happens next", () => {
     "Correcting Capital & Coast DHB Rehabilitation Service"
   );
   assert.equal(correctHeading({ kind: "geocode_flag", name: "KAPAI KIDZ" }), "Moving the pin for KAPAI KIDZ");
-  assert.equal(landingTab({ activeCount: 2, deferredCount: 1 }), "review");
-  assert.equal(landingTab({ activeCount: 0, deferredCount: 3 }), "needs");
-  assert.equal(landingTab({ activeCount: 0, deferredCount: 0 }), "listings");
   assert.equal(
     actionSuccessMessage({ action: "keep-community" }),
     "Kept. This is now a community listing. Next week's government feed will not take it off."

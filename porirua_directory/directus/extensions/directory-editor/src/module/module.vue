@@ -220,7 +220,7 @@
           Nothing needs confirmation.
         </p>
 
-        <section v-if="recent.length" class="recent" aria-labelledby="recent-finished-heading">
+        <section v-if="tab === 'review' && recent.length" class="recent" aria-labelledby="recent-finished-heading">
           <h2 id="recent-finished-heading" class="heading">Recently finished</h2>
           <ul>
             <li v-for="row in visibleRecent" :key="row.id">
