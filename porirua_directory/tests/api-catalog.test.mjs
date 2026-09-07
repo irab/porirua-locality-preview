@@ -96,3 +96,43 @@ test("GET /api/catalog?version=N serves that snapshot for rollback checks", asyn
     assert.deepEqual(await invalid.json(), { error: "invalid version" });
   });
 });
+
+const UNPUBLISHED_IDS = ["org-draft", "org-hidden", "org-merged", "svc-pending"];
+
+function catalogIds(envelope) {
+  const ids = new Set();
+  for (const entry of envelope.services ?? []) {
+    if (entry.id) ids.add(entry.id);
+    for (const line of entry.services ?? []) {
+      if (line.id) ids.add(line.id);
+    }
+  }
+  return ids;
+}
+
+test("served envelope contains no draft, hidden, pending_review, or merged ids", async (t) => {
+  const envelope = publishedEnvelope({
+    services: [
+      { id: "community-awatea-community-garden", name: "Awatea Community Garden" },
+      {
+        id: "org-wesley-community-action",
+        kind: "organization",
+        name: "Wesley Community Action",
+        services: [{ id: "fsd-2964", name: "Budgeting" }],
+      },
+    ],
+  });
+  const repository = fakeRepository({
+    current: snapshot(1, envelope),
+  });
+
+  await withCatalogApi(t, { repository }, async ({ get }) => {
+    const body = await (await get("/api/catalog")).json();
+    const ids = catalogIds(body);
+    for (const id of UNPUBLISHED_IDS) {
+      assert.equal(ids.has(id), false, `unpublished id leaked: ${id}`);
+    }
+    assert.equal(ids.has("community-awatea-community-garden"), true);
+    assert.equal(ids.has("fsd-2964"), true);
+  });
+});
