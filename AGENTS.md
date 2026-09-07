@@ -79,3 +79,4 @@ python3 -m http.server 8080
 - Data/script changes → `cd porirua_directory && npm test`
 - Merge/import/rule changes → also `npm run build:data` and update phase1 spec if needed
 - UI flow changes → consider `npm run test:e2e`; map app → manual smoke test
+- After any directory-dev pin: sign in as Editor on https://admin-directory-dev.bsky.nz (fresh session) and confirm the Directory module — not Directus “Page Not Found”. Do not move the pin without that click.

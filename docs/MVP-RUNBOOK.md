@@ -277,12 +277,13 @@ Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet gi
    gh workflow run directory.yml --ref <branch>
    ```
 
-   That job tags `ghcr.io/irab/porirua-directory`, `-api`, `-sync`, and `-operations` with the git SHA. Pin every container in the tenant to that SHA (not `:dev` or `:latest`).
+   That job tags `ghcr.io/irab/porirua-directory`, `-api`, `-sync`, `-operations`, and `-directus` with the git SHA. Pin every container in the tenant to that SHA (not `:dev` or `:latest`).
 2. Push the tenant directory to blackbox `main`. After the first sync creates `dev-porirua-directory`, copy `ghcr-io` from `dev-polis`. SealedSecrets cannot unseal until that namespace exists.
-3. Catalog-bootstrap Job: `db-import-from-json.mjs` from committed `data/services.json` + `data/overrides.json`, then the first `catalog:publish` (real Cloudflare purge — do not set `CATALOG_SKIP_PURGE`). Expect two colliding public ids to become `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`.
-4. Directus-bootstrap Job (Argo wave 3, before Ingress) applies `directus/snapshot.yaml`, Flows, Editor role, and the pending-review view. Do not put that hook after the Ingress wave — Traefik never writes Ingress ADDRESS, and Argo will sit on “waiting for healthy Ingress”. The Job image must be able to finish without writing the committed snapshot (it exports to `DIRECTUS_SNAPSHOT_OUT` or `/tmp` when `/app/directus` is read-only).
-5. Public routing: `/api` must be its **own** Ingress with a higher Traefik `router.priority` than `/`. A shared priority on one Ingress lets nginx answer `/api/catalog` with HTML.
-6. Weekly FSD CronJob is **suspended** in dev. The Job waits for Postgres (busybox init, same as catalog-bootstrap) before connecting. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
+3. **Do not call the pin done until someone has signed in as Editor after the roll** (fresh private window or hard reload) and seen the Directory module — Review / Listings — not Directus “Page Not Found”. The module script (`/extensions/sources/index.js`) is cookie-auth only; a leftover session cookie from the previous pod 401s it and no module registers. Tests and sidecar checks do not catch that.
+4. Catalog-bootstrap Job: `db-import-from-json.mjs` from committed `data/services.json` + `data/overrides.json`, then the first `catalog:publish` (real Cloudflare purge — do not set `CATALOG_SKIP_PURGE`). Expect two colliding public ids to become `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`.
+5. Directus-bootstrap Job (Argo wave 3, before Ingress) applies `directus/snapshot.yaml`, Flows, Editor role, and the pending-review view. Do not put that hook after the Ingress wave — Traefik never writes Ingress ADDRESS, and Argo will sit on “waiting for healthy Ingress”. The Job image must be able to finish without writing the committed snapshot (it exports to `DIRECTUS_SNAPSHOT_OUT` or `/tmp` when `/app/directus` is read-only).
+6. Public routing: `/api` must be its **own** Ingress with a higher Traefik `router.priority` than `/`. A shared priority on one Ingress lets nginx answer `/api/catalog` with HTML.
+7. Weekly FSD CronJob is **suspended** in dev. The Job waits for Postgres (busybox init, same as catalog-bootstrap) before connecting. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
 
 `CATALOG_CURRENT_TTL_MS=5000` in dev so a publish is visible without waiting 30s. Publishing does not require rolling the API pod.
 
