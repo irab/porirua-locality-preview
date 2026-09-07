@@ -729,7 +729,8 @@ Approve the design first. Then, in the module:
 
 | Mechanism | What it does | Use it? |
 |-----------|--------------|---------|
-| Bootstrap PATCH `last_page=/directory` on **Editor** users (create and each bootstrap) | First-party write. First login and post-deploy land on Directory. Does not rewrite reads. After she navigates, Directus stores wherever she was | **Yes. This is the supported path.** |
+| Bootstrap PATCH `last_page=/directory` on **Editor** users (create and each bootstrap) | First-party write. First login and post-deploy land on Directory. Does not rewrite reads. After she navigates, Directus stores wherever she was | **Yes. This is the supported path.** Do **not** send `password` on that PATCH unless login with the current secret fails — Directus deletes her sessions if `password` is present. |
+| `filter('users.update')` clamping Editor `last_page` away from hidden routes | Write-only. `/users/me/track/page` has no accountability and will persist `/content` after a failed module boot; Content is hidden, so that becomes Page Not Found. The clamp keeps `/directory`. It does not rewrite reads. | **Yes.** Not the rejected read hook. |
 | `filter('users.read')` rewriting `last_page` | Fires on every users read, including API consumers of `/users/me`. Even scoped to the current non-admin, it **lies** about `last_page` (we only rewrote `/content`, but the hook is still a payload mutation on a hot path) | **No. Removed.** It is not a landing API. |
 | `action('auth.login')` then UPDATE | Too late: this login already hydrated the old `last_page` | No |
 | Client embed / unofficial router guard | Same class of intercept, harder to test | No |
@@ -786,5 +787,5 @@ An admin for two people is lower stakes than the public directory. It is still a
 | Keep as community | No action | `overrides.action = community_owned` as in 7.2; widen the action CHECK; diff skips `removed`, matches reappearance |
 | Review undo | No snapshot of the last action | Server-side undo of the last Review write, or a short-lived undo token; must restore patches |
 | Undo publish | Admin-only rollback Flow | Editor-gated `POST /undo-publish` with `expectedVersion`; `canUndoPublish` from last publish event + 24h window |
-| Landing | Bootstrap `last_page` only. The `users.read` hook is gone | Keep bootstrap; do not add a read hook (§13) |
+| Landing | Bootstrap `last_page` plus a write clamp so track/page cannot persist `/content`. The `users.read` hook stays gone | Keep bootstrap; do not add a read hook (§13) |
 | Queue evidence | Runner writes `proposed.before` at queue time; Review still shows live | Keep both. Do not drop the stored snapshot |

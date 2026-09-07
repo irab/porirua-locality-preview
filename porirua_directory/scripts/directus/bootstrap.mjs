@@ -117,12 +117,37 @@ async function request(url, { token, method = "GET", body, headers } = {}) {
   return data;
 }
 
+export const EDITOR_LANDING_PAGE = "/directory";
+
 export async function login(email, password, url = DIRECTUS_URL) {
   const data = await request(`${url}/auth/login`, {
     method: "POST",
     body: { email, password },
   });
   return data.data.access_token;
+}
+
+/** Directus `updateMany` deletes `directus_sessions` when `password` is in the payload. */
+export function existingEditorPatch({ role, lastPage, desiredRole, passwordNeedsReset }) {
+  const body = {};
+  if (role !== desiredRole) body.role = desiredRole;
+  if (lastPage !== EDITOR_LANDING_PAGE) body.last_page = EDITOR_LANDING_PAGE;
+  return { body, passwordNeedsReset: Boolean(passwordNeedsReset) };
+}
+
+export async function editorPasswordStillWorks(email, password, url = DIRECTUS_URL) {
+  try {
+    const token = await login(email, password, url);
+    try {
+      await request(`${url}/auth/logout`, { token, method: "POST" });
+    } catch {
+      /* leftover json token is harmless */
+    }
+    return true;
+  } catch (error) {
+    if (error.status === 401) return false;
+    throw error;
+  }
 }
 
 export async function waitForDirectus({ url = DIRECTUS_URL, timeoutMs = 90_000 } = {}) {
@@ -392,16 +417,27 @@ async function replacePolicyPermissions(token, policyId, permissions) {
 
 async function ensureUser(token, { email, password, role, firstName }) {
   const existing = await request(
-    `${DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(email)}`,
+    `${DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(email)}&fields=id,email,role,last_page`,
     { token }
   );
   if ((existing.data ?? []).length > 0) {
-    await request(`${DIRECTUS_URL}/users/${existing.data[0].id}`, {
-      token,
-      method: "PATCH",
-      body: { role, password, last_page: "/directory" },
+    const user = existing.data[0];
+    const passwordNeedsReset = !(await editorPasswordStillWorks(email, password));
+    const { body } = existingEditorPatch({
+      role: user.role,
+      lastPage: user.last_page,
+      desiredRole: role,
+      passwordNeedsReset,
     });
-    return existing.data[0];
+    if (passwordNeedsReset) body.password = password;
+    if (Object.keys(body).length > 0) {
+      await request(`${DIRECTUS_URL}/users/${user.id}`, {
+        token,
+        method: "PATCH",
+        body,
+      });
+    }
+    return user;
   }
   const created = await request(`${DIRECTUS_URL}/users`, {
     token,
@@ -412,7 +448,7 @@ async function ensureUser(token, { email, password, role, firstName }) {
       role,
       first_name: firstName,
       status: "active",
-      last_page: "/directory",
+      last_page: EDITOR_LANDING_PAGE,
     },
   });
   return created.data;
@@ -420,15 +456,15 @@ async function ensureUser(token, { email, password, role, firstName }) {
 
 async function setEditorLandingPage(token, editorRoleId) {
   const users = await request(
-    `${DIRECTUS_URL}/users?filter[role][_eq]=${encodeURIComponent(editorRoleId)}&limit=-1`,
+    `${DIRECTUS_URL}/users?filter[role][_eq]=${encodeURIComponent(editorRoleId)}&fields=id,last_page&limit=-1`,
     { token }
   );
   for (const user of users.data ?? []) {
-    if (user.last_page === "/directory") continue;
+    if (user.last_page === EDITOR_LANDING_PAGE) continue;
     await request(`${DIRECTUS_URL}/users/${user.id}`, {
       token,
       method: "PATCH",
-      body: { last_page: "/directory" },
+      body: { last_page: EDITOR_LANDING_PAGE },
     });
   }
 }

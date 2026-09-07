@@ -30,6 +30,7 @@ export const DIRECTUS_TEST_FILES = [
   "tests/review-actions.test.mjs",
   "tests/undo-publish-db.test.mjs",
   "tests/directory-editor-auth.test.mjs",
+  "tests/directus-editor-session.test.mjs",
 ];
 
 const SHARED_STACK = /bootstrapDirectus|withDirectusDatabase|\bprobeDirectus\b/;

@@ -18,6 +18,11 @@
         "type": "endpoint",
         "name": "directory-editor",
         "source": "src/endpoint/index.js"
+      },
+      {
+        "type": "hook",
+        "name": "directory-editor-landing",
+        "source": "src/hook/index.js"
       }
     ],
     "host": "^11.0.0"
