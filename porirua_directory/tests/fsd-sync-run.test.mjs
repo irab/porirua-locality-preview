@@ -689,6 +689,42 @@ test("first real-feed sync after bootstrap is ~18 items, 17 category enrichments
   });
 });
 
+test("rejecting a new SERVICE_ID keeps it off the next snapshot and does not re-queue it as new", async (t) => {
+  await withSyncDatabase(t, async (client) => {
+    await runFsdSync({ db: client, csvText: fsdCsv([TITAHI_CLINIC]) });
+    const queue = await client.query(
+      `SELECT id FROM review_queue_items WHERE kind = 'new' AND status = 'pending'`
+    );
+    assert.equal(queue.rowCount, 1);
+    await rejectReviewItem({ db: client, queueItemId: queue.rows[0].id });
+
+    const service = await client.query(`SELECT status FROM services WHERE id = 'fsd-9003-clinic'`);
+    assert.equal(service.rows[0].status, "hidden");
+    const afterReject = await publishCatalog({
+      db: client,
+      publishedBy: "after-reject",
+      purge: async () => {},
+    });
+    const afterRejectIds = snapshotServiceIds(afterReject.envelope);
+    assert.equal(afterRejectIds.has("fsd-9003-clinic"), false);
+
+    const second = await runFsdSync({ db: client, csvText: fsdCsv([TITAHI_CLINIC]) });
+    assert.equal(second.stats.new, 0);
+    const pendingNew = await client.query(
+      `SELECT count(*)::int AS n FROM review_queue_items WHERE kind = 'new' AND status = 'pending'`
+    );
+    assert.equal(pendingNew.rows[0].n, 0);
+
+    const afterSync = await publishCatalog({
+      db: client,
+      publishedBy: "after-second-sync",
+      purge: async () => {},
+    });
+    const afterSyncIds = snapshotServiceIds(afterSync.envelope);
+    assert.equal(afterSyncIds.has("fsd-9003-clinic"), false);
+  });
+});
+
 test("approving a new SERVICE_ID publishes its draft organization into the snapshot", async (t) => {
   await withSyncDatabase(t, async (client) => {
     await runFsdSync({ db: client, csvText: fsdCsv([TITAHI_CLINIC]) });

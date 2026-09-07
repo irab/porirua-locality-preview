@@ -14,6 +14,7 @@ import { pathToFileURL } from "node:url";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { stringify as stringifyYaml } from "../../directus/yaml-stringify.mjs";
+import { resolveDirectusCredentials } from "./local-credentials.mjs";
 
 const { Client } = pg;
 
@@ -23,11 +24,12 @@ const FLOWS_DIR = path.join(DIRECTUS_DIR, "flows");
 const SNAPSHOT_PATH = path.join(DIRECTUS_DIR, "snapshot.yaml");
 const VIEW_SQL_PATH = path.join(DIRECTUS_DIR, "pending-review.sql");
 
-export const DIRECTUS_URL = process.env.DIRECTUS_URL || "http://127.0.0.1:18055";
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin-local";
-export const EDITOR_EMAIL = process.env.EDITOR_EMAIL || "editor@example.com";
-export const EDITOR_PASSWORD = process.env.EDITOR_PASSWORD || "editor-local";
+const localCreds = resolveDirectusCredentials();
+export const DIRECTUS_URL = localCreds.url;
+export const ADMIN_EMAIL = localCreds.adminEmail;
+export const ADMIN_PASSWORD = localCreds.adminPassword;
+export const EDITOR_EMAIL = localCreds.editorEmail;
+export const EDITOR_PASSWORD = localCreds.editorPassword;
 export const DIRECTUS_DATABASE_URL =
   process.env.DIRECTUS_DATABASE_URL ||
   process.env.DATABASE_URL ||

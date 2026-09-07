@@ -281,12 +281,19 @@ export async function rejectReviewItem({ db, queueItemId } = {}) {
     const service = await tx.query(`SELECT * FROM services WHERE id = $1`, [item.entity_id]);
     if (service.rowCount === 0) throw new Error(`service ${item.entity_id} not found`);
     const current = service.rows[0];
+    if (item.kind === "new") {
+      // Don't add this: off the site, and the hide lock is the same
+      // suppression removals use so next week's sync cannot resurrect it.
+      await archiveServiceWithHideOverride(tx, {
+        entityType: item.entity_type,
+        entityId: item.entity_id,
+      });
+      await markQueue(tx, queueItemId, "rejected");
+      return { queueItemId, entityId: item.entity_id, hidden: true };
+    }
     const raw = current.raw_import && typeof current.raw_import === "object" ? current.raw_import : {};
     const sets = ["updated_at = now()"];
     const values = [item.entity_id];
-    if (current.status === "pending_review") {
-      sets.push(`status = 'published'`);
-    }
     for (const spec of LIVE_COLUMNS) {
       const fromRaw = firstPresent(raw, spec.aliases);
       if (!fromRaw.present) continue;

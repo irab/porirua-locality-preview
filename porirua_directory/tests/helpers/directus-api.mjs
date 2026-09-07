@@ -1,9 +1,12 @@
-export const DIRECTUS_URL = process.env.DIRECTUS_URL || "http://127.0.0.1:18055";
+import { resolveDirectusCredentials } from "../../scripts/directus/local-credentials.mjs";
+
+const localCreds = resolveDirectusCredentials();
+export const DIRECTUS_URL = localCreds.url;
 export const OPERATIONS_URL = process.env.OPERATIONS_URL || "http://127.0.0.1:18790";
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin-local";
-export const EDITOR_EMAIL = process.env.EDITOR_EMAIL || "editor@example.com";
-export const EDITOR_PASSWORD = process.env.EDITOR_PASSWORD || "editor-local";
+export const ADMIN_EMAIL = localCreds.adminEmail;
+export const ADMIN_PASSWORD = localCreds.adminPassword;
+export const EDITOR_EMAIL = localCreds.editorEmail;
+export const EDITOR_PASSWORD = localCreds.editorPassword;
 
 export async function probeUrl(url, timeoutMs = 1500) {
   const controller = new AbortController();

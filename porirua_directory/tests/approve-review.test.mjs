@@ -291,9 +291,29 @@ test("reject leaves the stored record on raw_import and marks the queue item rej
     await rejectReviewItem({ db: client, queueItemId });
 
     const service = await readService(client);
-    assert.equal(service.status, "published");
+    assert.equal(service.status, "pending_review");
     assert.equal(service.address, "1 Old Street");
     assert.deepEqual(service.raw_import, RAW_BEFORE);
+    assert.equal((await readQueue(client, queueItemId)).status, "rejected");
+  });
+});
+
+test("rejecting a new service hides it instead of putting it on the site", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    const { queueItemId } = await seedReview(client, {
+      kind: "new",
+      status: "pending_review",
+    });
+    await rejectReviewItem({ db: client, queueItemId });
+
+    const service = await readService(client);
+    assert.equal(service.status, "hidden");
+    const override = await client.query(
+      `SELECT target_type, target_id, action, status FROM overrides WHERE action = 'hide'`
+    );
+    assert.equal(override.rows.length, 1);
+    assert.equal(override.rows[0].target_id, "fsd-2964");
+    assert.equal(override.rows[0].status, "open");
     assert.equal((await readQueue(client, queueItemId)).status, "rejected");
   });
 });
