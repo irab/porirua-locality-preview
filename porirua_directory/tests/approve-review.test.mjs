@@ -162,6 +162,31 @@ test("a partial address approve keeps previous url and categories so the next sy
   });
 });
 
+test("a sparse baseline plus an omitted categories key fills [] from RAW_IMPORT_DEFAULTS", () => {
+  const sparseBaseline = {
+    name: "Old Name",
+    serviceName: "Support",
+    description: "Old blurb",
+    phone: "04 111 2222",
+    url: "https://example.org/keep-me",
+    address: "1 Old Street",
+    lat: -41.13,
+    lng: 174.84,
+  };
+  const accepted = { address: "9 New Street" };
+  assert.equal(Object.hasOwn(sparseBaseline, "categories"), false);
+  assert.equal(Object.hasOwn(accepted, "categories"), false);
+
+  const written = rawImportFromAccepted(sparseBaseline, accepted);
+  assert.deepEqual(written, {
+    ...sparseBaseline,
+    address: "9 New Street",
+    categories: [],
+    fsd_service_id: null,
+    fsd_legacy_id: null,
+  });
+});
+
 test("edit-and-approve applies the editor payload then refreshes raw_import", async (t) => {
   await withDirectusDatabase(t, async (client) => {
     const { queueItemId } = await seedReview(client);
