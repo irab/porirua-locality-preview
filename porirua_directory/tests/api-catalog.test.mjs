@@ -136,3 +136,38 @@ test("served envelope contains no draft, hidden, pending_review, or merged ids",
     assert.equal(ids.has("fsd-2964"), true);
   });
 });
+
+test("a second request for the same version does not query Postgres again", async (t) => {
+  const envelope = publishedEnvelope();
+  const older = publishedEnvelope({
+    services: [{ id: "community-awatea-community-garden", name: "Older" }],
+  });
+  const repository = fakeRepository({
+    current: snapshot(8, envelope),
+    byVersion: [[7, snapshot(7, older, { isCurrent: false })]],
+  });
+
+  await withCatalogApi(t, { repository }, async ({ get }) => {
+    const first = await get("/api/catalog");
+    assert.equal(first.status, 200);
+    assert.equal(repository.queryCount(), 1);
+
+    const second = await get("/api/catalog");
+    assert.equal(second.status, 200);
+    assert.deepEqual(await second.json(), envelope);
+    assert.equal(repository.queryCount(), 1);
+
+    const pinned = await get("/api/catalog?version=7");
+    assert.equal(pinned.status, 200);
+    assert.equal(repository.queryCount(), 2);
+
+    const pinnedAgain = await get("/api/catalog?version=7");
+    assert.equal(pinnedAgain.status, 200);
+    assert.deepEqual(await pinnedAgain.json(), older);
+    assert.equal(repository.queryCount(), 2);
+
+    const sameAsCurrent = await get("/api/catalog?version=8");
+    assert.equal(sameAsCurrent.status, 200);
+    assert.equal(repository.queryCount(), 2);
+  });
+});

@@ -4,6 +4,7 @@
 
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
+import { createCatalogService } from "./catalog-service.mjs";
 
 export function snapshotEtag(version) {
   return `"${Number(version)}"`;
@@ -58,8 +59,13 @@ function sendCatalog(req, res, snapshot) {
   res.end(body);
 }
 
-export function createCatalogServer({ repository } = {}) {
-  if (!repository) {
+export function createCatalogServer({ repository, service } = {}) {
+  const catalog =
+    service ??
+    (repository
+      ? createCatalogService({ repository })
+      : null);
+  if (!catalog) {
     throw new Error("createCatalogServer requires a snapshot repository");
   }
 
@@ -71,9 +77,7 @@ export function createCatalogServer({ repository } = {}) {
         sendJson(res, 400, { error: "invalid version" });
         return;
       }
-      const snapshot = requested.version
-        ? await repository.getByVersion(requested.version)
-        : await repository.getCurrent();
+      const snapshot = await catalog.getCatalog({ version: requested.version });
       if (!snapshot) {
         sendJson(res, requested.version ? 404 : 503, {
           error: requested.version ? "snapshot not found" : "catalog unavailable",
