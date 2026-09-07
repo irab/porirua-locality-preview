@@ -125,9 +125,9 @@ The import CLI applies `scripts/db-schema.sql` when the tables are missing. A se
 
 Publish never includes `draft`, `hidden`, `pending_review`, or merged-away organizations. Exactly one snapshot has `is_current`. Rollback points that flag at an earlier `version`.
 
-The public site still reads `data/services.json` until the catalog API is wired. These commands do not deploy anything.
+The public site still reads `data/services.json` until the UI task wires `/api/catalog`. These commands do not deploy anything.
 
-Publish and rollback also purge the public catalog URL (`https://directory.bsky.nz/api/catalog` by default). Locally, set `CATALOG_SKIP_PURGE=1` or pass a stub `purge` function. In an environment that should actually drop the Cloudflare shared cache, set `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`. A failed purge is a failed publish — the previous `is_current` snapshot is restored.
+Publish and rollback also purge the public catalog URL (`https://directory.bsky.nz/api/catalog` by default). Locally, set `CATALOG_SKIP_PURGE=1` or pass a stub `purge` function. In an environment that should actually drop the Cloudflare shared cache, set `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`. A failed purge is a failed publish — the previous `is_current` snapshot is restored. Never set `CATALOG_SKIP_PURGE` on a tenant.
 
 ### Weekly FSD sync (Phase 2 runner)
 
@@ -139,7 +139,7 @@ export DATABASE_URL=postgres://…   # catalog Postgres
 npm run sync:fsd                   # node scripts/fsd-sync-run.mjs
 ```
 
-Worker image: `Dockerfile.sync` (Node; installs `csv-parse` even though it is a devDependency). The CronJob manifest lives in the blackbox tenant task, not this repo.
+Worker image: `Dockerfile.sync` (Node; installs `csv-parse` even though it is a devDependency). The CronJob manifest lives in the blackbox tenant.
 
 **Sanity abort:** if this week's `includedCount` is strictly below 75% of the last successful FSD run, the job finishes `import_runs.status='failed'`, writes **zero** removal queue rows, and raises an alert (`stats.alert`, `error_message`). A missing or zero baseline does not trip the guard.
 
@@ -159,9 +159,31 @@ npm run db:sync-test:down
 
 ---
 
+## Phase 2 — catalog API (local)
+
+Same-origin public read service. It returns the current `catalog_snapshots` envelope unchanged (shape-identical to `data/services.json`, except bootstrap may disambiguate `org-te-waka-whaiora-trust` and `community-te-wahi-tiaki-tatou`).
+
+```bash
+cd porirua_directory
+npm run db:test:up
+export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54329/porirua_test
+npm run db:import
+npm run catalog:publish
+npm run start:api
+# GET http://127.0.0.1:3000/api/catalog
+# GET http://127.0.0.1:3000/api/catalog?version=1
+# GET http://127.0.0.1:3000/api/health
+```
+
+`ETag` is the snapshot version. Send `If-None-Match` for a 304. Envelope bodies are cached in process by version and are never re-fetched (snapshots are immutable). The API re-checks only `SELECT version FROM catalog_snapshots WHERE is_current` on a short TTL (default 30 seconds, override with `CATALOG_CURRENT_TTL_MS` in `config.mjs` / the environment — use a small value in dev). After that TTL a new publish is served without restarting the process. If Postgres is briefly unreachable, the last known pointer and envelope stay in service. With an empty cache and no database it returns `503` `{ "error": "catalog unavailable" }` — never a stack trace.
+
+`Dockerfile` stays nginx-only. `Dockerfile.api` is the Node image (`ghcr.io/irab/porirua-directory-api`). Do not add Node to the static image.
+
+---
+
 ## Phase 2 — Directus editor workspace (local)
 
-Do **not** start `docker-compose.test.yml` (host port 54329) from this worktree if the catalog API task is also running — that compose file is shared and will collide or truncate tables. Use the Directus compose project and port **54341**:
+Do **not** start `docker-compose.test.yml` (host port 54329) from this worktree if another Phase 2 task is also running — that compose file is shared and will collide or truncate tables. Use the Directus compose project and port **54341**:
 
 ```bash
 cd porirua_directory
@@ -208,14 +230,12 @@ Configuration is in git, not clicked-in state:
 
 `npm run test:directus` covers permission boundaries, sticky override shape (read back from Postgres), Approve `raw_import` refresh, and cache invalidation. Live Cloudflare purge is not exercised in this environment.
 
-CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes `ghcr.io/irab/porirua-directory:latest` on push to `main`.
-
 ---
 
 ## Deploy
 
-1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the container image.
-2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`).
+1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the nginx and catalog-api container images.
+2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`). The catalog API is not routed in that tenant until the gated prod-tenant task adds the Deployment, Service, `DATABASE_URL` secret, optional `CATALOG_CURRENT_TTL_MS`, and Traefik `/api` path. Publishing a snapshot does not require rolling the API pod.
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
    - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).

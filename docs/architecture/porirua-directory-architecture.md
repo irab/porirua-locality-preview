@@ -1,6 +1,6 @@
 # Porirua Services Directory — Architecture
 
-**Status:** Phase 1 live at directory.bsky.nz. Phase 2 catalog store (schema, bootstrap, snapshot publish) is in this repo; the public site still reads the static file until the catalog API lands.  
+**Status:** Phase 1 live at directory.bsky.nz (nginx + baked JSON). Phase 2 catalog store and public read API are in this repo; the UI still reads the static file until the fallback task lands.  
 **Public URL (target):** [https://directory.bsky.nz](https://directory.bsky.nz)  
 **App code:** [`porirua_directory/`](../../porirua_directory/)  
 **Connections Map (parallel):** [`porirua_connections_map/`](../../porirua_connections_map/)
@@ -83,13 +83,15 @@ No admin database in Phase 1.
 | DNS / TLS edge | Cloudflare (`directory.bsky.nz`, proxied) |
 | Origin | blackbox `101.100.135.172:4443` → Traefik → Service → nginx |
 | App | Vanilla HTML/JS/CSS, Leaflet, OpenStreetMap tiles; ES modules (`*.mjs`) — nginx must serve them as `application/javascript` ([`infra/nginx.conf`](../../porirua_directory/infra/nginx.conf)) |
-| Data | `GET /data/services.json` (static file) |
+| Data | `GET /data/services.json` (static file, still the live UI source) |
 
 Traffic path (see blackbox `infra/cloudflare/bsky.nz/README.md`):
 
 ```
-Browser → https://directory.bsky.nz → Cloudflare → origin :4443 → Traefik → pod:8080
+Browser → https://directory.bsky.nz → Cloudflare → origin :4443 → Traefik → nginx:8080
 ```
+
+Phase 2 adds same-origin `GET /api/catalog` beside that path (Traefik `/api` → catalog API). The nginx image stays static-only.
 
 ExternalDNS on prod creates the `directory` record when Ingress is applied.
 
@@ -97,7 +99,7 @@ ExternalDNS on prod creates the `directory` record when Ingress is applied.
 
 ## Phase 2 — catalog store (in repo now)
 
-Public traffic still uses the Phase 1 nginx + `data/services.json` path until the catalog API and prod tenant tasks land. The **canonical model** is already implemented here:
+Public traffic still uses the Phase 1 nginx + `data/services.json` path until the UI fallback and prod-tenant routing tasks land. The **canonical model** and read API are already implemented here:
 
 | Piece | Path |
 |-------|------|
@@ -109,14 +111,18 @@ Public traffic still uses the Phase 1 nginx + `data/services.json` path until th
 | Local Directus | `porirua_directory/docker-compose.directus.yml` (own compose project / host port **54341**, not the catalog-API test port 54329) |
 | Editor workspace | `porirua_directory/directus/snapshot.yaml`, `directus/flows/`, `scripts/directus/bootstrap.mjs` |
 | Row ↔ envelope mapping | `catalog-rows.mjs`, `catalog-envelope.mjs` (pure; no clustering on read) |
+| Public read API | `porirua_directory/api/` — `GET /api/catalog`, `GET /api/health` (plain `node:http`) |
+| API image | `porirua_directory/Dockerfile.api` → `ghcr.io/irab/porirua-directory-api` |
 
 ```mermaid
 flowchart LR
   JSON[committed services.json + overrides.json]
   PG[(Postgres)]
   Snap[catalog_snapshots is_current]
+  API[catalog API]
   JSON -->|db:import| PG
   PG -->|published rows only| Snap
+  Snap -->|envelope jsonb| API
 ```
 
 **Publish** builds the Option B envelope from `status=published` rows (`draft`, `hidden`, `pending_review`, and `merged_into` are excluded), inserts a `catalog_snapshots` row, flips `is_current` in one transaction, then purges the public catalog URL. A failed purge is a failed publish. **Rollback** points `is_current` at an earlier version and purges the same way. Status changes alone do not go live.
@@ -127,13 +133,15 @@ flowchart LR
 
 **Tables:** `organizations`, `services`, `public_id_aliases`, `catalog_snapshots`, `overrides`, `import_runs`, `review_queue_items`. The last two ship complete for the sync task (`import_runs.stats` includes included/excluded/collapsed/queue counts; `review_queue_items.kind` is `new|changed|removed|geocode_flag`).
 
-The weekly runner is `porirua_directory/scripts/fsd-sync-run.mjs` (`npm run sync:fsd`, image `Dockerfile.sync`). Kubernetes CronJob manifests stay in the blackbox tenant task. Approve, hide, and reject share `scripts/approve-review.mjs` (`approveReviewItem`) with the Directus sidecar. Approve records no actor (no `approved_by` on `review_queue_items` yet) — a handover gap when Locality asks who signed off a change.
+**Public catalog API** serves `catalog_snapshots.envelope` as stored — no `applyOrgGrouping`, no join of `organizations` / `services` on the request path. `ETag` is the snapshot `version`; `If-None-Match` returns 304. `Cache-Control` is `public, max-age=60, s-maxage=86400`. `?version=N` pins a historical snapshot. Envelope bodies are cached in process by version forever. The current-version pointer is re-checked on a short TTL (default 30s, `CATALOG_CURRENT_TTL_MS`) with `SELECT version FROM catalog_snapshots WHERE is_current`; a publish is therefore live within about a minute without rolling pods. A failed pointer refresh keeps the last known snapshot. With nothing cached it returns `{ "error": "catalog unavailable" }` (503). `GET /api/health` reports `database: reachable|unreachable` without connection strings or driver errors.
 
-**Directus (local editor, this slice):** collections, Interfaces, Editor role, Review queue preset, and Flows are version-controlled under `porirua_directory/directus/`. Organizations expose related `service_lines` as a read-only O2M alias on `services.organization_id` (text join to `organizations.id`). Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Grain / `public_id` changes are Admin-only and write `public_id_aliases`. Nothing here deploys a tenant.
+The static nginx pod and baked `data/services.json` stay as the UI fallback when `/api/catalog` is missing or returns the wrong body.
 
-**Operations sidecar:** `directus/operations/server.mjs` is a new deployable the Flows call for sticky save, approve/hide/reject, publish, rollback, and public-id alias. It can publish the catalog, accept queue items, and rewrite `raw_import`. Keep it **cluster-internal with no Ingress** — local compose publishes `18790` only so tests can reach it. A tenant brief also needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` for the publish purge.
+The weekly runner is `porirua_directory/scripts/fsd-sync-run.mjs` (`npm run sync:fsd`, image `Dockerfile.sync`). Kubernetes CronJob manifests live in the blackbox tenant. Approve, hide, and reject share `scripts/approve-review.mjs` (`approveReviewItem`) with the Directus sidecar. Approve records no actor (no `approved_by` on `review_queue_items` yet) — a handover gap when Locality asks who signed off a change.
 
-**Not in this slice:** Kubernetes manifests and the catalog HTTP API. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, the operations sidecar as a ClusterIP-only Service, and later the API / Directus / sync images beside the existing nginx pod.
+**Directus (editor workspace):** collections, Interfaces, Editor role, Review queue preset, and Flows are version-controlled under `porirua_directory/directus/`. Organizations expose related `service_lines` as a read-only O2M alias on `services.organization_id` (text join to `organizations.id`). Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Grain / `public_id` changes are Admin-only and write `public_id_aliases`.
+
+**Operations sidecar:** `directus/operations/server.mjs` is the deployable the Flows call for sticky save, approve/hide/reject, publish, rollback, and public-id alias. It can publish the catalog, accept queue items, and rewrite `raw_import`. Keep it **cluster-internal with no Ingress** — local compose publishes `18790` only so tests can reach it. Publish needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` for the edge purge. Never set `CATALOG_SKIP_PURGE` on a tenant.
 
 **Admin host** stays separate from `directory.bsky.nz` (e.g. `admin.directory.bsky.nz`). D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
 

@@ -38,3 +38,13 @@ export const DATABASE_URL = process.env.DATABASE_URL || "";
 export const TEST_DATABASE_URL =
   process.env.DATABASE_URL ||
   "postgres://porirua:porirua@127.0.0.1:54329/porirua_test";
+
+function catalogCurrentTtlMs(raw = process.env.CATALOG_CURRENT_TTL_MS) {
+  if (raw == null || raw === "") return 30_000;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return 30_000;
+  return n;
+}
+
+/** How often the API re-checks `catalog_snapshots.is_current`. Envelope bodies stay cached by version. */
+export const CATALOG_CURRENT_TTL_MS = catalogCurrentTtlMs();
