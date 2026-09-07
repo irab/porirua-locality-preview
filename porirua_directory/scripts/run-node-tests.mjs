@@ -26,6 +26,8 @@ export const DIRECTUS_TEST_FILES = [
   "tests/directus-flows.test.mjs",
   "tests/operations-bulk.test.mjs",
   "tests/directus-review-inbox.test.mjs",
+  "tests/listings.test.mjs",
+  "tests/directory-editor-auth.test.mjs",
 ];
 
 const SHARED_STACK = /bootstrapDirectus|withDirectusDatabase|\bprobeDirectus\b/;

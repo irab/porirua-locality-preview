@@ -11,11 +11,13 @@ import { FSD_CSV_URL } from "./config.mjs";
 import { orgClusterKey } from "./lib/org-cluster.mjs";
 import { collapseFsdRows, serviceIdOf } from "./fsd-sync-collapse.mjs";
 import {
+  buildFsdFingerprint,
   diffFsdCatalog,
   fingerprintsEqualIgnoringFields,
   isIncludedCountBelowSanityThreshold,
 } from "./fsd-sync-diff.mjs";
 import { closePool, getPool, mapServiceRow, withTransaction } from "./lib/db.mjs";
+import { publicServiceId } from "./lib/listing-identity.mjs";
 import { slugId } from "./lib/normalize.mjs";
 
 export function parseFsdCsvText(csvText) {
@@ -72,6 +74,62 @@ export function shouldQueueDiffItem(item, dbRow) {
   const baseline = dbRow?.raw_import;
   if (!incoming || !baseline) return true;
   return !fingerprintsEqualIgnoringFields(incoming, baseline, locked);
+}
+
+/**
+ * Three-way lock rule — written here, not enabled in the weekly runner
+ * until the live-dev dry-run count is accepted.
+ *
+ * Queue a locked field only when incoming is not the editor patch and not
+ * the last folded government value (`raw_import`).
+ */
+export function shouldQueueDiffItemThreeWay(item, dbRow, patch = {}) {
+  if (!item || item.kind === "unchanged") return false;
+  if (item.kind === "new" || item.kind === "removed" || item.kind === "geocode_flag") {
+    return true;
+  }
+  if (item.kind !== "changed") return false;
+  const locked = new Set(item.proposed?.locked_fields ?? []);
+  const incoming = item.proposed?.after;
+  const baseline = dbRow?.raw_import;
+  if (!incoming || !baseline) return true;
+
+  const incomingFp = buildFsdFingerprint(incoming);
+  const rawFp = buildFsdFingerprint(baseline);
+  const patchFp = buildFsdFingerprint({ ...baseline, ...patch });
+
+  const drifted = Object.keys(incomingFp).filter(
+    (field) => JSON.stringify(incomingFp[field]) !== JSON.stringify(rawFp[field])
+  );
+  if (drifted.length === 0) return false;
+
+  return drifted.some((field) => {
+    if (!locked.has(field)) return true;
+    const incomingVal = JSON.stringify(incomingFp[field]);
+    const matchesPatch = incomingVal === JSON.stringify(patchFp[field]);
+    const matchesRaw = incomingVal === JSON.stringify(rawFp[field]);
+    return !matchesPatch && !matchesRaw;
+  });
+}
+
+export function threeWayQueuedFields(item, dbRow, patch = {}) {
+  if (!item || item.kind !== "changed") return [];
+  const locked = new Set(item.proposed?.locked_fields ?? []);
+  const incoming = item.proposed?.after;
+  const baseline = dbRow?.raw_import;
+  if (!incoming || !baseline) return [];
+  const incomingFp = buildFsdFingerprint(incoming);
+  const rawFp = buildFsdFingerprint(baseline);
+  const patchFp = buildFsdFingerprint({ ...baseline, ...patch });
+  return Object.keys(incomingFp).filter((field) => {
+    if (JSON.stringify(incomingFp[field]) === JSON.stringify(rawFp[field])) return false;
+    if (!locked.has(field)) return true;
+    const incomingVal = JSON.stringify(incomingFp[field]);
+    return (
+      incomingVal !== JSON.stringify(patchFp[field]) &&
+      incomingVal !== JSON.stringify(rawFp[field])
+    );
+  });
 }
 
 export function geocodeFlagCodeOf(proposed) {
@@ -212,11 +270,6 @@ export async function findOrCreateOrganization(db, incoming) {
     created: true,
     clusterKey,
   };
-}
-
-function publicServiceId(incoming) {
-  const serviceId = serviceIdOf(incoming);
-  return incoming.id || (serviceId ? `fsd-${serviceId}` : slugId(incoming.name || "provider", "fsd-"));
 }
 
 function incomingFingerprint(after) {

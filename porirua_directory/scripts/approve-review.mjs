@@ -179,13 +179,35 @@ async function markQueue(tx, queueItemId, status) {
  * column; do not invent one here. Locality will eventually need "who
  * approved this" on the handover.
  */
-export async function approveReviewItem({ db, queueItemId, payload } = {}) {
+async function archiveServiceWithHideOverride(tx, { entityType, entityId, createdBy } = {}) {
+  await tx.query(`UPDATE services SET status = 'hidden', updated_at = now() WHERE id = $1`, [
+    entityId,
+  ]);
+  await tx.query(
+    `INSERT INTO overrides (id, target_type, target_id, action, patch, status, created_by)
+     VALUES ($1, $2, $3, 'hide', NULL, 'open', $4)
+     ON CONFLICT (target_type, target_id, action)
+     DO UPDATE SET status = 'open'`,
+    [`hide:${entityType}:${entityId}`, entityType, entityId, createdBy ?? null]
+  );
+}
+
+export async function approveReviewItem({ db, queueItemId, payload, createdBy } = {}) {
   if (!db) throw new Error("approveReviewItem requires db");
   if (!queueItemId) throw new Error("approveReviewItem requires queueItemId");
   return withTransaction(async (tx) => {
     const item = await loadQueueItem(tx, queueItemId);
     if (item.entity_type !== "service") {
       throw new Error(`approve does not yet handle entity_type=${item.entity_type}`);
+    }
+    if (item.kind === "removed") {
+      await archiveServiceWithHideOverride(tx, {
+        entityType: item.entity_type,
+        entityId: item.entity_id,
+        createdBy,
+      });
+      await markQueue(tx, queueItemId, "accepted");
+      return { queueItemId, entityId: item.entity_id, archived: true };
     }
     const accepted = { ...proposedAfter(item), ...(payload ?? {}) };
     const lockedFields = item.proposed?.locked_fields ?? [];
@@ -207,18 +229,35 @@ export async function hideReviewItem({ db, queueItemId, createdBy } = {}) {
   if (!queueItemId) throw new Error("hideReviewItem requires queueItemId");
   return withTransaction(async (tx) => {
     const item = await loadQueueItem(tx, queueItemId);
-    await tx.query(`UPDATE services SET status = 'hidden', updated_at = now() WHERE id = $1`, [
-      item.entity_id,
-    ]);
-    await tx.query(
-      `INSERT INTO overrides (id, target_type, target_id, action, patch, status, created_by)
-       VALUES ($1, $2, $3, 'hide', NULL, 'open', $4)
-       ON CONFLICT (target_type, target_id, action)
-       DO UPDATE SET status = 'open'`,
-      [`hide:${item.entity_type}:${item.entity_id}`, item.entity_type, item.entity_id, createdBy ?? null]
-    );
+    await archiveServiceWithHideOverride(tx, {
+      entityType: item.entity_type,
+      entityId: item.entity_id,
+      createdBy,
+    });
     await markQueue(tx, queueItemId, "accepted");
     return { queueItemId, entityId: item.entity_id };
+  }, db);
+}
+
+/** Leave live columns and the sticky patch; refresh raw_import so this FSD value is not queued again. */
+export async function keepCurationReviewItem({ db, queueItemId } = {}) {
+  if (!db) throw new Error("keepCurationReviewItem requires db");
+  if (!queueItemId) throw new Error("keepCurationReviewItem requires queueItemId");
+  return withTransaction(async (tx) => {
+    const item = await loadQueueItem(tx, queueItemId);
+    if (item.entity_type !== "service") {
+      throw new Error(`keep-curation does not yet handle entity_type=${item.entity_type}`);
+    }
+    const service = await tx.query(`SELECT * FROM services WHERE id = $1`, [item.entity_id]);
+    if (service.rowCount === 0) throw new Error(`service ${item.entity_id} not found`);
+    const current = service.rows[0];
+    const rawImport = rawImportFromAccepted(current.raw_import, proposedAfter(item));
+    await tx.query(
+      `UPDATE services SET raw_import = $2::jsonb, updated_at = now() WHERE id = $1`,
+      [item.entity_id, JSON.stringify(rawImport)]
+    );
+    await markQueue(tx, queueItemId, "accepted");
+    return { queueItemId, entityId: item.entity_id, kept: true };
   }, db);
 }
 

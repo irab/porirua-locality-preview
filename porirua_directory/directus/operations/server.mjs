@@ -26,6 +26,19 @@ import {
   rollbackCatalog,
 } from "../../scripts/publish-catalog.mjs";
 import { buildCatalogEnvelope } from "../../scripts/catalog-envelope.mjs";
+import {
+  archiveListing,
+  createListing,
+  getListing,
+  listListings,
+  listQueueItems,
+  ListingError,
+  nameMatches,
+  publishStatus,
+  restoreListing,
+  updateListing,
+} from "../../scripts/listings.mjs";
+import { keepCurationReviewItem } from "../../scripts/approve-review.mjs";
 
 const PORT = Number(process.env.OPERATIONS_PORT || 8790);
 
@@ -175,6 +188,32 @@ function actor(body) {
   return body.createdBy || body.accountability?.user || body.user || "directus-flow";
 }
 
+const PORIRUA_VIEWBOX = "174.70,-41.22,175.05,-41.04";
+
+export async function geocodeAddress(query) {
+  const q = String(query ?? "").trim();
+  if (!q) throw new HttpError(400, "address is required");
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", q);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "5");
+  url.searchParams.set("viewbox", PORIRUA_VIEWBOX);
+  url.searchParams.set("bounded", "0");
+  url.searchParams.set("countrycodes", "nz");
+  const response = await fetch(url, {
+    headers: { "user-agent": "porirua-directory-editor/1.0 (directory.bsky.nz)" },
+  });
+  if (!response.ok) throw new HttpError(502, "Address lookup is unavailable");
+  const results = await response.json();
+  return {
+    results: (Array.isArray(results) ? results : []).map((row) => ({
+      label: row.display_name,
+      lat: Number(row.lat),
+      lng: Number(row.lon),
+    })),
+  };
+}
+
 async function handleSticky(body, db) {
   const keys = body.keys ?? (body.key ? [body.key] : []);
   const collection = body.collection;
@@ -243,6 +282,39 @@ export function createOperationsHandler({ db } = {}) {
       }
 
       const executor = db ?? getPool();
+      if (req.method === "GET" && url.pathname === "/listings/name-matches") {
+        send(
+          res,
+          200,
+          await nameMatches({
+            db: executor,
+            name: url.searchParams.get("name"),
+            organizationId: url.searchParams.get("organizationId"),
+          })
+        );
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/listings") {
+        send(res, 200, await listListings({ db: executor }));
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/queue") {
+        send(res, 200, await listQueueItems({ db: executor }));
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/publish-status") {
+        send(res, 200, await publishStatus({ db: executor }));
+        return;
+      }
+      if (req.method === "GET" && url.pathname.startsWith("/listings/") && url.pathname !== "/listings/name-matches") {
+        const organizationId = decodeURIComponent(url.pathname.slice("/listings/".length));
+        send(res, 200, await getListing({ db: executor, organizationId }));
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/geocode") {
+        send(res, 200, await geocodeAddress(url.searchParams.get("q")));
+        return;
+      }
       if (req.method !== "POST") {
         send(res, 405, { error: "method not allowed" });
         return;
@@ -250,6 +322,50 @@ export function createOperationsHandler({ db } = {}) {
 
       const body = await readJson(req);
       const trigger = unwrapTrigger(body);
+      if (url.pathname === "/listings") {
+        send(res, 200, await createListing({ db: executor, payload: trigger }));
+        return;
+      }
+      if (url.pathname === "/listings/archive") {
+        send(
+          res,
+          200,
+          await archiveListing({
+            db: executor,
+            serviceId: trigger.serviceId,
+            alsoArchiveOrganization: trigger.alsoArchiveOrganization === true,
+            createdBy: actor(trigger),
+          })
+        );
+        return;
+      }
+      if (url.pathname === "/listings/restore") {
+        send(res, 200, await restoreListing({ db: executor, serviceId: trigger.serviceId }));
+        return;
+      }
+      if (url.pathname === "/listings/update") {
+        send(
+          res,
+          200,
+          await updateListing({
+            db: executor,
+            organizationId: trigger.organizationId,
+            serviceId: trigger.serviceId,
+            payload: trigger.payload ?? trigger,
+            createdBy: actor(trigger),
+          })
+        );
+        return;
+      }
+      if (url.pathname === "/keep-curation") {
+        const queueItemId = requireSingleSelection(trigger, "keep-curation");
+        if (!queueItemId) throw new HttpError(400, "keep-curation requires exactly one queue item");
+        send(res, 200, {
+          ok: true,
+          ...(await keepCurationReviewItem({ db: executor, queueItemId })),
+        });
+        return;
+      }
       if (url.pathname === "/sticky-curation") {
         send(res, 200, await handleSticky(body, executor));
         return;
@@ -258,7 +374,12 @@ export function createOperationsHandler({ db } = {}) {
         const outcome = await runBulkQueue({
           action: "approve",
           keys: selectionKeys(trigger),
-          each: (queueItemId) => approveReviewItem({ db: executor, queueItemId }),
+          each: (queueItemId) =>
+            approveReviewItem({
+              db: executor,
+              queueItemId,
+              createdBy: actor(trigger),
+            }),
         });
         send(res, outcome.status, outcome.body);
         return;
@@ -335,7 +456,7 @@ export function createOperationsHandler({ db } = {}) {
       send(res, errorStatus(error), {
         ok: false,
         error: error instanceof Error ? error.message : String(error),
-        ...(error instanceof HttpError ? error.extra : {}),
+        ...(error instanceof HttpError || error instanceof ListingError ? error.extra : {}),
       });
     }
   };

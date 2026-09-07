@@ -18,6 +18,7 @@ const CURATED_FIELDS = [
   "service_name",
   "name",
   "categories",
+  "community_filters",
 ];
 
 function targetTypeFor(collection) {
