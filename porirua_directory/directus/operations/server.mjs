@@ -8,7 +8,7 @@
 
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
-import { getPool } from "../../scripts/lib/db.mjs";
+import { applySchema, getPool } from "../../scripts/lib/db.mjs";
 import { upsertStickyOverride } from "../../scripts/directus/sticky-curation.mjs";
 import {
   approveReviewItem,
@@ -38,6 +38,12 @@ import {
   restoreListing,
   updateListing,
 } from "../../scripts/listings.mjs";
+import {
+  deferQueueItem,
+  keepAsCommunityReviewItem,
+  undoReviewDecision,
+  wrapReviewUndo,
+} from "../../scripts/review-actions.mjs";
 import { keepCurationReviewItem } from "../../scripts/approve-review.mjs";
 
 const PORT = Number(process.env.OPERATIONS_PORT || 8790);
@@ -247,6 +253,7 @@ async function handlePublish(body, db) {
     publishedBy: actor(body),
     purge: typeof body.purge === "function" ? body.purge : undefined,
   });
+  await db.query(`DELETE FROM editor_undo`);
   return {
     ok: true,
     blocked: false,
@@ -362,8 +369,34 @@ export function createOperationsHandler({ db } = {}) {
         if (!queueItemId) throw new HttpError(400, "keep-curation requires exactly one queue item");
         send(res, 200, {
           ok: true,
-          ...(await keepCurationReviewItem({ db: executor, queueItemId })),
+          ...(await wrapReviewUndo(executor, queueItemId, "keep", () =>
+            keepCurationReviewItem({ db: executor, queueItemId })
+          )),
         });
+        return;
+      }
+      if (url.pathname === "/defer") {
+        const queueItemId = requireSingleSelection(trigger, "defer");
+        if (!queueItemId) throw new HttpError(400, "defer requires exactly one queue item");
+        send(res, 200, await deferQueueItem({ db: executor, queueItemId }));
+        return;
+      }
+      if (url.pathname === "/keep-community") {
+        const queueItemId = requireSingleSelection(trigger, "keep-community");
+        if (!queueItemId) throw new HttpError(400, "keep-community requires exactly one queue item");
+        send(res, 200, {
+          ok: true,
+          ...(await keepAsCommunityReviewItem({
+            db: executor,
+            queueItemId,
+            createdBy: actor(trigger),
+          })),
+        });
+        return;
+      }
+      if (url.pathname === "/review-undo") {
+        if (!trigger.undoId) throw new HttpError(400, "review-undo requires undoId");
+        send(res, 200, await undoReviewDecision({ db: executor, undoId: trigger.undoId }));
         return;
       }
       if (url.pathname === "/sticky-curation") {
@@ -375,11 +408,13 @@ export function createOperationsHandler({ db } = {}) {
           action: "approve",
           keys: selectionKeys(trigger),
           each: (queueItemId) =>
-            approveReviewItem({
-              db: executor,
-              queueItemId,
-              createdBy: actor(trigger),
-            }),
+            wrapReviewUndo(executor, queueItemId, "approve", () =>
+              approveReviewItem({
+                db: executor,
+                queueItemId,
+                createdBy: actor(trigger),
+              })
+            ),
         });
         send(res, outcome.status, outcome.body);
         return;
@@ -391,11 +426,13 @@ export function createOperationsHandler({ db } = {}) {
         }
         send(res, 200, {
           ok: true,
-          ...(await editAndApproveReviewItem({
-            db: executor,
-            queueItemId,
-            payload: trigger.payload,
-          })),
+          ...(await wrapReviewUndo(executor, queueItemId, "edit-and-approve", () =>
+            editAndApproveReviewItem({
+              db: executor,
+              queueItemId,
+              payload: trigger.payload,
+            })
+          )),
         });
         return;
       }
@@ -404,11 +441,13 @@ export function createOperationsHandler({ db } = {}) {
           action: "hide",
           keys: selectionKeys(trigger),
           each: (queueItemId) =>
-            hideReviewItem({
-              db: executor,
-              queueItemId,
-              createdBy: actor(trigger),
-            }),
+            wrapReviewUndo(executor, queueItemId, "hide", () =>
+              hideReviewItem({
+                db: executor,
+                queueItemId,
+                createdBy: actor(trigger),
+              })
+            ),
         });
         send(res, outcome.status, outcome.body);
         return;
@@ -417,7 +456,10 @@ export function createOperationsHandler({ db } = {}) {
         const outcome = await runBulkQueue({
           action: "reject",
           keys: selectionKeys(trigger),
-          each: (queueItemId) => rejectReviewItem({ db: executor, queueItemId }),
+          each: (queueItemId) =>
+            wrapReviewUndo(executor, queueItemId, "reject", () =>
+              rejectReviewItem({ db: executor, queueItemId })
+            ),
         });
         send(res, outcome.status, outcome.body);
         return;
@@ -462,7 +504,8 @@ export function createOperationsHandler({ db } = {}) {
   };
 }
 
-export function startOperationsServer({ db, port = PORT } = {}) {
+export async function startOperationsServer({ db, port = PORT } = {}) {
+  await applySchema(db ?? getPool());
   const server = createServer(createOperationsHandler({ db }));
   return new Promise((resolve) => {
     server.listen(port, "0.0.0.0", () => resolve(server));

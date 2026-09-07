@@ -92,6 +92,9 @@ export default {
     router.post("/hide", (req, res) => proxy(req, res, env, "/hide"));
     router.post("/reject", (req, res) => proxy(req, res, env, "/reject"));
     router.post("/edit-and-approve", (req, res) => proxy(req, res, env, "/edit-and-approve"));
+    router.post("/defer", (req, res) => proxy(req, res, env, "/defer"));
+    router.post("/keep-community", (req, res) => proxy(req, res, env, "/keep-community"));
+    router.post("/review-undo", (req, res) => proxy(req, res, env, "/review-undo"));
     router.post("/publish", (req, res) => proxy(req, res, env, "/publish"));
   },
 };
