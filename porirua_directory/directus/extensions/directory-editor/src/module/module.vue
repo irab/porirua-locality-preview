@@ -752,7 +752,8 @@ export default {
         lat: after.lat ?? item.pin?.lat ?? null,
         lng: after.lng ?? item.pin?.lng ?? null,
         categories: after.categories || [],
-        communityFilters: [],
+        communityFilters:
+          after.communityFilters || after.community_filters || item.before?.communityFilters || item.before?.community_filters || [],
       };
       this.formHighlight = formHighlightFields({
         before: item.before || {},

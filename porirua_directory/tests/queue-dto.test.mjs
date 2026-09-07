@@ -14,6 +14,7 @@ import {
   needsConfirmationTabLabel,
   primaryActionLabel,
   queueDiffHighlight,
+  listIdDelta,
   queueDiffRows,
   queueItemDto,
   queueItemHeading,
@@ -307,6 +308,15 @@ test("same help types in a different order do not invent a membership delta", ()
     }),
     null
   );
+  assert.equal(listIdDelta(["health", "work"], ["work", "health"]), null);
+});
+
+test("listIdDelta returns added and removed ids and refuses a non-list", () => {
+  assert.deepEqual(listIdDelta(["health", "legal"], ["health", "support"]), {
+    added: ["support"],
+    removed: ["legal"],
+  });
+  assert.equal(listIdDelta("health, legal", ["health", "support"]), null);
 });
 
 test("changed rows keep a real name change when both sides have a name", () => {

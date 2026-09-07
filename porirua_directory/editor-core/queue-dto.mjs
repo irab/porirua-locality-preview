@@ -354,6 +354,19 @@ function asIdList(value) {
   return ids;
 }
 
+/** Set difference for help types / community groups. Null when the value is not a reliable id list. */
+export function listIdDelta(beforeValue, afterValue) {
+  const beforeIds = asIdList(beforeValue);
+  const afterIds = asIdList(afterValue);
+  if (!beforeIds || !afterIds) return null;
+  const beforeSet = new Set(beforeIds);
+  const afterSet = new Set(afterIds);
+  const added = afterIds.filter((id) => !beforeSet.has(id));
+  const removed = beforeIds.filter((id) => !afterSet.has(id));
+  if (!added.length && !removed.length) return null;
+  return { added, removed };
+}
+
 function joinMarkedParts(items) {
   const parts = [];
   items.forEach((item, index) => {

@@ -173,9 +173,9 @@ On edit of a service line: also **Archive this service line**.
 When this form opens from **Accept and edit** (or **I’ll move the pin**):
 
 - It sits **inside the originating card**, replacing that card’s actions. Other cards stay visible but cannot be acted on. The heading names the record (**Correcting {name}** / **Moving the pin for {name}**), not the button label.  
-- Visually mark every field the proposal changed. The mark is text (**Changed in this update**) plus a non-colour cue (a left rule or icon). Colour alone is not enough (§14).  
+- Visually mark every field the proposal changed. Scalar fields use **Changed in this update** plus a short left rule. Help types and Community groups put **Added in this update** / **Removed in this update** on the option that moved, not a tall bar down the whole group. If the set difference cannot be computed, keep the field-level mark — do not guess. Colour alone is not enough (§14).  
 - Fields she has curated also keep **You set this earlier**. Both marks can appear on the same field.  
-- Scroll to the first changed field and place focus there, so the government change does not disappear into eight pre-filled boxes.
+- Scroll to the first changed field and place focus there. For Help types / Community groups, focus the first added option (or the first removed option if nothing was added).
 
 Duplicate warning sits **in the form**, under Name, after she leaves the field. Not a separate screen.
 
@@ -522,7 +522,7 @@ When the proposed change is nearly right (new phone, wrong extension), she shoul
 
 1. Opens the shared form  
 2. Fields filled from the government **after** values (the proposal), not from the stale live row  
-3. Mark every field the proposal changed (**Changed in this update** plus a non-colour cue). Keep **You set this earlier** on curated fields. Scroll to the first changed field and focus it  
+3. Mark every field the proposal changed. Scalar fields: **Changed in this update** plus a short left rule. Help types / Community groups: **Added in this update** / **Removed in this update** on the option that moved — no tall group bar. Keep **You set this earlier** on curated fields. Scroll to the first changed field and focus it (the first added option when that is a checkbox list)  
 4. She edits  
 5. **Save** applies the corrected values, writes the sticky patch, refreshes `raw_import`, and closes the queue item  
 
@@ -773,7 +773,7 @@ An admin for two people is lower stakes than the public directory. It is still a
 
 - Row summary is the accessible name (`Porirua Whānau Centre, Phone and address changed`).  
 - Diff lines are text, not colour alone (`Phone: A → B`).  
-- **You set this earlier** and **Changed in this update** are text on the field, not a colour flag.  
+- **You set this earlier**, **Changed in this update**, **Added in this update**, and **Removed in this update** are text on the field or option, not a colour flag. A Help types row stays one labelled checkbox plus its mark.  
 - Toasts are `role="status"` (polite). Undo is a button inside the status, announced.  
 - Hidden Website button (no URL) is not in the tab order.
 

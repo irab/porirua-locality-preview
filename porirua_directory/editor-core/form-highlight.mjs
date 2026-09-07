@@ -1,4 +1,5 @@
 import { fieldLabel } from "./fields.mjs";
+import { listIdDelta } from "./queue-dto.mjs";
 
 const FORM_FIELDS = ["name", "description", "address", "phone", "url", "categories", "communityFilters"];
 
@@ -24,10 +25,16 @@ function beforeValue(before, field) {
   return before[field];
 }
 
+function listFieldDelta(field, before, after) {
+  if (field !== "categories" && field !== "communityFilters") return null;
+  return listIdDelta(beforeValue(before, field), afterValue(after, field));
+}
+
 /**
  * Fields the shared form should mark when opened from Accept and edit.
  * `changed` is the government proposal vs live.
  * `youSetThis` is curated ∩ changed, or every curated field when `alwaysMarkLocked`.
+ * List fields carry `added` / `removed` ids when the set difference is reliable.
  */
 export function formHighlightFields({ before = {}, after = {}, locked = [], alwaysMarkLocked = false } = {}) {
   const changed = [];
@@ -35,11 +42,17 @@ export function formHighlightFields({ before = {}, after = {}, locked = [], alwa
     if (asText(field, beforeValue(before, field)) === asText(field, afterValue(after, field))) {
       continue;
     }
-    changed.push({
+    const row = {
       field,
       label: fieldLabel(field === "url" ? "url" : field),
       mark: "Changed in this update",
-    });
+    };
+    const delta = listFieldDelta(field, before, after);
+    if (delta) {
+      row.added = delta.added;
+      row.removed = delta.removed;
+    }
+    changed.push(row);
   }
   const pinMoved =
     asText("lat", before.lat) !== asText("lat", after.lat) ||
@@ -63,9 +76,11 @@ export function formHighlightFields({ before = {}, after = {}, locked = [], alwa
     seen.add(label);
     youSetThis.push({ field, label, mark: "You set this earlier" });
   }
+  const first = changed[0];
   return {
     changed,
     youSetThis,
-    focusField: changed[0]?.field ?? null,
+    focusField: first?.field ?? null,
+    focusOption: first?.added?.[0] ?? first?.removed?.[0] ?? null,
   };
 }

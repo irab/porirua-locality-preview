@@ -62,22 +62,42 @@
       <span v-if="youSet('url')" class="mark">You set this earlier</span>
       <input v-model="local.url" />
     </label>
-    <fieldset :class="{ marked: isChanged('categories') }" data-field="categories">
+    <fieldset :class="{ marked: fieldMark('categories') }" data-field="categories">
       <legend>
         Help types
-        <span v-if="isChanged('categories')" class="mark">Changed in this update</span>
+        <span v-if="fieldMark('categories')" class="mark">Changed in this update</span>
         <span v-if="youSet('categories')" class="mark">You set this earlier</span>
       </legend>
-      <label v-for="option in helpTypes" :key="option.id" class="check">
+      <label
+        v-for="option in helpTypes"
+        :key="option.id"
+        class="check"
+        :class="{ marked: Boolean(optionMark('categories', option.id)) }"
+        :data-option="option.id"
+      >
         <input type="checkbox" :value="option.id" v-model="local.categories" />
         {{ option.label }}
+        <span v-if="optionMark('categories', option.id)" class="mark">{{ optionMark("categories", option.id) }}</span>
       </label>
     </fieldset>
-    <fieldset>
-      <legend>Community groups</legend>
-      <label v-for="option in communityGroups" :key="option.id" class="check">
+    <fieldset :class="{ marked: fieldMark('communityFilters') }" data-field="communityFilters">
+      <legend>
+        Community groups
+        <span v-if="fieldMark('communityFilters')" class="mark">Changed in this update</span>
+        <span v-if="youSet('communityFilters')" class="mark">You set this earlier</span>
+      </legend>
+      <label
+        v-for="option in communityGroups"
+        :key="option.id"
+        class="check"
+        :class="{ marked: Boolean(optionMark('communityFilters', option.id)) }"
+        :data-option="option.id"
+      >
         <input type="checkbox" :value="option.id" v-model="local.communityFilters" />
         {{ option.label }}
+        <span v-if="optionMark('communityFilters', option.id)" class="mark">{{
+          optionMark("communityFilters", option.id)
+        }}</span>
       </label>
     </fieldset>
     <div class="actions">
@@ -100,7 +120,7 @@ export default {
     geoResults: { type: Array, default: () => [] },
     helpTypes: { type: Array, required: true },
     communityGroups: { type: Array, required: true },
-    highlight: { type: Object, default: () => ({ changed: [], youSetThis: [], focusField: null }) },
+    highlight: { type: Object, default: () => ({ changed: [], youSetThis: [], focusField: null, focusOption: null }) },
     saving: { type: Boolean, default: false },
     error: { type: String, default: "" },
   },
@@ -132,8 +152,25 @@ export default {
     this.focusChanged();
   },
   methods: {
+    changedRow(field) {
+      return (this.highlight.changed || []).find((row) => row.field === field) || null;
+    },
     isChanged(field) {
-      return (this.highlight.changed || []).some((row) => row.field === field);
+      return Boolean(this.changedRow(field));
+    },
+    hasOptionMarks(field) {
+      const row = this.changedRow(field);
+      return Boolean(row?.added?.length || row?.removed?.length);
+    },
+    fieldMark(field) {
+      return this.isChanged(field) && !this.hasOptionMarks(field);
+    },
+    optionMark(field, id) {
+      const row = this.changedRow(field);
+      const key = String(id);
+      if ((row?.added || []).some((item) => String(item) === key)) return "Added in this update";
+      if ((row?.removed || []).some((item) => String(item) === key)) return "Removed in this update";
+      return "";
     },
     youSet(field) {
       return (this.highlight.youSetThis || []).some(
@@ -142,9 +179,15 @@ export default {
     },
     focusChanged() {
       const field = this.highlight.focusField;
+      const option = this.highlight.focusOption;
       this.$nextTick(() => {
         const root = this.$el;
-        const target = field ? root.querySelector(`[data-field="${field}"] input, [data-field="${field}"] textarea`) : null;
+        const optionTarget =
+          field && option ? root.querySelector(`[data-field="${field}"] [data-option="${option}"] input`) : null;
+        const fieldTarget = field
+          ? root.querySelector(`[data-field="${field}"] input, [data-field="${field}"] textarea`)
+          : null;
+        const target = optionTarget || fieldTarget;
         (target || this.$refs.nameInput)?.focus?.();
         target?.scrollIntoView?.({ block: "center" });
       });
@@ -155,14 +198,23 @@ export default {
 
 <style scoped>
 .form {
-  margin-top: 24px;
+  margin-top: 12px;
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
-.form label,
+.form > label,
 .form fieldset {
   display: grid;
-  gap: 4px;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+}
+.form fieldset {
+  padding: 0;
+  border: 0;
+}
+.form legend {
+  padding: 0;
 }
 .form input,
 .form textarea {
@@ -171,6 +223,9 @@ export default {
 .marked {
   box-shadow: inset 4px 0 0 currentColor;
   padding-left: 10px;
+}
+.check.marked {
+  padding-left: 8px;
 }
 .mark {
   font-size: 0.9rem;
@@ -188,6 +243,12 @@ export default {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+.check input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  flex: 0 0 22px;
 }
 .matches {
   background: var(--theme--background-normal);
