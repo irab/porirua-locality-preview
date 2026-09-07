@@ -6,11 +6,15 @@ export function normalizeName(name) {
     .replace(/\s+/g, " ");
 }
 
-export function slugId(name, prefix = "") {
-  const base = normalizeName(name)
-    .toLowerCase()
+/** NFD fold used by `slugId` and by `foldOrgName` in name-match.mjs. */
+export function foldDiacritics(text) {
+  return String(text ?? "")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+export function slugId(name, prefix = "") {
+  const base = foldDiacritics(normalizeName(name).toLowerCase())
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
