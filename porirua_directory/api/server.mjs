@@ -22,6 +22,23 @@ function ifNoneMatchHits(ifNoneMatch, etag) {
 
 export const CATALOG_CACHE_CONTROL = "public, max-age=60, s-maxage=86400";
 
+function sendJson(res, status, payload, headers = {}) {
+  const body = JSON.stringify(payload);
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    ...headers,
+  });
+  res.end(body);
+}
+
+function parseRequestedVersion(raw) {
+  if (raw == null || raw === "") return { ok: true, version: null };
+  if (!/^[0-9]+$/.test(raw)) return { ok: false };
+  const version = Number(raw);
+  if (!Number.isSafeInteger(version) || version < 1) return { ok: false };
+  return { ok: true, version };
+}
+
 function sendCatalog(req, res, snapshot) {
   const etag = snapshotEtag(snapshot.version);
   const headers = {
@@ -49,8 +66,21 @@ export function createCatalogServer({ repository } = {}) {
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "GET" && url.pathname === "/api/catalog") {
-      const current = await repository.getCurrent();
-      sendCatalog(req, res, current);
+      const requested = parseRequestedVersion(url.searchParams.get("version"));
+      if (!requested.ok) {
+        sendJson(res, 400, { error: "invalid version" });
+        return;
+      }
+      const snapshot = requested.version
+        ? await repository.getByVersion(requested.version)
+        : await repository.getCurrent();
+      if (!snapshot) {
+        sendJson(res, requested.version ? 404 : 503, {
+          error: requested.version ? "snapshot not found" : "catalog unavailable",
+        });
+        return;
+      }
+      sendCatalog(req, res, snapshot);
       return;
     }
 

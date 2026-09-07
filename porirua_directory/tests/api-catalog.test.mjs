@@ -65,3 +65,34 @@ test("GET /api/catalog sends shared cache headers for browsers and CDN", async (
     );
   });
 });
+
+test("GET /api/catalog?version=N serves that snapshot for rollback checks", async (t) => {
+  const currentEnvelope = publishedEnvelope({
+    services: [{ id: "community-awatea-community-garden", name: "Current" }],
+  });
+  const olderEnvelope = publishedEnvelope({
+    services: [{ id: "community-awatea-community-garden", name: "Older" }],
+  });
+  const repository = fakeRepository({
+    current: snapshot(5, currentEnvelope),
+    byVersion: [[4, snapshot(4, olderEnvelope, { isCurrent: false })]],
+  });
+
+  await withCatalogApi(t, { repository }, async ({ get }) => {
+    const pinned = await get("/api/catalog?version=4");
+    assert.equal(pinned.status, 200);
+    assert.equal(pinned.headers.get("etag"), '"4"');
+    assert.deepEqual(await pinned.json(), olderEnvelope);
+
+    const current = await get("/api/catalog");
+    assert.deepEqual(await current.json(), currentEnvelope);
+
+    const missing = await get("/api/catalog?version=99");
+    assert.equal(missing.status, 404);
+    assert.deepEqual(await missing.json(), { error: "snapshot not found" });
+
+    const invalid = await get("/api/catalog?version=nope");
+    assert.equal(invalid.status, 400);
+    assert.deepEqual(await invalid.json(), { error: "invalid version" });
+  });
+});
