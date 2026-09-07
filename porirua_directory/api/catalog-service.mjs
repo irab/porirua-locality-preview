@@ -28,5 +28,14 @@ export function createCatalogService({ repository } = {}) {
       if (lastCurrent) return lastCurrent;
       return remember(await repository.getCurrent(), { asCurrent: true });
     },
+
+    async health() {
+      try {
+        await repository.ping();
+        return { ok: true, database: "reachable" };
+      } catch {
+        return { ok: false, database: "unreachable" };
+      }
+    },
   };
 }

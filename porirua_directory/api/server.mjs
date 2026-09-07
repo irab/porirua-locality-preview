@@ -71,6 +71,14 @@ export function createCatalogServer({ repository, service } = {}) {
 
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
+    if (req.method === "GET" && url.pathname === "/api/health") {
+      const health = await catalog.health();
+      sendJson(res, health.ok ? 200 : 503, health, {
+        "cache-control": "no-store",
+      });
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/catalog") {
       const requested = parseRequestedVersion(url.searchParams.get("version"));
       if (!requested.ok) {
