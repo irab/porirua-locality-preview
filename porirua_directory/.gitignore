@@ -1,4 +1,6 @@
 node_modules/
+directus/extensions/directory-editor/node_modules/
+directus/extensions/directory-editor/dist/
 playwright-report/
 test-results/
 data/fsd-porirua.raw.json

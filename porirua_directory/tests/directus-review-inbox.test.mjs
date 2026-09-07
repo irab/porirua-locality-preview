@@ -27,13 +27,13 @@ async function ensureWorkspace(t) {
   return true;
 }
 
-test("Editor inbox is review_queue_items; pending_review is not a Data Studio collection", async (t) => {
+test("Editor uses the Directory module; raw queue and snapshot collections stay hidden", async (t) => {
   if (!(await ensureWorkspace(t))) return;
   const editor = await loginDirectus(EDITOR_EMAIL, EDITOR_PASSWORD);
   const admin = await loginDirectus(ADMIN_EMAIL, ADMIN_PASSWORD);
 
   const queue = await directusRequest(editor, "/items/review_queue_items?limit=1");
-  assert.equal(queue.status, 200, JSON.stringify(queue.data));
+  assert.ok(queue.status === 403 || queue.status === 404, `review_queue_items status ${queue.status}`);
 
   const ghost = await directusRequest(editor, "/items/pending_review?limit=1");
   assert.ok(ghost.status === 403 || ghost.status === 404, `pending_review status ${ghost.status}`);
@@ -44,23 +44,13 @@ test("Editor inbox is review_queue_items; pending_review is not a Data Studio co
   const pending = (collections.data?.data ?? []).find((row) => row.collection === "pending_review");
   assert.ok(!pending || pending.meta?.hidden === true, "pending_review must not sit in the sidebar");
 
-  const queueCollection = (collections.data?.data ?? []).find(
-    (row) => row.collection === "review_queue_items"
-  );
-  assert.equal(queueCollection?.meta?.hidden, false);
+  for (const collection of ["organizations", "services", "review_queue_items", "catalog_snapshots"]) {
+    const row = (collections.data?.data ?? []).find((item) => item.collection === collection);
+    assert.equal(row?.meta?.hidden, true, `${collection} must be hidden from the sidebar`);
+  }
 
   const fields = await directusRequest(admin, "/fields/review_queue_items");
   const fieldNames = (fields.data?.data ?? []).map((row) => row.field);
   assert.ok(fieldNames.includes("change_summary"), "change_summary field metadata missing");
   assert.ok(fieldNames.includes("kind"));
-
-  const presets = await directusRequest(
-    admin,
-    "/presets?filter[bookmark][_eq]=Review queue&limit=5"
-  );
-  const reviewPreset = (presets.data?.data ?? []).find(
-    (row) => row.collection === "review_queue_items"
-  );
-  assert.ok(reviewPreset, "Review queue preset must target review_queue_items");
-  assert.equal(reviewPreset.filter?.status?._eq, "pending");
 });

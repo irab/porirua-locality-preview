@@ -3,6 +3,8 @@
 .vscode/
 .idea/
 node_modules/
+porirua_directory/directus/extensions/directory-editor/node_modules/
+porirua_directory/directus/extensions/directory-editor/dist/
 .venv/
 
 # PDF render previews

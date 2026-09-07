@@ -29,11 +29,14 @@ test("committed snapshot.yaml includes collections, Editor RBAC, and the Review 
   assert.match(text, /collection: directus_flows/);
 });
 
-test("Editor policy reads directus_flows so Data Studio can list manual flows", () => {
+test("Editor policy does not read Flows or the raw review queue — the Directory module is the inbox", () => {
   const rows = editorPermissions("policy");
-  assert.ok(rows.some((row) => row.collection === "directus_flows" && row.action === "read"));
-  assert.ok(rows.some((row) => row.collection === "review_queue_items" && row.action === "read"));
+  assert.equal(rows.some((row) => row.collection === "directus_flows"), false);
+  assert.equal(rows.some((row) => row.collection === "review_queue_items"), false);
+  assert.equal(rows.some((row) => row.collection === "catalog_snapshots"), false);
   assert.equal(rows.some((row) => row.collection === "pending_review"), false);
+  assert.ok(rows.some((row) => row.collection === "organizations" && row.action === "update"));
+  assert.equal(rows.some((row) => row.collection === "organizations" && row.action === "create"), false);
 });
 
 test("review Flows target the reachable review_queue_items collection only", async () => {

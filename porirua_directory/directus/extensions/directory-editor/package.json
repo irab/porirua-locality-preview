@@ -1,0 +1,31 @@
+{
+  "name": "directus-extension-directory-editor",
+  "version": "1.0.0",
+  "type": "module",
+  "directus:extension": {
+    "type": "bundle",
+    "path": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "entries": [
+      {
+        "type": "module",
+        "name": "directory",
+        "source": "src/module/index.js"
+      },
+      {
+        "type": "endpoint",
+        "name": "directory-editor",
+        "source": "src/endpoint/index.js"
+      }
+    ],
+    "host": "^11.0.0"
+  },
+  "scripts": {
+    "build": "directus-extension build"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "^13.1.1"
+  }
+}

@@ -44,7 +44,10 @@ services:
         condition: service_healthy
 
   directus:
-    image: directus/directus:11.9.3
+    build:
+      context: .
+      dockerfile: Dockerfile.directus
+    image: porirua-directory-directus:local
     ports:
       - "18055:8055"
     environment:

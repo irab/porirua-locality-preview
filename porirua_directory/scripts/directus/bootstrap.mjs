@@ -565,10 +565,10 @@ async function configureCollections(token) {
     unarchive_value: "published",
     sort_field: "sort_key",
     accountability: "all",
-    hidden: false,
+    hidden: true,
     singleton: false,
     translations: null,
-    note: "Providers. public_id and render_grain decide the public URL and org-card vs flat listing.",
+    note: "Providers. Edited through the Directory module, not this collection.",
   });
   await ensureCollection(token, "services", {
     icon: "handshake",
@@ -576,20 +576,20 @@ async function configureCollections(token) {
     archive_field: "status",
     archive_value: "hidden",
     unarchive_value: "published",
-    hidden: false,
-    note: "Service lines. FSD saves write an overrides patch behind the editor.",
+    hidden: true,
+    note: "Service lines. Edited through the Directory module, not this collection.",
   });
   await ensureCollection(token, "review_queue_items", {
     icon: "rate_review",
     display_template: "{{kind}} — {{change_summary}}",
-    hidden: false,
-    note: "Editor inbox. Pending FSD changes. Approve, hide, or reject — then Publish directory.",
+    hidden: true,
+    note: "FSD inbox. Editors use the Directory module Review tab.",
   });
   await ensureCollection(token, "catalog_snapshots", {
     icon: "history",
     display_template: "v{{version}}",
-    hidden: false,
-    note: "Published envelopes. Use Publish directory / Roll back — do not edit rows by hand.",
+    hidden: true,
+    note: "Published envelopes. Editors use Directory → Publish.",
   });
   await ensureCollection(token, "overrides", {
     icon: "edit_note",
@@ -783,28 +783,7 @@ export function editorPermissions(policyNote) {
       validation: {},
     },
     {
-      collection: "review_queue_items",
-      action: "read",
-      fields: ["*"],
-      permissions: {},
-      validation: {},
-    },
-    {
-      collection: "catalog_snapshots",
-      action: "read",
-      fields: ["*"],
-      permissions: {},
-      validation: {},
-    },
-    {
       collection: "directus_files",
-      action: "read",
-      fields: ["*"],
-      permissions: {},
-      validation: {},
-    },
-    {
-      collection: "directus_flows",
       action: "read",
       fields: ["*"],
       permissions: {},
@@ -837,38 +816,8 @@ async function configureRoles(token) {
   return { editorRole, editorPolicy, editorUser };
 }
 
-async function configurePresets(token, editorRoleId) {
-  await ensurePreset(token, {
-    bookmark: "Organizations",
-    collection: "organizations",
-    role: editorRoleId,
-    layout: "tabular",
-    layout_query: {
-      tabular: {
-        fields: ["name", "status", "render_grain", "public_id", "source_primary", "service_lines"],
-      },
-    },
-    layout_options: {
-      tabular: {
-        spacing: "cozy",
-      },
-    },
-  });
-  await ensurePreset(token, {
-    bookmark: "Review queue",
-    collection: "review_queue_items",
-    role: editorRoleId,
-    layout: "tabular",
-    layout_query: {
-      tabular: {
-        fields: ["kind", "entity_id", "change_summary", "created_at"],
-        sort: ["created_at"],
-      },
-    },
-    filter: {
-      status: { _eq: "pending" },
-    },
-  });
+async function configurePresets(_token, _editorRoleId) {
+  // Directory module owns Review and Listings. Do not bookmark raw collections for Editor.
 }
 
 async function exportWorkspace(token) {
