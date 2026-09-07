@@ -298,6 +298,25 @@ test("reject leaves the stored record on raw_import and marks the queue item rej
   });
 });
 
+test("approving a change on a hidden service leaves it hidden", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    const { queueItemId } = await seedReview(client, {
+      status: "hidden",
+      kind: "changed",
+    });
+    await approveReviewItem({ db: client, queueItemId });
+
+    const service = await readService(client);
+    assert.equal(service.status, "hidden");
+    assert.equal(service.address, "9 New Street");
+    assert.deepEqual(
+      service.raw_import,
+      rawImportFromAccepted(RAW_BEFORE, PROPOSED_AFTER)
+    );
+    assert.equal((await readQueue(client, queueItemId)).status, "accepted");
+  });
+});
+
 test("rejecting a proposal against a hidden record leaves it hidden", async (t) => {
   await withDirectusDatabase(t, async (client) => {
     const { queueItemId } = await seedReview(client, {

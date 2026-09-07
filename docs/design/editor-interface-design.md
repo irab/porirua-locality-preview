@@ -575,7 +575,7 @@ If she edited more **after** publishing, then undoes: those newer edits stay in 
 The weekly sync **does not publish** and **does not close** the window.
 
 - Undo publish still restores the previous **public** snapshot.  
-- Queue rows and `pending_review` the sync wrote stay. Undo does not accept or reject them.  
+- Queue rows and any new `pending_review` inserts the sync wrote stay. Undo does not accept or reject them.  
 - If she then Publishes again, that new snapshot includes whatever is publishable in the database at that moment (her undone work plus anything she accepted after the sync).  
 - If the sync queued items while Undo publish is still available, the band may add a quiet note: **Government updates arrived after you published. Undo publish only changes the public site.**
 

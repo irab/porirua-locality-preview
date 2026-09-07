@@ -131,7 +131,12 @@ async function applyAcceptedService(tx, entityId, accepted, lockedFields) {
     throw new Error("approve requires a raw_import refresh of the accepted record");
   }
 
-  const sets = ["status = 'published'", "raw_import = $2::jsonb", "updated_at = now()"];
+  // status means on the public site. A hidden row stays hidden; a new
+  // pending_review row becomes published. Do not republish a deliberate hide.
+  const sets = ["raw_import = $2::jsonb", "updated_at = now()"];
+  if (current.status !== "hidden") {
+    sets.push("status = 'published'");
+  }
   const values = [entityId, JSON.stringify(rawImport)];
 
   for (const spec of LIVE_COLUMNS) {

@@ -313,7 +313,7 @@ test("a new SERVICE_ID without a cluster match creates a draft org that never sn
   });
 });
 
-test("a changed record sets pending_review and keeps published columns", async (t) => {
+test("a changed record stays published and keeps live columns", async (t) => {
   await withSyncDatabase(t, async (client) => {
     const raw = fingerprintFromCsv(PORIRUA_FOOD);
     await insertFsdService(client, {
@@ -324,7 +324,7 @@ test("a changed record sets pending_review and keeps published columns", async (
     const incoming = { ...PORIRUA_FOOD, SERVICE_DETAIL: "Updated food help from FSD" };
     const result = await runFsdSync({ db: client, csvText: fsdCsv([incoming]) });
     const service = await client.query(`SELECT * FROM services WHERE fsd_service_id = '9001-line-a'`);
-    assert.equal(service.rows[0].status, "pending_review");
+    assert.equal(service.rows[0].status, "published");
     assert.equal(service.rows[0].description, "Last accepted food text");
     const queue = await client.query(
       `SELECT * FROM review_queue_items WHERE kind = 'changed'`
@@ -333,6 +333,56 @@ test("a changed record sets pending_review and keeps published columns", async (
     assert.equal(queue.rows[0].proposed.after.description, "Updated food help from FSD");
     assert.equal(result.stats.changed, 1);
     assert.equal(result.published, false);
+  });
+});
+
+function snapshotServiceIds(envelope) {
+  const ids = new Set();
+  for (const entry of envelope?.services ?? []) {
+    if (entry.id) ids.add(entry.id);
+    if (entry.lineId) ids.add(entry.lineId);
+    for (const line of entry.services ?? []) {
+      if (line.id) ids.add(line.id);
+      if (line.lineId) ids.add(line.lineId);
+    }
+  }
+  return ids;
+}
+
+test("a queued change does not drop a previously snapshotted service from the next snapshot", async (t) => {
+  await withSyncDatabase(t, async (client) => {
+    const rawFood = fingerprintFromCsv(PORIRUA_FOOD);
+    const rawClinic = fingerprintFromCsv(TITAHI_CLINIC);
+    await insertFsdService(client, {
+      csvRow: PORIRUA_FOOD,
+      description: "Last accepted food text",
+      rawImport: { ...rawFood, description: "Last accepted food text" },
+    });
+    await insertFsdService(client, { csvRow: TITAHI_CLINIC, rawImport: rawClinic });
+    const first = await publishCatalog({ db: client, publishedBy: "seed", purge: async () => {} });
+    const beforeIds = snapshotServiceIds(first.envelope);
+    assert.ok(beforeIds.has("fsd-9001-line-a"));
+    assert.ok(beforeIds.has("fsd-9003-clinic"));
+
+    const incoming = { ...PORIRUA_FOOD, SERVICE_DETAIL: "Updated food help from FSD" };
+    const synced = await runFsdSync({
+      db: client,
+      csvText: fsdCsv([incoming, TITAHI_CLINIC]),
+    });
+    assert.equal(synced.stats.changed, 1);
+    assert.equal(synced.stats.unchanged, 1);
+    const queue = await client.query(
+      `SELECT kind, status FROM review_queue_items WHERE entity_id = 'fsd-9001-line-a'`
+    );
+    assert.equal(queue.rowCount, 1);
+    assert.equal(queue.rows[0].kind, "changed");
+    assert.equal(queue.rows[0].status, "pending");
+
+    const next = await publishCatalog({ db: client, publishedBy: "after-sync", purge: async () => {} });
+    const afterIds = snapshotServiceIds(next.envelope);
+    for (const id of beforeIds) {
+      assert.ok(afterIds.has(id), `${id} disappeared from the snapshot after being queued for review`);
+    }
   });
 });
 
@@ -430,7 +480,7 @@ test("open patch keeps live columns and queues a third-value conflict", async (t
 
     const result = await runFsdSync({ db: client, csvText: fsdCsv([csvRow]) });
     const service = await client.query(`SELECT status, address, lat, lng FROM services WHERE id = 'fsd-2964'`);
-    assert.equal(service.rows[0].status, "pending_review");
+    assert.equal(service.rows[0].status, "published");
     assert.equal(service.rows[0].address, curated.address);
     assert.equal(Number(service.rows[0].lat), curated.lat);
     const queued = result.queued.filter((row) => row.entity_id === "fsd-2964");

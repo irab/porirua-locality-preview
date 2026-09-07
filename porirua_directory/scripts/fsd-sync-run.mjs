@@ -499,14 +499,8 @@ async function applyDiffItem(db, importRunId, item, dbByServiceId, collapsedBySe
   }
 
   if (item.kind === "changed") {
-    if (dbRow?.status !== "hidden") {
-      await db.query(
-        `UPDATE services
-            SET status = 'pending_review', updated_at = now()
-          WHERE fsd_service_id = $1`,
-        [item.serviceId]
-      );
-    }
+    // status means on the public site. The queue item is the only
+    // workflow record. Do not flip a live row to pending_review.
     const written = await upsertQueueItem(db, importRunId, item, dbRow.id);
     return { ...written, entityId: dbRow.id };
   }
