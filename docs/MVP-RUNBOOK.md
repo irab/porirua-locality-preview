@@ -259,7 +259,7 @@ Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet gi
 
 Production remains the nginx pin at [https://directory.bsky.nz](https://directory.bsky.nz) until a **separate, gated** prod-tenant task. Do not copy this database or these SealedSecrets toward prod.
 
-1. Push to `main` with an updated baked `data/services.json` only when you intend to refresh the offline fallback — workflow builds nginx + catalog-api.
+1. Push to `main` with an updated baked `data/services.json` only when you intend to refresh the offline fallback — workflow still builds only the nginx image. Dev’s four SHA-tagged images come from `workflow_dispatch`, not from a `main` push.
 2. ArgoCD syncs `clusters/prod/tenants/porirua-directory/`.
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add the hostname to the kit’s allowed domains.
