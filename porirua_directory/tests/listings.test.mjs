@@ -161,7 +161,7 @@ test("archive hides the service and writes a hide override; restore reverses it"
   });
 });
 
-test("listListings uses On the site / Off the site, not raw status enums", async (t) => {
+test("listListings uses On the site / Not on the site, not raw status enums", async (t) => {
   await withDirectusDatabase(t, async (client) => {
     await createPublishedOrg(client, { id: "community-status-words", name: "Status Words" });
     const { listings } = await listListings({ db: client });

@@ -11,7 +11,7 @@
           class="band"
           :class="{ zero: !queue.length }"
           :disabled="!queue.length"
-          @click="openReview"
+          @click="openReviewOrNeeds"
         >
           {{ reviewBandLabel }}
         </button>
@@ -40,18 +40,33 @@
 
       <div class="editor-tabs" role="tablist">
         <button
+          id="tab-needs"
+          type="button"
+          role="tab"
+          :aria-selected="tab === 'needs'"
+          :aria-controls="tab === 'listings' ? undefined : 'work-panel'"
+          :class="{ active: tab === 'needs' }"
+          @click="openNeeds"
+        >
+          {{ needsTabLabel }}
+        </button>
+        <button
+          id="tab-review"
           type="button"
           role="tab"
           :aria-selected="tab === 'review'"
+          :aria-controls="tab === 'listings' ? undefined : 'work-panel'"
           :class="{ active: tab === 'review' }"
           @click="openReview"
         >
           {{ reviewTabLabel }}
         </button>
         <button
+          id="tab-listings"
           type="button"
           role="tab"
           :aria-selected="tab === 'listings'"
+          aria-controls="listings-panel"
           :class="{ active: tab === 'listings' }"
           @click="openListingsTab"
         >
@@ -65,10 +80,15 @@
         <span>{{ toast.message }}</span>
       </div>
 
-      <section v-if="tab === 'review'" class="panel">
-        <h2 v-if="!activeQueue.length && allDeferredOnArrival" class="heading">
-          {{ needConfirmationOnlyTitle(deferredQueue.length) }}
-        </h2>
+      <section
+        v-if="tab === 'needs' || tab === 'review'"
+        id="work-panel"
+        class="panel"
+        role="tabpanel"
+        :aria-labelledby="tab === 'needs' ? 'tab-needs' : 'tab-review'"
+        tabindex="-1"
+        ref="workPanel"
+      >
         <p v-if="queueError" class="error">{{ queueError }}</p>
         <p v-if="queueLoading" class="hint">Looking for government updates…</p>
 
@@ -99,14 +119,26 @@
           </button>
         </section>
 
-        <div v-for="group in reviewGroups" :key="group.key" :class="group.deferred ? 'deferred' : 'review-list'">
-          <h3 v-if="group.deferred" class="heading">{{ needsConfirmationGroupLabel(group.items.length) }}</h3>
-          <article v-for="item in group.items" :key="item.id" class="review-card">
-            <button type="button" class="review-row" :aria-expanded="openId === item.id" @click="toggleOpen(item)">
+        <div class="review-list">
+          <article
+            v-for="item in currentTabItems"
+            :key="item.id"
+            class="review-card"
+            :class="{
+              'is-correcting': correcting?.id === item.id,
+              'is-inert': correcting && correcting.id !== item.id,
+            }"
+          >
+            <button
+              type="button"
+              class="review-row"
+              :aria-expanded="openId === item.id"
+              :disabled="Boolean(correcting && correcting.id !== item.id)"
+              @click="toggleOpen(item)"
+            >
               <strong>{{ item.name || item.title }}</strong>
               <span class="kind">{{ item.summaryLabel || item.kindLabel }}</span>
               <span v-if="item.changedSinceDeferred" class="badge">{{ item.changedSinceDeferredLabel }}</span>
-              <span v-if="item.deferred" class="badge">Needs confirmation</span>
             </button>
             <div v-if="openId === item.id" class="review-body">
               <p v-if="item.fsdReturned" class="banner-note">{{ item.fsdReturnedLabel }}</p>
@@ -124,85 +156,100 @@
                   <li v-for="row in item.otherRows" :key="row.field">{{ row.line }}</li>
                 </ul>
               </div>
-              <verification-bar
-                :website="item.websiteUrl || item.after?.url"
-                :phone="item.phone || item.after?.phone"
-                :address="item.currentAddress || item.before?.address"
-                :address-note="item.verifyAddressNote"
-                :pin="item.verifyPin || item.pin"
-                :compare-pin="item.verifyComparePin"
-                :show-map="item.showVerifyMap"
+              <template v-if="correcting?.id !== item.id">
+                <verification-bar
+                  :website="item.websiteUrl || item.after?.url"
+                  :phone="item.phone || item.after?.phone"
+                  :address="item.currentAddress || item.before?.address"
+                  :address-note="item.verifyAddressNote"
+                  :pin="item.verifyPin || item.pin"
+                  :compare-pin="item.verifyComparePin"
+                  :show-map="item.showVerifyMap"
+                />
+                <div class="actions" :class="{ equal: item.kind === 'removed' }">
+                  <template v-if="item.kind === 'removed'">
+                    <v-button small secondary type="button" @click="runQueue(item, '/hide', 'approve')">
+                      Take it off the site
+                    </v-button>
+                    <v-button small secondary type="button" @click="runQueue(item, '/keep-community', 'keep-community')">
+                      {{ item.keepAsCommunityLabel }}
+                    </v-button>
+                  </template>
+                  <template v-else>
+                    <v-button small @click="runQueue(item, primaryPath(item), 'approve')">
+                      {{ item.primaryActionLabel }}
+                    </v-button>
+                    <v-button
+                      v-if="item.kind === 'changed' && item.youSetThis?.length"
+                      small
+                      secondary
+                      @click="runQueue(item, '/keep-curation', 'keep')"
+                    >
+                      Keep yours
+                    </v-button>
+                    <v-button
+                      v-if="item.kind === 'changed' || item.kind === 'geocode_flag'"
+                      small
+                      secondary
+                      @click="startCorrect(item)"
+                    >
+                      {{ item.kind === 'geocode_flag' ? "I'll move the pin" : "Use this, and I'll correct it" }}
+                    </v-button>
+                    <v-button small secondary @click="runQueue(item, '/reject', 'reject')">
+                      {{ item.rejectActionLabel }}
+                    </v-button>
+                  </template>
+                  <v-button v-if="!item.deferred" small secondary @click="runQueue(item, '/defer', 'defer')">
+                    {{ item.deferActionLabel }}
+                  </v-button>
+                </div>
+              </template>
+              <listing-form
+                v-if="correcting?.id === item.id"
+                :title="correctTitle"
+                v-model="form"
+                :matches="[]"
+                :geo-results="geoResults"
+                :help-types="helpTypes"
+                :community-groups="communityGroups"
+                :highlight="formHighlight"
+                :saving="saving"
+                :error="formError"
+                @lookup-address="lookupAddress"
+                @apply-geo="applyGeo"
+                @pin-move="onPinMove"
+                @save="saveCorrection"
+                @cancel="cancelCorrect"
               />
-              <div class="actions" :class="{ equal: item.kind === 'removed' }">
-                <template v-if="item.kind === 'removed'">
-                  <v-button small secondary type="button" @click="runQueue(item, '/hide', 'approve')">
-                    Take it off the site
-                  </v-button>
-                  <v-button small secondary type="button" @click="runQueue(item, '/keep-community', 'keep-community')">
-                    {{ item.keepAsCommunityLabel }}
-                  </v-button>
-                </template>
-                <template v-else>
-                  <v-button small @click="runQueue(item, primaryPath(item), 'approve')">
-                    {{ item.primaryActionLabel }}
-                  </v-button>
-                  <v-button
-                    v-if="item.kind === 'changed' && item.youSetThis?.length"
-                    small
-                    secondary
-                    @click="runQueue(item, '/keep-curation', 'keep')"
-                  >
-                    Keep yours
-                  </v-button>
-                  <v-button
-                    v-if="item.kind === 'changed' || item.kind === 'geocode_flag'"
-                    small
-                    secondary
-                    @click="startCorrect(item)"
-                  >
-                    {{ item.kind === 'geocode_flag' ? "I'll move the pin" : "Use this, and I'll correct it" }}
-                  </v-button>
-                  <v-button small secondary @click="runQueue(item, '/reject', 'reject')">
-                    {{ item.rejectActionLabel }}
-                  </v-button>
-                </template>
-                <v-button v-if="!item.deferred" small secondary @click="runQueue(item, '/defer', 'defer')">
-                  {{ item.deferActionLabel }}
-                </v-button>
-              </div>
             </div>
           </article>
         </div>
 
-        <div v-if="reviewFinished" class="finish">
+        <div v-if="tab === 'review' && reviewFinished" class="finish">
           <h2 ref="finishHeading" tabindex="-1" class="heading">{{ finishHeading }}</h2>
           <v-button :loading="publishing" :disabled="!hasUnpublished" @click="publishCatalog">
             Publish now
           </v-button>
-          <v-button v-if="deferredQueue.length" secondary @click="tab = 'listings'">Keep reviewing later</v-button>
+          <v-button v-if="deferredQueue.length" secondary @click="openNeeds">Keep reviewing later</v-button>
         </div>
-        <p v-else-if="!queue.length && !queueLoading" class="hint">Nothing to review.</p>
-
-        <listing-form
-          v-if="correcting"
-          :title="correctTitle"
-          v-model="form"
-          :matches="[]"
-          :geo-results="geoResults"
-          :help-types="helpTypes"
-          :community-groups="communityGroups"
-          :highlight="formHighlight"
-          :saving="saving"
-          :error="formError"
-          @lookup-address="lookupAddress"
-          @apply-geo="applyGeo"
-          @pin-move="onPinMove"
-          @save="saveCorrection"
-          @cancel="correcting = null"
-        />
+        <p v-else-if="tab === 'review' && !activeQueue.length && !queueLoading" class="hint">Nothing to review.</p>
+        <p
+          v-else-if="tab === 'needs' && !deferredQueue.length && !queueLoading"
+          ref="emptyNeeds"
+          class="hint"
+          tabindex="-1"
+        >
+          Nothing needs confirmation.
+        </p>
       </section>
 
-      <section v-else class="panel">
+      <section
+        v-else
+        id="listings-panel"
+        class="panel"
+        role="tabpanel"
+        aria-labelledby="tab-listings"
+      >
         <div v-if="!detail && !formOpen">
           <label class="search">
             Find an organisation
@@ -210,7 +257,7 @@
           </label>
           <label class="check">
             <input type="checkbox" v-model="showArchived" />
-            Show listings that are off the site
+            Show listings that are not on the site
           </label>
           <div class="toolbar">
             <v-button small @click="startCreate('organization')">Add organisation</v-button>
@@ -219,10 +266,15 @@
           <p v-if="listLoading" class="hint">Loading organisations…</p>
           <ul class="results">
             <li v-for="row in visibleListings" :key="row.id">
-              <button type="button" class="result" @click="openDetail(row.id)">
+              <button
+                type="button"
+                class="result"
+                :class="{ 'not-on-site': row.status !== 'published' }"
+                @click="openDetail(row.id)"
+              >
                 <strong>{{ row.name }}</strong>
                 <span>{{ row.address }}</span>
-                <span>{{ row.statusLabel }}</span>
+                <span class="status" :class="{ 'status-off': row.status !== 'published' }">{{ row.statusLabel }}</span>
               </button>
             </li>
           </ul>
@@ -234,7 +286,12 @@
         <div v-else-if="detail && !formOpen">
           <v-button small secondary @click="closeDetail">Back</v-button>
           <h2 class="heading">{{ detail.organization.name }}</h2>
-          <p class="hint">{{ detail.organization.statusLabel }}</p>
+          <p
+            class="hint"
+            :class="{ 'status-off': detail.organization.status !== 'published' }"
+          >
+            {{ detail.organization.statusLabel }}
+          </p>
           <verification-bar
             :website="detail.organization.url"
             :phone="detail.organization.phone"
@@ -245,7 +302,9 @@
           <ul class="lines">
             <li v-for="line in detail.services" :key="line.id">
               <strong class="line-title">{{ line.title || line.service_name }}</strong>
-              <span class="line-status">{{ line.statusLabel }}</span>
+              <span class="line-status" :class="{ 'status-off': line.status !== 'published' }">{{
+                line.statusLabel
+              }}</span>
               <div class="actions">
                 <v-button small secondary @click="editLine(line)">Edit</v-button>
                 <v-button v-if="line.status === 'published'" small secondary @click="askArchive(line)">
@@ -308,9 +367,10 @@ import VerificationBar from "./verification-bar.vue";
 import { directoryEditorRequest, queueActionUndoId } from "./directory-api.js";
 import {
   actionSuccessMessage,
+  correctHeading,
   foldSearch,
-  needConfirmationOnlyTitle,
-  needsConfirmationGroupLabel,
+  landingTab,
+  needsConfirmationTabLabel,
   reviewCountLabel,
   reviewDeferredFinishLabel,
   reviewFinishedLabel,
@@ -422,24 +482,23 @@ export default {
       const n = this.activeQueue.length;
       return n ? `Review (${n})` : "Review";
     },
+    needsTabLabel() {
+      return needsConfirmationTabLabel(this.deferredQueue.length);
+    },
     activeQueue() {
       return this.queue.filter((item) => !item.deferred);
     },
     deferredQueue() {
       return this.queue.filter((item) => item.deferred);
     },
-    reviewGroups() {
-      const groups = [];
-      if (this.activeQueue.length) groups.push({ key: "active", items: this.activeQueue, deferred: false });
-      if (this.deferredQueue.length) {
-        groups.push({ key: "deferred", items: this.deferredQueue, deferred: true });
-      }
-      return groups;
-    },
-    allDeferredOnArrival() {
-      return this.activeQueue.length === 0 && this.deferredQueue.length > 0 && this.reviewedThisSession === 0;
+    currentTabItems() {
+      return this.tab === "needs" ? this.deferredQueue : this.activeQueue;
     },
     nextActiveItem() {
+      return this.activeQueue[0] || null;
+    },
+    nextItemAfterAction() {
+      if (this.tab === "needs") return this.deferredQueue[0] || null;
       return this.activeQueue[0] || null;
     },
     visibleRecent() {
@@ -453,13 +512,12 @@ export default {
       return reviewFinishedLabel(this.publishStatus.unpublishedCount || this.reviewedThisSession);
     },
     formTitle() {
-      if (this.correcting) return "Use this, and I'll correct it";
       if (this.formKind === "serviceLine") return "Add a service line";
       if (this.formKind === "edit") return "Edit listing";
       return "Add organisation";
     },
     correctTitle() {
-      return this.correcting?.kind === "geocode_flag" ? "I'll move the pin" : "Use this, and I'll correct it";
+      return correctHeading(this.correcting);
     },
     visibleListings() {
       const needle = foldSearch(this.listingSearch);
@@ -477,11 +535,16 @@ export default {
   },
   async mounted() {
     await Promise.all([this.refreshListings(), this.refreshQueue(), this.refreshPublish()]);
-    if (this.queue.length) {
-      this.tab = "review";
-      this.openId = this.activeQueue[0]?.id || this.queue[0]?.id || null;
-    }
-    this.$nextTick(() => this.$refs.searchInput?.focus?.());
+    this.tab = landingTab({
+      activeCount: this.activeQueue.length,
+      deferredCount: this.deferredQueue.length,
+    });
+    if (this.tab === "review") this.openId = this.activeQueue[0].id;
+    else if (this.tab === "needs") this.openId = this.deferredQueue[0].id;
+    this.$nextTick(() => {
+      if (this.tab === "listings") this.$refs.searchInput?.focus?.();
+      else this.focusWorkPanel();
+    });
     this.onVisibility = () => {
       if (document.visibilityState === "visible") this.refreshPublish();
     };
@@ -492,8 +555,6 @@ export default {
   },
   methods: {
     reviewCountLabel,
-    needsConfirmationGroupLabel,
-    needConfirmationOnlyTitle,
     async api(path, options = {}) {
       return directoryEditorRequest(this.apiClient, path, options);
     },
@@ -529,16 +590,56 @@ export default {
         this.publishStatus = { unpublished: false, unpublishedCount: 0, canUndoPublish: false };
       }
     },
+    openReviewOrNeeds() {
+      if (this.activeQueue.length) this.openReview();
+      else if (this.deferredQueue.length) this.openNeeds();
+    },
     openReview() {
+      this.correcting = null;
       this.tab = "review";
-      const first = this.activeQueue[0];
-      if (first) this.openId = first.id;
+      this.openId = this.activeQueue[0]?.id || null;
+      this.focusWorkPanel();
+    },
+    openNeeds() {
+      this.correcting = null;
+      this.tab = "needs";
+      this.openId = this.deferredQueue[0]?.id || null;
+      this.focusWorkPanel();
     },
     openListingsTab() {
+      this.correcting = null;
       this.tab = "listings";
     },
     toggleOpen(item) {
+      if (this.correcting) return;
       this.openId = this.openId === item.id ? null : item.id;
+    },
+    cancelCorrect() {
+      this.correcting = null;
+    },
+    focusWorkPanel() {
+      this.$nextTick(() => {
+        if (this.openId) {
+          const row = this.$el.querySelector(".review-card .review-row[aria-expanded='true']");
+          if (row) {
+            row.focus();
+            row.scrollIntoView({ block: "nearest" });
+            return;
+          }
+        }
+        const finish = this.$refs.finishHeading;
+        if (finish) {
+          finish.focus();
+          finish.scrollIntoView({ block: "nearest" });
+          return;
+        }
+        const empty = this.$refs.emptyNeeds;
+        if (empty) {
+          empty.focus();
+          return;
+        }
+        this.$refs.workPanel?.focus?.();
+      });
     },
     toggleOther(id) {
       const next = new Set(this.shownOther);
@@ -567,21 +668,7 @@ export default {
       }, 20000);
     },
     focusAfterQueueAction() {
-      this.$nextTick(() => {
-        if (this.openId) {
-          const row = this.$el.querySelector(".review-card .review-row[aria-expanded='true']");
-          if (row) {
-            row.focus();
-            row.scrollIntoView({ block: "nearest" });
-            return;
-          }
-        }
-        const finish = this.$refs.finishHeading;
-        if (finish) {
-          finish.focus();
-          finish.scrollIntoView({ block: "nearest" });
-        }
-      });
+      this.focusWorkPanel();
     },
     async runQueue(item, path, action) {
       try {
@@ -593,7 +680,7 @@ export default {
           undoId: queueActionUndoId(result),
         });
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
-        this.openId = this.nextActiveItem?.id || null;
+        this.openId = this.nextItemAfterAction?.id || null;
         this.focusAfterQueueAction();
       } catch (error) {
         this.queueError = error.message || "Could not save that decision. Try again.";
@@ -611,7 +698,10 @@ export default {
         const result = await this.api("/review-undo", { method: "POST", body: { undoId } });
         this.reviewedThisSession = Math.max(0, this.reviewedThisSession - 1);
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
-        this.openId = result.queueItemId || this.nextActiveItem?.id || null;
+        this.openId = result.queueItemId || this.nextItemAfterAction?.id || null;
+        const restored = this.queue.find((item) => item.id === this.openId);
+        if (restored?.deferred) this.tab = "needs";
+        else if (restored) this.tab = "review";
         this.focusAfterQueueAction();
       } catch (error) {
         this.queueError = error.message || "Could not undo that.";
@@ -624,6 +714,7 @@ export default {
     },
     startCorrect(item) {
       this.correcting = item;
+      this.openId = item.id;
       const after = item.after || {};
       this.form = {
         name: after.name || item.name || "",
@@ -642,7 +733,9 @@ export default {
         locked: (item.youSetThis || []).map((row) => row.field),
       });
       this.formError = "";
-      this.tab = "review";
+      this.$nextTick(() => {
+        this.$el.querySelector(".review-card.is-correcting")?.scrollIntoView({ block: "nearest" });
+      });
     },
     async saveCorrection() {
       if (!this.correcting) return;
@@ -659,7 +752,7 @@ export default {
         });
         this.correcting = null;
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
-        this.openId = this.nextActiveItem?.id || null;
+        this.openId = this.nextItemAfterAction?.id || null;
         this.focusAfterQueueAction();
       } catch (error) {
         this.formError = error.message || "Could not save that decision. Try again.";
@@ -1007,6 +1100,24 @@ export default {
   cursor: pointer;
   display: grid;
   gap: 4px;
+}
+.result.not-on-site {
+  background: var(--theme--background-subdued, var(--theme--background-normal));
+  border-style: dashed;
+  opacity: 0.92;
+}
+.status-off {
+  font-weight: 600;
+  color: var(--theme--foreground);
+}
+.review-card.is-inert {
+  opacity: 0.45;
+}
+.review-card.is-inert .review-row {
+  cursor: default;
+}
+.review-card.is-correcting {
+  box-shadow: inset 4px 0 0 var(--theme--primary);
 }
 .review-card {
   margin-bottom: 12px;

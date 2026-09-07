@@ -7,7 +7,10 @@ import {
   finishedWhenLabel,
   keepAsCommunityLabel,
   kindLabel,
+  correctHeading,
+  landingTab,
   needsConfirmationGroupLabel,
+  needsConfirmationTabLabel,
   primaryActionLabel,
   queueDiffRows,
   queueItemDto,
@@ -54,8 +57,8 @@ test("kind and status never stay as raw enums", () => {
   assert.equal(kindLabel("removed"), "Gone from the government list");
   assert.equal(kindLabel("geocode_flag"), "Check the map pin");
   assert.equal(statusLabel("published"), "On the site");
-  assert.equal(statusLabel("hidden"), "Off the site");
-  assert.equal(statusLabel("draft"), "Off the site");
+  assert.equal(statusLabel("hidden"), "Not on the site");
+  assert.equal(statusLabel("draft"), "Not on the site");
   assert.equal(queueItemDto({ kind: "geocode_flag" }).kindLabel, "Check the map pin");
 });
 
@@ -284,7 +287,20 @@ test("success copy says what happens next", () => {
     actionSuccessMessage({ action: "approve", kind: "changed" }),
     "Accepted. It will go on the public site when you publish."
   );
-  assert.equal(actionSuccessMessage({ action: "defer" }), "Needs confirmation. It stays in Review.");
+  assert.equal(
+    actionSuccessMessage({ action: "defer" }),
+    "Needs confirmation. It's waiting on the Needs confirmation tab."
+  );
+  assert.equal(needsConfirmationTabLabel(0), "Needs confirmation");
+  assert.equal(needsConfirmationTabLabel(2), "Needs confirmation (2)");
+  assert.equal(
+    correctHeading({ kind: "changed", name: "Capital & Coast DHB Rehabilitation Service" }),
+    "Correcting Capital & Coast DHB Rehabilitation Service"
+  );
+  assert.equal(correctHeading({ kind: "geocode_flag", name: "KAPAI KIDZ" }), "Moving the pin for KAPAI KIDZ");
+  assert.equal(landingTab({ activeCount: 2, deferredCount: 1 }), "review");
+  assert.equal(landingTab({ activeCount: 0, deferredCount: 3 }), "needs");
+  assert.equal(landingTab({ activeCount: 0, deferredCount: 0 }), "listings");
   assert.equal(
     actionSuccessMessage({ action: "keep-community" }),
     "Kept. This is now a community listing. Next week's government feed will not take it off."

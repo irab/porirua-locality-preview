@@ -60,7 +60,7 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 | `removed` | **Gone from the government list** |
 | `geocode_flag` | **Check the map pin** |
 | `published` | **On the site** |
-| `hidden` / `draft` | **Off the site** |
+| `hidden` / `draft` | **Not on the site** |
 | Deferred pending item | **Needs confirmation** (badge on the row) |
 
 ### Review actions
@@ -86,7 +86,7 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 | **Edit** | Open the shared form for that org or that line |
 | **Archive this service line** | Take this line off the public site after Publish |
 | **Put it back on the site** | Restore an archived line / org |
-| **Show listings that are off the site** | Archived filter |
+| **Show listings that are not on the site** | Filter for listings she has taken down. “Off the site” is reserved for the verb (**Take it off the site**); the adjective collides with off-site / another venue |
 | **Open the existing one** | Duplicate warning, primary |
 | **Create anyway** | Duplicate warning, secondary |
 
@@ -172,6 +172,7 @@ On edit of a service line: also **Archive this service line**.
 
 When this form opens from **Use this, and I’ll correct it** (or **I’ll move the pin**):
 
+- It sits **inside the originating card**, replacing that card’s actions. Other cards stay visible but cannot be acted on. The heading names the record (**Correcting {name}** / **Moving the pin for {name}**), not the button label.  
 - Visually mark every field the proposal changed. The mark is text (**Changed in this update**) plus a non-colour cue (a left rule or icon). Colour alone is not enough (§14).  
 - Fields she has curated also keep **You set this earlier**. Both marks can appear on the same field.  
 - Scroll to the first changed field and place focus there, so the government change does not disappear into eight pre-filled boxes.
@@ -190,7 +191,7 @@ For each screen: purpose, what is on it, what she can do, where each action lead
 
 **Purpose.** Get her onto the work, not onto an empty Content collection.
 
-**On it.** Directus login, then Directory. Status band. Review if anything is pending (including deferred); otherwise Listings.
+**On it.** Directus login, then Directory. Status band. **Review** if any active work is waiting; **Needs confirmation** if only deferred items remain; otherwise Listings.
 
 **She can.** Review or maintain. She should not have to find “Directory” in a module bar as the first puzzle of the day.
 
@@ -212,9 +213,9 @@ For each screen: purpose, what is on it, what she can do, where each action lead
 
 - Status band  
 - Title: **4 changes to review** (or **1 change to review**)  
-- One row per item: organisation name, plain-words summary, **Needs confirmation** badge if deferred  
-- Deferred items sit in a second group under **Needs confirmation (2)**, still in Review, not a third tab  
-- **Recently finished** under the work: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter.  
+- One row per item: organisation name, plain-words summary  
+- Deferred items live only on the **Needs confirmation** tab (first tab, always present; count in the label when non-zero). They are not copied at the bottom of Review.  
+- **Recently finished** above the remaining cards: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter.  
 
 Row summary examples (not the raw kind):
 
@@ -233,7 +234,7 @@ Row summary examples (not the raw kind):
 | Empty, she has not worked this session | **Nothing to review.** Status band still offers Publish if anything is waiting |
 | Empty, she just finished the last item | Finish state (section 8) |
 | Error | **Could not load Review.** **Try again** |
-| All remaining items deferred | Title becomes **2 need confirmation**. Finish/Publish is offered as well: she may publish other work and leave these |
+| All remaining items deferred | Review shows the finish state (or **Nothing to review** on a fresh load). **Needs confirmation (n)** is the place those items live |
 
 **Current build:** a table of name + kind-or-label + buttons, no defer group, no field summary on the closed row. Replace the closed-row content with the summary; keep in-place expand.
 
@@ -259,9 +260,9 @@ Row summary examples (not the raw kind):
 | Action | Next |
 |--------|------|
 | Accept / Add this / The pin is fine / Keep yours / Don’t use / Don’t add / Take it off / Keep as community | Toast with **Undo** (7.4). Row leaves the active list. The next active item opens on its own. Do not auto-open a Needs confirmation item. |
-| Needs confirmation | Row moves to **Needs confirmation**. Same: toast, next active item opens. If only deferred items remain, land on the finish state. |
-| Use this, and I’ll correct it | Shared form, pre-filled with the government values she can edit. Changed fields are marked, scrolled to, and focused (4.3). **Save** = accept the corrected values. Toast with **Undo** |
-| I’ll move the pin | Same form, address + map, then Save = accept the pin |
+| Needs confirmation | Row moves to the **Needs confirmation** tab. Toast, next **active** item opens. If only deferred items remain, Review shows the finish state; **Keep reviewing later** opens that tab. |
+| Use this, and I’ll correct it | Shared form **inside that card**, heading **Correcting {name}**. Changed fields marked, scrolled to, and focused (4.3). Other cards cannot be acted on. **Save** = accept the corrected values. Toast with **Undo** |
+| I’ll move the pin | Same, heading **Moving the pin for {name}** |
 
 | State | What she sees |
 |-------|----------------|
@@ -280,9 +281,9 @@ Row summary examples (not the raw kind):
 - Status band  
 - **Find an organisation** — filters as she types, diacritic-fold so “Whanau” finds **Porirua Whānau Centre**  
 - Default sort A–Z  
-- Results: name, suburb-or-address, On the site / Off the site  
+- Results: name, suburb-or-address, On the site / Not on the site. A not-on-the-site row is visually distinct (dashed border, subdued fill, status weight) so the status is not only the third span  
 - **Add organisation**  
-- Filter: **Show listings that are off the site** (off by default)  
+- Filter: **Show listings that are not on the site** (off by default)  
 
 There is no giant spreadsheet as the primary object. If she has not typed, show the A–Z list anyway (she may be browsing) but the search field is focused and is the first thing she sees.
 
@@ -305,9 +306,9 @@ There is no giant spreadsheet as the primary object. If she has not typed, show 
 **On it.**
 
 - Status band  
-- Organisation name, On the site / Off the site  
+- Organisation name, On the site / Not on the site  
 - Verification bar  
-- Service lines: name, short address, On/Off the site, **Edit**, **Archive** / **Put it back on the site**  
+- Service lines: name, short address, On the site / Not on the site, **Edit**, **Archive** / **Put it back on the site**  
 - **Add a service line**  
 - **Edit organisation** (name, community groups, org-level contact if that is how the card is stored)
 
@@ -319,7 +320,7 @@ There is no giant spreadsheet as the primary object. If she has not typed, show 
 |-------|----------------|
 | Loading | Name + skeleton lines |
 | Error | **Could not open that listing.** Back to search |
-| All lines off the site | Org marked Off the site. Restore on the lines |
+| All lines not on the site | Org marked Not on the site. Restore on the lines |
 
 **Current build:** no listing detail. Opening a row is the form. **Discard that.** One extra click (open, then Edit) buys: the right line, verification, and add-line without accidental edit.
 
@@ -335,7 +336,7 @@ Under Name, after blur.
 
 > An organisation with a similar name is already in the directory.
 
-Each match: name, address, phone, On/Off the site. **Open the existing one** (primary). **Create anyway** (secondary).
+Each match: name, address, phone, On the site / Not on the site. **Open the existing one** (primary). **Create anyway** (secondary).
 
 Archived and merged names are included. Opening a match leaves the form and opens that listing.
 
@@ -364,7 +365,7 @@ Buttons: **Take this service off the site** · **Take the organisation off too**
 
 ### 5.10 Archived listings
 
-Same search screen, with **Show listings that are off the site** on. Results include Off the site. Opening one is listing detail with **Put it back on the site** on the hidden line (and the org if it is hidden).
+Same search screen, with **Show listings that are not on the site** on. Results include Not on the site, visually distinct from live rows. Opening one is listing detail with **Put it back on the site** on the hidden line (and the org if it is hidden).
 
 Restore toast as in the copy dictionary. Public site updates on Publish, not on restore.
 
@@ -596,7 +597,7 @@ When the last **active** item is decided:
 If deferred items remain:
 
 > **You’ve decided the ones you can. 2 need confirmation.**  
-> **Publish now** · **Keep reviewing later**
+> **Publish now** · **Keep reviewing later** (opens the **Needs confirmation** tab — not Listings)
 
 **Publish now** publishes immediately. The finish is not a second empty table with a banner above it.
 
@@ -701,7 +702,7 @@ This design doc is the approval artifact. After implementation, the one-pager mu
 Approve the design first. Then, in the module:
 
 - **Keep:** Review / Listings split; landing on Directory; field-by-field diff lines; Leaflet map with no coordinates; name-blur duplicate warning; “Take it off the site” / “The pin is fine” / “Keep yours” as the quality bar for new copy; notifications that say what happens next.  
-- **Rewrite:** listings as search-first + listing detail (discard click-row-to-edit); Review closed-row summary; verification bar; **Needs confirmation** group; keep-as-community (equal actions); edit-then-accept with changed-field highlighting; immediate Publish; session finish; undo on the toast; auto-advance after a decision; recently finished with **Open listing**.  
+- **Rewrite:** listings as search-first + listing detail (discard click-row-to-edit); Review closed-row summary; verification bar; **Needs confirmation** as its own first tab; keep-as-community (equal actions); edit-then-accept **inside the originating card**; immediate Publish; session finish; undo on the toast; auto-advance after a decision; recently finished with **Open listing**.  
 - **Do not build more of:** N/S/E/W nudge, raw kind/status in the table, `window.confirm`, a Review table whose only information is the buttons, the `users.read` landing hook (§13), a Publish confirmation dialog.  
 - **Build:** **Undo publish** (7.5) as agreed — server-derived availability, expected-version guard, persist-only audit, purge on rollback.
 
@@ -711,7 +712,7 @@ Approve the design first. Then, in the module:
 
 | # | Question | Decided |
 |---|----------|---------|
-| 1 | Deferred items: own group, mixed with a badge, or hidden until asked? | **Own group**, named **Needs confirmation**. Same words on the button, the badge, the group heading, and the toast. |
+| 1 | Deferred items: own group, mixed with a badge, or hidden until asked? | **Own tab**, first in the row: **Needs confirmation**, Review, Listings. Always present; count in the label when non-zero. Not a group at the bottom of Review. Supersedes the 8 Sep group decision. |
 | 2 | Gone from the government list: equal buttons, take-off primary, or keep primary? | **Equal weighting.** **Take it off the site** and **Keep it as a community listing** have no visual hierarchy and no keyboard default. |
 | 3 | Almost-right change: shared form or inline on the card? | **Shared form**, pre-filled, with the field(s) the proposal changed marked, scrolled to, and focused. **You set this earlier** stays on curated fields. Not colour alone. |
 | 4 | Publish from the finish: named confirmation, immediate, or count only? | **Immediate.** No confirmation dialog. **Undo publish** (7.5) is the safety net. Agreed 8 Sep 2026: 24-hour-or-next-publish window; first-ever publish has no undo; live rows stay; expected version must match or the server refuses; record who published and who undid. |

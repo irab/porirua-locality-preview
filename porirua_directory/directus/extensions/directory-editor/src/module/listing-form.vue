@@ -10,10 +10,16 @@
     <div v-if="matches.length" class="matches">
       <p>An organisation with a similar name is already in the directory.</p>
       <ul>
-        <li v-for="match in matches" :key="match.id">
+        <li
+          v-for="match in matches"
+          :key="match.id"
+          :class="{ 'not-on-site': match.status && match.status !== 'published' }"
+        >
           <strong>{{ match.name }}</strong>
           <span>{{ match.address }} {{ match.phone }}</span>
-          <span v-if="match.statusLabel">{{ match.statusLabel }}</span>
+          <span v-if="match.statusLabel" :class="{ 'status-off': match.status && match.status !== 'published' }">{{
+            match.statusLabel
+          }}</span>
           <v-button small @click="$emit('open-existing', match.id)">Open the existing one</v-button>
         </li>
       </ul>
@@ -183,6 +189,13 @@ export default {
   color: var(--theme--primary);
   cursor: pointer;
   text-align: left;
+}
+.matches .not-on-site {
+  border-left: 4px dashed var(--theme--foreground-subdued);
+  padding-left: 10px;
+}
+.status-off {
+  font-weight: 600;
 }
 .actions {
   display: flex;

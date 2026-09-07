@@ -34,7 +34,7 @@ export function kindLabel(kind) {
 }
 
 export function statusLabel(status) {
-  return status === "published" ? "On the site" : "Off the site";
+  return status === "published" ? "On the site" : "Not on the site";
 }
 
 export function rejectActionLabel(kind) {
@@ -61,6 +61,23 @@ export function deferActionLabel() {
 export function needsConfirmationGroupLabel(count) {
   const n = Number(count) || 0;
   return n === 1 ? "Needs confirmation (1)" : `Needs confirmation (${n})`;
+}
+
+export function needsConfirmationTabLabel(count) {
+  const n = Number(count) || 0;
+  return n ? needsConfirmationGroupLabel(n) : "Needs confirmation";
+}
+
+export function correctHeading(item) {
+  const name = item?.name || item?.title || "this listing";
+  if (item?.kind === "geocode_flag") return `Moving the pin for ${name}`;
+  return `Correcting ${name}`;
+}
+
+export function landingTab({ activeCount = 0, deferredCount = 0 } = {}) {
+  if (activeCount > 0) return "review";
+  if (deferredCount > 0) return "needs";
+  return "listings";
 }
 
 export function needConfirmationOnlyTitle(count) {
@@ -104,7 +121,7 @@ export function actionSuccessMessage({ action, kind, unpublished = true } = {}) 
   if (action === "undo-publish") {
     return "Publish undone. Those changes are waiting to go on the site again.";
   }
-  if (action === "defer") return "Needs confirmation. It stays in Review.";
+  if (action === "defer") return "Needs confirmation. It's waiting on the Needs confirmation tab.";
   if (action === "keep-community") {
     return "Kept. This is now a community listing. Next week's government feed will not take it off.";
   }
