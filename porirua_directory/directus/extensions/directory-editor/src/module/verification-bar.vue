@@ -62,11 +62,12 @@ export default {
 .verify-address {
   margin: 0;
   width: 100%;
+  color: #2a2f3d;
 }
 .verify-note {
   display: block;
-  color: var(--theme--foreground);
-  font-size: 0.85rem;
+  color: #2a2f3d;
+  font-size: 1rem;
   font-weight: 600;
 }
 .verify :deep(.pin-map) {

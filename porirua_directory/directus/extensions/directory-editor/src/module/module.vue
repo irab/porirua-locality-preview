@@ -988,6 +988,7 @@ export default {
 .directory-editor {
   padding: 16px 24px 48px;
   max-width: 960px;
+  color: #2a2f3d;
 }
 .status-band {
   display: flex;
@@ -1032,7 +1033,7 @@ export default {
   margin: 8px 0 16px;
 }
 .hint {
-  color: var(--theme--foreground);
+  color: #2a2f3d;
 }
 .recent {
   margin: 28px 0 8px;
@@ -1082,7 +1083,7 @@ export default {
   border-bottom: 2px solid transparent;
   padding: 10px 2px 8px;
   cursor: pointer;
-  color: var(--theme--foreground);
+  color: #2a2f3d;
   font-weight: 400;
 }
 .editor-tabs button.active {
@@ -1153,32 +1154,36 @@ export default {
   background: var(--theme--background-normal);
 }
 .review-row strong {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #2a2f3d;
 }
 .review-row .line-name {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 500;
 }
 .review-row .kind {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 .review-body {
   padding: 8px 12px 16px;
 }
 .review-body .diff {
+  font-size: 1.05rem;
   font-weight: 500;
+  color: #2a2f3d;
 }
 .kind,
 .line-status {
-  color: var(--theme--foreground);
+  color: #2a2f3d;
 }
 .recent .kind {
   font-size: 0.85rem;
   font-weight: 400;
 }
 .line-name {
-  color: var(--theme--foreground);
+  color: #2a2f3d;
 }
 .lines li {
   display: grid;

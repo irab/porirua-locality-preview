@@ -173,12 +173,12 @@ export default {
   padding-left: 10px;
 }
 .mark {
-  font-size: 0.85rem;
-  color: var(--theme--foreground);
+  font-size: 0.9rem;
+  color: #2a2f3d;
   font-weight: 600;
 }
 .hint {
-  color: var(--theme--foreground);
+  color: #2a2f3d;
   margin: 0;
 }
 .error {
