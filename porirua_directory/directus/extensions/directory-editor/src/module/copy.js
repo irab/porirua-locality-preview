@@ -88,10 +88,32 @@ export function needsConfirmationTabLabel(count) {
   return n ? needsConfirmationGroupLabel(n) : "Needs confirmation";
 }
 
+function foldLabel(text) {
+  return String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function queueLineLabel({ name, lineTitle } = {}) {
+  const org = String(name || "").trim();
+  const line = String(lineTitle || "").trim();
+  if (!line) return "";
+  if (foldLabel(line) === foldLabel(org)) return "";
+  return line;
+}
+
+function namedHeading(item, fallback = "this listing") {
+  const name = item?.name || fallback;
+  return item?.lineLabel ? `${name} — ${item.lineLabel}` : name;
+}
+
 export function correctHeading(item) {
-  const name = item?.name || item?.title || "this listing";
-  if (item?.kind === "geocode_flag") return `Moving the pin for ${name}`;
-  return `Correcting ${name}`;
+  const who = namedHeading(item);
+  if (item?.kind === "geocode_flag") return `Moving the pin for ${who}`;
+  return `Correcting ${who}`;
 }
 
 export function landingTab({ activeCount = 0, deferredCount = 0 } = {}) {

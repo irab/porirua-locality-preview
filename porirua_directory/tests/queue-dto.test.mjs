@@ -9,6 +9,7 @@ import {
   kindLabel,
   correctHeading,
   landingTab,
+  queueLineLabel,
   needsConfirmationGroupLabel,
   needsConfirmationTabLabel,
   primaryActionLabel,
@@ -25,7 +26,11 @@ import {
   statusLabel,
   waitingCountLabel,
 } from "../editor-core/queue-dto.mjs";
-import { landingTab as moduleLandingTab } from "../directus/extensions/directory-editor/src/module/copy.js";
+import {
+  correctHeading as moduleCorrectHeading,
+  landingTab as moduleLandingTab,
+  queueLineLabel as moduleQueueLineLabel,
+} from "../directus/extensions/directory-editor/src/module/copy.js";
 
 test("removed items use Take it off the site, not Accept", () => {
   assert.equal(primaryActionLabel("removed"), "Take it off the site");
@@ -86,6 +91,37 @@ test("closed-row summary names the fields that moved", () => {
       },
     }).summaryLabel,
     "Phone and address changed"
+  );
+});
+
+test("queue cards name the service line when it is not the organisation", () => {
+  assert.equal(
+    queueLineLabel({
+      name: "Tenancy Services",
+      lineTitle: "Dispute resolution service for tenants and landlords",
+    }),
+    "Dispute resolution service for tenants and landlords"
+  );
+  assert.equal(moduleQueueLineLabel({ name: "Tenancy Services", lineTitle: "Tenancy Services" }), "");
+  assert.equal(queueLineLabel({ name: "KAPAI KIDZ", lineTitle: "kapai kidz" }), "");
+  const twoLines = [
+    queueItemDto(
+      { kind: "changed", proposed: { before: { categories: ["housing"] }, after: { categories: ["housing", "legal"], name: "Tenancy Services" } } },
+      { name: "Tenancy Services", title: "Dispute resolution service for tenants and landlords" }
+    ),
+    queueItemDto(
+      { kind: "changed", proposed: { before: { categories: ["housing"] }, after: { categories: ["housing", "legal"], name: "Tenancy Services" } } },
+      { name: "Tenancy Services", title: "Information, advice and templates on tenancy" }
+    ),
+  ];
+  assert.equal(twoLines[0].name, "Tenancy Services");
+  assert.equal(twoLines[1].name, "Tenancy Services");
+  assert.notEqual(twoLines[0].lineLabel, twoLines[1].lineLabel);
+  assert.equal(twoLines[0].lineLabel, "Dispute resolution service for tenants and landlords");
+  assert.equal(
+    queueItemDto({ kind: "changed", proposed: { after: { name: "KAPAI KIDZ" } } }, { name: "KAPAI KIDZ", title: "KAPAI KIDZ" })
+      .lineLabel,
+    ""
   );
 });
 
@@ -311,6 +347,22 @@ test("success copy says what happens next", () => {
   );
   assert.equal(correctHeading({ kind: "geocode_flag", name: "KAPAI KIDZ" }), "Moving the pin for KAPAI KIDZ");
   assert.equal(
+    correctHeading({
+      kind: "changed",
+      name: "Tenancy Services",
+      lineLabel: "Dispute resolution service for tenants and landlords",
+    }),
+    "Correcting Tenancy Services — Dispute resolution service for tenants and landlords"
+  );
+  assert.equal(
+    moduleCorrectHeading({
+      kind: "geocode_flag",
+      name: "Tenancy Services",
+      lineLabel: "Information, advice and templates on tenancy",
+    }),
+    "Moving the pin for Tenancy Services — Information, advice and templates on tenancy"
+  );
+  assert.equal(
     actionSuccessMessage({ action: "keep-community" }),
     "Kept. This is now a community listing. Next week's government feed will not take it off."
   );
@@ -343,6 +395,7 @@ test("finished work names the decision in her words and keeps a path back to the
     updated_at: "2026-09-08T06:32:00.000Z",
     organization_id: "org-kelly",
     organization_name: "Kelly Sports Porirua",
+    title: "After school sport",
     proposed: {
       editor_decision: { action: "approve", at: "2026-09-08T06:32:00.000Z" },
       before: { address: "Mana Esplanade" },
@@ -350,6 +403,7 @@ test("finished work names the decision in her words and keeps a path back to the
     },
   });
   assert.equal(dto.name, "Kelly Sports Porirua");
+  assert.equal(dto.lineLabel, "After school sport");
   assert.equal(dto.decisionLabel, "Accepted this change");
   assert.equal(dto.summaryLabel, "Address changed");
   assert.equal(dto.organizationId, "org-kelly");

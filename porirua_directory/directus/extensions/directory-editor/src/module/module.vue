@@ -110,6 +110,7 @@
               @click="toggleOpen(item)"
             >
               <strong>{{ item.name || item.title }}</strong>
+              <span v-if="item.lineLabel" class="line-name">{{ item.lineLabel }}</span>
               <span class="kind">{{ item.summaryLabel || item.kindLabel }}</span>
               <span v-if="item.changedSinceDeferred" class="badge">{{ item.changedSinceDeferredLabel }}</span>
             </button>
@@ -225,6 +226,7 @@
           <ul>
             <li v-for="row in visibleRecent" :key="row.id">
               <strong>{{ row.name }}</strong>
+              <span v-if="row.lineLabel" class="line-name">{{ row.lineLabel }}</span>
               <span>{{ row.decisionLabel }}</span>
               <span class="kind">{{ row.whenLabel }}</span>
               <button
@@ -1139,6 +1141,9 @@ export default {
 .kind,
 .line-status {
   color: var(--theme--foreground-subdued);
+}
+.line-name {
+  color: var(--theme--foreground);
 }
 .lines li {
   display: grid;

@@ -271,6 +271,8 @@ test("listQueueItems skips Service name when the proposal has no name key", asyn
     );
     const { items } = await listQueueItems({ db: client });
     const item = items.find((row) => row.entityId === "community-name-gap");
+    assert.equal(item.name, "Name Gap");
+    assert.equal(item.lineLabel, "Supported Employment Service");
     assert.equal(
       item.diffRows.some((row) => /Supported Employment|→ —/.test(row.line)),
       false
@@ -308,6 +310,7 @@ test("listQueueItems returns recently finished work from closed rows, not a sess
     const row = after.recent.find((item) => item.organizationId === "community-finished");
     assert.ok(row);
     assert.equal(row.name, "Finished Org");
+    assert.equal(row.lineLabel, "");
     assert.equal(row.decisionLabel, "Accepted this change");
     assert.equal(row.listingLabel, "Open listing");
     const stored = await client.query(`SELECT proposed, status FROM review_queue_items WHERE id = $1`, [
@@ -315,6 +318,52 @@ test("listQueueItems returns recently finished work from closed rows, not a sess
     ]);
     assert.equal(stored.rows[0].status, "accepted");
     assert.equal(stored.rows[0].proposed.editor_decision.action, "approve");
+  });
+});
+
+test("listQueueItems keeps two service lines under one organisation distinct", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, {
+      id: "org-tenancy-services",
+      name: "Tenancy Services",
+      grain: "organization",
+    });
+    await client.query(`DELETE FROM services WHERE organization_id = 'org-tenancy-services'`);
+    await client.query(
+      `INSERT INTO services (id, organization_id, line_id, title, source, status)
+       VALUES
+         ('fsd-35898', 'org-tenancy-services', 'fsd-35898', 'Dispute resolution service for tenants and landlords', 'fsd', 'published'),
+         ('fsd-3964', 'org-tenancy-services', 'fsd-3964', 'Information, advice and templates on tenancy', 'fsd', 'published')`
+    );
+    const run = await client.query(
+      `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
+    );
+    await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES
+         ($1, 'service', 'fsd-35898', 'changed', $2::jsonb, 'pending'),
+         ($1, 'service', 'fsd-3964', 'changed', $3::jsonb, 'pending')`,
+      [
+        run.rows[0].id,
+        JSON.stringify({
+          before: { categories: ["housing", "money"], name: "Tenancy Services" },
+          after: { categories: ["housing", "money", "legal"], name: "Tenancy Services" },
+        }),
+        JSON.stringify({
+          before: { categories: ["housing", "money", "support"], name: "Tenancy Services" },
+          after: { categories: ["housing", "money", "support", "legal"], name: "Tenancy Services" },
+        }),
+      ]
+    );
+    const { items } = await listQueueItems({ db: client });
+    const dispute = items.find((row) => row.entityId === "fsd-35898");
+    const advice = items.find((row) => row.entityId === "fsd-3964");
+    assert.equal(dispute.name, "Tenancy Services");
+    assert.equal(advice.name, "Tenancy Services");
+    assert.equal(dispute.lineLabel, "Dispute resolution service for tenants and landlords");
+    assert.equal(advice.lineLabel, "Information, advice and templates on tenancy");
+    assert.notEqual(dispute.lineLabel, advice.lineLabel);
   });
 });
 

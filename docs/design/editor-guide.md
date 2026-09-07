@@ -25,7 +25,7 @@ The status band at the top says how many government updates need a decision, and
 
 Your own creates never appear here.
 
-- **Details changed** — field rows like `Phone: 04 237 7749 → 04 237 9608`. A row is omitted when the government payload has no value for that field. A removal says **is coming off the site**, not `→ —`.
+- **Details changed** — field rows like `Phone: 04 237 7749 → 04 237 9608`. A row is omitted when the government payload has no value for that field. A removal says **is coming off the site**, not `→ —`. When two services sit under one organisation, the card shows the organisation and then the service line.
 - **New service**
 - **Gone from the government list**
 - **Check the map pin** — the map is the whole card. There is no field list. **The pin is fine** keeps it. **I'll move the pin** opens the form. There is no Skip — that read as a second way of not deciding.

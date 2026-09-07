@@ -72,10 +72,32 @@ export function needsConfirmationTabLabel(count) {
   return n ? needsConfirmationGroupLabel(n) : "Needs confirmation";
 }
 
+function foldLabel(text) {
+  return String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function queueLineLabel({ name, lineTitle } = {}) {
+  const org = String(name || "").trim();
+  const line = String(lineTitle || "").trim();
+  if (!line) return "";
+  if (foldLabel(line) === foldLabel(org)) return "";
+  return line;
+}
+
+function namedHeading(item, fallback = "this listing") {
+  const name = item?.name || fallback;
+  return item?.lineLabel ? `${name} — ${item.lineLabel}` : name;
+}
+
 export function correctHeading(item) {
-  const name = item?.name || item?.title || "this listing";
-  if (item?.kind === "geocode_flag") return `Moving the pin for ${name}`;
-  return `Correcting ${name}`;
+  const who = namedHeading(item);
+  if (item?.kind === "geocode_flag") return `Moving the pin for ${who}`;
+  return `Correcting ${who}`;
 }
 
 export function landingTab({ activeCount = 0, deferredCount = 0 } = {}) {
@@ -199,9 +221,12 @@ export function recentQueueItemDto(row = {}) {
   const before = proposed.before && typeof proposed.before === "object" ? proposed.before : {};
   const diffRows = queueDiffRows({ kind: row.kind, before, after });
   const organizationId = row.organization_id || row.organizationId || null;
+  const name = row.organization_name || after.name || before.name || "";
+  const lineTitle = row.title || row.service_name || pickField(after, "serviceName") || pickField(before, "serviceName") || "";
   return {
     id: row.id,
-    name: row.organization_name || after.name || before.name || "",
+    name,
+    lineLabel: queueLineLabel({ name, lineTitle }),
     summaryLabel: queueSummaryLabel({ kind: row.kind, diffRows }),
     decisionLabel: finishedDecisionLabel({ action, kind: row.kind, status: row.status }),
     whenLabel: finishedWhenLabel(proposed.editor_decision?.at || row.updated_at),
@@ -407,6 +432,9 @@ export function queueItemDto(item = {}, live = null) {
   const afterPin = queuePin(after, {});
   const verifyPin = beforePin || (item.kind === "geocode_flag" || item.kind === "new" ? afterPin : null);
   const verifyComparePin = pinsDiffer(beforePin, afterPin) ? afterPin : null;
+  const name = live?.name || after.name || before.name || "";
+  const lineTitle =
+    live?.title || live?.serviceName || pickField(after, "serviceName") || pickField(before, "serviceName") || "";
   return {
     id: item.id,
     kind: item.kind,
@@ -414,7 +442,8 @@ export function queueItemDto(item = {}, live = null) {
     summaryLabel: queueSummaryLabel({ kind: item.kind, diffRows }),
     status: item.status,
     entityId: item.entity_id ?? item.entityId,
-    name: after.name || before.name || "",
+    name,
+    lineLabel: queueLineLabel({ name, lineTitle }),
     address: after.address || before.address || "",
     currentAddress,
     verifyAddressNote: currentAddress && item.kind !== "new" ? "On the site now" : "",

@@ -562,6 +562,8 @@ export async function listQueueItems({ db } = {}) {
             q.updated_at,
             q.proposed,
             q.entity_id,
+            s.title,
+            s.service_name,
             o.id AS organization_id,
             o.name AS organization_name
        FROM review_queue_items q

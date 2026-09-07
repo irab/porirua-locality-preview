@@ -213,9 +213,9 @@ For each screen: purpose, what is on it, what she can do, where each action lead
 
 - Status band  
 - Title: **4 changes to review** (or **1 change to review**)  
-- One row per item: organisation name, plain-words summary  
+- One row per item: organisation name, the service line when the item is about one (omitted when the line is the organisation itself), plain-words summary  
 - Deferred items live only on the **Needs confirmation** tab (first tab, always present; count in the label when non-zero). They are not copied at the bottom of Review.  
-- **Recently finished** below the Review queue only: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter. It is a record of decisions, so it does not appear on Needs confirmation. It is a reference she consults after the work, not something she reads on the way to every decision.  
+- **Recently finished** below the Review queue only: organisation name, the service line when the item was about one, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter. It is a record of decisions, so it does not appear on Needs confirmation. It is a reference she consults after the work, not something she reads on the way to every decision.  
 
 Row summary examples (not the raw kind):
 
@@ -539,7 +539,7 @@ Every Review decision is one click and applied immediately. Nothing is public un
 - Restores the queue item to `pending` (same entity+kind), restores live columns, overrides, and `raw_import` from a snapshot taken **before** the action. Accept-on-Ora-Toa must put her patch back. The restored item opens again.  
 - After Publish, Review-decision undo is gone. Safety after Publish is **Undo publish** (7.5), not a confirmation dialog.  
 - Do not auto-open a Needs confirmation item. When only deferred items remain, or the queue is empty, land on the finish state.  
-- Focus after a decision: the **heading button** of the newly open card (organisation name + summary). Enter toggles the card; it does not Accept. The toast stays `role="status"` so the confirmation is still announced. Undo sits immediately above the list, so Shift+Tab from that heading reaches Undo without walking the card. When the last active item is done, focus the finish heading.
+- Focus after a decision: the **heading button** of the newly open card (organisation name, service line when there is one, and summary). Enter toggles the card; it does not Accept. The toast stays `role="status"` so the confirmation is still announced. Undo sits immediately above the list, so Shift+Tab from that heading reaches Undo without walking the card. When the last active item is done, focus the finish heading.
 
 **Recently finished** (below the Review queue only) is the recovery path after the Undo window: what it was, what she decided, when, and **Open listing**. It does not appear on Needs confirmation.
 
@@ -748,7 +748,7 @@ An admin for two people is lower stakes than the public directory. It is still a
 
 1. Status band (Review count, then Publish count)  
 2. Queue heading  
-3. Each closed row is a button (name + summary). Enter/Space expands  
+3. Each closed row is a button (organisation name, service line when there is one, and summary). Enter/Space expands  
 4. Inside an open card: the before-and-after first, then the verification bar (Website, phone, current address, map is skippable), then actions left to right as labelled. On a removal, neither take-off nor keep-as-community is the default. Then **Needs confirmation**  
 5. **Needs confirmation** group heading, then those rows  
 6. **Recently finished**, then **Open listing** on each row  
