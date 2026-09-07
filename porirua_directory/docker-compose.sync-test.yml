@@ -1,0 +1,19 @@
+# Isolated Postgres for weekly FSD sync tests.
+# Do not share docker-compose.test.yml (54329) with Directus or other worktrees.
+#   docker compose -p weekly-fsd-sync-l2yyxlzr -f docker-compose.sync-test.yml up -d --wait
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: porirua
+      POSTGRES_PASSWORD: porirua
+      POSTGRES_DB: porirua_sync
+    ports:
+      - "54339:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U porirua -d porirua_sync"]
+      interval: 2s
+      timeout: 5s
+      retries: 15

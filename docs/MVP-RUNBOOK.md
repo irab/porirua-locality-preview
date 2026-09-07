@@ -129,6 +129,34 @@ The public site still reads `data/services.json` until the catalog API is wired.
 
 Publish and rollback also purge the public catalog URL (`https://directory.bsky.nz/api/catalog` by default). Locally, set `CATALOG_SKIP_PURGE=1` or pass a stub `purge` function. In an environment that should actually drop the Cloudflare shared cache, set `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`. A failed purge is a failed publish — the previous `is_current` snapshot is restored.
 
+### Weekly FSD sync (Phase 2 runner)
+
+`npm run sync:fsd` fetches the national CSV, applies the same Porirua filter and geocode QA as `import:fsd` (`buildFsdImportReport`), attaches `SERVICE_ID` / `FSD_ID` from the CSV, collapses duplicate SERVICE_ID groups, and diffs against `services.raw_import`. It writes **one** `import_runs` row and `review_queue_items` for new, changed, removed, and geocode-flag rows. It **never** creates a `catalog_snapshots` row or changes the live catalog. A later run refreshes an existing **pending** item for the same entity and kind instead of stacking another row. A `geocode_flag` that an editor already accepted or rejected (same flag code) is not raised again.
+
+```bash
+cd porirua_directory
+export DATABASE_URL=postgres://…   # catalog Postgres
+npm run sync:fsd                   # node scripts/fsd-sync-run.mjs
+```
+
+Worker image: `Dockerfile.sync` (Node; installs `csv-parse` even though it is a devDependency). The CronJob manifest lives in the blackbox tenant task, not this repo.
+
+**Sanity abort:** if this week's `includedCount` is strictly below 75% of the last successful FSD run, the job finishes `import_runs.status='failed'`, writes **zero** removal queue rows, and raises an alert (`stats.alert`, `error_message`). A missing or zero baseline does not trip the guard.
+
+**Locks:** `status=hidden` and open `overrides` rows (`action=hide|patch`, locked fields = keys on `patch`) stay on the published columns. The curated Ngāti Toa Street patch on `fsd-2964` must not be proposed for reversion.
+
+**Approval:** `scripts/approve-review.mjs` exporting **`approveReviewItem`** is the single implementation (Directus imports the same module; `npm run review:approve -- --approve <queueItemId>` calls it). It applies `proposed.after`, sets `published`, promotes a draft organisation, and **refreshes `raw_import`**. Without that refresh the same change re-queues every week. Then `npm run catalog:publish` materialises a new snapshot. Draft organisations created for unmatched SERVICE_IDs stay out of snapshots until that approval. New SERVICE_IDs seed `raw_import` on insert so the following week is `unchanged`, not `missing_raw_import`.
+
+**Expected first run** (bootstrapped catalog vs current feed): 162 collapsed SERVICE_IDs; most lines unchanged; about 17 category enrichments (collapse unions categories the Phase 1 pipeline drops); `fsd-2964` locked; plus standalone geocode-flag items. If every line is `changed`, SERVICE_ID matching is broken.
+
+Isolated runner tests use a **separate** compose project so they do not share port 54329 with other worktrees:
+
+```bash
+npm run db:sync-test:up    # host port 54339, project weekly-fsd-sync-l2yyxlzr
+npm run test:sync
+npm run db:sync-test:down
+```
+
 ---
 
 ## Phase 2 — Directus editor workspace (local)
@@ -156,7 +184,7 @@ Configuration is in git, not clicked-in state:
 |------|------------|
 | `porirua_directory/directus/snapshot.yaml` | Collections, fields, Interfaces, relations, plus roles / permissions / presets exported with the running instance |
 | `porirua_directory/directus/flows/` | Sticky curation, Publish directory, Roll back, review actions, failure notification |
-| `porirua_directory/directus/operations/` | Sidecar the Flows POST to (sticky, approve, hide, reject, publish, rollback, alias). Can publish, approve, and rewrite `raw_import`. **Cluster-internal only — no Ingress.** Local compose binds host `18790` for tests. |
+| `porirua_directory/directus/operations/` | Sidecar the Flows POST to (sticky, approve, hide, reject, publish, rollback, alias). Can publish, approve, and rewrite `raw_import`. **Cluster-internal only — no Ingress.** Local compose binds host `18790` for tests. Approve/hide/reject import `scripts/approve-review.mjs`. |
 | `porirua_directory/scripts/directus/bootstrap.mjs` | Applies the workspace to a fresh Directus |
 
 ### Editor daily path
@@ -164,7 +192,7 @@ Configuration is in git, not clicked-in state:
 1. Sign in as **Editor**.
 2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line). Related **service lines** are on the organisation record (read-only). Open a line to edit it; do not re-parent from the organisation form.
 3. Edit ordinary fields (address, phone, description). On an FSD-sourced record, saving triggers **Sticky curation on save**, which upserts one `overrides` row `{target_type, target_id, action: "patch", patch}` and merges keys into that row. You never type patch JSON.
-4. Open the **Review queue** preset on `pending_review`. Use **Approve**, **Edit-and-approve**, **Hide**, or **Reject**. Approve applies `proposed.after`, sets status, **refreshes `raw_import`**, and marks the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week.
+4. Open the **Review queue** preset on `pending_review`. Use **Approve**, **Edit-and-approve**, **Hide**, or **Reject**. Those Flows call the shared `approveReviewItem` in `scripts/approve-review.mjs` — apply `proposed.after`, set status, **refresh `raw_import`**, promote a draft organisation, mark the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week.
 5. Status changes stay in Postgres. They do **not** go public until you publish.
 
 ### Publish

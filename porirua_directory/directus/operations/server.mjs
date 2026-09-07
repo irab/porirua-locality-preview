@@ -15,7 +15,7 @@ import {
   editAndApproveReviewItem,
   hideReviewItem,
   rejectReviewItem,
-} from "../../scripts/directus/approve-review.mjs";
+} from "../../scripts/approve-review.mjs";
 import { recordPublicIdAlias } from "../../scripts/directus/public-id-alias.mjs";
 import { catalogCountPreflight } from "../../scripts/directus/publish-preflight.mjs";
 import {

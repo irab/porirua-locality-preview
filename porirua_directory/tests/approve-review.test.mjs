@@ -5,7 +5,7 @@ import {
   editAndApproveReviewItem,
   hideReviewItem,
   rejectReviewItem,
-} from "../scripts/directus/approve-review.mjs";
+} from "../scripts/approve-review.mjs";
 import { withDirectusDatabase } from "./helpers/directus-postgres.mjs";
 
 const RAW_BEFORE = {

@@ -13,6 +13,7 @@
 |-------------|----------|
 | FSD Porirua import | `porirua_directory/scripts/fsd-import.mjs` |
 | Filter + category rules | `porirua_directory/scripts/fsd-porirua-rules.mjs` |
+| Weekly FSD collapse / diff / runner (Phase 2) | `porirua_directory/scripts/fsd-sync-collapse.mjs`, `fsd-sync-diff.mjs`, `fsd-sync-run.mjs` |
 | Connections + FSD merge | `porirua_directory/scripts/merge-services.mjs` |
 | Normalisation / dedupe | `porirua_directory/scripts/lib/normalize.mjs` |
 | Org grouping (Option B) | `porirua_directory/scripts/org-grouping.mjs` |
@@ -176,3 +177,22 @@ Applied at merge time. `hiddenIds` removes rows from published output entirely.
 ## Phase 2 pointer
 
 Schema, bootstrap, and snapshot publish live in `porirua_directory/scripts/` (`db-schema.sql`, `db-import-from-json.mjs`, `publish-catalog.mjs`). Admin workflows (review queue, publish/hide, weekly FSD) — see requirements §6 and [architecture Phase 2](./architecture/porirua-directory-architecture.md#phase-2--catalog-store-in-repo-now). **Directus** is the editor UI; **D1** is an exit only.
+
+### Weekly FSD sync — collapse, diff, and runner
+
+The feed repeats `SERVICE_ID` across category rows. `importFsdFromCsv` does not de-duplicate; a first-row-wins weekly diff would flap when only CSV order moved. Pure helpers in `porirua_directory/scripts/` specify the contract; `fsd-sync-run.mjs` wires them to Postgres. `buildFsdImportReport`, `fsd-porirua-rules.mjs`, and `fsd-geocode-qa.mjs` stay the source of truth for filtering and geocode QA.
+
+**`collapseFsdRows(mappedRows)`** (`fsd-sync-collapse.mjs`) groups already-mapped rows by **`SERVICE_ID`**. Mapped input must carry `SERVICE_ID` and `FSD_ID` as separate fields. Output repeats that split as **`fsd_service_id`** (the only diff key; database `fsd_service_id`) and **`fsd_legacy_id`** (DIA `FSD_ID`, still emitted on the public payload as `fsdServiceId`). Do not treat `fsdServiceId` as the catalog identity — `mapFsdRowToService` sets it from `FSD_ID`. Winner per group:
+
+1. Most non-empty fingerprint fields (`name`, `serviceName`, `description`, `phone`, `url`, `address`, `lat`, `lng`, `categories`)
+2. Then a non-null, in-bounds geocode per `fsd-geocode-qa.mjs`
+3. Then lowest `FSD_ID`, then original CSV order
+
+`categories` are unioned across the group (same idea as `buildOrganizationRecord`). The result carries `sourceRowCount` and `discardedFsdIds`.
+
+**`diffFsdCatalog(collapsed, dbRows)`** (`fsd-sync-diff.mjs`) keys database rows on `fsd_service_id` = **`SERVICE_ID`**. Unmatched incoming rows are `new` with `proposed.match_confidence='low'` (no fuzzy name/address match). Fingerprint compare is against **`raw_import`** (last accepted snapshot), normalised via `scripts/lib/normalize.mjs` — editor edits to live fields do not re-queue. Kinds: `new`, `changed`, `removed`, `unchanged`, `geocode_flag`.
+
+Locks: `status='hidden'` or an open `overrides` hide/patch keeps incoming values in `proposed` and never auto-publishes (`proposed.blocked_by_hidden` on hide). Removals never auto-hide. Missing `raw_import` is `changed` with `proposed.missing_raw_import`. `isIncludedCountBelowSanityThreshold` is true only when this week's included count is **strictly below** 75% of the last successful run (the runner aborts and writes zero removals). Open override rows use schema `action` (`hide` | `patch`) and lock every key on `patch` jsonb — not a `type`/`field` pair.
+
+The runner keeps **one pending** `review_queue_items` row per entity+kind (refresh `proposed` in place). A `geocode_flag` already accepted or rejected for the same code is not raised again. Editors approve through **`approveReviewItem`** in `scripts/approve-review.mjs` (Directus imports the same export).
+
