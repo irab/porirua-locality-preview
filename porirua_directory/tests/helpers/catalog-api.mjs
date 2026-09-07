@@ -41,17 +41,44 @@ export function snapshot(version, envelope, extras = {}) {
   };
 }
 
+export function fakeClock(start = 0) {
+  let now = start;
+  return {
+    now() {
+      return now;
+    },
+    set(value) {
+      now = value;
+    },
+    advance(ms) {
+      now += ms;
+    },
+  };
+}
+
 export function fakeRepository(initial = {}) {
   let current = initial.current ?? null;
   const byVersion = new Map(initial.byVersion ?? []);
   if (current) byVersion.set(current.version, current);
   let queryCount = 0;
+  let envelopeReads = 0;
+  let pointerReads = 0;
   let unreachable = Boolean(initial.unreachable);
   const pingError = initial.pingError ?? null;
+
+  function failIfUnreachable() {
+    if (unreachable) throw new Error("connect ECONNREFUSED 127.0.0.1:5432");
+  }
 
   return {
     queryCount() {
       return queryCount;
+    },
+    envelopeReads() {
+      return envelopeReads;
+    },
+    pointerReads() {
+      return pointerReads;
     },
     setCurrent(next) {
       current = next;
@@ -60,14 +87,22 @@ export function fakeRepository(initial = {}) {
     setUnreachable(value) {
       unreachable = value;
     },
+    async getCurrentVersion() {
+      queryCount += 1;
+      pointerReads += 1;
+      failIfUnreachable();
+      return current ? current.version : null;
+    },
     async getCurrent() {
       queryCount += 1;
-      if (unreachable) throw new Error("connect ECONNREFUSED 127.0.0.1:5432");
+      envelopeReads += 1;
+      failIfUnreachable();
       return current;
     },
     async getByVersion(version) {
       queryCount += 1;
-      if (unreachable) throw new Error("connect ECONNREFUSED 127.0.0.1:5432");
+      envelopeReads += 1;
+      failIfUnreachable();
       return byVersion.get(Number(version)) ?? null;
     },
     async ping() {

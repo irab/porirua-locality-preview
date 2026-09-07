@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  fakeClock,
   fakeRepository,
   publishedEnvelope,
   snapshot,
@@ -137,56 +138,100 @@ test("served envelope contains no draft, hidden, pending_review, or merged ids",
   });
 });
 
-test("a second request for the same version does not query Postgres again", async (t) => {
+test("a repeat request does not re-read the envelope body", async (t) => {
   const envelope = publishedEnvelope();
   const older = publishedEnvelope({
     services: [{ id: "community-awatea-community-garden", name: "Older" }],
   });
+  const clock = fakeClock(0);
   const repository = fakeRepository({
     current: snapshot(8, envelope),
     byVersion: [[7, snapshot(7, older, { isCurrent: false })]],
   });
 
-  await withCatalogApi(t, { repository }, async ({ get }) => {
+  await withCatalogApi(t, { repository, now: clock.now, currentTtlMs: 30_000 }, async ({ get }) => {
     const first = await get("/api/catalog");
     assert.equal(first.status, 200);
-    assert.equal(repository.queryCount(), 1);
+    assert.equal(repository.envelopeReads(), 1);
 
     const second = await get("/api/catalog");
     assert.equal(second.status, 200);
     assert.deepEqual(await second.json(), envelope);
-    assert.equal(repository.queryCount(), 1);
+    assert.equal(repository.envelopeReads(), 1);
+    assert.equal(repository.pointerReads(), 1);
+
+    clock.advance(30_000);
+    const afterTtl = await get("/api/catalog");
+    assert.equal(afterTtl.status, 200);
+    assert.equal(afterTtl.headers.get("etag"), '"8"');
+    assert.equal(repository.envelopeReads(), 1);
+    assert.equal(repository.pointerReads(), 2);
 
     const pinned = await get("/api/catalog?version=7");
     assert.equal(pinned.status, 200);
-    assert.equal(repository.queryCount(), 2);
+    assert.equal(repository.envelopeReads(), 2);
 
     const pinnedAgain = await get("/api/catalog?version=7");
-    assert.equal(pinnedAgain.status, 200);
     assert.deepEqual(await pinnedAgain.json(), older);
-    assert.equal(repository.queryCount(), 2);
+    assert.equal(repository.envelopeReads(), 2);
 
     const sameAsCurrent = await get("/api/catalog?version=8");
     assert.equal(sameAsCurrent.status, 200);
-    assert.equal(repository.queryCount(), 2);
+    assert.equal(repository.envelopeReads(), 2);
+  });
+});
+
+test("a newly published snapshot is served after the current-pointer TTL", async (t) => {
+  const firstEnvelope = publishedEnvelope({
+    services: [{ id: "community-awatea-community-garden", name: "First publish" }],
+  });
+  const secondEnvelope = publishedEnvelope({
+    services: [{ id: "community-awatea-community-garden", name: "Second publish" }],
+  });
+  const clock = fakeClock(0);
+  const repository = fakeRepository({
+    current: snapshot(1, firstEnvelope),
+  });
+
+  await withCatalogApi(t, { repository, now: clock.now, currentTtlMs: 30_000 }, async ({ get }) => {
+    const first = await get("/api/catalog");
+    assert.equal(first.headers.get("etag"), '"1"');
+    assert.deepEqual(await first.json(), firstEnvelope);
+
+    repository.setCurrent(snapshot(2, secondEnvelope));
+    const stillCached = await get("/api/catalog");
+    assert.equal(stillCached.headers.get("etag"), '"1"');
+    assert.equal(repository.envelopeReads(), 1);
+
+    clock.advance(30_000);
+    const refreshed = await get("/api/catalog");
+    assert.equal(refreshed.status, 200);
+    assert.equal(refreshed.headers.get("etag"), '"2"');
+    assert.deepEqual(await refreshed.json(), secondEnvelope);
+    assert.equal(repository.envelopeReads(), 2);
   });
 });
 
 test("serves the last known snapshot when Postgres becomes unreachable", async (t) => {
   const envelope = publishedEnvelope();
+  const clock = fakeClock(0);
   const repository = fakeRepository({
     current: snapshot(9, envelope),
   });
 
-  await withCatalogApi(t, { repository }, async ({ get }) => {
+  await withCatalogApi(t, { repository, now: clock.now, currentTtlMs: 30_000 }, async ({ get }) => {
     const first = await get("/api/catalog");
     assert.equal(first.status, 200);
     repository.setUnreachable(true);
 
-    const stale = await get("/api/catalog");
-    assert.equal(stale.status, 200);
-    assert.equal(stale.headers.get("etag"), '"9"');
-    const text = await stale.text();
+    const withinTtl = await get("/api/catalog");
+    assert.equal(withinTtl.status, 200);
+
+    clock.advance(30_000);
+    const afterFailedRefresh = await get("/api/catalog");
+    assert.equal(afterFailedRefresh.status, 200);
+    assert.equal(afterFailedRefresh.headers.get("etag"), '"9"');
+    const text = await afterFailedRefresh.text();
     assertNoStackLeak(text);
     assert.deepEqual(JSON.parse(text), envelope);
   });

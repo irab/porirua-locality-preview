@@ -59,11 +59,11 @@ function sendCatalog(req, res, snapshot) {
   res.end(body);
 }
 
-export function createCatalogServer({ repository, service } = {}) {
+export function createCatalogServer({ repository, service, now, currentTtlMs } = {}) {
   const catalog =
     service ??
     (repository
-      ? createCatalogService({ repository })
+      ? createCatalogService({ repository, now, currentTtlMs })
       : null);
   if (!catalog) {
     throw new Error("createCatalogServer requires a snapshot repository");

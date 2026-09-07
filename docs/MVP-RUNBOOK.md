@@ -143,7 +143,7 @@ npm run start:api
 # GET http://127.0.0.1:3000/api/health
 ```
 
-`ETag` is the snapshot version. Send `If-None-Match` for a 304. The process caches envelopes by version (repeat requests do not query Postgres) and keeps the last current snapshot if the database is briefly unreachable. With an empty cache and no database it returns `503` `{ "error": "catalog unavailable" }` — never a stack trace. After a new publish, restart the API process so it picks up the new `is_current` row.
+`ETag` is the snapshot version. Send `If-None-Match` for a 304. Envelope bodies are cached in process by version and are never re-fetched (snapshots are immutable). The API re-checks only `SELECT version FROM catalog_snapshots WHERE is_current` on a short TTL (default 30 seconds, override with `CATALOG_CURRENT_TTL_MS` in `config.mjs` / the environment — use a small value in dev). After that TTL a new publish is served without restarting the process. If Postgres is briefly unreachable, the last known pointer and envelope stay in service. With an empty cache and no database it returns `503` `{ "error": "catalog unavailable" }` — never a stack trace.
 
 `Dockerfile` stays nginx-only. `Dockerfile.api` is the Node image (`ghcr.io/irab/porirua-directory-api`). Do not add Node to the static image.
 
@@ -154,7 +154,7 @@ CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; on push to `main`
 ## Deploy
 
 1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the nginx and catalog-api container images.
-2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`). The catalog API is not routed in that tenant until the gated prod-tenant task adds the Deployment, Service, `DATABASE_URL` secret, and Traefik `/api` path.
+2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`). The catalog API is not routed in that tenant until the gated prod-tenant task adds the Deployment, Service, `DATABASE_URL` secret, optional `CATALOG_CURRENT_TTL_MS`, and Traefik `/api` path. Publishing a snapshot does not require rolling the API pod.
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
    - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).

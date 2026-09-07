@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { createCatalogRepository } from "../api/catalog-repository.mjs";
 import { bootstrapFromJson } from "../scripts/db-import-from-json.mjs";
 import { publishCatalog } from "../scripts/publish-catalog.mjs";
-import { withCatalogApi } from "./helpers/catalog-api.mjs";
+import { fakeClock, withCatalogApi } from "./helpers/catalog-api.mjs";
 import { withTestDatabase } from "./helpers/postgres.mjs";
 
 const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "../data");
@@ -85,5 +85,44 @@ test("publish then GET /api/catalog never serves draft, hidden, pending_review, 
         false
       );
     });
+  });
+});
+
+test("a second publish is served after the pointer TTL without restarting the process", async (t) => {
+  await withTestDatabase(t, async (client) => {
+    const { envelope, overrides } = await loadCommitted();
+    await bootstrapFromJson({ envelope, overrides, db: client });
+    const first = await publishCatalog({ db: client, publishedBy: "ttl-v1" });
+    const clock = fakeClock(0);
+    const repository = createCatalogRepository(client);
+
+    await withCatalogApi(
+      t,
+      { repository, now: clock.now, currentTtlMs: 30_000 },
+      async ({ get }) => {
+        const before = await get("/api/catalog");
+        assert.equal(before.status, 200);
+        assert.equal(before.headers.get("etag"), `"${first.version}"`);
+
+        await client.query(
+          `UPDATE organizations SET name = 'Live After Publish' WHERE public_id = 'fsd-2964'`
+        );
+        const second = await publishCatalog({ db: client, publishedBy: "ttl-v2" });
+        assert.notEqual(second.version, first.version);
+
+        const stillFirst = await get("/api/catalog");
+        assert.equal(stillFirst.headers.get("etag"), `"${first.version}"`);
+
+        clock.advance(30_000);
+        const after = await get("/api/catalog");
+        assert.equal(after.status, 200);
+        assert.equal(after.headers.get("etag"), `"${second.version}"`);
+        const body = await after.json();
+        assert.equal(
+          body.services.some((entry) => entry.name === "Live After Publish"),
+          true
+        );
+      }
+    );
   });
 });

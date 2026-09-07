@@ -24,6 +24,17 @@ export function createCatalogRepository(db = null) {
   const executor = () => db ?? getPool();
 
   return {
+    async getCurrentVersion() {
+      const result = await executor().query(
+        `SELECT version
+           FROM catalog_snapshots
+          WHERE is_current
+          LIMIT 1`
+      );
+      const version = result.rows[0]?.version;
+      return version == null ? null : Number(version);
+    },
+
     async getCurrent() {
       const result = await executor().query(
         `SELECT ${SNAPSHOT_COLUMNS}
