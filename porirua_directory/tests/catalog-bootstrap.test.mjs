@@ -103,6 +103,23 @@ test("disambiguated ids are stable when envelope order is shuffled", async () =>
   );
 });
 
+test("bootstrapped FSD lines key fsd_service_id from the fsd- public id, not fsdServiceId", async () => {
+  const envelope = JSON.parse(await fs.readFile(path.join(dataDir, "services.json"), "utf8"));
+  const { services } = prepareRows(envelope);
+  const fsd = services.filter((service) => service.source === "fsd");
+  assert.equal(fsd.length, 162);
+  for (const service of fsd) {
+    const publicLineId = String(service.line_id ?? service.id);
+    assert.match(publicLineId, /^fsd-/);
+    assert.equal(service.fsd_service_id, publicLineId.slice("fsd-".length));
+    assert.notEqual(
+      service.fsd_service_id,
+      service.fsd_legacy_id,
+      `${publicLineId} must not treat FSD_ID as SERVICE_ID`
+    );
+  }
+});
+
 test("raw_import is seeded for every FSD-sourced line and no community line", async () => {
   const envelope = JSON.parse(await fs.readFile(path.join(dataDir, "services.json"), "utf8"));
   const rows = catalogToRows(envelope, {});

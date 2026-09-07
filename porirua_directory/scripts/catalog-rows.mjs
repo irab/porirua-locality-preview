@@ -6,10 +6,16 @@
 import { flatRowToServiceLine } from "./org-grouping.mjs";
 
 /**
- * CSV SERVICE_ID is not stored on the published envelope.
+ * CSV SERVICE_ID is not stored on the published envelope — there is no
+ * `SERVICE_ID` key on `data/services.json` or the raw import JSON.
  * Public FSD ids are `fsd-<SERVICE_ID>` when SERVICE_ID was present, otherwise
- * `fsd-<FSD_ID>`. Derive the future diff key from that prefix so sync can key
- * on SERVICE_ID even though this snapshot cannot prove the two ever differed.
+ * `fsd-<FSD_ID>`. `fsdServiceId` on the envelope is FSD_ID (legacy), never
+ * SERVICE_ID. Derive the weekly-sync diff key by stripping `fsd-` from the
+ * line id. Do not read `fsdServiceId` here: that would make the first sync
+ * match nothing and queue every FSD line as new+removed.
+ *
+ * Must stay aligned with `serviceIdOf()` in `fsd-sync-collapse.mjs` (its
+ * fallback when SERVICE_ID is absent): strip the `fsd-` prefix from `id`.
  */
 export function fsdServiceIdFromPublicId(publicId) {
   const id = String(publicId ?? "");

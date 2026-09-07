@@ -42,6 +42,24 @@ test("bootstrap is idempotent: a second run changes no row counts and no ids", a
   });
 });
 
+test("persisted FSD lines keep SERVICE_ID in fsd_service_id and FSD_ID in fsd_legacy_id", async (t) => {
+  await withTestDatabase(t, async (client) => {
+    const { envelope, overrides } = await loadCommitted();
+    await bootstrapFromJson({ envelope, overrides, db: client });
+    const fsd = await client.query(
+      `SELECT line_id, fsd_service_id, fsd_legacy_id
+         FROM services
+        WHERE source = 'fsd'
+        ORDER BY line_id`
+    );
+    assert.equal(fsd.rowCount, 162);
+    for (const row of fsd.rows) {
+      assert.equal(row.fsd_service_id, String(row.line_id).slice("fsd-".length));
+      assert.notEqual(row.fsd_service_id, row.fsd_legacy_id);
+    }
+  });
+});
+
 test("raw_import is seeded for every FSD-sourced line", async (t) => {
   await withTestDatabase(t, async (client) => {
     const { envelope, overrides } = await loadCommitted();
