@@ -397,16 +397,38 @@ async function ensureUser(token, { email, password, role, firstName }) {
     await request(`${DIRECTUS_URL}/users/${existing.data[0].id}`, {
       token,
       method: "PATCH",
-      body: { role, password },
+      body: { role, password, last_page: "/directory" },
     });
     return existing.data[0];
   }
   const created = await request(`${DIRECTUS_URL}/users`, {
     token,
     method: "POST",
-    body: { email, password, role, first_name: firstName, status: "active" },
+    body: {
+      email,
+      password,
+      role,
+      first_name: firstName,
+      status: "active",
+      last_page: "/directory",
+    },
   });
   return created.data;
+}
+
+async function setEditorLandingPage(token, editorRoleId) {
+  const users = await request(
+    `${DIRECTUS_URL}/users?filter[role][_eq]=${encodeURIComponent(editorRoleId)}&limit=-1`,
+    { token }
+  );
+  for (const user of users.data ?? []) {
+    if (user.last_page === "/directory") continue;
+    await request(`${DIRECTUS_URL}/users/${user.id}`, {
+      token,
+      method: "PATCH",
+      body: { last_page: "/directory" },
+    });
+  }
 }
 
 async function ensurePreset(token, preset) {
@@ -883,6 +905,7 @@ export async function bootstrapDirectus() {
   await configureCollections(token);
   const { editorRole, editorPolicy, editorUser } = await configureRoles(token);
   await configurePresets(token, editorRole.id);
+  await setEditorLandingPage(token, editorRole.id);
   const flows = await importFlows(token);
   const snapshotPath = await exportWorkspace(token);
   return {

@@ -53,4 +53,8 @@ test("Editor uses the Directory module; raw queue and snapshot collections stay 
   const fieldNames = (fields.data?.data ?? []).map((row) => row.field);
   assert.ok(fieldNames.includes("change_summary"), "change_summary field metadata missing");
   assert.ok(fieldNames.includes("kind"));
+
+  const me = await directusRequest(editor, "/users/me?fields=last_page");
+  assert.equal(me.status, 200, `users/me status ${me.status}`);
+  assert.equal(me.data?.data?.last_page, "/directory");
 });
