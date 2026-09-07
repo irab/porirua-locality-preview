@@ -8,9 +8,11 @@ import { catalogToRows } from "../scripts/catalog-rows.mjs";
 import { FSD_CSV_URL } from "../scripts/config.mjs";
 import { bootstrapFromJson } from "../scripts/db-import-from-json.mjs";
 import { orgClusterKey } from "../scripts/lib/org-cluster.mjs";
-import { approveFsdReviewItem } from "../scripts/fsd-sync-approve.mjs";
+import { approveReviewItem, rejectReviewItem } from "../scripts/approve-review.mjs";
+import { GEOCODE_QA_REASON } from "../scripts/fsd-geocode-qa.mjs";
 import {
   attachFsdIdentity,
+  decideQueueWrite,
   includedRowsForCollapse,
   missingServiceIdCount,
   runFsdSync,
@@ -74,6 +76,21 @@ export const WELLINGTON_ONLY = {
   LATITUDE: "-41.28",
   LONGITUDE: "174.77",
   LEVEL_1_CATEGORY: "Support",
+};
+
+/** In-Porirua district, marine pin — fingerprint-stable geocode_flag fixture. */
+export const MARINE_PIN = {
+  FSD_ID: "4690",
+  SERVICE_ID: "9004-marine",
+  PROVIDER_NAME: "Marine Pin Trust",
+  SERVICE_NAME: "Support group",
+  SERVICE_DETAIL: "Respiratory support.",
+  PUBLISHED_PHONE_1: "04 237 6892",
+  PHYSICAL_DISTRICT: "Porirua City",
+  PHYSICAL_ADDRESS: "",
+  LATITUDE: "-41.080194",
+  LONGITUDE: "174.760239",
+  LEVEL_1_CATEGORY: "Health",
 };
 
 export const TITAHI_CLINIC = {
@@ -280,6 +297,9 @@ test("a new SERVICE_ID without a cluster match creates a draft org that never sn
     const service = await client.query(`SELECT * FROM services WHERE fsd_service_id = '9003-clinic'`);
     assert.equal(service.rows[0].organization_id, org.rows[0].id);
     assert.equal(service.rows[0].status, "pending_review");
+    assert.ok(service.rows[0].raw_import);
+    assert.equal(service.rows[0].raw_import.name, "Titahi Bay Community");
+    assert.equal(service.rows[0].raw_import.fsd_service_id, "9003-clinic");
     const snapshot = rowsForSnapshot(
       org.rows.map(mapOrganizationRow),
       service.rows.map(mapServiceRow)
@@ -502,7 +522,7 @@ test("sync then approve then publish moves a change live and approval refreshes 
     );
     assert.equal(queue.rowCount, 1);
 
-    await approveFsdReviewItem({ db: client, queueItemId: queue.rows[0].id });
+    await approveReviewItem({ db: client, queueItemId: queue.rows[0].id });
     const service = await client.query(`SELECT * FROM services WHERE fsd_service_id = '9001-line-a'`);
     assert.equal(service.rows[0].status, "published");
     assert.ok(service.rows[0].categories.includes("health"));
@@ -616,7 +636,7 @@ test("approving a new SERVICE_ID publishes its draft organization into the snaps
     const orgBefore = await client.query(`SELECT status FROM organizations WHERE id = 'fsd-9003-clinic'`);
     assert.equal(orgBefore.rows[0].status, "draft");
     const queue = await client.query(`SELECT id FROM review_queue_items WHERE kind = 'new'`);
-    await approveFsdReviewItem({ db: client, queueItemId: queue.rows[0].id });
+    await approveReviewItem({ db: client, queueItemId: queue.rows[0].id });
     const orgAfter = await client.query(`SELECT status FROM organizations WHERE id = 'fsd-9003-clinic'`);
     assert.equal(orgAfter.rows[0].status, "published");
     const published = await publishCatalog({ db: client, publishedBy: "editor" });
@@ -626,5 +646,126 @@ test("approving a new SERVICE_ID publishes its draft organization into the snaps
         (entry.services ?? []).some((line) => line.id === "fsd-9003-clinic" || line.lineId === "fsd-9003-clinic")
     );
     assert.equal(found, true);
+  });
+});
+
+test("a new SERVICE_ID seeds raw_import so the next week is unchanged, not missing_raw_import", async (t) => {
+  await withSyncDatabase(t, async (client) => {
+    await runFsdSync({ db: client, csvText: fsdCsv([TITAHI_CLINIC]) });
+    const first = await client.query(`SELECT raw_import FROM services WHERE fsd_service_id = '9003-clinic'`);
+    assert.ok(first.rows[0].raw_import);
+    assert.notEqual(first.rows[0].raw_import, null);
+
+    const second = await runFsdSync({ db: client, csvText: fsdCsv([TITAHI_CLINIC]) });
+    const changed = second.items.filter((item) => item.kind === "changed");
+    assert.equal(changed.length, 0);
+    assert.equal(second.stats.unchanged, 1);
+    assert.ok(!changed.some((item) => item.proposed?.missing_raw_import));
+    const pending = await client.query(
+      `SELECT kind, count(*)::int AS n FROM review_queue_items WHERE status = 'pending' GROUP BY kind`
+    );
+    assert.equal(pending.rows.length, 1);
+    assert.equal(pending.rows[0].kind, "new");
+    assert.equal(pending.rows[0].n, 1);
+  });
+});
+
+test("decideQueueWrite refreshes one pending row and skips a ruled-on geocode code", () => {
+  assert.equal(decideQueueWrite({ kind: "changed" }, { pending: { id: "q1" } }), "refresh");
+  assert.equal(decideQueueWrite({ kind: "changed" }, { pending: null }), "insert");
+  assert.equal(
+    decideQueueWrite(
+      { kind: "geocode_flag", proposed: { geocode_flag: { code: GEOCODE_QA_REASON.GEOCODE_IN_MARINE_BBOX } } },
+      { pending: { id: "q1" } }
+    ),
+    "refresh"
+  );
+  assert.equal(
+    decideQueueWrite(
+      { kind: "geocode_flag", proposed: { geocode_flag: { code: GEOCODE_QA_REASON.GEOCODE_IN_MARINE_BBOX } } },
+      { pending: null, ruledGeocodeCodes: new Set([GEOCODE_QA_REASON.GEOCODE_IN_MARINE_BBOX]) }
+    ),
+    "skip"
+  );
+  assert.equal(
+    decideQueueWrite(
+      {
+        kind: "geocode_flag",
+        proposed: { geocode_flag: { code: GEOCODE_QA_REASON.GEOCODE_OUTSIDE_PORIRUA_BOUNDS } },
+      },
+      { pending: null, ruledGeocodeCodes: new Set([GEOCODE_QA_REASON.GEOCODE_IN_MARINE_BBOX]) }
+    ),
+    "insert"
+  );
+});
+
+test("two syncs over unchanged data leave one pending item per entity and kind", async (t) => {
+  await withSyncDatabase(t, async (client) => {
+    const raw = fingerprintFromCsv(PORIRUA_FOOD);
+    await insertFsdService(client, {
+      csvRow: PORIRUA_FOOD,
+      description: "Last accepted food text",
+      rawImport: { ...raw, description: "Last accepted food text" },
+    });
+    await insertFsdService(client, { csvRow: MARINE_PIN });
+    const incoming = { ...PORIRUA_FOOD, SERVICE_DETAIL: "Updated food help from FSD" };
+    const csv = fsdCsv([incoming, MARINE_PIN]);
+
+    const first = await runFsdSync({ db: client, csvText: csv });
+    assert.equal(first.stats.changed, 1);
+    assert.equal(first.stats.geocode_flag, 1);
+
+    const second = await runFsdSync({ db: client, csvText: csv });
+    assert.equal(second.stats.changed, 1);
+    assert.equal(second.stats.geocode_flag, 1);
+
+    const pending = await client.query(
+      `SELECT entity_id, kind, count(*)::int AS n
+         FROM review_queue_items
+        WHERE status = 'pending'
+        GROUP BY entity_id, kind
+        ORDER BY entity_id, kind`
+    );
+    assert.deepEqual(
+      pending.rows.map((row) => ({ entity_id: row.entity_id, kind: row.kind, n: row.n })),
+      [
+        { entity_id: "fsd-9001-line-a", kind: "changed", n: 1 },
+        { entity_id: "fsd-9004-marine", kind: "geocode_flag", n: 1 },
+      ]
+    );
+    const total = await client.query(`SELECT count(*)::int AS n FROM review_queue_items`);
+    assert.equal(total.rows[0].n, 2);
+  });
+});
+
+test("a rejected geocode flag of the same code is not raised again", async (t) => {
+  await withSyncDatabase(t, async (client) => {
+    await insertFsdService(client, { csvRow: MARINE_PIN });
+    const first = await runFsdSync({ db: client, csvText: fsdCsv([MARINE_PIN]) });
+    assert.equal(first.stats.geocode_flag, 1);
+    const queue = await client.query(
+      `SELECT * FROM review_queue_items WHERE kind = 'geocode_flag' AND status = 'pending'`
+    );
+    assert.equal(queue.rowCount, 1);
+    assert.equal(queue.rows[0].proposed.geocode_flag.code, GEOCODE_QA_REASON.GEOCODE_IN_MARINE_BBOX);
+
+    await rejectReviewItem({ db: client, queueItemId: queue.rows[0].id });
+    const afterReject = await client.query(`SELECT status FROM review_queue_items WHERE id = $1`, [
+      queue.rows[0].id,
+    ]);
+    assert.equal(afterReject.rows[0].status, "rejected");
+
+    const second = await runFsdSync({ db: client, csvText: fsdCsv([MARINE_PIN]) });
+    const pending = await client.query(
+      `SELECT * FROM review_queue_items WHERE kind = 'geocode_flag' AND status = 'pending'`
+    );
+    assert.equal(pending.rowCount, 0);
+    assert.equal(
+      second.queued.filter((row) => row.kind === "geocode_flag").length,
+      0
+    );
+    const allFlags = await client.query(`SELECT status FROM review_queue_items WHERE kind = 'geocode_flag'`);
+    assert.equal(allFlags.rowCount, 1);
+    assert.equal(allFlags.rows[0].status, "rejected");
   });
 });

@@ -194,3 +194,5 @@ The feed repeats `SERVICE_ID` across category rows. `importFsdFromCsv` does not 
 
 Locks: `status='hidden'` or an open `overrides` hide/patch keeps incoming values in `proposed` and never auto-publishes (`proposed.blocked_by_hidden` on hide). Removals never auto-hide. Missing `raw_import` is `changed` with `proposed.missing_raw_import`. `isIncludedCountBelowSanityThreshold` is true only when this week's included count is **strictly below** 75% of the last successful run (the runner aborts and writes zero removals). Open override rows use schema `action` (`hide` | `patch`) and lock every key on `patch` jsonb — not a `type`/`field` pair.
 
+The runner keeps **one pending** `review_queue_items` row per entity+kind (refresh `proposed` in place). A `geocode_flag` already accepted or rejected for the same code is not raised again. Editors approve through **`approveReviewItem`** in `scripts/approve-review.mjs` (Directus imports the same export).
+

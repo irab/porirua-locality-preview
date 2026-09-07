@@ -129,7 +129,7 @@ The public site still reads `data/services.json` until the catalog API is wired.
 
 ### Weekly FSD sync (Phase 2 runner)
 
-`npm run sync:fsd` fetches the national CSV, applies the same Porirua filter and geocode QA as `import:fsd` (`buildFsdImportReport`), attaches `SERVICE_ID` / `FSD_ID` from the CSV, collapses duplicate SERVICE_ID groups, and diffs against `services.raw_import`. It writes **one** `import_runs` row and `review_queue_items` for new, changed, removed, and geocode-flag rows. It **never** creates a `catalog_snapshots` row or changes the live catalog.
+`npm run sync:fsd` fetches the national CSV, applies the same Porirua filter and geocode QA as `import:fsd` (`buildFsdImportReport`), attaches `SERVICE_ID` / `FSD_ID` from the CSV, collapses duplicate SERVICE_ID groups, and diffs against `services.raw_import`. It writes **one** `import_runs` row and `review_queue_items` for new, changed, removed, and geocode-flag rows. It **never** creates a `catalog_snapshots` row or changes the live catalog. A later run refreshes an existing **pending** item for the same entity and kind instead of stacking another row. A `geocode_flag` that an editor already accepted or rejected (same flag code) is not raised again.
 
 ```bash
 cd porirua_directory
@@ -143,7 +143,7 @@ Worker image: `Dockerfile.sync` (Node; installs `csv-parse` even though it is a 
 
 **Locks:** `status=hidden` and open `overrides` rows (`action=hide|patch`, locked fields = keys on `patch`) stay on the published columns. The curated Ngāti Toa Street patch on `fsd-2964` must not be proposed for reversion.
 
-**Approval:** `scripts/fsd-sync-approve.mjs` applies `proposed.after`, sets `published`, and **refreshes `raw_import`**. Without that refresh the same change re-queues every week. Then `npm run catalog:publish` materialises a new snapshot. Draft organisations created for unmatched SERVICE_IDs stay out of snapshots until that approval.
+**Approval:** `scripts/approve-review.mjs` exporting **`approveReviewItem`** is the single implementation (Directus imports the same module; `npm run review:approve -- --approve <queueItemId>` calls it). It applies `proposed.after`, sets `published`, promotes a draft organisation, and **refreshes `raw_import`**. Without that refresh the same change re-queues every week. Then `npm run catalog:publish` materialises a new snapshot. Draft organisations created for unmatched SERVICE_IDs stay out of snapshots until that approval. New SERVICE_IDs seed `raw_import` on insert so the following week is `unchanged`, not `missing_raw_import`.
 
 **Expected first run** (bootstrapped catalog vs current feed): 162 collapsed SERVICE_IDs; most lines unchanged; about 17 category enrichments (collapse unions categories the Phase 1 pipeline drops); `fsd-2964` locked; plus standalone geocode-flag items. If every line is `changed`, SERVICE_ID matching is broken.
 

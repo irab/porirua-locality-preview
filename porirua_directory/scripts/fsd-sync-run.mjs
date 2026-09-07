@@ -74,6 +74,27 @@ export function shouldQueueDiffItem(item, dbRow) {
   return !fingerprintsEqualIgnoringFields(incoming, baseline, locked);
 }
 
+export function geocodeFlagCodeOf(proposed) {
+  return proposed?.geocode_flag?.code ?? null;
+}
+
+/**
+ * One pending row per entity+kind. A geocode_flag already accepted or rejected
+ * for the same code stays quiet; a different code is new information.
+ *
+ * @returns {"insert"|"refresh"|"skip"}
+ */
+export function decideQueueWrite(item, { pending = null, ruledGeocodeCodes = new Set() } = {}) {
+  if (item?.kind === "geocode_flag") {
+    if (pending) return "refresh";
+    const code = geocodeFlagCodeOf(item.proposed);
+    if (code && ruledGeocodeCodes.has(code)) return "skip";
+    return "insert";
+  }
+  if (pending) return "refresh";
+  return "insert";
+}
+
 function emptyKindCounts() {
   return { new: 0, changed: 0, removed: 0, unchanged: 0, geocode_flag: 0 };
 }
@@ -258,6 +279,50 @@ async function insertQueueItem(db, importRunId, item, entityId) {
   return inserted.rows[0];
 }
 
+async function findPendingQueueItem(db, entityId, kind) {
+  const result = await db.query(
+    `SELECT * FROM review_queue_items
+      WHERE entity_type = 'service' AND entity_id = $1 AND kind = $2 AND status = 'pending'
+      ORDER BY updated_at DESC, created_at DESC
+      LIMIT 1`,
+    [entityId, kind]
+  );
+  return result.rows[0] ?? null;
+}
+
+async function loadRuledGeocodeCodes(db, entityId) {
+  const result = await db.query(
+    `SELECT proposed FROM review_queue_items
+      WHERE entity_type = 'service' AND entity_id = $1 AND kind = 'geocode_flag'
+        AND status IN ('accepted', 'rejected')`,
+    [entityId]
+  );
+  return new Set(result.rows.map((row) => geocodeFlagCodeOf(row.proposed)).filter(Boolean));
+}
+
+async function refreshQueueItem(db, pendingId, importRunId, item) {
+  const updated = await db.query(
+    `UPDATE review_queue_items
+        SET proposed = $2::jsonb, import_run_id = $3, updated_at = now()
+      WHERE id = $1
+      RETURNING *`,
+    [pendingId, asJson(item.proposed ?? {}), importRunId]
+  );
+  return updated.rows[0];
+}
+
+async function upsertQueueItem(db, importRunId, item, entityId) {
+  const pending = await findPendingQueueItem(db, entityId, item.kind);
+  const ruledGeocodeCodes =
+    item.kind === "geocode_flag" ? await loadRuledGeocodeCodes(db, entityId) : new Set();
+  const decision = decideQueueWrite(item, { pending, ruledGeocodeCodes });
+  if (decision === "skip") return { queued: false, skipped: true };
+  if (decision === "refresh") {
+    return { queued: true, refreshed: true, queueItem: await refreshQueueItem(db, pending.id, importRunId, item) };
+  }
+  return { queued: true, refreshed: false, queueItem: await insertQueueItem(db, importRunId, item, entityId) };
+}
+
 async function applyDiffItem(db, importRunId, item, dbByServiceId, collapsedByServiceId) {
   const dbRow = dbByServiceId.get(item.serviceId);
   if (!shouldQueueDiffItem(item, dbRow)) {
@@ -266,10 +331,13 @@ async function applyDiffItem(db, importRunId, item, dbByServiceId, collapsedBySe
 
   if (item.kind === "new") {
     const incoming = collapsedByServiceId.get(item.serviceId);
-    const { organization } = await findOrCreateOrganization(db, incoming);
-    const entityId = await insertNewService(db, incoming, organization.id, item.proposed?.after);
-    const queueItem = await insertQueueItem(db, importRunId, item, entityId);
-    return { queued: true, queueItem, entityId };
+    let entityId = dbRow?.id;
+    if (!entityId) {
+      const { organization } = await findOrCreateOrganization(db, incoming);
+      entityId = await insertNewService(db, incoming, organization.id, item.proposed?.after);
+    }
+    const written = await upsertQueueItem(db, importRunId, item, entityId);
+    return { ...written, entityId };
   }
 
   if (item.kind === "changed") {
@@ -281,18 +349,18 @@ async function applyDiffItem(db, importRunId, item, dbByServiceId, collapsedBySe
         [item.serviceId]
       );
     }
-    const queueItem = await insertQueueItem(db, importRunId, item, dbRow.id);
-    return { queued: true, queueItem, entityId: dbRow.id };
+    const written = await upsertQueueItem(db, importRunId, item, dbRow.id);
+    return { ...written, entityId: dbRow.id };
   }
 
   if (item.kind === "removed") {
-    const queueItem = await insertQueueItem(db, importRunId, item, dbRow.id);
-    return { queued: true, queueItem, entityId: dbRow.id };
+    const written = await upsertQueueItem(db, importRunId, item, dbRow.id);
+    return { ...written, entityId: dbRow.id };
   }
 
   if (item.kind === "geocode_flag") {
-    const queueItem = await insertQueueItem(db, importRunId, item, dbRow.id);
-    return { queued: true, queueItem, entityId: dbRow.id };
+    const written = await upsertQueueItem(db, importRunId, item, dbRow.id);
+    return { ...written, entityId: dbRow.id };
   }
 
   return { queued: false };

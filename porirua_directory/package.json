@@ -16,6 +16,7 @@
     "db:import": "node scripts/db-import-from-json.mjs",
     "catalog:publish": "node scripts/publish-catalog.mjs",
     "sync:fsd": "node scripts/fsd-sync-run.mjs",
+    "review:approve": "node scripts/approve-review.mjs",
     "import:fsd": "node scripts/fsd-import.mjs",
     "merge:services": "node scripts/merge-services.mjs",
     "build:data": "npm run import:fsd && npm run merge:services",

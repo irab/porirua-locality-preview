@@ -74,7 +74,7 @@ flowchart TD
 3. Diffs against database FSD rows keyed on `fsd_service_id`. Excluded national rows never enter the diff; feeding the whole CSV would queue hundreds of false new/removed items.
 4. Aborts if `includedCount` is strictly below 75% of the last successful FSD run.
 
-Geocode flags on included rows still do not drop the service; they become `review_queue_items.kind='geocode_flag'`. Operational steps: [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) § Weekly FSD sync.
+Geocode flags on included rows still do not drop the service; they become `review_queue_items.kind='geocode_flag'`. The runner does not stack a second pending flag, and it does not re-raise a code an editor already accepted or rejected. Operational steps: [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) § Weekly FSD sync.
 
 ---
 
