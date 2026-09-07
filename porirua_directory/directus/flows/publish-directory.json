@@ -9,7 +9,7 @@
   "options": {
     "collections": ["catalog_snapshots"],
     "requireSelection": false,
-    "location": "item",
+    "location": "collection",
     "confirm": true,
     "confirmationDescription": "Publish the current catalog to the public snapshot? A large count delta will stop here until you confirm."
   },

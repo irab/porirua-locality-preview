@@ -219,8 +219,8 @@ Configuration is in git, not clicked-in state:
 
 ### Publish
 
-1. Open **Catalog snapshots**.
-2. Run the **Publish directory** Flow. It shows a preflight of counts against the live snapshot and warns if published count moves by 15% or more (confirm to continue).
+1. Open **Catalog snapshots** (the collection, not a past version's detail page).
+2. Run the **Publish directory** Flow from the collection. It shows a preflight of counts against the live snapshot and warns if published count moves by 15% or more (confirm to continue). The Editor role must be able to `GET /flows` (`directus_flows` read) or those buttons do not render.
 3. `publish-catalog.mjs` writes a new `is_current` snapshot, purges the edge, then reports the version that went live.
 
 ### Roll back

@@ -9,7 +9,7 @@
   "options": {
     "collections": ["catalog_snapshots"],
     "requireSelection": true,
-    "location": "item",
+    "location": "both",
     "confirm": true,
     "confirmationDescription": "Roll the public directory back to this snapshot version?"
   },

@@ -2665,6 +2665,13 @@ permissions:
     permissions: {}
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
+    collection: directus_flows
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
     collection: directus_collections
     action: read
     fields:

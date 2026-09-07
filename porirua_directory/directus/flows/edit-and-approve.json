@@ -9,7 +9,7 @@
   "options": {
     "collections": ["pending_review", "review_queue_items"],
     "requireSelection": true,
-    "location": "item"
+    "location": "both"
   },
   "operation": "request_edit_approve",
   "operations": [

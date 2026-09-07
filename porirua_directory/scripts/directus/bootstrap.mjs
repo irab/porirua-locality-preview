@@ -644,7 +644,7 @@ async function configureCollections(token) {
   await ensureOrganizationServiceLines(token);
 }
 
-function editorPermissions(policyNote) {
+export function editorPermissions(policyNote) {
   return [
     {
       collection: "organizations",
@@ -697,6 +697,13 @@ function editorPermissions(policyNote) {
     },
     {
       collection: "directus_files",
+      action: "read",
+      fields: ["*"],
+      permissions: {},
+      validation: {},
+    },
+    {
+      collection: "directus_flows",
       action: "read",
       fields: ["*"],
       permissions: {},
