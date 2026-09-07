@@ -14,6 +14,7 @@ COPY data/services.json data/overrides.json ./data/
 ENV NODE_ENV=production
 ENV OPERATIONS_PORT=8790
 ENV DATA_DIR=/app/data
+ENV DIRECTUS_SNAPSHOT_OUT=/tmp/directus-snapshot.yaml
 EXPOSE 8790
 USER node
 CMD ["node", "directus/operations/server.mjs"]

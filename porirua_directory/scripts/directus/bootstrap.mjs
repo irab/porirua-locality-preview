@@ -8,6 +8,7 @@
  */
 
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { fileURLToPath } from "node:url";
@@ -799,8 +800,20 @@ async function exportWorkspace(token) {
       filter: row.filter,
     })),
   };
-  await fs.writeFile(SNAPSHOT_PATH, stringifyYaml(workspace));
-  return SNAPSHOT_PATH;
+  const yaml = stringifyYaml(workspace);
+  const preferred = process.env.DIRECTUS_SNAPSHOT_OUT || SNAPSHOT_PATH;
+  try {
+    await fs.writeFile(preferred, yaml);
+    return preferred;
+  } catch (error) {
+    // The operations image copies /app/directus as root and runs as node.
+    if (error?.code === "EACCES") {
+      const fallback = path.join(os.tmpdir(), "directus-snapshot.yaml");
+      await fs.writeFile(fallback, yaml);
+      return fallback;
+    }
+    throw error;
+  }
 }
 
 export async function bootstrapDirectus() {
