@@ -1,6 +1,6 @@
 # Porirua Services Directory — Architecture
 
-**Status:** Phase 1 (MVP) — UI, CI, and prod tenant manifests in repo; live at directory.bsky.nz after image push + Argo sync  
+**Status:** Phase 1 live at directory.bsky.nz. Phase 2 catalog store (schema, bootstrap, snapshot publish) is in this repo; the public site still reads the static file until the catalog API lands.  
 **Public URL (target):** [https://directory.bsky.nz](https://directory.bsky.nz)  
 **App code:** [`porirua_directory/`](../../porirua_directory/)  
 **Connections Map (parallel):** [`porirua_connections_map/`](../../porirua_connections_map/)
@@ -15,7 +15,7 @@ One public directory for Porirua that serves three audiences:
 2. **Community connection** — find and contact community groups (Connections Map, `orgType` filters).
 3. **Civic & community places** — marae, councils, Pātaka Kai, and similar organisations curated locally.
 
-Phase 1 is a **static site + generated JSON**. Phase 2 adds editor workflows (Directus + Postgres is the requirements default; **Cloudflare D1 + Workers** is an alternative under evaluation).
+Phase 1 is a **static site + generated JSON**. Phase 2 makes **PostgreSQL** the canonical store and serves a materialised Option B snapshot; Directus is the editor UI. **Cloudflare D1 + Workers** remains a documented exit, not the path being built.
 
 ---
 
@@ -95,13 +95,39 @@ ExternalDNS on prod creates the `directory` record when Ingress is applied.
 
 ---
 
-## Phase 2 — target (requirements vs options)
+## Phase 2 — catalog store (in repo now)
 
-**Requirements default (Appendix A):** PostgreSQL + **Directus** (admin UI + REST/GraphQL API) + weekly FSD job + publish pipeline to public JSON.
+Public traffic still uses the Phase 1 nginx + `data/services.json` path until the catalog API and prod tenant tasks land. The **canonical model** is already implemented here:
 
-**Option under evaluation:** **Cloudflare D1** (SQLite) + **Workers** for admin API; publish export to `services.json` / R2 / blackbox. Does not use Directus without a custom admin UI.
+| Piece | Path |
+|-------|------|
+| Schema | `porirua_directory/scripts/db-schema.sql` |
+| Test database | `porirua_directory/docker-compose.test.yml` |
+| Pooled client | `porirua_directory/scripts/lib/db.mjs` (`DATABASE_URL` via `config.mjs`) |
+| Bootstrap | `npm run db:import` — `db-import-from-json.mjs` |
+| Publish / rollback | `npm run catalog:publish` — `publish-catalog.mjs` |
+| Row ↔ envelope mapping | `catalog-rows.mjs`, `catalog-envelope.mjs` (pure; no clustering on read) |
 
-Both options keep the **public site static**; the admin layer is separate from `directory.bsky.nz` (e.g. `admin.directory.bsky.nz` or internal host).
+```mermaid
+flowchart LR
+  JSON[committed services.json + overrides.json]
+  PG[(Postgres)]
+  Snap[catalog_snapshots is_current]
+  JSON -->|db:import| PG
+  PG -->|published rows only| Snap
+```
+
+**Publish** builds the Option B envelope from `status=published` rows (`draft`, `hidden`, `pending_review`, and `merged_into` are excluded), inserts a `catalog_snapshots` row, and flips `is_current` in one transaction. **Rollback** points `is_current` at an earlier version. Status changes alone do not go live.
+
+**Bootstrap** loads today's committed JSON, persists grain and public ids, and seeds `raw_import` on every FSD line so the first weekly sync does not queue the whole catalog as changed. Two live cards share a public id (`org-te-waka-whaiora-trust`, `community-te-wahi-tiaki-tatou`); bootstrap makes `public_id` unique deterministically (winner keeps the bare id; the other gets `-<first 4 hex of sha256(cluster_key)>`). Cleaning those duplicates is an editor merge later — not a pipeline job.
+
+**Counts:** `published`, `serviceLines`, and `organizations` are recomputed from the snapshot entries. `community`, `fsd`, and `duplicatesHidden` are merge-input sizes (382 FSD rows became 162 lines) and are copied onto the bootstrap `import_runs.stats` row. Once weekly sync lands, those three must come from that job's stats rather than staying frozen.
+
+**Tables:** `organizations`, `services`, `public_id_aliases`, `catalog_snapshots`, `overrides`, `import_runs`, `review_queue_items`. The last two ship complete for the sync task (`import_runs.stats` includes included/excluded/collapsed/queue counts; `review_queue_items.kind` is `new|changed|removed|geocode_flag`).
+
+**Not in this slice:** Kubernetes manifests, the catalog HTTP API, Directus, and the weekly CronJob. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, and later the API / Directus / sync images beside the existing nginx pod.
+
+**Admin host** stays separate from `directory.bsky.nz` (e.g. `admin.directory.bsky.nz`). D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
 
 ---
 

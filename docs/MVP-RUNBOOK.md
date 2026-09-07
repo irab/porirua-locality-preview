@@ -104,6 +104,29 @@ npm test
 npm run test:e2e
 ```
 
+`npm test` is the unit suite. Database-backed tests (`tests/db-*.test.mjs`) **skip** when Postgres is not reachable, so CI and laptops without Docker stay green.
+
+### Phase 2 catalog database (local)
+
+Disposable Postgres for the integration suite and for trying bootstrap/publish:
+
+```bash
+cd porirua_directory
+npm run db:test:up          # docker compose -f docker-compose.test.yml up -d --wait
+export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54329/porirua_test
+npm run test:db             # schema, bootstrap, publish, rollback
+npm run db:import           # load data/services.json + data/overrides.json
+npm run catalog:publish     # insert catalog_snapshots and flip is_current
+npm run catalog:publish -- --rollback 1
+npm run db:test:down
+```
+
+The import CLI applies `scripts/db-schema.sql` when the tables are missing. A second `db:import` is idempotent (same ids and row counts). `raw_import` is written for every FSD line.
+
+Publish never includes `draft`, `hidden`, `pending_review`, or merged-away organizations. Exactly one snapshot has `is_current`. Rollback points that flag at an earlier `version`.
+
+The public site still reads `data/services.json` until the catalog API is wired. These commands do not deploy anything.
+
 CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes `ghcr.io/irab/porirua-directory:latest` on push to `main`.
 
 ---
