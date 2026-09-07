@@ -267,6 +267,11 @@ export function queuePin(after = {}, before = {}) {
   return { lat, lng };
 }
 
+export function pinsDiffer(left, right) {
+  if (!left || !right) return false;
+  return left.lat !== right.lat || left.lng !== right.lng;
+}
+
 export function queueShowsPin({ kind, before = {}, after = {}, proposed = {} } = {}) {
   if (kind === "geocode_flag" || proposed.geocode_flag) return queuePin(after, before) != null;
   const beforeLat = asCoord(before.lat);
@@ -310,7 +315,10 @@ export function queueItemDto(item = {}, live = null) {
   const youSetThis = youSetThisFields(locked, reviewable, diffRows, showPin);
   const otherRows = otherUnchangedRows({ kind: item.kind, before, after, diffRows });
   const currentAddress = before.address || (item.kind === "new" ? after.address || "" : "");
-  const verifyPin = item.kind === "geocode_flag" ? pin : queuePin(before, {});
+  const beforePin = queuePin(before, {});
+  const afterPin = queuePin(after, {});
+  const verifyPin = beforePin || (item.kind === "geocode_flag" || item.kind === "new" ? afterPin : null);
+  const verifyComparePin = pinsDiffer(beforePin, afterPin) ? afterPin : null;
   return {
     id: item.id,
     kind: item.kind,
@@ -323,7 +331,8 @@ export function queueItemDto(item = {}, live = null) {
     currentAddress,
     verifyAddressNote: currentAddress && item.kind !== "new" ? "On the site now" : "",
     verifyPin,
-    showVerifyMap: Boolean(verifyPin) && (showPin || item.kind === "geocode_flag"),
+    verifyComparePin,
+    showVerifyMap: Boolean(verifyPin || verifyComparePin) && (showPin || item.kind === "geocode_flag"),
     primaryActionLabel: primaryActionLabel(item.kind),
     rejectActionLabel: rejectActionLabel(item.kind),
     deferActionLabel: deferActionLabel(),

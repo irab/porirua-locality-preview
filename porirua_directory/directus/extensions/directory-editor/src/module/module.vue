@@ -107,6 +107,7 @@
                 :address="item.currentAddress || item.before?.address"
                 :address-note="item.verifyAddressNote"
                 :pin="item.verifyPin || item.pin"
+                :compare-pin="item.verifyComparePin"
                 :show-map="item.showVerifyMap"
               />
               <div class="actions" :class="{ equal: item.kind === 'removed' }">

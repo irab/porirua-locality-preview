@@ -145,7 +145,7 @@ On every expanded Review item and every listing detail.
 |---------|-----------|
 | **Website** | Opens the organisation website in a **new tab**. Uses the government URL if present, otherwise the live listing URL. Hidden if neither exists. |
 | Phone | `tel:` link, shown as the number she already understands |
-| Address | On Review, the **current** listing address, labelled **On the site now**. The proposed address lives only in the diff. A map (Leaflet, same OSM tiles as the public site) shows the current pin, or the proposed pin on a pin-check. Never show latitude or longitude. If tiles cannot load, hide the map — do not leave an empty box. |
+| Address | On Review, the **current** listing address, labelled **On the site now**. The proposed address lives only in the diff. When the pin moved, the map shows **both** pins — **Now** and **Proposed**, labelled on the markers, fitted so both are visible. A pin-check or an unchanged pin shows one marker. Never show latitude or longitude. If any tile fails, hide the map — do not leave a half-drawn box. |
 
 The address text is a complete path. The map is a check and a nudge, not the only way to set a place (see 4.3 and §14).
 

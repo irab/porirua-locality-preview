@@ -12,7 +12,14 @@
       <span v-if="addressNote" class="verify-note">{{ addressNote }}</span>
       {{ address }}
     </p>
-    <pin-map v-if="showMap && pin && !tilesFailed" :lat="pin.lat" :lng="pin.lng" @tiles-failed="tilesFailed = true" />
+    <pin-map
+      v-if="showMap && pin && !tilesFailed"
+      :lat="pin.lat"
+      :lng="pin.lng"
+      :compare-lat="comparePin?.lat"
+      :compare-lng="comparePin?.lng"
+      @tiles-failed="tilesFailed = true"
+    />
   </div>
 </template>
 
@@ -27,6 +34,7 @@ export default {
     address: { type: String, default: "" },
     addressNote: { type: String, default: "" },
     pin: { type: Object, default: null },
+    comparePin: { type: Object, default: null },
     showMap: { type: Boolean, default: false },
   },
   data() {

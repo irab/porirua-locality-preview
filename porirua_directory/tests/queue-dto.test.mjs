@@ -259,6 +259,7 @@ test("queue DTO fills before from the live listing when weekly sync omitted it",
   assert.equal(dto.currentAddress, "Old Street");
   assert.equal(dto.verifyAddressNote, "On the site now");
   assert.deepEqual(dto.verifyPin, { lat: -41.1, lng: 174.8 });
+  assert.deepEqual(dto.verifyComparePin, { lat: -41.2, lng: 174.9 });
 });
 
 test("new items do not treat the already-inserted live row as a before side", () => {
