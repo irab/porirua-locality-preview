@@ -14,7 +14,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 const PORIRUA = { lat: -41.134, lng: 174.84, zoom: 12 };
-const TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ABSENCE_MS = 3000;
 
 function asCoord(value) {
@@ -107,9 +107,8 @@ export default {
       zoomControl: true,
     }).setView([PORIRUA.lat, PORIRUA.lng], PORIRUA.zoom);
     this.tiles = L.tileLayer(TILES, {
-      attribution: "&copy; OpenStreetMap, &copy; CARTO",
-      maxZoom: 18,
-      subdomains: "abcd",
+      attribution: "&copy; OpenStreetMap",
+      maxZoom: 19,
     });
     this.tiles.on("tileload", () => {
       this.tilesLoaded += 1;
