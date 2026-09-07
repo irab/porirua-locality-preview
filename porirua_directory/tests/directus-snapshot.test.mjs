@@ -31,13 +31,19 @@ test("Editor policy reads directus_flows so Data Studio can list manual flows", 
   assert.ok(rows.some((row) => row.collection === "directus_flows" && row.action === "read"));
 });
 
-test("Publish is a collection action; rollback and review actions are on list and item", async () => {
+test("Publish is collection; rollback and edit-and-approve are item; bulk review is both", async () => {
   const publish = JSON.parse(await fs.readFile(path.join(flowsDir, "publish-directory.json"), "utf8"));
   assert.equal(publish.options.location, "collection");
+  assert.equal(publish.options.requireSelection, false);
   const rollback = JSON.parse(await fs.readFile(path.join(flowsDir, "rollback-catalog.json"), "utf8"));
-  assert.equal(rollback.options.location, "both");
-  for (const name of ["approve-review.json", "edit-and-approve.json", "hide-review.json", "reject-review.json"]) {
+  assert.equal(rollback.options.location, "item");
+  assert.equal(rollback.operations[0].options.body, "{{$trigger}}");
+  const edit = JSON.parse(await fs.readFile(path.join(flowsDir, "edit-and-approve.json"), "utf8"));
+  assert.equal(edit.options.location, "item");
+  assert.equal(edit.operations[0].options.body, "{{$trigger}}");
+  for (const name of ["approve-review.json", "hide-review.json", "reject-review.json"]) {
     const flow = JSON.parse(await fs.readFile(path.join(flowsDir, name), "utf8"));
     assert.equal(flow.options.location, "both", name);
+    assert.equal(flow.operations[0].options.body, "{{$trigger}}", name);
   }
 });

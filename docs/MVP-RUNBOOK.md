@@ -214,7 +214,7 @@ Configuration is in git, not clicked-in state:
 1. Sign in as **Editor**.
 2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line). Related **service lines** are on the organisation record (read-only). Open a line to edit it; do not re-parent from the organisation form.
 3. Edit ordinary fields (address, phone, description). On an FSD-sourced record, saving triggers **Sticky curation on save**, which upserts one `overrides` row `{target_type, target_id, action: "patch", patch}` and merges keys into that row. You never type patch JSON.
-4. Open the **Review queue** preset on `pending_review`. Use **Approve**, **Edit-and-approve**, **Hide**, or **Reject**. Those Flows call the shared `approveReviewItem` in `scripts/approve-review.mjs` — apply `proposed.after`, set status, **refresh `raw_import`**, promote a draft organisation, mark the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week.
+4. Open the **Review queue** preset on `pending_review`. **Approve**, **Hide**, and **Reject** work from the list (tick many rows) and from the item. The sidecar loops every selected id, does not undo earlier successes when a later row fails, and reports succeeded/failed counts (a mixed batch is a 409, not a silent first-row success). **Edit-and-approve** is item-only — it carries one payload and cannot mean anything across a multi-row selection. Those Flows call the shared `approveReviewItem` in `scripts/approve-review.mjs` — apply `proposed.after`, set status, **refresh `raw_import`**, promote a draft organisation, mark the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week.
 5. Status changes stay in Postgres. They do **not** go public until you publish.
 
 ### Publish
@@ -225,8 +225,8 @@ Configuration is in git, not clicked-in state:
 
 ### Roll back
 
-1. Open **Catalog snapshots** and select the version to restore.
-2. Run the **Roll back** Flow. It points `is_current` at that version and purges the edge the same way as publish. No developer required.
+1. Open **Catalog snapshots** and open the **one** version to restore (item action — not a list multi-select).
+2. Run the **Roll back** Flow. It points `is_current` at that version and purges the edge the same way as publish. The sidecar **400s** if more than one key is sent. No developer required.
 
 `npm run test:directus` covers permission boundaries, sticky override shape (read back from Postgres), Approve `raw_import` refresh, and cache invalidation. Live Cloudflare purge is not exercised in this environment.
 

@@ -2,14 +2,14 @@
   "name": "Edit-and-approve",
   "icon": "edit",
   "color": "#0B6E4F",
-  "description": "Apply the editor's current fields, then the same raw_import refresh as Approve.",
+  "description": "Apply the editor's current fields to this one queue item, then the same raw_import refresh as Approve. Item only — a payload cannot apply across a multi-row selection.",
   "status": "active",
   "accountability": "all",
   "trigger": "manual",
   "options": {
     "collections": ["pending_review", "review_queue_items"],
     "requireSelection": true,
-    "location": "both"
+    "location": "item"
   },
   "operation": "request_edit_approve",
   "operations": [
@@ -23,10 +23,7 @@
       "options": {
         "method": "POST",
         "url": "http://operations:8790/edit-and-approve",
-        "body": {
-          "queueItemId": "{{$trigger.body.keys[0]}}",
-          "payload": "{{$trigger.body.payload}}"
-        }
+        "body": "{{$trigger}}"
       },
       "resolve": null,
       "reject": "notify_failure"

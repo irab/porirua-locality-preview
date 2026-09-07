@@ -2,7 +2,7 @@
   "name": "Hide",
   "icon": "visibility_off",
   "color": "#B54708",
-  "description": "Hide the listing, write a hide override, and accept the queue item.",
+  "description": "Hide each selected listing, write a hide override, and accept the queue item. List-view multi-select is real: each row is processed independently.",
   "status": "active",
   "accountability": "all",
   "trigger": "manual",
@@ -23,9 +23,7 @@
       "options": {
         "method": "POST",
         "url": "http://operations:8790/hide",
-        "body": {
-          "queueItemId": "{{$trigger.body.keys[0]}}"
-        }
+        "body": "{{$trigger}}"
       },
       "resolve": null,
       "reject": "notify_failure"

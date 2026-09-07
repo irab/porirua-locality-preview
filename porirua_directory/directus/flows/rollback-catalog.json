@@ -9,9 +9,9 @@
   "options": {
     "collections": ["catalog_snapshots"],
     "requireSelection": true,
-    "location": "both",
+    "location": "item",
     "confirm": true,
-    "confirmationDescription": "Roll the public directory back to this snapshot version?"
+    "confirmationDescription": "Roll the public directory back to the selected snapshot version? Select exactly one row — this changes the public site."
   },
   "operation": "request_rollback",
   "operations": [
@@ -25,9 +25,7 @@
       "options": {
         "method": "POST",
         "url": "http://operations:8790/rollback",
-        "body": {
-          "version": "{{$trigger.body.keys[0]}}"
-        }
+        "body": "{{$trigger}}"
       },
       "resolve": null,
       "reject": "notify_failure"

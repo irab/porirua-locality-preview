@@ -29,6 +29,15 @@ import { buildCatalogEnvelope } from "../../scripts/catalog-envelope.mjs";
 
 const PORT = Number(process.env.OPERATIONS_PORT || 8790);
 
+export class HttpError extends Error {
+  constructor(statusCode, message, extra = {}) {
+    super(message);
+    this.name = "HttpError";
+    this.statusCode = statusCode;
+    this.extra = extra;
+  }
+}
+
 function send(res, status, body) {
   const json = JSON.stringify(body);
   res.writeHead(status, {
@@ -36,6 +45,123 @@ function send(res, status, body) {
     "cache-control": "no-store",
   });
   res.end(json);
+}
+
+function errorStatus(error) {
+  if (
+    error &&
+    Number.isInteger(error.statusCode) &&
+    error.statusCode >= 400 &&
+    error.statusCode < 600
+  ) {
+    return error.statusCode;
+  }
+  return 500;
+}
+
+/** Directus `{{$trigger}}` may be the wrapper or the inner body. */
+export function unwrapTrigger(body) {
+  if (!body || typeof body !== "object") return {};
+  const inner = body.body;
+  if (
+    inner &&
+    typeof inner === "object" &&
+    !Array.isArray(inner) &&
+    (Array.isArray(inner.keys) ||
+      inner.queueItemId != null ||
+      inner.queueItemIds != null ||
+      inner.payload != null ||
+      inner.version != null ||
+      inner.collection)
+  ) {
+    return {
+      ...inner,
+      createdBy: body.createdBy ?? inner.createdBy,
+      accountability: body.accountability ?? inner.accountability,
+      user: body.user ?? inner.user,
+    };
+  }
+  return body;
+}
+
+function asKeyList(value) {
+  if (Array.isArray(value)) {
+    return value.map((key) => String(key)).filter((key) => key && key !== "undefined");
+  }
+  if (typeof value === "string" && value.trim()) {
+    const trimmed = value.trim();
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return asKeyList(parsed);
+      } catch {
+        /* treat as a single key */
+      }
+    }
+    return [trimmed];
+  }
+  if (value != null && value !== "") return [String(value)];
+  return [];
+}
+
+export function selectionKeys(body, { includeVersion = false } = {}) {
+  const trigger = unwrapTrigger(body);
+  const fromKeys = asKeyList(trigger.keys);
+  if (fromKeys.length > 0) return fromKeys;
+  const fromIds = asKeyList(trigger.queueItemIds);
+  if (fromIds.length > 0) return fromIds;
+  if (trigger.queueItemId != null && trigger.queueItemId !== "") {
+    return [String(trigger.queueItemId)];
+  }
+  if (includeVersion && trigger.version != null && trigger.version !== "") {
+    return [String(trigger.version)];
+  }
+  return [];
+}
+
+export function requireSingleSelection(body, endpoint, options = {}) {
+  const keys = selectionKeys(body, options);
+  if (keys.length > 1) {
+    throw new HttpError(400, `${endpoint} accepts exactly one selection, got ${keys.length}`, {
+      keys,
+    });
+  }
+  return keys[0] ?? null;
+}
+
+export async function runBulkQueue({ action, keys, each }) {
+  if (keys.length === 0) {
+    throw new HttpError(400, `${action} requires at least one queue item`);
+  }
+  const succeeded = [];
+  const failed = [];
+  for (const queueItemId of keys) {
+    try {
+      const result = await each(queueItemId);
+      succeeded.push({ queueItemId, ...result });
+    } catch (error) {
+      failed.push({
+        queueItemId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  const total = succeeded.length + failed.length;
+  return {
+    status: failed.length === 0 ? 200 : 409,
+    body: {
+      ok: failed.length === 0,
+      action,
+      succeededCount: succeeded.length,
+      failedCount: failed.length,
+      succeeded,
+      failed,
+      message:
+        failed.length === 0
+          ? `${action} ${succeeded.length} item${succeeded.length === 1 ? "" : "s"}`
+          : `${action} ${succeeded.length} of ${total}. ${failed.length} failed.`,
+    },
+  };
 }
 
 async function readJson(req) {
@@ -92,11 +218,16 @@ async function handlePublish(body, db) {
 }
 
 async function handleRollback(body, db) {
-  const version = Number(body.version);
+  const trigger = unwrapTrigger(body);
+  const selected = requireSingleSelection(trigger, "rollback", { includeVersion: true });
+  const version = Number(selected ?? trigger.version);
+  if (!Number.isFinite(version)) {
+    throw new HttpError(400, "rollback requires exactly one snapshot version");
+  }
   const result = await rollbackCatalog({
     db,
     version,
-    publishedBy: actor(body),
+    publishedBy: actor(trigger),
     purge: typeof body.purge === "function" ? body.purge : undefined,
   });
   return { ok: true, version: result.version, counts: result.envelope.counts };
@@ -118,44 +249,56 @@ export function createOperationsHandler({ db } = {}) {
       }
 
       const body = await readJson(req);
+      const trigger = unwrapTrigger(body);
       if (url.pathname === "/sticky-curation") {
         send(res, 200, await handleSticky(body, executor));
         return;
       }
       if (url.pathname === "/approve") {
-        send(res, 200, {
-          ok: true,
-          ...(await approveReviewItem({ db: executor, queueItemId: body.queueItemId })),
+        const outcome = await runBulkQueue({
+          action: "approve",
+          keys: selectionKeys(trigger),
+          each: (queueItemId) => approveReviewItem({ db: executor, queueItemId }),
         });
+        send(res, outcome.status, outcome.body);
         return;
       }
       if (url.pathname === "/edit-and-approve") {
+        const queueItemId = requireSingleSelection(trigger, "edit-and-approve");
+        if (!queueItemId) {
+          throw new HttpError(400, "edit-and-approve requires exactly one queue item");
+        }
         send(res, 200, {
           ok: true,
           ...(await editAndApproveReviewItem({
             db: executor,
-            queueItemId: body.queueItemId,
-            payload: body.payload,
+            queueItemId,
+            payload: trigger.payload,
           })),
         });
         return;
       }
       if (url.pathname === "/hide") {
-        send(res, 200, {
-          ok: true,
-          ...(await hideReviewItem({
-            db: executor,
-            queueItemId: body.queueItemId,
-            createdBy: actor(body),
-          })),
+        const outcome = await runBulkQueue({
+          action: "hide",
+          keys: selectionKeys(trigger),
+          each: (queueItemId) =>
+            hideReviewItem({
+              db: executor,
+              queueItemId,
+              createdBy: actor(trigger),
+            }),
         });
+        send(res, outcome.status, outcome.body);
         return;
       }
       if (url.pathname === "/reject") {
-        send(res, 200, {
-          ok: true,
-          ...(await rejectReviewItem({ db: executor, queueItemId: body.queueItemId })),
+        const outcome = await runBulkQueue({
+          action: "reject",
+          keys: selectionKeys(trigger),
+          each: (queueItemId) => rejectReviewItem({ db: executor, queueItemId }),
         });
+        send(res, outcome.status, outcome.body);
         return;
       }
       if (url.pathname === "/publish") {
@@ -189,9 +332,10 @@ export function createOperationsHandler({ db } = {}) {
       }
       send(res, 404, { error: "not found" });
     } catch (error) {
-      send(res, 500, {
+      send(res, errorStatus(error), {
         ok: false,
         error: error instanceof Error ? error.message : String(error),
+        ...(error instanceof HttpError ? error.extra : {}),
       });
     }
   };

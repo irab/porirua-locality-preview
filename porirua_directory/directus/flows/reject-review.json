@@ -2,7 +2,7 @@
   "name": "Reject",
   "icon": "close",
   "color": "#B42318",
-  "description": "Keep the stored record on raw_import and mark the queue item rejected.",
+  "description": "Keep each selected record on raw_import and mark the queue item rejected. List-view multi-select is real: each row is processed independently.",
   "status": "active",
   "accountability": "all",
   "trigger": "manual",
@@ -23,9 +23,7 @@
       "options": {
         "method": "POST",
         "url": "http://operations:8790/reject",
-        "body": {
-          "queueItemId": "{{$trigger.body.keys[0]}}"
-        }
+        "body": "{{$trigger}}"
       },
       "resolve": null,
       "reject": "notify_failure"
