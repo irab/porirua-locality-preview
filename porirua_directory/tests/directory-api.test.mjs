@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { directoryEditorRequest } from "../directus/extensions/directory-editor/src/module/directory-api.js";
+import {
+  directoryEditorRequest,
+  queueActionUndoId,
+} from "../directus/extensions/directory-editor/src/module/directory-api.js";
 
 test("directoryEditorRequest uses Axios request(), not the removed SDK transport", async () => {
   const calls = [];
@@ -33,6 +36,15 @@ test("directoryEditorRequest posts a body on mutating calls", async () => {
     data: { expectedVersion: 4 },
     params: undefined,
   });
+});
+
+test("queueActionUndoId reads the nested bulk-approve undo id", () => {
+  assert.equal(queueActionUndoId({ undoId: "top" }), "top");
+  assert.equal(
+    queueActionUndoId({ succeeded: [{ queueItemId: "a" }, { queueItemId: "b", undoId: "nested" }] }),
+    "nested"
+  );
+  assert.equal(queueActionUndoId({ succeeded: [] }), null);
 });
 
 test("directoryEditorRequest refuses a client that only has the old transport shape", async () => {

@@ -121,6 +121,8 @@ test("bulk approve processes every selected key and leaves queue rows accepted",
       });
       assert.equal(response.status, 200, JSON.stringify(response.json));
       assert.equal(response.json.ok, true);
+      assert.equal(typeof response.json.undoId, "string");
+      assert.ok(response.json.undoId);
       assert.equal(response.json.succeededCount, 2);
       assert.equal(response.json.failedCount, 0);
       const rows = await client.query(

@@ -72,6 +72,33 @@
         <p v-if="queueError" class="error">{{ queueError }}</p>
         <p v-if="queueLoading" class="hint">Looking for government updates…</p>
 
+        <section v-if="recent.length" class="recent" aria-labelledby="recent-finished-heading">
+          <h2 id="recent-finished-heading" class="heading">Recently finished</h2>
+          <ul>
+            <li v-for="row in visibleRecent" :key="row.id">
+              <strong>{{ row.name }}</strong>
+              <span>{{ row.decisionLabel }}</span>
+              <span class="kind">{{ row.whenLabel }}</span>
+              <button
+                v-if="row.organizationId"
+                type="button"
+                class="other-toggle"
+                @click="openFinishedListing(row)"
+              >
+                {{ row.listingLabel }}
+              </button>
+            </li>
+          </ul>
+          <button
+            v-if="recent.length > 5"
+            type="button"
+            class="other-toggle"
+            @click="showAllRecent = !showAllRecent"
+          >
+            {{ showAllRecent ? "Show fewer" : `Show all ${recent.length}` }}
+          </button>
+        </section>
+
         <div v-for="group in reviewGroups" :key="group.key" :class="group.deferred ? 'deferred' : 'review-list'">
           <h3 v-if="group.deferred" class="heading">{{ needsConfirmationGroupLabel(group.items.length) }}</h3>
           <article v-for="item in group.items" :key="item.id" class="review-card">
@@ -155,26 +182,6 @@
           <v-button v-if="deferredQueue.length" secondary @click="tab = 'listings'">Keep reviewing later</v-button>
         </div>
         <p v-else-if="!queue.length && !queueLoading" class="hint">Nothing to review.</p>
-
-        <section v-if="recent.length" class="recent" aria-labelledby="recent-finished-heading">
-          <h2 id="recent-finished-heading" class="heading">Recently finished</h2>
-          <ul>
-            <li v-for="row in recent" :key="row.id">
-              <strong>{{ row.name }}</strong>
-              <span>{{ row.decisionLabel }}</span>
-              <span v-if="row.summaryLabel" class="kind">{{ row.summaryLabel }}</span>
-              <span class="kind">{{ row.whenLabel }}</span>
-              <button
-                v-if="row.organizationId"
-                type="button"
-                class="other-toggle"
-                @click="openFinishedListing(row)"
-              >
-                {{ row.listingLabel }}
-              </button>
-            </li>
-          </ul>
-        </section>
 
         <listing-form
           v-if="correcting"
@@ -298,7 +305,7 @@
 import { useApi } from "@directus/extensions-sdk";
 import ListingForm from "./listing-form.vue";
 import VerificationBar from "./verification-bar.vue";
-import { directoryEditorRequest } from "./directory-api.js";
+import { directoryEditorRequest, queueActionUndoId } from "./directory-api.js";
 import {
   actionSuccessMessage,
   foldSearch,
@@ -359,6 +366,7 @@ export default {
       listings: [],
       queue: [],
       recent: [],
+      showAllRecent: false,
       publishStatus: { unpublished: false, unpublishedCount: 0, canUndoPublish: false },
       publishing: false,
       undoingPublish: false,
@@ -433,6 +441,9 @@ export default {
     },
     nextActiveItem() {
       return this.activeQueue[0] || null;
+    },
+    visibleRecent() {
+      return this.showAllRecent ? this.recent : this.recent.slice(0, 5);
     },
     reviewFinished() {
       return this.activeQueue.length === 0 && this.reviewedThisSession > 0;
@@ -579,7 +590,7 @@ export default {
         this.correcting = null;
         this.showToast({
           message: actionSuccessMessage({ action, kind: item.kind, unpublished: true }),
-          undoId: result.undoId || null,
+          undoId: queueActionUndoId(result),
         });
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
         this.openId = this.nextActiveItem?.id || null;
@@ -644,7 +655,7 @@ export default {
         this.reviewedThisSession += 1;
         this.showToast({
           message: actionSuccessMessage({ action: "approve", kind: this.correcting.kind }),
-          undoId: result.undoId || null,
+          undoId: queueActionUndoId(result),
         });
         this.correcting = null;
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
@@ -909,19 +920,23 @@ export default {
   color: var(--theme--foreground-subdued);
 }
 .recent {
-  margin-top: 32px;
+  margin: 8px 0 20px;
+}
+.recent .heading {
+  margin-bottom: 8px;
 }
 .recent ul {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 8px;
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 .recent li {
-  display: grid;
-  gap: 2px;
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
 }
 .error {
   color: var(--danger);

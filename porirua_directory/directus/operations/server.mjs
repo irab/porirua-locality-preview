@@ -167,11 +167,13 @@ export async function runBulkQueue({ action, keys, each }) {
     }
   }
   const total = succeeded.length + failed.length;
+  const lastUndoId = [...succeeded].reverse().find((row) => row.undoId)?.undoId ?? null;
   return {
     status: failed.length === 0 ? 200 : 409,
     body: {
       ok: failed.length === 0,
       action,
+      undoId: lastUndoId,
       succeededCount: succeeded.length,
       failedCount: failed.length,
       succeeded,
