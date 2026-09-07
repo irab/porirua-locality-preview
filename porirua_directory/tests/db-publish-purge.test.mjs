@@ -68,7 +68,7 @@ test("a failed purge is a failed publish and does not leave the new snapshot cur
   });
 });
 
-test("rollback purges the public catalog URL", async (t) => {
+test("rollbackCatalog purges the public catalog URL — undo is cosmetic if this path ever drops the purge", async (t) => {
   await withDirectusDatabase(t, async (client) => {
     await seedListing(client);
     const first = await publishCatalog({

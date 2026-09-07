@@ -188,3 +188,16 @@ CREATE TABLE IF NOT EXISTS editor_undo (
   action text NOT NULL,
   snapshot jsonb NOT NULL
 );
+
+-- Who published or undid a snapshot. Not shown in the Directory module.
+CREATE TABLE IF NOT EXISTS catalog_publish_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  action text NOT NULL CHECK (action IN ('publish', 'undo-publish')),
+  snapshot_version bigint NOT NULL REFERENCES catalog_snapshots (version),
+  previous_version bigint REFERENCES catalog_snapshots (version),
+  actor text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS catalog_publish_events_created_idx
+  ON catalog_publish_events (created_at DESC);

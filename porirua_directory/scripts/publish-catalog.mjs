@@ -12,6 +12,7 @@ import {
   mapServiceRow,
   withTransaction,
 } from "./lib/db.mjs";
+import { recordCatalogPublishEvent } from "./catalog-publish-events.mjs";
 import { purgeCatalogCache } from "./lib/edge-cache.mjs";
 
 export function isSnapshotOrganization(organization) {
@@ -137,6 +138,12 @@ export async function publishCatalog({ db, publishedBy, purge } = {}) {
     await restorePreviousCurrent(db, previous);
     throw error;
   }
+  await recordCatalogPublishEvent(executor, {
+    action: "publish",
+    snapshotVersion: version,
+    previousVersion: previous?.version ?? null,
+    actor: publishedBy ?? null,
+  });
   return { version, envelope };
 }
 

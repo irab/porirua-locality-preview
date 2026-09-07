@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { columnNames, tableNames, withTestDatabase } from "./helpers/postgres.mjs";
 
 const REQUIRED_TABLES = [
+  "catalog_publish_events",
   "catalog_snapshots",
   "editor_undo",
   "import_runs",

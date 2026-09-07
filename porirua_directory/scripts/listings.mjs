@@ -15,6 +15,11 @@ import {
 import { withTransaction } from "./lib/db.mjs";
 import { upsertStickyOverride } from "./directus/sticky-curation.mjs";
 import { queueItemDto, statusLabel } from "../editor-core/queue-dto.mjs";
+import { undoPublishAvailability } from "../editor-core/undo-publish.mjs";
+import {
+  lastEventForAvailability,
+  loadLatestPublishEvent,
+} from "./catalog-publish-events.mjs";
 import { buildCatalogEnvelope } from "./catalog-envelope.mjs";
 import {
   getCurrentSnapshot,
@@ -567,20 +572,19 @@ export async function publishStatus({ db } = {}) {
   delete nextBody.generatedAt;
   const unpublished = JSON.stringify(currentBody) !== JSON.stringify(nextBody);
   const work = unpublishedWork(currentBody, nextBody);
-  const previous = await db.query(
-    `SELECT version, generated_at FROM catalog_snapshots
-      WHERE is_current = false
-      ORDER BY version DESC
-      LIMIT 1`
-  );
+  const availability = undoPublishAvailability({
+    currentVersion: current?.version ?? null,
+    lastEvent: lastEventForAvailability(await loadLatestPublishEvent(db)),
+  });
   return {
     unpublished,
     unpublishedCount: work.unpublishedCount,
     unpublishedNames: work.unpublishedNames,
     currentVersion: current?.version ?? null,
-    previousVersion: previous.rows[0]?.version ?? null,
+    previousVersion: availability.previousVersion,
     publishedAt: current?.envelope?.generatedAt ?? null,
-    canUndoPublish: false,
+    canUndoPublish: availability.canUndoPublish,
+    undoPublishVersion: availability.undoPublishVersion ?? null,
     nextCounts: next.counts,
   };
 }
