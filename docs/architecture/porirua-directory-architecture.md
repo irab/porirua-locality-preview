@@ -105,7 +105,9 @@ Public traffic still uses the Phase 1 nginx + `data/services.json` path until th
 | Test database | `porirua_directory/docker-compose.test.yml` |
 | Pooled client | `porirua_directory/scripts/lib/db.mjs` (`DATABASE_URL` via `config.mjs`) |
 | Bootstrap | `npm run db:import` — `db-import-from-json.mjs` |
-| Publish / rollback | `npm run catalog:publish` — `publish-catalog.mjs` |
+| Publish / rollback | `npm run catalog:publish` — `publish-catalog.mjs` (purges the edge cache before reporting the version) |
+| Local Directus | `porirua_directory/docker-compose.directus.yml` (own compose project / host port **54341**, not the catalog-API test port 54329) |
+| Editor workspace | `porirua_directory/directus/snapshot.yaml`, `directus/flows/`, `scripts/directus/bootstrap.mjs` |
 | Row ↔ envelope mapping | `catalog-rows.mjs`, `catalog-envelope.mjs` (pure; no clustering on read) |
 
 ```mermaid
@@ -117,7 +119,7 @@ flowchart LR
   PG -->|published rows only| Snap
 ```
 
-**Publish** builds the Option B envelope from `status=published` rows (`draft`, `hidden`, `pending_review`, and `merged_into` are excluded), inserts a `catalog_snapshots` row, and flips `is_current` in one transaction. **Rollback** points `is_current` at an earlier version. Status changes alone do not go live.
+**Publish** builds the Option B envelope from `status=published` rows (`draft`, `hidden`, `pending_review`, and `merged_into` are excluded), inserts a `catalog_snapshots` row, flips `is_current` in one transaction, then purges the public catalog URL. A failed purge is a failed publish. **Rollback** points `is_current` at an earlier version and purges the same way. Status changes alone do not go live.
 
 **Bootstrap** loads today's committed JSON, persists grain and public ids, and seeds `raw_import` on every FSD line so the first weekly sync does not queue the whole catalog as changed. Two live cards share a public id (`org-te-waka-whaiora-trust`, `community-te-wahi-tiaki-tatou`); bootstrap makes `public_id` unique deterministically (winner keeps the bare id; the other gets `-<first 4 hex of sha256(cluster_key)>`). Cleaning those duplicates is an editor merge later — not a pipeline job.
 
@@ -125,7 +127,9 @@ flowchart LR
 
 **Tables:** `organizations`, `services`, `public_id_aliases`, `catalog_snapshots`, `overrides`, `import_runs`, `review_queue_items`. The last two ship complete for the sync task (`import_runs.stats` includes included/excluded/collapsed/queue counts; `review_queue_items.kind` is `new|changed|removed|geocode_flag`).
 
-**Not in this slice:** Kubernetes manifests, the catalog HTTP API, Directus, and the weekly CronJob. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, and later the API / Directus / sync images beside the existing nginx pod.
+**Directus (local editor, this slice):** collections, Interfaces, Editor role, Review queue preset, and Flows are version-controlled under `porirua_directory/directus/`. Sticky curation upserts one `overrides` patch row per FSD target. Approve refreshes `raw_import`. Grain / `public_id` changes are Admin-only and write `public_id_aliases`. Nothing here deploys a tenant.
+
+**Not in this slice:** Kubernetes manifests, the catalog HTTP API, and the weekly CronJob. Deployment needs (for the gated prod-tenant task): Postgres + PVC, `DATABASE_URL` as a Sealed Secret, and later the API / Directus / sync images beside the existing nginx pod.
 
 **Admin host** stays separate from `directory.bsky.nz` (e.g. `admin.directory.bsky.nz`). D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
 

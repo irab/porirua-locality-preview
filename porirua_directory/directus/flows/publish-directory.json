@@ -1,0 +1,49 @@
+{
+  "name": "Publish directory",
+  "icon": "publish",
+  "color": "#0B6E4F",
+  "description": "Show a count preflight against the live snapshot, then run publish-catalog.mjs. Status changes alone do not go public.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "manual",
+  "options": {
+    "collections": ["catalog_snapshots"],
+    "requireSelection": false,
+    "location": "item",
+    "confirm": true,
+    "confirmationDescription": "Publish the current catalog to the public snapshot? A large count delta will stop here until you confirm."
+  },
+  "operation": "request_publish",
+  "operations": [
+    {
+      "identifier": "request_publish",
+      "name": "Publish catalog",
+      "key": "request_publish",
+      "type": "request",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "method": "POST",
+        "url": "http://operations:8790/publish",
+        "body": "{{$trigger}}"
+      },
+      "resolve": null,
+      "reject": "notify_failure"
+    },
+    {
+      "identifier": "notify_failure",
+      "name": "Notify failure",
+      "key": "notify_failure",
+      "type": "trigger",
+      "position_x": 37,
+      "position_y": 17,
+      "options": {
+        "flow": "failure-notification",
+        "payload": {
+          "flow": "Publish directory",
+          "error": "{{$last}}"
+        }
+      }
+    }
+  ]
+}

@@ -127,6 +127,58 @@ Publish never includes `draft`, `hidden`, `pending_review`, or merged-away organ
 
 The public site still reads `data/services.json` until the catalog API is wired. These commands do not deploy anything.
 
+Publish and rollback also purge the public catalog URL (`https://directory.bsky.nz/api/catalog` by default). Locally, set `CATALOG_SKIP_PURGE=1` or pass a stub `purge` function. In an environment that should actually drop the Cloudflare shared cache, set `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`. A failed purge is a failed publish — the previous `is_current` snapshot is restored.
+
+---
+
+## Phase 2 — Directus editor workspace (local)
+
+Do **not** start `docker-compose.test.yml` (host port 54329) from this worktree if the catalog API task is also running — that compose file is shared and will collide or truncate tables. Use the Directus compose project and port **54341**:
+
+```bash
+cd porirua_directory
+npm run directus:up
+export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54341/porirua_directus
+npm run db:import            # optional: load committed services.json
+npm run directus:bootstrap   # collections, Editor role, presets, Flows, snapshot
+```
+
+Open **http://127.0.0.1:18055**
+
+| Account | Email | Password |
+|---------|--------|----------|
+| Administrator | `admin@example.com` | `admin-local` |
+| Editor | `editor@example.com` | `editor-local` |
+
+Configuration is in git, not clicked-in state:
+
+| Path | What it is |
+|------|------------|
+| `porirua_directory/directus/snapshot.yaml` | Collections, fields, Interfaces, relations, plus roles / permissions / presets exported with the running instance |
+| `porirua_directory/directus/flows/` | Sticky curation, Publish directory, Roll back, review actions, failure notification |
+| `porirua_directory/scripts/directus/bootstrap.mjs` | Applies the workspace to a fresh Directus |
+
+### Editor daily path
+
+1. Sign in as **Editor**.
+2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line).
+3. Edit ordinary fields (address, phone, description). On an FSD-sourced record, saving triggers **Sticky curation on save**, which upserts one `overrides` row `{target_type, target_id, action: "patch", patch}` and merges keys into that row. You never type patch JSON.
+4. Open the **Review queue** preset on `pending_review`. Use **Approve**, **Edit-and-approve**, **Hide**, or **Reject**. Approve applies `proposed.after`, sets status, **refreshes `raw_import`**, and marks the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week.
+5. Status changes stay in Postgres. They do **not** go public until you publish.
+
+### Publish
+
+1. Open **Catalog snapshots**.
+2. Run the **Publish directory** Flow. It shows a preflight of counts against the live snapshot and warns if published count moves by 15% or more (confirm to continue).
+3. `publish-catalog.mjs` writes a new `is_current` snapshot, purges the edge, then reports the version that went live.
+
+### Roll back
+
+1. Open **Catalog snapshots** and select the version to restore.
+2. Run the **Roll back** Flow. It points `is_current` at that version and purges the edge the same way as publish. No developer required.
+
+`npm run test:directus` covers permission boundaries, sticky override shape (read back from Postgres), Approve `raw_import` refresh, and cache invalidation. Live Cloudflare purge is not exercised in this environment.
+
 CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes `ghcr.io/irab/porirua-directory:latest` on push to `main`.
 
 ---

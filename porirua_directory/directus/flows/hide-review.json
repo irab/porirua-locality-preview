@@ -1,0 +1,49 @@
+{
+  "name": "Hide",
+  "icon": "visibility_off",
+  "color": "#B54708",
+  "description": "Hide the listing, write a hide override, and accept the queue item.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "manual",
+  "options": {
+    "collections": ["pending_review", "review_queue_items"],
+    "requireSelection": true,
+    "location": "item"
+  },
+  "operation": "request_hide",
+  "operations": [
+    {
+      "identifier": "request_hide",
+      "name": "Hide listing",
+      "key": "request_hide",
+      "type": "request",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "method": "POST",
+        "url": "http://operations:8790/hide",
+        "body": {
+          "queueItemId": "{{$trigger.body.keys[0]}}"
+        }
+      },
+      "resolve": null,
+      "reject": "notify_failure"
+    },
+    {
+      "identifier": "notify_failure",
+      "name": "Notify failure",
+      "key": "notify_failure",
+      "type": "trigger",
+      "position_x": 37,
+      "position_y": 17,
+      "options": {
+        "flow": "failure-notification",
+        "payload": {
+          "flow": "Hide",
+          "error": "{{$last}}"
+        }
+      }
+    }
+  ]
+}

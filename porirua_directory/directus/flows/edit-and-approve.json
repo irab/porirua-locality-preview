@@ -1,0 +1,50 @@
+{
+  "name": "Edit-and-approve",
+  "icon": "edit",
+  "color": "#0B6E4F",
+  "description": "Apply the editor's current fields, then the same raw_import refresh as Approve.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "manual",
+  "options": {
+    "collections": ["pending_review", "review_queue_items"],
+    "requireSelection": true,
+    "location": "item"
+  },
+  "operation": "request_edit_approve",
+  "operations": [
+    {
+      "identifier": "request_edit_approve",
+      "name": "Edit and approve",
+      "key": "request_edit_approve",
+      "type": "request",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "method": "POST",
+        "url": "http://operations:8790/edit-and-approve",
+        "body": {
+          "queueItemId": "{{$trigger.body.keys[0]}}",
+          "payload": "{{$trigger.body.payload}}"
+        }
+      },
+      "resolve": null,
+      "reject": "notify_failure"
+    },
+    {
+      "identifier": "notify_failure",
+      "name": "Notify failure",
+      "key": "notify_failure",
+      "type": "trigger",
+      "position_x": 37,
+      "position_y": 17,
+      "options": {
+        "flow": "failure-notification",
+        "payload": {
+          "flow": "Edit-and-approve",
+          "error": "{{$last}}"
+        }
+      }
+    }
+  ]
+}

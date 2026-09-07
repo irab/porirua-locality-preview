@@ -1,0 +1,49 @@
+{
+  "name": "Reject",
+  "icon": "close",
+  "color": "#B42318",
+  "description": "Keep the stored record on raw_import and mark the queue item rejected.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "manual",
+  "options": {
+    "collections": ["pending_review", "review_queue_items"],
+    "requireSelection": true,
+    "location": "item"
+  },
+  "operation": "request_reject",
+  "operations": [
+    {
+      "identifier": "request_reject",
+      "name": "Reject item",
+      "key": "request_reject",
+      "type": "request",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "method": "POST",
+        "url": "http://operations:8790/reject",
+        "body": {
+          "queueItemId": "{{$trigger.body.keys[0]}}"
+        }
+      },
+      "resolve": null,
+      "reject": "notify_failure"
+    },
+    {
+      "identifier": "notify_failure",
+      "name": "Notify failure",
+      "key": "notify_failure",
+      "type": "trigger",
+      "position_x": 37,
+      "position_y": 17,
+      "options": {
+        "flow": "failure-notification",
+        "payload": {
+          "flow": "Reject",
+          "error": "{{$last}}"
+        }
+      }
+    }
+  ]
+}

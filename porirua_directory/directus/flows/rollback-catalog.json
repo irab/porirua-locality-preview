@@ -1,0 +1,51 @@
+{
+  "name": "Roll back",
+  "icon": "undo",
+  "color": "#B42318",
+  "description": "Point is_current at an earlier catalog_snapshots version and purge the edge. Usable without a developer.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "manual",
+  "options": {
+    "collections": ["catalog_snapshots"],
+    "requireSelection": true,
+    "location": "item",
+    "confirm": true,
+    "confirmationDescription": "Roll the public directory back to this snapshot version?"
+  },
+  "operation": "request_rollback",
+  "operations": [
+    {
+      "identifier": "request_rollback",
+      "name": "Roll back catalog",
+      "key": "request_rollback",
+      "type": "request",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "method": "POST",
+        "url": "http://operations:8790/rollback",
+        "body": {
+          "version": "{{$trigger.body.keys[0]}}"
+        }
+      },
+      "resolve": null,
+      "reject": "notify_failure"
+    },
+    {
+      "identifier": "notify_failure",
+      "name": "Notify failure",
+      "key": "notify_failure",
+      "type": "trigger",
+      "position_x": 37,
+      "position_y": 17,
+      "options": {
+        "flow": "failure-notification",
+        "payload": {
+          "flow": "Roll back",
+          "error": "{{$last}}"
+        }
+      }
+    }
+  ]
+}

@@ -8,8 +8,12 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "test:db": "node --test --test-concurrency=1 tests/db-*.test.mjs",
+    "test:directus": "node --test --test-concurrency=1 tests/edge-cache.test.mjs tests/publish-preflight.test.mjs tests/sticky-curation.test.mjs tests/approve-review.test.mjs tests/public-id-alias.test.mjs tests/db-publish-purge.test.mjs tests/directus-permissions.test.mjs tests/directus-flows.test.mjs",
     "db:test:up": "docker compose -f docker-compose.test.yml up -d --wait",
     "db:test:down": "docker compose -f docker-compose.test.yml down",
+    "directus:up": "docker compose -p porirua-directus-ojw13bd2 -f docker-compose.directus.yml up -d --wait",
+    "directus:down": "docker compose -p porirua-directus-ojw13bd2 -f docker-compose.directus.yml down",
+    "directus:bootstrap": "node scripts/directus/bootstrap.mjs",
     "db:import": "node scripts/db-import-from-json.mjs",
     "catalog:publish": "node scripts/publish-catalog.mjs",
     "import:fsd": "node scripts/fsd-import.mjs",

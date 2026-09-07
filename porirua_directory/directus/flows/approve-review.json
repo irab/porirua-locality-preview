@@ -1,0 +1,49 @@
+{
+  "name": "Approve",
+  "icon": "check",
+  "color": "#0B6E4F",
+  "description": "Apply proposed.after, refresh raw_import, clear pending_review, mark the queue item accepted.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "manual",
+  "options": {
+    "collections": ["pending_review", "review_queue_items"],
+    "requireSelection": true,
+    "location": "item"
+  },
+  "operation": "request_approve",
+  "operations": [
+    {
+      "identifier": "request_approve",
+      "name": "Approve item",
+      "key": "request_approve",
+      "type": "request",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "method": "POST",
+        "url": "http://operations:8790/approve",
+        "body": {
+          "queueItemId": "{{$trigger.body.keys[0]}}"
+        }
+      },
+      "resolve": null,
+      "reject": "notify_failure"
+    },
+    {
+      "identifier": "notify_failure",
+      "name": "Notify failure",
+      "key": "notify_failure",
+      "type": "trigger",
+      "position_x": 37,
+      "position_y": 17,
+      "options": {
+        "flow": "failure-notification",
+        "payload": {
+          "flow": "Approve",
+          "error": "{{$last}}"
+        }
+      }
+    }
+  ]
+}
