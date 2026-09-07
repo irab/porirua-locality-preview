@@ -3,6 +3,12 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import {
+  browseSearch,
+  fillBrowseSearch,
+  pickCommunityPath,
+  pickSupportPath,
+} from "./helpers/browse.js";
+import {
   buildShareCodebook,
   encodeShareCodes,
   favoritableIdsFromEntries,
@@ -21,24 +27,6 @@ function shareHashForIds(ids) {
 
 const LOGO_ALT = "Te Wāhi Tiaki Tātou — Porirua Locality";
 const PRODUCT_TITLE = "Your Porirua Directory";
-
-async function pickSupportPath(page) {
-  await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i }).click();
-}
-
-async function pickCommunityPath(page) {
-  await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Connect with community/i }).click();
-}
-
-function browseSearch(page) {
-  return page.getByRole("searchbox", { name: "Search organisations" });
-}
-
-async function fillBrowseSearch(page, query) {
-  const input = browseSearch(page);
-  await expect(input).toBeVisible();
-  await input.fill(query);
-}
 
 /** Playwright context geolocation is unreliable with getCurrentPosition; stub in-page. */
 async function mockGeolocation(page, { latitude, longitude, accuracy = 10 }) {
@@ -544,9 +532,9 @@ test("browse search — field fits placeholder on mobile", async ({ page }) => {
 
 test("landing path card enters support browse", async ({ page }) => {
   await page.goto("/index.html");
-  await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i }).click();
+  await pickSupportPath(page);
   await expect(page.locator("#site-subnav")).toBeHidden();
-  await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
+  await expect(page.getByRole("article").first()).toBeVisible();
   await expect(page.locator("body")).toHaveAttribute("data-view", "browse");
 });
 

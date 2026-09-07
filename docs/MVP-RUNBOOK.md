@@ -106,6 +106,33 @@ npm run test:e2e
 
 `npm test` runs pure unit files in parallel, then the Directus-dependent files one at a time (`--test-concurrency=1`). Those files share one Directus and one Postgres and call `bootstrapDirectus()`, so a single parallel glob races them. Database-backed catalog tests (`tests/db-*.test.mjs`) **skip** when Postgres is not reachable, so CI and laptops without Docker stay green. Local Directus is compose project `porirua-directus`; `npm run directus:down` includes `-v`.
 
+### Playwright against directory-dev
+
+Local `npm run test:e2e` cannot prove Cloudflare → Traefik → catalog-api → Postgres, or that an Editor can see Flows in Data Studio. It stays on a local static server. The live suite refuses `directory.bsky.nz`.
+
+```bash
+cd porirua_directory
+npm run test:e2e:dev
+# equivalent: BASE_URL=https://directory-dev.bsky.nz npm run test:e2e
+```
+
+That runs `directory.spec.js`, `catalog-fetch.spec.js`, and `e2e/dev-deployment.spec.js` against the live host (no local `webServer`). It does not need Directus credentials.
+
+A Data Studio approve + publish + rollback cycle is **opt-in** (mutates the shared review queue and snapshots, then cleans up):
+
+```bash
+cd porirua_directory
+export DIRECTORY_DEV_SECRETS=/path/to/secrets/dev/porirua-directory-admin.txt
+# or EDITOR_EMAIL / EDITOR_PASSWORD / ADMIN_EMAIL / ADMIN_PASSWORD
+npm run test:e2e:dev:publish
+```
+
+`e2e/dev-deployment.spec.js` drives the **public** site and asserts the page consumed `GET /api/catalog` JSON (including bootstrap ids `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`), falls back to `data/services.json` when the browser intercepts `/api/catalog`, and that ETag / `?version=N` / My list / search behave on the live envelope.
+
+`e2e/dev-studio.spec.js` drives **Data Studio as the Editor** (login form → sidebar → real buttons). It seeds throwaway `e2e-*` organisations and services only — never existing FSD rows — then asserts multi-select Approve against those ids in Postgres, and that Publish / Roll back move the public ETag relative to the snapshot that was current when the test started.
+
+Leave the weekly FSD CronJob suspended. Do not run this suite against [https://directory.bsky.nz](https://directory.bsky.nz).
+
 ### Phase 2 catalog database (local)
 
 Disposable Postgres for the integration suite and for trying bootstrap/publish:

@@ -24,7 +24,9 @@ npm run directus:bootstrap
 npm run test:directus # same sequential Directus path `npm test` runs second
 npm run sync:fsd      # weekly FSD review-queue job (needs DATABASE_URL; never publishes)
 npm run test:sync     # collapse/diff/runner (needs npm run db:sync-test:up — port 54339)
-npm run test:e2e      # Playwright (Chromium; see Browser testing below)
+npm run test:e2e      # Playwright against a local static server (Chromium)
+npm run test:e2e:dev  # same public specs against https://directory-dev.bsky.nz (never production)
+npm run test:e2e:dev:publish  # Data Studio as Editor (needs DIRECTORY_DEV_SECRETS)
 npm run start:api     # GET /api/catalog on :3000 (needs DATABASE_URL)
 ```
 
@@ -32,7 +34,7 @@ npm run start:api     # GET /api/catalog on :3000 (needs DATABASE_URL)
 
 | Environment | Coverage |
 |-------------|----------|
-| **Chromium** | Automated: `npm run test:e2e` (scroll-collapse, sticky panel, layout order, filters/search). CI runs the same on every PR and on push to `main`. |
+| **Chromium** | Automated: `npm run test:e2e` (local static server, including catalog-fallback mocks). Live public chain: `npm run test:e2e:dev`. Data Studio: `npm run test:e2e:dev:publish` with secrets. CI runs the local suite only. |
 | **Firefox / WebKit** | Not configured in `playwright.config.js` (Chromium only). Smoke-test scroll-collapse manually if you change browse chrome CSS/JS. |
 | **Android Chrome / iOS Safari** | **Manual** on a real device: open [https://directory.bsky.nz](https://directory.bsky.nz) → **Find support** → scroll the listing down/up and confirm filters/map collapse without visible tile flicker; tap **Show filters** to expand while mid-list (scrolling up should not reopen chips until the top). |
 

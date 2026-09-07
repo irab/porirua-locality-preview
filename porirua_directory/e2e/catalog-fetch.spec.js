@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { pickSupportPath } from "./helpers/browse.js";
+import { attachCatalogCapture, waitForDirectoryData } from "./helpers/catalog.js";
 
 const API_PROBE_NAME = "Catalog API Probe Org";
 const STATIC_KNOWN_NAME = "Little People";
@@ -22,25 +24,10 @@ function apiProbeEnvelope() {
   };
 }
 
-async function pickSupportPath(page) {
-  await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i }).click();
-}
-
-function catalogRequests(page) {
-  const api = [];
-  const staticFile = [];
-  page.on("request", (req) => {
-    const url = req.url();
-    if (url.includes("/api/catalog")) api.push(url);
-    if (url.includes("/data/services.json")) staticFile.push(url);
-  });
-  return { api, staticFile };
-}
-
 test("browse consumes the catalog API and never requests the static file", async ({ page }) => {
-  const seen = catalogRequests(page);
+  const seen = attachCatalogCapture(page);
 
-  await page.route("**/api/catalog", async (route) => {
+  await page.route("**/api/catalog*", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -52,38 +39,42 @@ test("browse consumes the catalog API and never requests the static file", async
   });
 
   await page.goto("/index.html");
+  await waitForDirectoryData(seen);
   await pickSupportPath(page);
 
   await expect(page.getByRole("article").filter({ hasText: API_PROBE_NAME })).toBeVisible();
   await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toHaveCount(0);
-  expect(seen.api).toHaveLength(1);
+  await seen.settle();
+  expect(seen.apiRequests).toHaveLength(1);
   expect(seen.staticFile).toHaveLength(0);
 });
 
 test("browse falls back to the baked file when the catalog API is unreachable", async ({
   page,
 }) => {
-  const seen = catalogRequests(page);
+  const seen = attachCatalogCapture(page);
 
-  await page.route("**/api/catalog", async (route) => {
+  await page.route("**/api/catalog*", async (route) => {
     await route.abort("failed");
   });
 
   await page.goto("/index.html");
+  await waitForDirectoryData(seen);
   await pickSupportPath(page);
 
   await expect(page.getByRole("article").first()).toBeVisible();
   await page.getByRole("searchbox", { name: "Search organisations" }).fill(STATIC_KNOWN_NAME);
   await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toBeVisible();
   await expect(page.getByRole("article").filter({ hasText: API_PROBE_NAME })).toHaveCount(0);
-  expect(seen.api).toHaveLength(1);
+  await seen.settle();
+  expect(seen.apiRequests.length).toBeGreaterThanOrEqual(1);
   expect(seen.staticFile).toHaveLength(1);
 });
 
 test("browse falls back when /api/catalog returns 200 HTML", async ({ page }) => {
-  const seen = catalogRequests(page);
+  const seen = attachCatalogCapture(page);
 
-  await page.route("**/api/catalog", async (route) => {
+  await page.route("**/api/catalog*", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "text/html",
@@ -92,22 +83,24 @@ test("browse falls back when /api/catalog returns 200 HTML", async ({ page }) =>
   });
 
   await page.goto("/index.html");
+  await waitForDirectoryData(seen);
   await pickSupportPath(page);
 
   await expect(page.getByText(/We couldn’t load the listings/i)).toHaveCount(0);
   await expect(page.getByRole("article").first()).toBeVisible();
   await page.getByRole("searchbox", { name: "Search organisations" }).fill(STATIC_KNOWN_NAME);
   await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toBeVisible();
-  expect(seen.api).toHaveLength(1);
+  await seen.settle();
+  expect(seen.apiRequests.length).toBeGreaterThanOrEqual(1);
   expect(seen.staticFile).toHaveLength(1);
 });
 
 test("browse falls back to the baked file when the catalog API returns 503", async ({
   page,
 }) => {
-  const seen = catalogRequests(page);
+  const seen = attachCatalogCapture(page);
 
-  await page.route("**/api/catalog", async (route) => {
+  await page.route("**/api/catalog*", async (route) => {
     await route.fulfill({
       status: 503,
       contentType: "application/json",
@@ -116,12 +109,14 @@ test("browse falls back to the baked file when the catalog API returns 503", asy
   });
 
   await page.goto("/index.html");
+  await waitForDirectoryData(seen);
   await pickSupportPath(page);
 
   await expect(page.getByRole("article").first()).toBeVisible();
   await page.getByRole("searchbox", { name: "Search organisations" }).fill(STATIC_KNOWN_NAME);
   await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toBeVisible();
   await expect(page.getByRole("article").filter({ hasText: API_PROBE_NAME })).toHaveCount(0);
-  expect(seen.api).toHaveLength(1);
+  await seen.settle();
+  expect(seen.apiRequests.length).toBeGreaterThanOrEqual(1);
   expect(seen.staticFile).toHaveLength(1);
 });

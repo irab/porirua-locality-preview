@@ -27,6 +27,8 @@
     "merge:services": "node scripts/merge-services.mjs",
     "build:data": "npm run import:fsd && npm run merge:services",
     "test:e2e": "playwright test",
+    "test:e2e:dev": "BASE_URL=https://directory-dev.bsky.nz playwright test",
+    "test:e2e:dev:publish": "RUN_DEV_E2E=1 BASE_URL=https://directory-dev.bsky.nz playwright test e2e/dev-studio.spec.js",
     "serve": "python3 -m http.server 5173",
     "start:api": "node api/server.mjs"
   },
