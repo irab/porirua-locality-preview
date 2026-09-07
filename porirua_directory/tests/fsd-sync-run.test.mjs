@@ -393,7 +393,7 @@ test("hidden status is a lock: incoming is queued but status stays hidden", asyn
   });
 });
 
-test("open catalogToRows patch locks curated fields and does not overwrite them", async (t) => {
+test("open patch keeps live columns and queues a third-value conflict", async (t) => {
   await withSyncDatabase(t, async (client) => {
     const curated = {
       address: "22 Ngāti Toa Street, Takapūwāhia, Porirua",
@@ -430,10 +430,15 @@ test("open catalogToRows patch locks curated fields and does not overwrite them"
 
     const result = await runFsdSync({ db: client, csvText: fsdCsv([csvRow]) });
     const service = await client.query(`SELECT status, address, lat, lng FROM services WHERE id = 'fsd-2964'`);
-    assert.equal(service.rows[0].status, "published");
+    assert.equal(service.rows[0].status, "pending_review");
     assert.equal(service.rows[0].address, curated.address);
+    assert.equal(Number(service.rows[0].lat), curated.lat);
     const queued = result.queued.filter((row) => row.entity_id === "fsd-2964");
-    assert.equal(queued.length, 0);
+    assert.equal(queued.length, 1);
+    assert.ok((queued[0].proposed.locked_fields ?? []).includes("address"));
+    assert.ok((queued[0].proposed.reviewable_fields ?? []).includes("address"));
+    assert.equal(queued[0].proposed.before.address, curated.address);
+    assert.equal(Number(queued[0].proposed.before.lat), curated.lat);
   });
 });
 
@@ -521,6 +526,7 @@ test("sync then approve then publish moves a change live and approval refreshes 
       `SELECT * FROM review_queue_items WHERE kind = 'changed' AND status = 'pending'`
     );
     assert.equal(queue.rowCount, 1);
+    assert.deepEqual(queue.rows[0].proposed.before?.categories, ["food"]);
 
     await approveReviewItem({ db: client, queueItemId: queue.rows[0].id });
     const service = await client.query(`SELECT * FROM services WHERE fsd_service_id = '9001-line-a'`);
@@ -622,10 +628,13 @@ test("first real-feed sync after bootstrap is ~18 items, 17 category enrichments
     if (oraToa.kind === "changed") {
       assert.ok((oraToa.proposed.locked_fields ?? []).includes("address"));
     }
-    assert.equal(
-      result.queued.some((row) => row.entity_id === "fsd-2964"),
-      false
-    );
+    const queuedOra = result.queued.find((row) => row.entity_id === "fsd-2964");
+    assert.ok(queuedOra, "three-way rule should queue the curated Ora Toa address conflict");
+    const proposed = queuedOra.proposed ?? {};
+    assert.ok((proposed.locked_fields ?? []).includes("address"));
+    assert.ok((proposed.reviewable_fields ?? []).includes("address"));
+    assert.ok(proposed.before && typeof proposed.before === "object");
+    assert.ok(Object.keys(proposed.before).length > 0);
     assert.equal(result.queued.length, result.stats.queued);
   });
 });
@@ -635,7 +644,8 @@ test("approving a new SERVICE_ID publishes its draft organization into the snaps
     await runFsdSync({ db: client, csvText: fsdCsv([TITAHI_CLINIC]) });
     const orgBefore = await client.query(`SELECT status FROM organizations WHERE id = 'fsd-9003-clinic'`);
     assert.equal(orgBefore.rows[0].status, "draft");
-    const queue = await client.query(`SELECT id FROM review_queue_items WHERE kind = 'new'`);
+    const queue = await client.query(`SELECT id, proposed FROM review_queue_items WHERE kind = 'new'`);
+    assert.equal(queue.rows[0].proposed.before == null || Object.keys(queue.rows[0].proposed.before).length === 0, true);
     await approveReviewItem({ db: client, queueItemId: queue.rows[0].id });
     const orgAfter = await client.query(`SELECT status FROM organizations WHERE id = 'fsd-9003-clinic'`);
     assert.equal(orgAfter.rows[0].status, "published");

@@ -77,8 +77,8 @@ export function shouldQueueDiffItem(item, dbRow) {
 }
 
 /**
- * Three-way lock rule — written here, not enabled in the weekly runner
- * until the live-dev dry-run count is accepted.
+ * Three-way lock rule — enabled in the weekly runner after the live-dev
+ * dry-run (1 newly queued item: FSD 2964 address/lat/lng).
  *
  * Queue a locked field only when incoming is not the editor patch and not
  * the last folded government value (`raw_import`).
@@ -376,11 +376,69 @@ async function upsertQueueItem(db, importRunId, item, entityId) {
   return { queued: true, refreshed: false, queueItem: await insertQueueItem(db, importRunId, item, entityId) };
 }
 
+function openPatchFromRow(dbRow) {
+  const patches = (dbRow?.overrides ?? []).filter((entry) => {
+    const type = String(entry?.action ?? entry?.type ?? entry?.kind ?? "").toLowerCase();
+    if (type !== "patch") return false;
+    if (entry.open === true) return true;
+    if (entry.open === false) return false;
+    if (entry.status == null) return true;
+    return String(entry.status).toLowerCase() === "open";
+  });
+  return Object.assign(
+    {},
+    ...patches.map((entry) => (entry.patch && typeof entry.patch === "object" ? entry.patch : {}))
+  );
+}
+
+function withReviewableFields(item, dbRow, patch) {
+  if (item.kind !== "changed") return item;
+  const reviewable = threeWayQueuedFields(item, dbRow, patch);
+  return {
+    ...item,
+    proposed: {
+      ...(item.proposed && typeof item.proposed === "object" ? item.proposed : {}),
+      reviewable_fields: reviewable,
+    },
+  };
+}
+
+/** Live listing columns at queue time — what this week's diff was computed against. */
+function liveListingSnapshot(dbRow) {
+  if (!dbRow) return {};
+  return {
+    name: dbRow.name ?? "",
+    title: dbRow.title ?? "",
+    serviceName: dbRow.service_name ?? dbRow.serviceName ?? "",
+    description: dbRow.description ?? "",
+    phone: dbRow.phone ?? "",
+    url: dbRow.url ?? "",
+    address: dbRow.address ?? "",
+    lat: dbRow.lat ?? null,
+    lng: dbRow.lng ?? null,
+    categories: dbRow.categories ?? [],
+  };
+}
+
+function withQueuedBefore(item, dbRow) {
+  if (item.kind === "new") return item;
+  if (!dbRow) return item;
+  return {
+    ...item,
+    proposed: {
+      ...(item.proposed && typeof item.proposed === "object" ? item.proposed : {}),
+      before: liveListingSnapshot(dbRow),
+    },
+  };
+}
+
 async function applyDiffItem(db, importRunId, item, dbByServiceId, collapsedByServiceId) {
   const dbRow = dbByServiceId.get(item.serviceId);
-  if (!shouldQueueDiffItem(item, dbRow)) {
+  const patch = openPatchFromRow(dbRow);
+  if (!shouldQueueDiffItemThreeWay(item, dbRow, patch)) {
     return { queued: false };
   }
+  item = withQueuedBefore(withReviewableFields(item, dbRow, patch), dbRow);
 
   if (item.kind === "new") {
     const incoming = collapsedByServiceId.get(item.serviceId);

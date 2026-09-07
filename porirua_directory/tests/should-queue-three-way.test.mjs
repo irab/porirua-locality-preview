@@ -22,7 +22,7 @@ const rawImport = {
   categories: ["health"],
 };
 
-test("today's rule still skips locked-field-only drift (not enabled yet)", () => {
+test("legacy skip still describes locked-field-only drift; the runner uses three-way", () => {
   assert.equal(shouldQueueDiffItem(lockedItem, { raw_import: rawImport }), false);
 });
 

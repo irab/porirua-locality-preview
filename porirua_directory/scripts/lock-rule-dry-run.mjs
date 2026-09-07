@@ -1,8 +1,8 @@
 /**
  * Read-only: compare today's locked-field skip with the three-way rule
  * against live catalog rows + this week's FSD CSV. Never writes queue rows
- * or import_runs. Keep shouldQueueDiffItem as the weekly runner until the
- * newly-queued count is accepted.
+ * or import_runs. The weekly runner now uses shouldQueueDiffItemThreeWay;
+ * this script still compares both so a later feed can be recounted.
  *
  *   DATABASE_URL=... node scripts/lock-rule-dry-run.mjs
  */
