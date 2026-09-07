@@ -1,0 +1,19 @@
+# Directus operations sidecar. Flows POST here for publish, rollback, and
+# review actions. Cluster-internal only — never publish an Ingress.
+# Also used by the catalog-bootstrap and Directus-bootstrap Jobs.
+FROM node:20-alpine
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY scripts ./scripts
+COPY directus ./directus
+COPY data/services.json data/overrides.json ./data/
+
+ENV NODE_ENV=production
+ENV OPERATIONS_PORT=8790
+ENV DATA_DIR=/app/data
+EXPOSE 8790
+USER node
+CMD ["node", "directus/operations/server.mjs"]

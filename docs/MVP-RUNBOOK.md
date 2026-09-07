@@ -234,13 +234,35 @@ Configuration is in git, not clicked-in state:
 
 ## Deploy
 
-1. Push the app branch or `main` so CI can build and push the four images (nginx, catalog API, sync worker, operations sidecar). Live listings come from `/api/catalog`; refresh baked `data/services.json` only when you intend to update the offline fallback.
-2. ArgoCD syncs the **dev** tenant `porirua-directory` (`clusters/dev/tenants/porirua-directory/`) at `https://directory-dev.bsky.nz`. Production stays the Phase 1 nginx pin until a separate, gated prod task. Publishing a snapshot does not require rolling the API pod.
-3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
-4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
-   - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
+### Dev (Phase 2 stack)
 
-**Pin a SHA:** edit `deployment.yaml` image tag to `:sha` instead of `:latest` for reproducible rollouts.
+Public: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)  
+Admin: [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)  
+Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet git-scans `tenants/*`).
+
+1. From a branch, build the four images without changing what `main` pushes today:
+
+   ```bash
+   gh workflow run directory.yml --ref <branch>
+   ```
+
+   That job tags `ghcr.io/irab/porirua-directory`, `-api`, `-sync`, and `-operations` with the git SHA. Pin every container in the tenant to that SHA (not `:dev` or `:latest`).
+2. Push the tenant directory to blackbox `main`. After the first sync creates `dev-porirua-directory`, copy `ghcr-io` from `dev-polis`. SealedSecrets cannot unseal until that namespace exists.
+3. Catalog-bootstrap Job: `db-import-from-json.mjs` from committed `data/services.json` + `data/overrides.json`, then the first `catalog:publish` (real Cloudflare purge — do not set `CATALOG_SKIP_PURGE`). Expect two colliding public ids to become `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`.
+4. Directus-bootstrap Job applies `directus/snapshot.yaml`, Flows, Editor role, and the pending-review view.
+5. Weekly FSD CronJob is **suspended** in dev. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
+
+`CATALOG_CURRENT_TTL_MS=5000` in dev so a publish is visible without waiting 30s. Publishing does not require rolling the API pod.
+
+### Production (Phase 1, unchanged)
+
+Production remains the nginx pin at [https://directory.bsky.nz](https://directory.bsky.nz) until a **separate, gated** prod-tenant task. Do not copy this database or these SealedSecrets toward prod.
+
+1. Push to `main` with an updated baked `data/services.json` only when you intend to refresh the offline fallback — workflow builds nginx + catalog-api.
+2. ArgoCD syncs `clusters/prod/tenants/porirua-directory/`.
+3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
+4. Verify headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add the hostname to the kit’s allowed domains.
+   - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
 
 ---
 

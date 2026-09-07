@@ -23,30 +23,38 @@ Phase 1 is a **static site + generated JSON**. Phase 2 makes **PostgreSQL** the 
 
 ```mermaid
 flowchart TB
-  subgraph editors [Editors MVP]
+  subgraph editors [Editors]
+    Directus[Directus admin-directory-dev.bsky.nz]
+    Ops[operations sidecar ClusterIP]
     Sheet[Google Sheet Connections Map]
-    Overrides[data/overrides.json]
   end
   subgraph external [External data]
     FSD[FSD CSV data.govt.nz]
   end
-  subgraph build [porirua_directory build]
-    Import[fsd-import.mjs]
-    Merge[merge-services.mjs]
-    JSON[services.json]
+  subgraph data [Canonical store]
+    PG[(Postgres PVC)]
+    Snap[catalog_snapshots is_current]
   end
   subgraph public [Public runtime]
-    CF[Cloudflare bsky.nz]
+    CF[Cloudflare directory-dev.bsky.nz]
     BB[blackbox Traefik]
-    Nginx[nginx static pod]
-    UI[directory UI + Leaflet]
+    API[catalog API /api]
+    Nginx[nginx static + baked fallback]
+    UI[directory UI]
   end
-  Sheet --> Merge
-  Overrides --> Merge
-  FSD --> Import --> Merge --> JSON
-  JSON --> Nginx
-  UI --> Nginx
-  CF --> BB --> Nginx
+  Sheet --> PG
+  FSD --> Sync[weekly CronJob suspended in dev]
+  Sync --> PG
+  Directus --> Ops --> PG
+  Ops -->|publish + purge| Snap
+  Ops -->|purge files| CF
+  PG --> Snap --> API
+  JSON[baked services.json] --> Nginx
+  UI -->|/api/catalog then fallback| API
+  UI -->|fallback| Nginx
+  CF --> BB
+  BB -->|/api| API
+  BB -->|/| Nginx
 ```
 
 ---
@@ -143,7 +151,9 @@ The weekly runner is `porirua_directory/scripts/fsd-sync-run.mjs` (`npm run sync
 
 **Operations sidecar:** `directus/operations/server.mjs` is the deployable the Flows call for sticky save, approve/hide/reject, publish, rollback, and public-id alias. It can publish the catalog, accept queue items, and rewrite `raw_import`. Keep it **cluster-internal with no Ingress** — local compose publishes `18790` only so tests can reach it. Publish needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` for the edge purge. Never set `CATALOG_SKIP_PURGE` on a tenant.
 
-**Admin host** stays separate from `directory.bsky.nz` (e.g. `admin.directory.bsky.nz`). D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
+**Dev tenant** (this stack): `https://directory-dev.bsky.nz` (nginx + `/api`) and `https://admin-directory-dev.bsky.nz` (Directus). Manifests: blackbox `clusters/dev/tenants/porirua-directory/`. Images are pinned to an immutable app-repo SHA (`ghcr.io/irab/porirua-directory{,-api,-sync,-operations}:<sha>`), never a floating `:dev`. `CATALOG_CURRENT_TTL_MS` is `5000` in dev. The operations Service is ClusterIP-only; a NetworkPolicy allows Directus → operations:8790 and operations → Postgres, and excludes operations from the tenant-wide same-namespace and Traefik allow lists. Never set `CATALOG_SKIP_PURGE` on the tenant.
+
+**Admin host** stays separate from the public directory host. Production will choose its own admin hostname in a gated prod task. D1 + custom admin is an exit if Directus is withdrawn — export Postgres and keep the snapshot envelope.
 
 ---
 

@@ -53,11 +53,19 @@ test("publish then GET /api/catalog never serves draft, hidden, pending_review, 
          ('svc-pending', 'fsd-2964', 'svc-pending', 'Pending line', 'fsd', 'pending_review')`
     );
 
-    const first = await publishCatalog({ db: client, publishedBy: "api-test" });
+    const first = await publishCatalog({
+      db: client,
+      publishedBy: "api-test",
+      purge: async () => {},
+    });
     await client.query(
       `UPDATE organizations SET name = 'Renamed For Api Version Pin' WHERE public_id = 'fsd-2964'`
     );
-    const second = await publishCatalog({ db: client, publishedBy: "api-test-2" });
+    const second = await publishCatalog({
+      db: client,
+      publishedBy: "api-test-2",
+      purge: async () => {},
+    });
     const repository = createCatalogRepository(client);
 
     await withCatalogApi(t, { repository }, async ({ get }) => {
@@ -92,7 +100,11 @@ test("a second publish is served after the pointer TTL without restarting the pr
   await withTestDatabase(t, async (client) => {
     const { envelope, overrides } = await loadCommitted();
     await bootstrapFromJson({ envelope, overrides, db: client });
-    const first = await publishCatalog({ db: client, publishedBy: "ttl-v1" });
+    const first = await publishCatalog({
+      db: client,
+      publishedBy: "ttl-v1",
+      purge: async () => {},
+    });
     const clock = fakeClock(0);
     const repository = createCatalogRepository(client);
 
@@ -107,7 +119,11 @@ test("a second publish is served after the pointer TTL without restarting the pr
         await client.query(
           `UPDATE organizations SET name = 'Live After Publish' WHERE public_id = 'fsd-2964'`
         );
-        const second = await publishCatalog({ db: client, publishedBy: "ttl-v2" });
+        const second = await publishCatalog({
+          db: client,
+          publishedBy: "ttl-v2",
+          purge: async () => {},
+        });
         assert.notEqual(second.version, first.version);
 
         const stillFirst = await get("/api/catalog");

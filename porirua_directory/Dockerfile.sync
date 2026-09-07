@@ -10,4 +10,5 @@ RUN npm ci --include=dev
 COPY scripts ./scripts
 
 ENV NODE_ENV=production
+USER node
 CMD ["node", "scripts/fsd-sync-run.mjs"]
