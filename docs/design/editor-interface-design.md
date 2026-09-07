@@ -71,7 +71,7 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 | New service | **Add this service** · **Don’t add this** · **Needs confirmation** |
 | Gone from the government list | **Take it off the site** · **Keep it as a community listing** — **equal weight, no visual hierarchy, no keyboard default** · **Needs confirmation** |
 | Check the map pin | **The pin is fine** · **I’ll move the pin** · **Needs confirmation** |
-| After any decision | **Undo** (on the toast) · **Next** (does not auto-expand) |
+| After any decision | **Undo** (on the toast). The next active item opens on its own. |
 
 **Don’t use this change** and **Don’t add this** are decisions: the government proposal is declined, that week’s value will not be asked again unless FSD moves again.  
 **Needs confirmation** is not a decision: the item stays pending and marked. If next week’s proposal is the same, it stays in **Needs confirmation**. If the proposal itself changed, the mark dies and the row returns to the active list (7.1).
@@ -212,9 +212,9 @@ For each screen: purpose, what is on it, what she can do, where each action lead
 
 - Status band  
 - Title: **4 changes to review** (or **1 change to review**)  
-- Lede: **These are government updates. Your own adds never appear here.**  
 - One row per item: organisation name, plain-words summary, **Needs confirmation** badge if deferred  
 - Deferred items sit in a second group under **Needs confirmation (2)**, still in Review, not a third tab  
+- **Recently finished** under the work: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter.  
 
 Row summary examples (not the raw kind):
 
@@ -258,8 +258,8 @@ Row summary examples (not the raw kind):
 
 | Action | Next |
 |--------|------|
-| Accept / Add this / The pin is fine / Keep yours / Don’t use / Don’t add / Take it off / Keep as community | Toast with **Undo** (7.4). Row leaves the active list. The list does **not** auto-expand the next item. An explicit **Next** is focused instead |
-| Needs confirmation | Row moves to **Needs confirmation**. Same: toast, no auto-expand, **Next** is focused |
+| Accept / Add this / The pin is fine / Keep yours / Don’t use / Don’t add / Take it off / Keep as community | Toast with **Undo** (7.4). Row leaves the active list. The next active item opens on its own. Do not auto-open a Needs confirmation item. |
+| Needs confirmation | Row moves to **Needs confirmation**. Same: toast, next active item opens. If only deferred items remain, land on the finish state. |
 | Use this, and I’ll correct it | Shared form, pre-filled with the government values she can edit. Changed fields are marked, scrolled to, and focused (4.3). **Save** = accept the corrected values. Toast with **Undo** |
 | I’ll move the pin | Same form, address + map, then Save = accept the pin |
 
@@ -394,7 +394,7 @@ flowchart TD
   defer --> deferred[Row moves to Needs confirmation] --> toast
   toast --> undo{Undo within the window?}
   undo -->|Undo| restore[Item returns, still expanded]
-  undo -->|Next| next{More active items?}
+  toast --> next{More active items?}
   next -->|yes| open
   next -->|only deferred left| later[Needs confirmation still listed]
   next -->|none left| finish[You've reviewed everything]
@@ -525,21 +525,22 @@ The sidecar already has edit-and-approve. The current module does not expose it.
 
 **I’ll move the pin** is the same movement for a pin check.
 
-### 7.4 Undo, and why the next item must not jump
+### 7.4 Undo, and auto-advance
 
-Every Review decision is one click and applied immediately. Nothing is public until Publish, but without undo she cannot say “not that one”: the list reflows and the next click can land on another organisation’s button. On a curated field, Accept can close her own patch on the way.
+Every Review decision is one click and applied immediately. Nothing is public until Publish. After the action succeeds, the next **active** item opens on its own. The confirmation toast and its **Undo** stay on the same 20-second timer. Losing Undo would make auto-advance worse than the extra click.
 
 **Undo** sits on the confirmation toast:
 
 > **Accepted. It will go on the public site when you publish.** [Undo]
 
 - Shown after every Review decision (including defer, decline, keep-as-community, keep yours).  
-- Lasts until she starts another decision, opens **Next**, or 20 seconds pass — whichever is first.  
-- Restores the queue item to `pending` (same entity+kind), restores live columns, overrides, and `raw_import` from a snapshot taken **before** the action. Accept-on-Ora-Toa must put her patch back.  
+- Lasts until she starts another decision or 20 seconds pass — whichever is first. Auto-advance does **not** dismiss it.  
+- Restores the queue item to `pending` (same entity+kind), restores live columns, overrides, and `raw_import` from a snapshot taken **before** the action. Accept-on-Ora-Toa must put her patch back. The restored item opens again.  
 - After Publish, Review-decision undo is gone. Safety after Publish is **Undo publish** (7.5), not a confirmation dialog.  
-- Focus after a decision: the toast’s **Undo**, then **Next** — never the next card’s primary button.
+- Do not auto-open a Needs confirmation item. When only deferred items remain, or the queue is empty, land on the finish state.  
+- Focus after a decision: the **heading button** of the newly open card (organisation name + summary). Enter toggles the card; it does not Accept. The toast stays `role="status"` so the confirmation is still announced. Undo sits immediately above the list, so Shift+Tab from that heading reaches Undo without walking the card. When the last active item is done, focus the finish heading.
 
-**Auto-advance is not used.** After a decision the row leaves, the list stays still, and she presses **Next** (or opens another row).
+**Recently finished** (below the work) is the recovery path after the Undo window: what it was, what she decided, when, and **Open listing**.
 
 ### 7.5 Undo publish — agreed 8 Sep 2026
 
@@ -653,18 +654,15 @@ Assume 4 items, first already expanded, one is Ora Toa, one is a removal, she de
 |------|------:|--------|
 | Lands on Review | 0 | Status band: 4 to review |
 | Read Ora Toa, open website | 1 | Buys: she can keep her pin on purpose |
-| **Keep yours** | 1 | Toast with **Undo** |
-| **Next** | 1 | Explicit; no reflow under the cursor |
+| **Keep yours** | 1 | Toast with **Undo**; next card opens |
 | **Accept this change** | 1 | |
-| **Next** | 1 | |
 | Gone from the government list. She knows it still runs | 0 | |
 | **Keep it as a community listing** | 1 | Equal to take-off — not a secondary |
-| **Next** | 1 | |
 | Last item: she wants to ring them | 0 | |
-| **Needs confirmation** | 1 | |
+| **Needs confirmation** | 1 | Finish state — only deferred remain |
 | Finish: **Publish now** | 1 | Publishes immediately; deferred remain |
 
-**Clicks: 9** for four items with one verify, one defer, and explicit **Next**.  
+**Clicks: 6** for four items with one verify, one defer, and auto-advance.  
 Undo on every decision toast. Website / **Needs confirmation** / keep-as-community / immediate Publish each buy a decision she can stand behind. **Undo publish** is the recovery if that last click was wrong.
 
 **Fail the job if:** a removal’s only primary action takes a live service off the site, or Ora Toa has no before-and-after / no “You set this earlier”.
@@ -703,7 +701,7 @@ This design doc is the approval artifact. After implementation, the one-pager mu
 Approve the design first. Then, in the module:
 
 - **Keep:** Review / Listings split; landing on Directory; field-by-field diff lines; Leaflet map with no coordinates; name-blur duplicate warning; “Take it off the site” / “The pin is fine” / “Keep yours” as the quality bar for new copy; notifications that say what happens next.  
-- **Rewrite:** listings as search-first + listing detail (discard click-row-to-edit); Review closed-row summary; verification bar; **Needs confirmation** group; keep-as-community (equal actions); edit-then-accept with changed-field highlighting; immediate Publish; session finish; undo on the toast; explicit **Next**.  
+- **Rewrite:** listings as search-first + listing detail (discard click-row-to-edit); Review closed-row summary; verification bar; **Needs confirmation** group; keep-as-community (equal actions); edit-then-accept with changed-field highlighting; immediate Publish; session finish; undo on the toast; auto-advance after a decision; recently finished with **Open listing**.  
 - **Do not build more of:** N/S/E/W nudge, raw kind/status in the table, `window.confirm`, a Review table whose only information is the buttons, the `users.read` landing hook (§13), a Publish confirmation dialog.  
 - **Build:** **Undo publish** (7.5) as agreed — server-derived availability, expected-version guard, persist-only audit, purge on rollback.
 
@@ -717,7 +715,7 @@ Approve the design first. Then, in the module:
 | 2 | Gone from the government list: equal buttons, take-off primary, or keep primary? | **Equal weighting.** **Take it off the site** and **Keep it as a community listing** have no visual hierarchy and no keyboard default. |
 | 3 | Almost-right change: shared form or inline on the card? | **Shared form**, pre-filled, with the field(s) the proposal changed marked, scrolled to, and focused. **You set this earlier** stays on curated fields. Not colour alone. |
 | 4 | Publish from the finish: named confirmation, immediate, or count only? | **Immediate.** No confirmation dialog. **Undo publish** (7.5) is the safety net. Agreed 8 Sep 2026: 24-hour-or-next-publish window; first-ever publish has no undo; live rows stay; expected version must match or the server refuses; record who published and who undid. |
-| 5 | After a decision: auto-expand the next item, or an explicit **Next**? | **Explicit Next.** Undo on every Review action toast. |
+| 5 | After a decision: auto-expand the next item, or an explicit **Next**? | **Auto-advance** the next active item. Undo stays on the toast. Overruled the explicit-Next call on 8 Sep 2026 after Accept on a live card. |
 
 ---
 
@@ -750,14 +748,15 @@ An admin for two people is lower stakes than the public directory. It is still a
 1. Status band (Review count, then Publish count)  
 2. Queue heading  
 3. Each closed row is a button (name + summary). Enter/Space expands  
-4. Inside an open card: the before-and-after first, then the verification bar (Website, phone, current address, map is skippable), then actions left to right as labelled. On a removal, neither take-off nor keep-as-community is the default. Then **Needs confirmation**, then **Next** if shown  
+4. Inside an open card: the before-and-after first, then the verification bar (Website, phone, current address, map is skippable), then actions left to right as labelled. On a removal, neither take-off nor keep-as-community is the default. Then **Needs confirmation**  
 5. **Needs confirmation** group heading, then those rows  
+6. **Recently finished**, then **Open listing** on each row  
 
 **After a decision**
 
-- Move focus to the toast (**Undo** first, then the message).  
-- Do **not** move focus onto the next card’s primary action.  
-- When she activates **Next** (or if auto-advance is chosen), focus the **heading** of the newly open card, not **Accept this change**. Enter must not accept by accident.
+- Open the next active item.  
+- Move focus to that card’s **heading button**, not **Accept this change**. Enter must not accept by accident.  
+- Leave the confirmation toast in place (`role="status"`). Undo is the first control in the toast, immediately above the list.
 
 **Keyboard**
 

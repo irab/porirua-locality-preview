@@ -38,15 +38,6 @@
         Government updates arrived after you published. Undo publish only changes the public site.
       </p>
 
-      <div v-if="toast" class="toast" role="status">
-        <v-button v-if="toast.undoPublish" small ref="undoBtn" @click="undoLastPublish">Undo publish</v-button>
-        <v-button v-else-if="toast.undoId" small ref="undoBtn" @click="undoLast">Undo</v-button>
-        <span>{{ toast.message }}</span>
-        <v-button v-if="toast.showNext && nextActiveItem" small secondary ref="nextBtn" @click="openNext">
-          Next
-        </v-button>
-      </div>
-
       <div class="editor-tabs" role="tablist">
         <button
           type="button"
@@ -68,8 +59,13 @@
         </button>
       </div>
 
+      <div v-if="toast" class="toast" role="status">
+        <v-button v-if="toast.undoPublish" small ref="undoBtn" @click="undoLastPublish">Undo publish</v-button>
+        <v-button v-else-if="toast.undoId" small ref="undoBtn" @click="undoLast">Undo</v-button>
+        <span>{{ toast.message }}</span>
+      </div>
+
       <section v-if="tab === 'review'" class="panel">
-        <p class="lede">These are government updates. Your own adds never appear here.</p>
         <h2 v-if="!activeQueue.length && allDeferredOnArrival" class="heading">
           {{ needConfirmationOnlyTitle(deferredQueue.length) }}
         </h2>
@@ -152,13 +148,33 @@
         </div>
 
         <div v-if="reviewFinished" class="finish">
-          <h2 class="heading">{{ finishHeading }}</h2>
+          <h2 ref="finishHeading" tabindex="-1" class="heading">{{ finishHeading }}</h2>
           <v-button :loading="publishing" :disabled="!hasUnpublished" @click="publishCatalog">
             Publish now
           </v-button>
           <v-button v-if="deferredQueue.length" secondary @click="tab = 'listings'">Keep reviewing later</v-button>
         </div>
         <p v-else-if="!queue.length && !queueLoading" class="hint">Nothing to review.</p>
+
+        <section v-if="recent.length" class="recent" aria-labelledby="recent-finished-heading">
+          <h2 id="recent-finished-heading" class="heading">Recently finished</h2>
+          <ul>
+            <li v-for="row in recent" :key="row.id">
+              <strong>{{ row.name }}</strong>
+              <span>{{ row.decisionLabel }}</span>
+              <span v-if="row.summaryLabel" class="kind">{{ row.summaryLabel }}</span>
+              <span class="kind">{{ row.whenLabel }}</span>
+              <button
+                v-if="row.organizationId"
+                type="button"
+                class="other-toggle"
+                @click="openFinishedListing(row)"
+              >
+                {{ row.listingLabel }}
+              </button>
+            </li>
+          </ul>
+        </section>
 
         <listing-form
           v-if="correcting"
@@ -342,6 +358,7 @@ export default {
       tab: "listings",
       listings: [],
       queue: [],
+      recent: [],
       publishStatus: { unpublished: false, unpublishedCount: 0, canUndoPublish: false },
       publishing: false,
       undoingPublish: false,
@@ -486,6 +503,7 @@ export default {
       try {
         const data = await this.api("/queue");
         this.queue = data.items || [];
+        this.recent = data.recent || [];
         this.queueError = "";
       } catch (error) {
         this.queueError = error.message || "Could not load Review.";
@@ -520,27 +538,39 @@ export default {
     primaryPath(item) {
       return item.kind === "removed" ? "/hide" : "/approve";
     },
-    showToast({ message, undoId = null, showNext = false, undoPublish = false }) {
+    showToast({ message, undoId = null, undoPublish = false, focusUndo = false }) {
       if (this.toastTimer) clearTimeout(this.toastTimer);
-      this.toast = { message, undoId, showNext, undoPublish };
-      this.$nextTick(() => {
-        const undo = this.$refs.undoBtn;
-        const next = this.$refs.nextBtn;
-        const undoEl = undo?.$el || undo;
-        const nextEl = next?.$el || next;
-        if (typeof undoEl?.focus === "function") undoEl.focus();
-        else if (typeof nextEl?.focus === "function") nextEl.focus();
-      });
+      this.toast = { message, undoId, undoPublish };
+      if (focusUndo) {
+        this.$nextTick(() => {
+          const undo = this.$refs.undoBtn;
+          const undoEl = undo?.$el || undo;
+          undoEl?.focus?.();
+        });
+      }
       this.toastTimer = setTimeout(() => {
         if (this.toast) {
           this.toast.undoId = null;
           this.toast.undoPublish = false;
         }
-        this.$nextTick(() => {
-          const next = this.$refs.nextBtn;
-          (next?.$el || next)?.focus?.();
-        });
       }, 20000);
+    },
+    focusAfterQueueAction() {
+      this.$nextTick(() => {
+        if (this.openId) {
+          const row = this.$el.querySelector(".review-card .review-row[aria-expanded='true']");
+          if (row) {
+            row.focus();
+            row.scrollIntoView({ block: "nearest" });
+            return;
+          }
+        }
+        const finish = this.$refs.finishHeading;
+        if (finish) {
+          finish.focus();
+          finish.scrollIntoView({ block: "nearest" });
+        }
+      });
     },
     async runQueue(item, path, action) {
       try {
@@ -550,18 +580,13 @@ export default {
         this.showToast({
           message: actionSuccessMessage({ action, kind: item.kind, unpublished: true }),
           undoId: result.undoId || null,
-          showNext: true,
         });
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
-        if (this.openId === item.id) this.openId = null;
+        this.openId = this.nextActiveItem?.id || null;
+        this.focusAfterQueueAction();
       } catch (error) {
         this.queueError = error.message || "Could not save that decision. Try again.";
       }
-    },
-    openNext() {
-      const next = this.nextActiveItem;
-      this.toast = null;
-      if (next) this.openId = next.id;
     },
     async undoLast() {
       const undoId = this.toast?.undoId;
@@ -572,12 +597,19 @@ export default {
         return;
       }
       try {
-        await this.api("/review-undo", { method: "POST", body: { undoId } });
+        const result = await this.api("/review-undo", { method: "POST", body: { undoId } });
         this.reviewedThisSession = Math.max(0, this.reviewedThisSession - 1);
+        await Promise.all([this.refreshQueue(), this.refreshPublish()]);
+        this.openId = result.queueItemId || this.nextActiveItem?.id || null;
+        this.focusAfterQueueAction();
       } catch (error) {
         this.queueError = error.message || "Could not undo that.";
+        await Promise.all([this.refreshQueue(), this.refreshPublish()]);
       }
-      await Promise.all([this.refreshQueue(), this.refreshPublish()]);
+    },
+    openFinishedListing(row) {
+      if (!row?.organizationId) return;
+      this.openDetail(row.organizationId);
     },
     startCorrect(item) {
       this.correcting = item;
@@ -613,10 +645,11 @@ export default {
         this.showToast({
           message: actionSuccessMessage({ action: "approve", kind: this.correcting.kind }),
           undoId: result.undoId || null,
-          showNext: true,
         });
         this.correcting = null;
         await Promise.all([this.refreshQueue(), this.refreshPublish()]);
+        this.openId = this.nextActiveItem?.id || null;
+        this.focusAfterQueueAction();
       } catch (error) {
         this.formError = error.message || "Could not save that decision. Try again.";
       } finally {
@@ -633,6 +666,7 @@ export default {
         this.showToast({
           message: actionSuccessMessage({ action: "publish" }),
           undoPublish: this.canUndoPublish,
+          focusUndo: this.canUndoPublish,
         });
       } catch (error) {
         this.queueError = error.message || "Could not publish. Try again.";
@@ -859,7 +893,10 @@ export default {
   background: var(--theme--background-normal);
   padding: 10px 14px;
   border-radius: 8px;
-  margin-bottom: 12px;
+  margin: 12px 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 .panel {
   margin-top: 16px;
@@ -868,9 +905,23 @@ export default {
   font-size: 1.15rem;
   margin: 8px 0 16px;
 }
-.lede,
 .hint {
   color: var(--theme--foreground-subdued);
+}
+.recent {
+  margin-top: 32px;
+}
+.recent ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.recent li {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
 }
 .error {
   color: var(--danger);

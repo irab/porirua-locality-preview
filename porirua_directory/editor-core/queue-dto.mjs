@@ -123,6 +123,73 @@ export function actionSuccessMessage({ action, kind, unpublished = true } = {}) 
   return `Accepted.${publishNext}`;
 }
 
+export function finishedDecisionLabel({ action, kind, status } = {}) {
+  const resolved = action || (status === "rejected" ? "reject" : "approve");
+  if (resolved === "keep") return "Kept yours";
+  if (resolved === "keep-community") return "Kept it as a community listing";
+  if (resolved === "hide" || (resolved === "approve" && kind === "removed")) {
+    return "Took it off the site";
+  }
+  if (resolved === "reject") {
+    if (kind === "new") return "Didn't add this";
+    if (kind === "geocode_flag") return "Skipped this pin check";
+    return "Didn't use this change";
+  }
+  if (kind === "new") return "Added this service";
+  if (kind === "geocode_flag") return "The pin is fine";
+  return "Accepted this change";
+}
+
+function aucklandDay(value) {
+  return new Date(value).toLocaleDateString("en-CA", { timeZone: "Pacific/Auckland" });
+}
+
+function addIsoDay(isoDay, days) {
+  const [year, month, day] = isoDay.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day));
+  next.setUTCDate(next.getUTCDate() + days);
+  return next.toISOString().slice(0, 10);
+}
+
+export function finishedWhenLabel(iso, now = new Date()) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const time = date.toLocaleTimeString("en-NZ", {
+    timeZone: "Pacific/Auckland",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const day = aucklandDay(date);
+  const today = aucklandDay(now);
+  if (day === today) return `Today, ${time}`;
+  if (day === addIsoDay(today, -1)) return `Yesterday, ${time}`;
+  const short = date.toLocaleDateString("en-NZ", {
+    timeZone: "Pacific/Auckland",
+    day: "numeric",
+    month: "short",
+  });
+  return `${short}, ${time}`;
+}
+
+export function recentQueueItemDto(row = {}) {
+  const proposed = row.proposed && typeof row.proposed === "object" ? row.proposed : {};
+  const action = proposed.editor_decision?.action;
+  const after = proposed.after && typeof proposed.after === "object" ? proposed.after : {};
+  const before = proposed.before && typeof proposed.before === "object" ? proposed.before : {};
+  const diffRows = queueDiffRows({ kind: row.kind, before, after });
+  const organizationId = row.organization_id || row.organizationId || null;
+  return {
+    id: row.id,
+    name: row.organization_name || after.name || before.name || "",
+    summaryLabel: queueSummaryLabel({ kind: row.kind, diffRows }),
+    decisionLabel: finishedDecisionLabel({ action, kind: row.kind, status: row.status }),
+    whenLabel: finishedWhenLabel(proposed.editor_decision?.at || row.updated_at),
+    decidedAt: proposed.editor_decision?.at || row.updated_at || null,
+    organizationId,
+    listingLabel: organizationId ? "Open listing" : "",
+  };
+}
+
 export function reviewCountLabel(count) {
   const n = Number(count) || 0;
   if (n === 0) return "Nothing to review";

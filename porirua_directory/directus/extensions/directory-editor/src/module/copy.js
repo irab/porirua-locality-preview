@@ -25,6 +25,23 @@ export function actionSuccessMessage({ action, kind, unpublished = true } = {}) 
   return `Accepted.${publishNext}`;
 }
 
+export function finishedDecisionLabel({ action, kind, status } = {}) {
+  const resolved = action || (status === "rejected" ? "reject" : "approve");
+  if (resolved === "keep") return "Kept yours";
+  if (resolved === "keep-community") return "Kept it as a community listing";
+  if (resolved === "hide" || (resolved === "approve" && kind === "removed")) {
+    return "Took it off the site";
+  }
+  if (resolved === "reject") {
+    if (kind === "new") return "Didn't add this";
+    if (kind === "geocode_flag") return "Skipped this pin check";
+    return "Didn't use this change";
+  }
+  if (kind === "new") return "Added this service";
+  if (kind === "geocode_flag") return "The pin is fine";
+  return "Accepted this change";
+}
+
 export function reviewCountLabel(count) {
   const n = Number(count) || 0;
   if (n === 0) return "Nothing to review";

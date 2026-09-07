@@ -127,9 +127,13 @@ export async function keepAsCommunityReviewItem({ db, queueItemId, createdBy } =
         item.entity_id,
       ]);
     }
+    const proposed = item.proposed && typeof item.proposed === "object" ? { ...item.proposed } : {};
+    proposed.editor_decision = { action: "keep-community", at: new Date().toISOString() };
     await tx.query(
-      `UPDATE review_queue_items SET status = 'accepted', updated_at = now() WHERE id = $1`,
-      [queueItemId]
+      `UPDATE review_queue_items
+          SET status = 'accepted', proposed = $2::jsonb, updated_at = now()
+        WHERE id = $1`,
+      [queueItemId, JSON.stringify(proposed)]
     );
     const undoId = await recordReviewUndo(tx, snapshot, "keep-community");
     return { ok: true, queueItemId, entityId: item.entity_id, communityOwned: true, undoId };

@@ -12,6 +12,7 @@ import {
   restoreListing,
   updateListing,
 } from "../scripts/listings.mjs";
+import { approveReviewItem } from "../scripts/approve-review.mjs";
 import { withDirectusDatabase } from "./helpers/directus-postgres.mjs";
 
 async function createPublishedOrg(client, { id, name, grain = "flat" } = {}) {
@@ -275,6 +276,45 @@ test("listQueueItems skips Service name when the proposal has no name key", asyn
       false
     );
     assert.ok(item.diffRows.some((row) => row.line.startsWith("Help types:")));
+  });
+});
+
+test("listQueueItems returns recently finished work from closed rows, not a session counter", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, { id: "community-finished", name: "Finished Org" });
+    await client.query(
+      `UPDATE services SET address = '1 Old Street' WHERE id = 'community-finished'`
+    );
+    const run = await client.query(
+      `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
+    );
+    const queued = await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES ($1, 'service', 'community-finished', 'changed', $2::jsonb, 'pending')
+       RETURNING id`,
+      [
+        run.rows[0].id,
+        JSON.stringify({
+          before: { address: "1 Old Street", name: "Finished Org" },
+          after: { address: "9 New Street", name: "Finished Org" },
+        }),
+      ]
+    );
+    const before = await listQueueItems({ db: client });
+    assert.equal(before.recent.some((row) => row.organizationId === "community-finished"), false);
+    await approveReviewItem({ db: client, queueItemId: queued.rows[0].id });
+    const after = await listQueueItems({ db: client });
+    const row = after.recent.find((item) => item.organizationId === "community-finished");
+    assert.ok(row);
+    assert.equal(row.name, "Finished Org");
+    assert.equal(row.decisionLabel, "Accepted this change");
+    assert.equal(row.listingLabel, "Open listing");
+    const stored = await client.query(`SELECT proposed, status FROM review_queue_items WHERE id = $1`, [
+      queued.rows[0].id,
+    ]);
+    assert.equal(stored.rows[0].status, "accepted");
+    assert.equal(stored.rows[0].proposed.editor_decision.action, "approve");
   });
 });
 

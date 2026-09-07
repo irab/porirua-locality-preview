@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   actionSuccessMessage,
   deferActionLabel,
+  finishedDecisionLabel,
+  finishedWhenLabel,
   keepAsCommunityLabel,
   kindLabel,
   needsConfirmationGroupLabel,
@@ -10,6 +12,7 @@ import {
   queueDiffRows,
   queueItemDto,
   queueSummaryLabel,
+  recentQueueItemDto,
   rejectActionLabel,
   reviewCountLabel,
   reviewDeferredFinishLabel,
@@ -298,4 +301,32 @@ test("success copy says what happens next", () => {
     reviewFinishedLabel(4),
     "You've reviewed everything. Put 4 changes on the public site."
   );
+});
+
+test("finished work names the decision in her words and keeps a path back to the listing", () => {
+  assert.equal(finishedDecisionLabel({ action: "approve", kind: "changed" }), "Accepted this change");
+  assert.equal(finishedDecisionLabel({ action: "keep", kind: "changed" }), "Kept yours");
+  assert.equal(finishedDecisionLabel({ action: "reject", kind: "new" }), "Didn't add this");
+  assert.equal(finishedDecisionLabel({ status: "rejected", kind: "changed" }), "Didn't use this change");
+  const now = new Date("2026-09-08T07:32:00+12:00");
+  assert.equal(finishedWhenLabel("2026-09-08T06:32:00.000Z", now), "Today, 6:32 pm");
+  assert.equal(finishedWhenLabel("2026-09-07T04:10:00.000Z", now), "Yesterday, 4:10 pm");
+  const dto = recentQueueItemDto({
+    id: "q-done",
+    kind: "changed",
+    status: "accepted",
+    updated_at: "2026-09-08T06:32:00.000Z",
+    organization_id: "org-kelly",
+    organization_name: "Kelly Sports Porirua",
+    proposed: {
+      editor_decision: { action: "approve", at: "2026-09-08T06:32:00.000Z" },
+      before: { address: "Mana Esplanade" },
+      after: { address: "3 Staithes Drive North", name: "Kelly Sports Porirua" },
+    },
+  });
+  assert.equal(dto.name, "Kelly Sports Porirua");
+  assert.equal(dto.decisionLabel, "Accepted this change");
+  assert.equal(dto.summaryLabel, "Address changed");
+  assert.equal(dto.organizationId, "org-kelly");
+  assert.equal(dto.listingLabel, "Open listing");
 });

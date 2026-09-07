@@ -170,10 +170,20 @@ async function applyAcceptedService(tx, entityId, accepted, lockedFields) {
   return written.rows[0];
 }
 
-async function markQueue(tx, queueItemId, status) {
+async function markQueue(tx, queueItemId, status, action) {
+  const decision = {
+    editor_decision: {
+      action: action || (status === "rejected" ? "reject" : "approve"),
+      at: new Date().toISOString(),
+    },
+  };
   await tx.query(
-    `UPDATE review_queue_items SET status = $2, updated_at = now() WHERE id = $1`,
-    [queueItemId, status]
+    `UPDATE review_queue_items
+        SET status = $2,
+            proposed = COALESCE(proposed, '{}'::jsonb) || $3::jsonb,
+            updated_at = now()
+      WHERE id = $1`,
+    [queueItemId, status, JSON.stringify(decision)]
   );
 }
 
@@ -212,7 +222,7 @@ export async function approveReviewItem({ db, queueItemId, payload, createdBy } 
         entityId: item.entity_id,
         createdBy,
       });
-      await markQueue(tx, queueItemId, "accepted");
+      await markQueue(tx, queueItemId, "accepted", "hide");
       return { queueItemId, entityId: item.entity_id, archived: true };
     }
     const accepted = { ...proposedAfter(item), ...(payload ?? {}) };
@@ -221,7 +231,7 @@ export async function approveReviewItem({ db, queueItemId, payload, createdBy } 
       await closeCommunityOwned(tx, item.entity_id);
     }
     await applyAcceptedService(tx, item.entity_id, accepted, lockedFields);
-    await markQueue(tx, queueItemId, "accepted");
+    await markQueue(tx, queueItemId, "accepted", "approve");
     return { queueItemId, entityId: item.entity_id, accepted };
   }, db);
 }
@@ -243,7 +253,7 @@ export async function hideReviewItem({ db, queueItemId, createdBy } = {}) {
       entityId: item.entity_id,
       createdBy,
     });
-    await markQueue(tx, queueItemId, "accepted");
+    await markQueue(tx, queueItemId, "accepted", "hide");
     return { queueItemId, entityId: item.entity_id };
   }, db);
 }
@@ -268,7 +278,7 @@ export async function keepCurationReviewItem({ db, queueItemId } = {}) {
     if (item.proposed?.fsd_returned) {
       await markCommunityOwnedRuledOn(tx, item.entity_id);
     }
-    await markQueue(tx, queueItemId, "accepted");
+    await markQueue(tx, queueItemId, "accepted", "keep");
     return { queueItemId, entityId: item.entity_id, kept: true };
   }, db);
 }
@@ -288,7 +298,7 @@ export async function rejectReviewItem({ db, queueItemId } = {}) {
         entityType: item.entity_type,
         entityId: item.entity_id,
       });
-      await markQueue(tx, queueItemId, "rejected");
+      await markQueue(tx, queueItemId, "rejected", "reject");
       return { queueItemId, entityId: item.entity_id, hidden: true };
     }
     const raw = current.raw_import && typeof current.raw_import === "object" ? current.raw_import : {};
@@ -315,7 +325,7 @@ export async function rejectReviewItem({ db, queueItemId } = {}) {
         ]);
       }
     }
-    await markQueue(tx, queueItemId, "rejected");
+    await markQueue(tx, queueItemId, "rejected", "reject");
     return { queueItemId, entityId: item.entity_id };
   }, db);
 }

@@ -15,7 +15,7 @@ import {
 import { withTransaction } from "./lib/db.mjs";
 import { upsertStickyOverride } from "./directus/sticky-curation.mjs";
 import { formHighlightFields } from "../editor-core/form-highlight.mjs";
-import { queueItemDto, statusLabel } from "../editor-core/queue-dto.mjs";
+import { queueItemDto, recentQueueItemDto, statusLabel } from "../editor-core/queue-dto.mjs";
 import { undoPublishAvailability } from "../editor-core/undo-publish.mjs";
 import {
   lastEventForAvailability,
@@ -555,6 +555,22 @@ export async function listQueueItems({ db } = {}) {
       WHERE q.status = 'pending'
       ORDER BY q.created_at ASC`
   );
+  const recent = await db.query(
+    `SELECT q.id,
+            q.kind,
+            q.status,
+            q.updated_at,
+            q.proposed,
+            q.entity_id,
+            o.id AS organization_id,
+            o.name AS organization_name
+       FROM review_queue_items q
+       LEFT JOIN services s ON s.id = q.entity_id
+       LEFT JOIN organizations o ON o.id = s.organization_id
+      WHERE q.status IN ('accepted', 'rejected')
+      ORDER BY q.updated_at DESC
+      LIMIT 20`
+  );
   return {
     items: result.rows.map((row) => {
       const live = {
@@ -578,6 +594,7 @@ export async function listQueueItems({ db } = {}) {
         phone: live.phone || dto.after.phone || "",
       };
     }),
+    recent: recent.rows.map((row) => recentQueueItemDto(row)),
   };
 }
 
