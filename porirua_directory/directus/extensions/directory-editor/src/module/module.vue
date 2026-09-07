@@ -47,10 +47,26 @@
         </v-button>
       </div>
 
-      <v-tabs v-model="tab">
-        <v-tab value="review">{{ reviewTabLabel }}</v-tab>
-        <v-tab value="listings">Listings</v-tab>
-      </v-tabs>
+      <div class="editor-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="tab === 'review'"
+          :class="{ active: tab === 'review' }"
+          @click="openReview"
+        >
+          {{ reviewTabLabel }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="tab === 'listings'"
+          :class="{ active: tab === 'listings' }"
+          @click="openListingsTab"
+        >
+          Listings
+        </button>
+      </div>
 
       <section v-if="tab === 'review'" class="panel">
         <p class="lede">These are government updates. Your own adds never appear here.</p>
@@ -93,10 +109,10 @@
               </div>
               <div class="actions" :class="{ equal: item.kind === 'removed' }">
                 <template v-if="item.kind === 'removed'">
-                  <v-button small secondary @click="runQueue(item, '/hide', 'approve')">
+                  <v-button small secondary type="button" @click="runQueue(item, '/hide', 'approve')">
                     Take it off the site
                   </v-button>
-                  <v-button small secondary @click="runQueue(item, '/keep-community', 'keep-community')">
+                  <v-button small secondary type="button" @click="runQueue(item, '/keep-community', 'keep-community')">
                     {{ item.keepAsCommunityLabel }}
                   </v-button>
                 </template>
@@ -202,8 +218,8 @@
           />
           <ul class="lines">
             <li v-for="line in detail.services" :key="line.id">
-              <strong>{{ line.title || line.service_name }}</strong>
-              <span>{{ line.statusLabel }}</span>
+              <strong class="line-title">{{ line.title || line.service_name }}</strong>
+              <span class="line-status">{{ line.statusLabel }}</span>
               <div class="actions">
                 <v-button small secondary @click="editLine(line)">Edit</v-button>
                 <v-button v-if="line.status === 'published'" small secondary @click="askArchive(line)">
@@ -260,7 +276,7 @@
 </template>
 
 <script>
-import { useApi, useStores } from "@directus/extensions-sdk";
+import { useApi } from "@directus/extensions-sdk";
 import ListingForm from "./listing-form.vue";
 import VerificationBar from "./verification-bar.vue";
 import { directoryEditorRequest } from "./directory-api.js";
@@ -272,6 +288,7 @@ import {
   reviewCountLabel,
   reviewDeferredFinishLabel,
   reviewFinishedLabel,
+  reviewStatusBandLabel,
   waitingCountLabel,
 } from "./copy.js";
 import { formHighlightFields } from "./form-highlight.js";
@@ -315,14 +332,7 @@ export default {
   components: { ListingForm, VerificationBar },
   setup() {
     const apiClient = useApi();
-    let notifyStore = null;
-    try {
-      const { useNotificationsStore } = useStores();
-      notifyStore = useNotificationsStore();
-    } catch {
-      notifyStore = null;
-    }
-    return { notifyStore, apiClient };
+    return { apiClient };
   },
   data() {
     return {
@@ -368,7 +378,7 @@ export default {
       return this.publishStatus.unpublished ? null : 0;
     },
     reviewBandLabel() {
-      return reviewCountLabel(this.queue.length);
+      return reviewStatusBandLabel(this.queue);
     },
     waitingBandLabel() {
       if (this.unpublishedCount == null) return "Changes waiting to go on the site";
@@ -381,7 +391,8 @@ export default {
       return this.publishStatus.canUndoPublish === true;
     },
     reviewTabLabel() {
-      return this.queue.length ? `Review (${this.queue.length})` : "Review";
+      const n = this.activeQueue.length;
+      return n ? `Review (${n})` : "Review";
     },
     activeQueue() {
       return this.queue.filter((item) => !item.deferred);
@@ -491,6 +502,9 @@ export default {
       const first = this.activeQueue[0];
       if (first) this.openId = first.id;
     },
+    openListingsTab() {
+      this.tab = "listings";
+    },
     toggleOpen(item) {
       this.openId = this.openId === item.id ? null : item.id;
     },
@@ -506,7 +520,6 @@ export default {
     showToast({ message, undoId = null, showNext = false, undoPublish = false }) {
       if (this.toastTimer) clearTimeout(this.toastTimer);
       this.toast = { message, undoId, showNext, undoPublish };
-      this.notifyStore?.add?.({ title: message, type: "success" });
       this.$nextTick(() => {
         const undo = this.$refs.undoBtn;
         const next = this.$refs.nextBtn;
@@ -548,10 +561,19 @@ export default {
       if (next) this.openId = next.id;
     },
     async undoLast() {
-      if (!this.toast?.undoId) return;
-      await this.api("/review-undo", { method: "POST", body: { undoId: this.toast.undoId } });
+      const undoId = this.toast?.undoId;
+      if (this.toastTimer) clearTimeout(this.toastTimer);
       this.toast = null;
-      this.reviewedThisSession = Math.max(0, this.reviewedThisSession - 1);
+      if (!undoId) {
+        await Promise.all([this.refreshQueue(), this.refreshPublish()]);
+        return;
+      }
+      try {
+        await this.api("/review-undo", { method: "POST", body: { undoId } });
+        this.reviewedThisSession = Math.max(0, this.reviewedThisSession - 1);
+      } catch (error) {
+        this.queueError = error.message || "Could not undo that.";
+      }
       await Promise.all([this.refreshQueue(), this.refreshPublish()]);
     },
     startCorrect(item) {
@@ -671,7 +693,11 @@ export default {
         lng: org.lng ?? null,
         communityFilters: org.community_filters || org.communityFilters || [],
       };
-      this.formHighlight = { changed: [], youSetThis: [], focusField: null };
+      this.formHighlight = {
+        changed: [],
+        youSetThis: org.youSetThis || [],
+        focusField: null,
+      };
       this.formOpen = true;
     },
     editLine(line) {
@@ -689,7 +715,11 @@ export default {
         categories: line.categories || [],
         communityFilters: org.community_filters || [],
       };
-      this.formHighlight = { changed: [], youSetThis: [], focusField: null };
+      this.formHighlight = {
+        changed: [],
+        youSetThis: [...(line.youSetThis || []), ...(org.youSetThis || [])],
+        focusField: null,
+      };
       this.formOpen = true;
     },
     async checkName() {
@@ -849,6 +879,27 @@ export default {
 .actions.equal {
   align-items: stretch;
 }
+.actions.equal :deep(.v-button) {
+  flex: 1 1 0;
+}
+.editor-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid var(--theme--border-color-subdued);
+  margin-top: 8px;
+}
+.editor-tabs button {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 10px 2px 8px;
+  cursor: pointer;
+  color: var(--theme--foreground-subdued);
+}
+.editor-tabs button.active {
+  color: var(--theme--foreground);
+  border-bottom-color: var(--theme--primary);
+}
 .search {
   display: grid;
   gap: 4px;
@@ -890,8 +941,13 @@ export default {
 .review-body {
   padding: 8px 4px 0;
 }
-.kind {
+.kind,
+.line-status {
   color: var(--theme--foreground-subdued);
+}
+.lines li {
+  display: grid;
+  gap: 4px;
 }
 .badge {
   font-size: 0.85rem;

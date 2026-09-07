@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   archiveListing,
   createListing,
+  getListing,
   listListings,
   listQueueItems,
   ListingError,
@@ -224,5 +225,74 @@ test("listQueueItems shows the live listing and keeps the queued before snapshot
     assert.equal(item.before.address, "1 Live Street");
     assert.equal(item.queuedBefore.phone, "04 111 0000");
     assert.equal(item.queuedBefore.address, "9 Queued Street");
+  });
+});
+
+test("listQueueItems does not invent deletions for a pin-check", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, { id: "community-pin-only", name: "Pin Only" });
+    await client.query(
+      `UPDATE services SET phone = '04 237 7749', address = '1 Old Street', title = 'Pin Only Upper Hutt' WHERE id = 'community-pin-only'`
+    );
+    const run = await client.query(
+      `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
+    );
+    await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES ($1, 'service', 'community-pin-only', 'geocode_flag', $2::jsonb, 'pending')`,
+      [run.rows[0].id, JSON.stringify({ geocode_flag: "sea" })]
+    );
+    const { items } = await listQueueItems({ db: client });
+    const item = items.find((row) => row.entityId === "community-pin-only");
+    assert.equal(item.kindLabel, "Check the map pin");
+    assert.deepEqual(item.diffRows, []);
+  });
+});
+
+test("listQueueItems skips Service name when the proposal has no name key", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, { id: "community-name-gap", name: "Name Gap" });
+    await client.query(
+      `UPDATE services SET title = 'Supported Employment Service', categories = '["support"]'::jsonb WHERE id = 'community-name-gap'`
+    );
+    const run = await client.query(
+      `INSERT INTO import_runs (source, status) VALUES ('fsd', 'success') RETURNING id`
+    );
+    await client.query(
+      `INSERT INTO review_queue_items (
+         import_run_id, entity_type, entity_id, kind, proposed, status
+       ) VALUES ($1, 'service', 'community-name-gap', 'changed', $2::jsonb, 'pending')`,
+      [
+        run.rows[0].id,
+        JSON.stringify({ after: { name: "Name Gap", categories: ["food"] } }),
+      ]
+    );
+    const { items } = await listQueueItems({ db: client });
+    const item = items.find((row) => row.entityId === "community-name-gap");
+    assert.equal(
+      item.diffRows.some((row) => /Supported Employment|→ —/.test(row.line)),
+      false
+    );
+    assert.ok(item.diffRows.some((row) => row.line.startsWith("Help types:")));
+  });
+});
+
+test("getListing marks curated fields You set this earlier on a plain edit", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await createPublishedOrg(client, { id: "community-locked-edit", name: "Locked Edit" });
+    await client.query(
+      `UPDATE services SET address = '22 Ngati Toa Street', lat = -41.12, lng = 174.83 WHERE id = 'community-locked-edit'`
+    );
+    await client.query(
+      `INSERT INTO overrides (id, target_type, target_id, action, patch, status)
+       VALUES ('service:community-locked-edit:patch', 'service', 'community-locked-edit', 'patch', $1::jsonb, 'open')`,
+      [JSON.stringify({ address: "22 Ngati Toa Street", lat: -41.12, lng: 174.83 })]
+    );
+    const listing = await getListing({ db: client, organizationId: "community-locked-edit" });
+    assert.deepEqual(
+      listing.services[0].youSetThis.map((row) => row.label).sort(),
+      ["Address", "Map pin"]
+    );
   });
 });

@@ -47,11 +47,55 @@ function stripCompareSuffixes(folded) {
   return current;
 }
 
+const WEAK_NAME_TOKENS = new Set([
+  "a",
+  "and",
+  "centre",
+  "center",
+  "community",
+  "group",
+  "inc",
+  "incorporated",
+  "limited",
+  "ltd",
+  "new",
+  "nz",
+  "o",
+  "of",
+  "porirua",
+  "service",
+  "services",
+  "support",
+  "te",
+  "the",
+  "trust",
+  "wellington",
+  "whitireia",
+  "zealand",
+]);
+
+export function distinctiveNameTokens(value) {
+  return foldOrgName(value)
+    .split(/\s+/)
+    .filter((token) => token.length > 1 && !WEAK_NAME_TOKENS.has(token));
+}
+
 export function namesNearMatch(a, b) {
   const left = foldOrgName(a);
   const right = foldOrgName(b);
   if (!left || !right) return false;
   return left === right;
+}
+
+/** Warn-level match: folded equality or distinctive token overlap. Biased to false positives. */
+export function namesSuggestMatch(a, b) {
+  if (!a || !b) return false;
+  if (namesNearMatch(a, b)) return true;
+  const left = distinctiveNameTokens(a);
+  const right = distinctiveNameTokens(b);
+  if (left.length === 0 || right.length === 0) return false;
+  const [shorter, longer] = left.length <= right.length ? [left, right] : [right, left];
+  return shorter.every((token) => longer.includes(token));
 }
 
 function diacriticCount(name) {
@@ -99,7 +143,7 @@ export function findOrganisationNameMatches(queryName, organizations = []) {
   const matches = [];
 
   for (const org of organizations) {
-    if (!org || !namesNearMatch(queryName, org.name)) continue;
+    if (!org || !namesSuggestMatch(queryName, org.name)) continue;
 
     const mergedInto = org.merged_into ?? org.mergedInto ?? null;
     const target = mergedInto ? byId.get(mergedInto) : null;
@@ -137,7 +181,7 @@ export function findServiceLineNameMatches(queryName, services = []) {
   const seen = new Set();
   const matches = [];
   for (const service of services) {
-    if (!service || !namesNearMatch(queryName, lineName(service))) continue;
+    if (!service || !namesSuggestMatch(queryName, lineName(service))) continue;
     const id = service.id ?? service.line_id;
     if (!id || seen.has(id)) continue;
     seen.add(id);

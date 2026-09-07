@@ -257,6 +257,91 @@ export async function seedReviewPair(token, stamp) {
   return { stamp, orgId, orgName, runId, lines, queueItems };
 }
 
+export async function seedRemovalItem(token, stamp) {
+  const orgId = `org-e2e-${stamp}`;
+  const serviceId = `e2e-${stamp}-removed`;
+  const orgName = `E2E ${stamp} Removal`;
+  assertThrowawayOrgId(orgId);
+  assertThrowawayServiceId(serviceId);
+
+  const org = await directusRequest(token, "/items/organizations", {
+    method: "POST",
+    body: {
+      id: orgId,
+      public_id: orgId,
+      render_grain: "flat",
+      name: orgName,
+      cluster_key: stamp,
+      status: "published",
+      source_primary: "fsd",
+    },
+  });
+  if (org.status !== 200 && org.status !== 201) {
+    throw new Error(`Seed removal organization failed: HTTP ${org.status}`);
+  }
+
+  const service = await directusRequest(token, "/items/services", {
+    method: "POST",
+    body: {
+      id: serviceId,
+      organization_id: orgId,
+      line_id: serviceId,
+      title: orgName,
+      status: "published",
+      source: "fsd",
+      address: "1 Old Street",
+      phone: "04 900 0099",
+    },
+  });
+  if (service.status !== 200 && service.status !== 201) {
+    throw new Error(`Seed removal service failed: HTTP ${service.status}`);
+  }
+
+  const run = await directusRequest(token, "/items/import_runs", {
+    method: "POST",
+    body: { source: "e2e", status: "success", notes: `playwright removal ${stamp}` },
+  });
+  if ((run.status !== 200 && run.status !== 201) || !run.data?.data?.id) {
+    throw new Error(`Seed removal import_run failed: HTTP ${run.status}`);
+  }
+  const runId = run.data.data.id;
+
+  const queued = await directusRequest(token, "/items/review_queue_items", {
+    method: "POST",
+    body: {
+      import_run_id: runId,
+      entity_type: "service",
+      entity_id: serviceId,
+      kind: "removed",
+      proposed: {
+        before: { name: orgName, address: "1 Old Street", phone: "04 900 0099" },
+        after: {},
+      },
+      status: "pending",
+    },
+  });
+  if ((queued.status !== 200 && queued.status !== 201) || !queued.data?.data?.id) {
+    throw new Error(`Seed removal queue item failed: HTTP ${queued.status}`);
+  }
+
+  return {
+    stamp,
+    orgId,
+    orgName,
+    runId,
+    lines: [{ id: serviceId, title: orgName }],
+    queueItems: [
+      {
+        id: queued.data.data.id,
+        serviceId,
+        title: orgName,
+        orgName,
+        kind: "removed",
+      },
+    ],
+  };
+}
+
 export async function cleanupSeed(token, seed) {
   if (!seed) return;
   for (const item of seed.queueItems ?? []) {

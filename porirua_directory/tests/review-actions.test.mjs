@@ -45,6 +45,18 @@ test("Needs confirmation stays pending and lists under the deferred group", asyn
     const dto = items.find((row) => row.entityId === "community-defer-me");
     assert.equal(dto.deferred, true);
     assert.equal(dto.deferActionLabel, "Needs confirmation");
+    const active = items.filter((row) => !row.deferred);
+    const deferred = items.filter((row) => row.deferred);
+    assert.equal(active.some((row) => row.entityId === "community-defer-me"), false);
+    assert.equal(deferred.some((row) => row.entityId === "community-defer-me"), true);
+    await undoReviewDecision({ db: client, undoId: result.undoId });
+    const afterUndo = await listQueueItems({ db: client });
+    const restored = afterUndo.items.find((row) => row.entityId === "community-defer-me");
+    assert.equal(restored.deferred, false);
+    assert.equal(
+      afterUndo.items.filter((row) => !row.deferred).some((row) => row.entityId === "community-defer-me"),
+      true
+    );
   });
 });
 

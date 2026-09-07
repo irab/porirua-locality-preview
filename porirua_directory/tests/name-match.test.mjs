@@ -5,6 +5,7 @@ import {
   findServiceLineNameMatches,
   foldOrgName,
   namesNearMatch,
+  namesSuggestMatch,
   preferMacronisedName,
 } from "../scripts/lib/name-match.mjs";
 import { slugId } from "../scripts/lib/normalize.mjs";
@@ -228,6 +229,66 @@ test("service-line matcher is scoped to the lines it is given, including hidden"
     findServiceLineNameMatches("Budgeting", lines).length,
     0
   );
+});
+
+test("typed fragments surface live orgs — partial, reordered, missing word", () => {
+  const whanau = [
+    "community-porirua-whanau-centre",
+    "org-porirua-whanau-centre",
+  ];
+  assert.deepEqual(matchIds("Whanau"), whanau);
+  assert.deepEqual(matchIds("Porirua Whanau"), whanau);
+  assert.deepEqual(matchIds("Whanau Porirua"), whanau);
+  assert.deepEqual(matchIds("Whānau Centre"), whanau);
+  assert.deepEqual(matchIds("Te Waka"), [
+    "org-te-waka-whaiora-trust",
+    "org-te-waka-whaiora-trust-342f",
+  ]);
+  assert.deepEqual(matchIds("Waka Whaiora"), [
+    "org-te-waka-whaiora-trust",
+    "org-te-waka-whaiora-trust-342f",
+  ]);
+  assert.deepEqual(matchIds("Tiaki Tatou"), [
+    "community-te-wahi-tiaki-tatou",
+    "community-te-wahi-tiaki-tatou-ea82",
+  ]);
+  assert.deepEqual(matchIds("Runanga"), [
+    "community-te-runanga-o-toa-rangatira",
+    "org-te-runanga-o-toa-rangatira",
+  ]);
+});
+
+test("weak tokens alone do not warn — Porirua, Centre, Te, Trust", () => {
+  assert.deepEqual(matchIds("Porirua"), []);
+  assert.deepEqual(matchIds("Centre"), []);
+  assert.deepEqual(matchIds("Te"), []);
+  assert.deepEqual(matchIds("Trust"), []);
+  assert.deepEqual(matchIds("Community"), []);
+  assert.equal(namesSuggestMatch("Porirua", "Porirua Whānau Centre"), false);
+  assert.equal(namesSuggestMatch("Whanau", "Porirua Whānau Centre"), true);
+  assert.equal(namesNearMatch("Whanau", "Porirua Whānau Centre"), false);
+});
+
+test("service-line matcher uses the same typed-name overlap", () => {
+  const lines = [
+    {
+      id: "line-a",
+      organization_id: "org-te-waka-whaiora-trust",
+      title: "Whānau support",
+      status: "published",
+    },
+    {
+      id: "line-other",
+      organization_id: "org-te-waka-whaiora-trust",
+      title: "Truancy",
+      status: "published",
+    },
+  ];
+  assert.deepEqual(
+    findServiceLineNameMatches("Whanau", lines).map((row) => row.id),
+    ["line-a"]
+  );
+  assert.equal(findServiceLineNameMatches("Support", lines).length, 0);
 });
 
 test("preferMacronisedName keeps the form with diacritics", () => {

@@ -79,7 +79,7 @@ Editors (current):
 
 - Change community listings in Data Studio → **Directory** (Listings tab). Creates are published rows with **no** review-queue item. The public site updates on **Publish**.
 - Review FSD proposals on the **Review** tab. A removed row’s primary action is **Take it off the site** (hide + override), not Accept.
-- Near-name check on create: `scripts/lib/name-match.mjs`. Do not change `normalizedOrgName` / clustering here — see [open-duplicate-org-cards](../issues/open-duplicate-org-cards.md).
+- Near-name check on create: `scripts/lib/name-match.mjs` (NFD fold plus distinctive token overlap; warns, does not block). Do not change `normalizedOrgName` / clustering here — see [open-duplicate-org-cards](../issues/open-duplicate-org-cards.md).
 
 ---
 

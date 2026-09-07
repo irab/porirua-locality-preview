@@ -14,6 +14,7 @@ import {
   reviewCountLabel,
   reviewDeferredFinishLabel,
   reviewFinishedLabel,
+  reviewStatusBandLabel,
   statusLabel,
   waitingCountLabel,
 } from "../editor-core/queue-dto.mjs";
@@ -122,8 +123,78 @@ test("removed diff shows what is coming off the site", () => {
   });
   assert.deepEqual(
     rows.map((row) => row.line),
-    ["Name: Closed service", "Address: 1 Bedford Court"]
+    [
+      "Name is coming off the site: Closed service",
+      "Address is coming off the site: 1 Bedford Court",
+    ]
   );
+});
+
+test("a pin check has no field list — the map is the card", () => {
+  const dto = queueItemDto(
+    {
+      kind: "geocode_flag",
+      proposed: { geocode_flag: "sea" },
+    },
+    {
+      name: "Literacy Aotearoa",
+      title: "Literacy Aotearoa – Upper Hutt",
+      phone: "04 111 0000",
+      address: "1 Old Street",
+    }
+  );
+  assert.deepEqual(dto.diffRows, []);
+  assert.equal(dto.summaryLabel, "Check the map pin");
+  assert.equal(
+    dto.diffRows.some((row) => row.line.includes("→")),
+    false
+  );
+});
+
+test("changed rows skip a field when after is missing that key", () => {
+  const rows = queueDiffRows({
+    kind: "changed",
+    before: {
+      name: "Workmates",
+      title: "Supported Employment Service",
+      categories: ["support"],
+    },
+    after: {
+      name: "Workmates",
+      categories: ["food"],
+    },
+  });
+  assert.deepEqual(
+    rows.map((row) => row.line),
+    ["Help types: Support and counselling → Food / kai"]
+  );
+  assert.equal(
+    rows.some((row) => /Supported Employment|→ —/.test(row.line)),
+    false
+  );
+});
+
+test("changed rows keep a real name change when both sides have a name", () => {
+  const rows = queueDiffRows({
+    kind: "changed",
+    before: { title: "Supported Employment Service", categories: ["support"] },
+    after: { serviceName: "Supported employment", categories: ["support"] },
+  });
+  assert.deepEqual(
+    rows.map((row) => row.line),
+    ["Service name: Supported Employment Service → Supported employment"]
+  );
+});
+
+test("review counts use the active list, not pending-including-deferred", () => {
+  const items = [
+    { deferred: false },
+    { deferred: false },
+    { deferred: true },
+  ];
+  assert.equal(reviewStatusBandLabel(items), "2 changes to review");
+  assert.equal(reviewStatusBandLabel([{ deferred: true }]), "1 needs confirmation");
+  assert.equal(reviewCountLabel(0), "Nothing to review");
 });
 
 test("you-set-this appears for a curated locked field even without reviewable_fields", () => {

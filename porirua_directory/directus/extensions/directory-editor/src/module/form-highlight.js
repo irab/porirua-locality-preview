@@ -22,7 +22,7 @@ function beforeValue(before, field) {
   return before[field];
 }
 
-export function formHighlightFields({ before = {}, after = {}, locked = [] } = {}) {
+export function formHighlightFields({ before = {}, after = {}, locked = [], alwaysMarkLocked = false } = {}) {
   const changed = [];
   for (const field of FORM_FIELDS) {
     if (asText(field, beforeValue(before, field)) === asText(field, afterValue(after, field))) {
@@ -46,11 +46,14 @@ export function formHighlightFields({ before = {}, after = {}, locked = [] } = {
   const seen = new Set();
   for (const field of locked) {
     const formField = field === "lat" || field === "lng" ? "address" : field;
-    if (!changedIds.has(formField) && !changedIds.has(field)) continue;
+    if (!alwaysMarkLocked && !changedIds.has(formField) && !changedIds.has(field)) continue;
     const key = field === "lat" || field === "lng" ? "pin" : field;
     if (seen.has(key)) continue;
     seen.add(key);
-    youSetThis.push({ field, label: field === "lat" || field === "lng" ? "Map pin" : field });
+    youSetThis.push({
+      field,
+      label: field === "lat" || field === "lng" ? "Map pin" : field,
+    });
   }
   return {
     changed,

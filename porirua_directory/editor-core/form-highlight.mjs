@@ -26,9 +26,10 @@ function beforeValue(before, field) {
 
 /**
  * Fields the shared form should mark when opened from Use this, and I'll correct it.
- * `changed` is the government proposal vs live. `youSetThis` is curated ∩ changed.
+ * `changed` is the government proposal vs live.
+ * `youSetThis` is curated ∩ changed, or every curated field when `alwaysMarkLocked`.
  */
-export function formHighlightFields({ before = {}, after = {}, locked = [] } = {}) {
+export function formHighlightFields({ before = {}, after = {}, locked = [], alwaysMarkLocked = false } = {}) {
   const changed = [];
   for (const field of FORM_FIELDS) {
     if (asText(field, beforeValue(before, field)) === asText(field, afterValue(after, field))) {
@@ -56,7 +57,7 @@ export function formHighlightFields({ before = {}, after = {}, locked = [] } = {
   const seen = new Set();
   for (const field of locked) {
     const formField = field === "lat" || field === "lng" ? "address" : field === "url" ? "url" : field;
-    if (!changedIds.has(formField) && !changedIds.has(field)) continue;
+    if (!alwaysMarkLocked && !changedIds.has(formField) && !changedIds.has(field)) continue;
     const label = fieldLabel(field);
     if (seen.has(label)) continue;
     seen.add(label);

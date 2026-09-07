@@ -9,19 +9,25 @@ export const KIND_LABELS = {
   geocode_flag: "Check the map pin",
 };
 
-const TEXT_DIFF_FIELDS = [
-  "name",
-  "title",
-  "serviceName",
-  "service_name",
-  "description",
-  "phone",
-  "url",
-  "address",
-  "categories",
-];
+const TEXT_DIFF_FIELDS = ["name", "serviceName", "description", "phone", "url", "address", "categories"];
 
-const NAME_ALIASES = new Set(["title", "serviceName", "service_name"]);
+function pickField(side, field) {
+  if (!side || typeof side !== "object") return undefined;
+  if (field === "serviceName") return side.serviceName ?? side.service_name ?? side.title;
+  if (field === "url") return side.url ?? side.website;
+  if (field === "categories") return side.categories ?? side.help_types;
+  return side[field];
+}
+
+function hasField(side, field) {
+  if (!side || typeof side !== "object") return false;
+  if (field === "serviceName") {
+    return "serviceName" in side || "service_name" in side || "title" in side;
+  }
+  if (field === "url") return "url" in side || "website" in side;
+  if (field === "categories") return "categories" in side || "help_types" in side;
+  return field in side;
+}
 
 export function kindLabel(kind) {
   return KIND_LABELS[kind] || "Details changed";
@@ -82,10 +88,10 @@ export function otherUnchangedRows({ kind, before = {}, after = {}, diffRows = [
   if (kind === "new" || kind === "removed") return [];
   const shown = new Set(diffRows.map((row) => row.label));
   const rows = [];
-  for (const field of ["name", "description", "address", "phone", "url", "categories"]) {
+  for (const field of ["name", "serviceName", "description", "address", "phone", "url", "categories"]) {
     const label = fieldLabel(field);
     if (shown.has(label)) continue;
-    const value = formatFieldValue(field, after[field] ?? before[field]);
+    const value = formatFieldValue(field, pickField(after, field) ?? pickField(before, field));
     if (!value) continue;
     rows.push({ field, label, line: `${label}: ${value}` });
   }
@@ -119,7 +125,19 @@ export function actionSuccessMessage({ action, kind, unpublished = true } = {}) 
 
 export function reviewCountLabel(count) {
   const n = Number(count) || 0;
+  if (n === 0) return "Nothing to review";
   return n === 1 ? "1 change to review" : `${n} changes to review`;
+}
+
+export function reviewActiveCount(items = []) {
+  return items.filter((item) => !item.deferred).length;
+}
+
+export function reviewStatusBandLabel(items = []) {
+  const active = reviewActiveCount(items);
+  const deferred = items.filter((item) => item.deferred).length;
+  if (active === 0 && deferred > 0) return needConfirmationOnlyTitle(deferred);
+  return reviewCountLabel(active);
 }
 
 export function reviewFinishedLabel(count) {
@@ -166,11 +184,18 @@ function valuesEqual(field, left, right) {
   return formatFieldValue(field, left) === formatFieldValue(field, right);
 }
 
+function isBlank(value) {
+  return value == null || String(value).trim() === "";
+}
+
 export function formatDiffLine(row, kind) {
-  if (kind === "new") return `${row.label}: ${row.after}`;
-  if (kind === "removed") return `${row.label}: ${row.before}`;
-  if (!row.before) return `${row.label}: ${row.after}`;
-  if (!row.after) return `${row.label}: ${row.before} → —`;
+  if (kind === "removed" && !isBlank(row.before) && isBlank(row.after)) {
+    return `${row.label} is coming off the site: ${row.before}`;
+  }
+  if (kind === "new" && !isBlank(row.after)) {
+    return `${row.label}: ${row.after}`;
+  }
+  if (isBlank(row.before) || isBlank(row.after)) return "";
   return `${row.label}: ${row.before} → ${row.after}`;
 }
 
@@ -186,31 +211,44 @@ function editorBefore(item, live) {
 }
 
 export function queueDiffRows({ kind, before = {}, after = {} } = {}) {
+  if (kind === "geocode_flag") return [];
   const rows = [];
   const seenLabels = new Set();
   for (const field of TEXT_DIFF_FIELDS) {
-    if (NAME_ALIASES.has(field) && valuesEqual("name", before.name ?? after.name, before[field] ?? after[field])) {
+    const beforeValue = pickField(before, field);
+    const afterValue = pickField(after, field);
+    if (
+      field === "serviceName" &&
+      valuesEqual("name", pickField(before, "name"), beforeValue) &&
+      valuesEqual("name", pickField(after, "name"), afterValue)
+    ) {
       continue;
     }
+    const beforeText = formatFieldValue(field, beforeValue);
+    const afterText = formatFieldValue(field, afterValue);
+    const afterMissing = !hasField(after, field) || !hasDisplayValue(field, afterValue);
+    const beforeMissing = !hasField(before, field) || !hasDisplayValue(field, beforeValue);
+
     if (kind === "new") {
-      if (!hasDisplayValue(field, after[field])) continue;
+      if (afterMissing) continue;
     } else if (kind === "removed") {
-      if (!hasDisplayValue(field, before[field])) continue;
-    } else if (valuesEqual(field, before[field], after[field])) {
-      continue;
-    } else if (!hasDisplayValue(field, before[field]) && !hasDisplayValue(field, after[field])) {
-      continue;
+      if (beforeMissing) continue;
+    } else {
+      if (valuesEqual(field, beforeValue, afterValue)) continue;
+      if (afterMissing || beforeMissing) continue;
     }
+
     const label = fieldLabel(field);
-    if (seenLabels.has(label) && NAME_ALIASES.has(field)) continue;
-    seenLabels.add(label);
+    if (seenLabels.has(label)) continue;
     const row = {
       field,
       label,
-      before: formatFieldValue(field, before[field]),
-      after: formatFieldValue(field, after[field]),
+      before: beforeText,
+      after: afterText,
     };
     row.line = formatDiffLine(row, kind);
+    if (!row.line) continue;
+    seenLabels.add(label);
     rows.push(row);
   }
   return rows;

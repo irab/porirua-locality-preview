@@ -31,6 +31,17 @@ export function reviewCountLabel(count) {
   return n === 1 ? "1 change to review" : `${n} changes to review`;
 }
 
+export function reviewActiveCount(items = []) {
+  return items.filter((item) => !item.deferred).length;
+}
+
+export function reviewStatusBandLabel(items = []) {
+  const active = reviewActiveCount(items);
+  const deferred = items.filter((item) => item.deferred).length;
+  if (active === 0 && deferred > 0) return needConfirmationOnlyTitle(deferred);
+  return reviewCountLabel(active);
+}
+
 export function waitingCountLabel(count) {
   const n = Number(count) || 0;
   if (n === 0) return "Nothing waiting to go on the site";

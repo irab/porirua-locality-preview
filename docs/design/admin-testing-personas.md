@@ -340,10 +340,10 @@ Each card shows a field-by-field change (`Phone: 04 237 7749 → 04 237 9608`) o
 **Persona:** Kahu  
 **When** the same organisation is already in the directory, **I want to** be warned before I add it again, **so I can** avoid a second card.
 
-Create-time near-name check must flag the known live pairs (Whānau/Whanau, Rūnanga/Runanga, Te Waka Whaiora, Te Wāhi Tiaki Tātou), including archived and merged-away names. Full merge UI is a follow-on task — see [open-duplicate-org-cards](../issues/open-duplicate-org-cards.md).
+Create-time near-name check must flag the known live pairs (Whānau/Whanau, Rūnanga/Runanga, Te Waka Whaiora, Te Wāhi Tiaki Tātou), including archived and merged-away names, and typed fragments such as **Whanau** or **Porirua Whanau**. Full merge UI is a follow-on task — see [open-duplicate-org-cards](../issues/open-duplicate-org-cards.md).
 
 **Pass if:** leaving the Name field shows Open the existing one (primary) and Create anyway (secondary).  
-**Fail if:** the check is Vue-only, skips hidden rows, or misses Whānau/Whanau or Rūnanga/Runanga.
+**Fail if:** the check is Vue-only, skips hidden rows, misses Whānau/Whanau or Rūnanga/Runanga, or ignores a distinctive partial such as **Whanau**.
 
 #### P-03 — Editor guide vs runbook
 

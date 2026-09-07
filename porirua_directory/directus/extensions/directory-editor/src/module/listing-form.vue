@@ -53,6 +53,7 @@
       <legend>
         Help types
         <span v-if="isChanged('categories')" class="mark">Changed in this update</span>
+        <span v-if="youSet('categories')" class="mark">You set this earlier</span>
       </legend>
       <label v-for="option in helpTypes" :key="option.id" class="check">
         <input type="checkbox" :value="option.id" v-model="local.categories" />

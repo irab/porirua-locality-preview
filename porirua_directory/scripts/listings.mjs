@@ -14,6 +14,7 @@ import {
 } from "./lib/listing-identity.mjs";
 import { withTransaction } from "./lib/db.mjs";
 import { upsertStickyOverride } from "./directus/sticky-curation.mjs";
+import { formHighlightFields } from "../editor-core/form-highlight.mjs";
 import { queueItemDto, statusLabel } from "../editor-core/queue-dto.mjs";
 import { undoPublishAvailability } from "../editor-core/undo-publish.mjs";
 import {
@@ -428,6 +429,39 @@ export async function listListings({ db } = {}) {
   };
 }
 
+function lockedFieldsFromPatches(rows = []) {
+  const fields = [];
+  for (const row of rows) {
+    const patch = row.patch && typeof row.patch === "object" ? row.patch : {};
+    fields.push(...Object.keys(patch));
+  }
+  return [...new Set(fields)];
+}
+
+function youSetThisFromPatches(rows = []) {
+  return formHighlightFields({
+    locked: lockedFieldsFromPatches(rows),
+    alwaysMarkLocked: true,
+  }).youSetThis;
+}
+
+async function openPatchOverridesByTarget(db, targetIds) {
+  const ids = targetIds.filter(Boolean);
+  if (!ids.length) return new Map();
+  const result = await db.query(
+    `SELECT target_id, patch FROM overrides
+      WHERE status = 'open' AND action = 'patch' AND target_id = ANY($1::text[])`,
+    [ids]
+  );
+  const byTarget = new Map();
+  for (const row of result.rows) {
+    const list = byTarget.get(row.target_id) || [];
+    list.push(row);
+    byTarget.set(row.target_id, list);
+  }
+  return byTarget;
+}
+
 export async function getListing({ db, organizationId } = {}) {
   if (!db) throw new Error("getListing requires db");
   if (!organizationId) throw new ListingError(400, "organizationId is required");
@@ -437,12 +471,21 @@ export async function getListing({ db, organizationId } = {}) {
     `SELECT * FROM services WHERE organization_id = $1 ORDER BY sort_key ASC, title ASC`,
     [organizationId]
   );
+  const patches = await openPatchOverridesByTarget(db, [
+    organizationId,
+    ...services.rows.map((row) => row.id),
+  ]);
   return {
     organization: {
       ...org.rows[0],
       statusLabel: statusLabel(org.rows[0].status),
+      youSetThis: youSetThisFromPatches(patches.get(organizationId) || []),
     },
-    services: services.rows.map((row) => ({ ...row, statusLabel: statusLabel(row.status) })),
+    services: services.rows.map((row) => ({
+      ...row,
+      statusLabel: statusLabel(row.status),
+      youSetThis: youSetThisFromPatches(patches.get(row.id) || []),
+    })),
   };
 }
 

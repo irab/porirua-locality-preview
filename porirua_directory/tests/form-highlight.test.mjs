@@ -30,6 +30,18 @@ test("keeps You set this earlier on a curated changed field", () => {
   assert.equal(result.focusField, "address");
 });
 
+test("plain edit marks curated fields even when nothing changed this visit", () => {
+  const result = formHighlightFields({
+    locked: ["address", "lat", "lng", "phone"],
+    alwaysMarkLocked: true,
+  });
+  assert.deepEqual(result.changed, []);
+  assert.deepEqual(
+    result.youSetThis.map((row) => row.label),
+    ["Address", "Map pin", "Phone"]
+  );
+});
+
 test("unchanged form has no highlight and no focus steal", () => {
   const result = formHighlightFields({
     before: { name: "Same", phone: "04 1" },
