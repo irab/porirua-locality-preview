@@ -215,7 +215,7 @@ For each screen: purpose, what is on it, what she can do, where each action lead
 - Title: **4 changes to review** (or **1 change to review**)  
 - One row per item: organisation name, plain-words summary  
 - Deferred items live only on the **Needs confirmation** tab (first tab, always present; count in the label when non-zero). They are not copied at the bottom of Review.  
-- **Recently finished** above the remaining cards: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter.  
+- **Recently finished** below the remaining cards: name, what she decided, when, and **Open listing**. Reads from closed `review_queue_items` (decision stored on `proposed.editor_decision`), so it survives reload. Not a session counter. It is a reference she consults after the work, not something she reads on the way to every decision.  
 
 Row summary examples (not the raw kind):
 

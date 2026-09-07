@@ -53,7 +53,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
-  align-items: center;
+  align-items: stretch;
   margin: 12px 0 4px;
 }
 .verify-link {
@@ -67,5 +67,10 @@ export default {
   display: block;
   color: var(--theme--foreground-subdued);
   font-size: 0.85rem;
+}
+.verify :deep(.pin-map) {
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 100%;
 }
 </style>

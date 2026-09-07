@@ -92,33 +92,6 @@
         <p v-if="queueError" class="error">{{ queueError }}</p>
         <p v-if="queueLoading" class="hint">Looking for government updates…</p>
 
-        <section v-if="recent.length" class="recent" aria-labelledby="recent-finished-heading">
-          <h2 id="recent-finished-heading" class="heading">Recently finished</h2>
-          <ul>
-            <li v-for="row in visibleRecent" :key="row.id">
-              <strong>{{ row.name }}</strong>
-              <span>{{ row.decisionLabel }}</span>
-              <span class="kind">{{ row.whenLabel }}</span>
-              <button
-                v-if="row.organizationId"
-                type="button"
-                class="other-toggle"
-                @click="openFinishedListing(row)"
-              >
-                {{ row.listingLabel }}
-              </button>
-            </li>
-          </ul>
-          <button
-            v-if="recent.length > 5"
-            type="button"
-            class="other-toggle"
-            @click="showAllRecent = !showAllRecent"
-          >
-            {{ showAllRecent ? "Show fewer" : `Show all ${recent.length}` }}
-          </button>
-        </section>
-
         <div class="review-list">
           <article
             v-for="item in currentTabItems"
@@ -195,7 +168,12 @@
                     >
                       {{ item.kind === 'geocode_flag' ? "I'll move the pin" : "Use this, and I'll correct it" }}
                     </v-button>
-                    <v-button small secondary @click="runQueue(item, '/reject', 'reject')">
+                    <v-button
+                      v-if="item.showRejectAction"
+                      small
+                      secondary
+                      @click="runQueue(item, '/reject', 'reject')"
+                    >
                       {{ item.rejectActionLabel }}
                     </v-button>
                   </template>
@@ -241,6 +219,33 @@
         >
           Nothing needs confirmation.
         </p>
+
+        <section v-if="recent.length" class="recent" aria-labelledby="recent-finished-heading">
+          <h2 id="recent-finished-heading" class="heading">Recently finished</h2>
+          <ul>
+            <li v-for="row in visibleRecent" :key="row.id">
+              <strong>{{ row.name }}</strong>
+              <span>{{ row.decisionLabel }}</span>
+              <span class="kind">{{ row.whenLabel }}</span>
+              <button
+                v-if="row.organizationId"
+                type="button"
+                class="other-toggle"
+                @click="openFinishedListing(row)"
+              >
+                {{ row.listingLabel }}
+              </button>
+            </li>
+          </ul>
+          <button
+            v-if="recent.length > 5"
+            type="button"
+            class="other-toggle"
+            @click="showAllRecent = !showAllRecent"
+          >
+            {{ showAllRecent ? "Show fewer" : `Show all ${recent.length}` }}
+          </button>
+        </section>
       </section>
 
       <section
@@ -1013,7 +1018,7 @@ export default {
   color: var(--theme--foreground-subdued);
 }
 .recent {
-  margin: 8px 0 20px;
+  margin: 28px 0 8px;
 }
 .recent .heading {
   margin-bottom: 8px;

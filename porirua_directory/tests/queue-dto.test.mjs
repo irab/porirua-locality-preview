@@ -17,6 +17,7 @@ import {
   queueSummaryLabel,
   recentQueueItemDto,
   rejectActionLabel,
+  showRejectAction,
   reviewCountLabel,
   reviewDeferredFinishLabel,
   reviewFinishedLabel,
@@ -91,6 +92,9 @@ test("reject copy is kind-specific", () => {
   assert.equal(rejectActionLabel("new"), "Don't add this");
   assert.equal(rejectActionLabel("changed"), "Don't use this change");
   assert.equal(rejectActionLabel("geocode_flag"), "Skip this pin check");
+  assert.equal(showRejectAction("geocode_flag"), false);
+  assert.equal(showRejectAction("changed"), true);
+  assert.equal(queueItemDto({ kind: "geocode_flag" }).showRejectAction, false);
 });
 
 test("changed diff is field-by-field in Moana's words and skips unchanged fields", () => {

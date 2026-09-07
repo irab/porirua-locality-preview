@@ -28,9 +28,11 @@ Your own creates never appear here.
 - **Details changed** — field rows like `Phone: 04 237 7749 → 04 237 9608`. A row is omitted when the government payload has no value for that field. A removal says **is coming off the site**, not `→ —`.
 - **New service**
 - **Gone from the government list**
-- **Check the map pin** — the map is the whole card. There is no field list.
+- **Check the map pin** — the map is the whole card. There is no field list. **The pin is fine** keeps it. **I'll move the pin** opens the form. There is no Skip — that read as a second way of not deciding.
 
 If you cannot decide yet, **Needs confirmation**. That item moves to the **Needs confirmation** tab. It is not a decision. You can come back to it from that tab.
+
+**Recently finished** sits under the queue. It is a reference after the Undo window, not the thing you walk through to reach the next card.
 
 If a service has gone from the government list, **Take it off the site** and **Keep it as a community listing** are equal choices. Neither is the default.
 

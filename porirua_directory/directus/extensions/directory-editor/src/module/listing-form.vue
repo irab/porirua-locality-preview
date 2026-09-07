@@ -41,7 +41,14 @@
         <button type="button" @click="$emit('apply-geo', result)">{{ result.label }}</button>
       </li>
     </ul>
-    <pin-map :lat="local.lat" :lng="local.lng" draggable @move="$emit('pin-move', $event)" />
+    <pin-map
+      v-if="!tilesFailed"
+      :lat="local.lat"
+      :lng="local.lng"
+      draggable
+      @move="$emit('pin-move', $event)"
+      @tiles-failed="tilesFailed = true"
+    />
     <p class="hint">Search an address, then drag the pin if the place is wrong. You can save an address with no pin.</p>
     <label :class="{ marked: isChanged('phone') }" data-field="phone">
       Phone
@@ -108,6 +115,9 @@ export default {
     "open-existing",
     "create-anyway",
   ],
+  data() {
+    return { tilesFailed: false };
+  },
   computed: {
     local: {
       get() {

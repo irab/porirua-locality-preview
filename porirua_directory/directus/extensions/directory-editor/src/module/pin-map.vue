@@ -1,6 +1,6 @@
 <template>
   <div class="pin-map" :class="{ compare: Boolean(comparePoint) }" role="application" :aria-label="ariaLabel">
-    <div ref="el" class="pin-map-canvas"></div>
+    <div ref="el" class="pin-map-canvas directory-pin-map-canvas"></div>
     <p v-if="comparePoint" class="pin-legend">
       <span>Now — on the site</span>
       <span>Proposed — this update</span>
@@ -15,6 +15,7 @@ import "leaflet/dist/leaflet.css";
 
 const PORIRUA = { lat: -41.134, lng: 174.84, zoom: 12 };
 const TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const ABSENCE_MS = 3000;
 
 function asCoord(value) {
   if (value == null || value === "") return null;
@@ -38,6 +39,10 @@ function pinIcon(kind, label) {
   });
 }
 
+function mapHasUsableSize(el) {
+  return Boolean(el && el.clientWidth >= 40 && el.clientHeight >= 40);
+}
+
 export default {
   props: {
     lat: { type: [Number, String], default: null },
@@ -50,10 +55,15 @@ export default {
   data() {
     return {
       map: null,
+      tiles: null,
       marker: null,
       compareMarker: null,
       resizeObserver: null,
       sized: false,
+      tilesLoaded: 0,
+      tilesFailed: false,
+      absenceTimer: null,
+      absenceWatching: false,
     };
   },
   computed: {
@@ -96,13 +106,16 @@ export default {
       scrollWheelZoom: false,
       zoomControl: true,
     }).setView([PORIRUA.lat, PORIRUA.lng], PORIRUA.zoom);
-    const tiles = L.tileLayer(TILES, {
+    this.tiles = L.tileLayer(TILES, {
       attribution: "&copy; OpenStreetMap, &copy; CARTO",
       maxZoom: 18,
       subdomains: "abcd",
     });
-    tiles.on("tileerror", () => this.$emit("tiles-failed"));
-    tiles.addTo(this.map);
+    this.tiles.on("tileload", () => {
+      this.tilesLoaded += 1;
+    });
+    this.tiles.on("tileerror", () => this.failTiles());
+    this.tiles.addTo(this.map);
     this.syncMarkers();
     if (this.draggable) {
       this.map.on("click", (event) => {
@@ -110,29 +123,61 @@ export default {
       });
     }
     this.resizeObserver = new ResizeObserver(() => {
+      this.syncViewport();
+    });
+    this.resizeObserver.observe(this.$refs.el);
+    this.$nextTick(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => this.syncViewport());
+      });
+    });
+  },
+  beforeUnmount() {
+    this.clearAbsenceTimer();
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    this.map?.remove();
+    this.map = null;
+    this.tiles = null;
+    this.marker = null;
+    this.compareMarker = null;
+  },
+  methods: {
+    failTiles() {
+      if (this.tilesFailed) return;
+      this.tilesFailed = true;
+      this.clearAbsenceTimer();
+      this.$emit("tiles-failed");
+    },
+    clearAbsenceTimer() {
+      if (this.absenceTimer) {
+        clearTimeout(this.absenceTimer);
+        this.absenceTimer = null;
+      }
+    },
+    startAbsenceWatch() {
+      if (this.absenceWatching || this.tilesFailed) return;
+      this.absenceWatching = true;
+      this.absenceTimer = setTimeout(() => {
+        this.absenceTimer = null;
+        if (this.tilesFailed) return;
+        if (!mapHasUsableSize(this.$refs.el)) {
+          this.absenceWatching = false;
+          return;
+        }
+        if (this.tilesLoaded === 0) this.failTiles();
+      }, ABSENCE_MS);
+    },
+    syncViewport() {
       if (!this.map || !this.$refs.el) return;
-      if (this.$refs.el.clientWidth < 40) return;
+      if (!mapHasUsableSize(this.$refs.el)) return;
       this.map.invalidateSize();
       if (!this.sized) {
         this.sized = true;
         this.fitView();
       }
-    });
-    this.resizeObserver.observe(this.$refs.el);
-    this.$nextTick(() => {
-      this.map?.invalidateSize();
-      this.fitView();
-    });
-  },
-  beforeUnmount() {
-    this.resizeObserver?.disconnect();
-    this.resizeObserver = null;
-    this.map?.remove();
-    this.map = null;
-    this.marker = null;
-    this.compareMarker = null;
-  },
-  methods: {
+      this.startAbsenceWatch();
+    },
     upsertMarker(existing, point, { kind, label, draggable }) {
       if (!point) {
         existing?.remove();
@@ -193,25 +238,42 @@ export default {
 
 <style>
 @import "leaflet/dist/leaflet.css";
+
+.directory-pin-map-canvas.leaflet-container {
+  width: 100% !important;
+  height: 160px !important;
+  min-height: 160px !important;
+  background: #ddd;
+}
+.pin-map.compare .directory-pin-map-canvas.leaflet-container {
+  height: 200px !important;
+  min-height: 200px !important;
+}
+.directory-pin-map-canvas.leaflet-container img.leaflet-tile {
+  mix-blend-mode: normal !important;
+  max-width: none !important;
+  max-height: none !important;
+}
 </style>
 
 <style scoped>
 .pin-map {
+  flex: 1 1 100%;
   width: 100%;
+  min-width: 100%;
+  min-height: 160px;
 }
 .pin-map-canvas {
   width: 100%;
   height: 160px;
+  min-height: 160px;
   border-radius: 8px;
   z-index: 1;
-  background: var(--theme--background-normal, #f0f0f0);
+  background: #ddd;
 }
 .pin-map.compare .pin-map-canvas {
   height: 200px;
-}
-.pin-map-canvas :deep(.leaflet-container) {
-  width: 100%;
-  height: 100%;
+  min-height: 200px;
 }
 .pin-legend {
   display: flex;

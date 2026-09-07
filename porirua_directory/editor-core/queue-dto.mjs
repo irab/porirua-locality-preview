@@ -43,6 +43,10 @@ export function rejectActionLabel(kind) {
   return "Don't use this change";
 }
 
+export function showRejectAction(kind) {
+  return kind !== "geocode_flag";
+}
+
 export function primaryActionLabel(kind) {
   if (kind === "removed") return "Take it off the site";
   if (kind === "geocode_flag") return "The pin is fine";
@@ -419,6 +423,7 @@ export function queueItemDto(item = {}, live = null) {
     showVerifyMap: Boolean(verifyPin || verifyComparePin) && (showPin || item.kind === "geocode_flag"),
     primaryActionLabel: primaryActionLabel(item.kind),
     rejectActionLabel: rejectActionLabel(item.kind),
+    showRejectAction: showRejectAction(item.kind),
     deferActionLabel: deferActionLabel(),
     keepAsCommunityLabel: keepAsCommunityLabel(),
     deferred: Boolean(proposed.deferred_at),

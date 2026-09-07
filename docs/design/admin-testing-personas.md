@@ -328,7 +328,7 @@ These jobs **pass** when Kahu can do them in the Directory module. They **fail**
 | Details changed | Accept, Keep yours (when she already set that field), Don't use this change |
 | New service | Accept, Don't add this |
 | Gone from the government list | **Take it off the site** (archives; not labelled Accept) |
-| Check the pin | The pin is fine, Skip this pin check |
+| Check the pin | The pin is fine, I'll move the pin, Needs confirmation |
 
 Each card shows a field-by-field change (`Phone: 04 237 7749 → 04 237 9608`) or the map for a pin check. No raw `changed` / `new` / `geocode_flag` labels.
 
