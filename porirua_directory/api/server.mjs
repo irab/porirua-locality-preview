@@ -5,6 +5,37 @@
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 
+export function snapshotEtag(version) {
+  return `"${Number(version)}"`;
+}
+
+function ifNoneMatchHits(ifNoneMatch, etag) {
+  if (!ifNoneMatch) return false;
+  const header = ifNoneMatch.trim();
+  if (header === "*") return true;
+  const want = etag.replaceAll('"', "");
+  return header.split(",").some((part) => {
+    const token = part.trim().replace(/^W\//, "").replaceAll('"', "");
+    return token === want;
+  });
+}
+
+function sendCatalog(req, res, snapshot) {
+  const etag = snapshotEtag(snapshot.version);
+  const headers = { etag };
+  if (ifNoneMatchHits(req.headers["if-none-match"], etag)) {
+    res.writeHead(304, headers);
+    res.end();
+    return;
+  }
+  const body = JSON.stringify(snapshot.envelope);
+  res.writeHead(200, {
+    ...headers,
+    "content-type": "application/json; charset=utf-8",
+  });
+  res.end(body);
+}
+
 export function createCatalogServer({ repository } = {}) {
   if (!repository) {
     throw new Error("createCatalogServer requires a snapshot repository");
@@ -14,11 +45,7 @@ export function createCatalogServer({ repository } = {}) {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "GET" && url.pathname === "/api/catalog") {
       const current = await repository.getCurrent();
-      const body = JSON.stringify(current.envelope);
-      res.writeHead(200, {
-        "content-type": "application/json; charset=utf-8",
-      });
-      res.end(body);
+      sendCatalog(req, res, current);
       return;
     }
 
