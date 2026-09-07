@@ -16,6 +16,7 @@
 | Connections + FSD merge | `porirua_directory/scripts/merge-services.mjs` |
 | Normalisation / dedupe | `porirua_directory/scripts/lib/normalize.mjs` |
 | Org grouping (Option B) | `porirua_directory/scripts/org-grouping.mjs` |
+| Catalog row mapping (Phase 2) | `porirua_directory/scripts/catalog-rows.mjs`, `catalog-envelope.mjs` |
 | Published dataset | `porirua_directory/data/services.json` |
 | Manual curation | `porirua_directory/data/overrides.json` |
 | Public UI | `index.html`, `directory.js`, `config-directory.js`, `directory.css` |
@@ -43,7 +44,7 @@ Published `services.json` is a **catalog**: flat listings and/or `kind: "organiz
 | Field | Type | Notes |
 |-------|------|--------|
 | `id` | string | FSD: `fsd-<SERVICE_ID>` when present, else `fsd-<FSD_ID>` |
-| `fsdServiceId`, `serviceName` | string | Optional FSD line metadata |
+| `fsdServiceId`, `serviceName` | string | `fsdServiceId` is CSV **FSD_ID** (legacy). It is not SERVICE_ID — those keys differ on live rows. |
 | `name` | string | Display name (provider) |
 | `description` | string | Plain language; FSD values may include `\n` line breaks and `-` lists — import preserves newlines (`normalizeDescriptionText`); public UI renders via `format-description.mjs` |
 | `phone` | string | Normalised where possible |
@@ -63,7 +64,7 @@ Published `services.json` is a **catalog**: flat listings and/or `kind: "organiz
 | Field | Notes |
 |-------|--------|
 | `id` | Org card id (favourites, map) |
-| `services[]` | Lines with `lineId`, `id`, `title`, `serviceName`, `description`, `categories`, `source` |
+| `services[]` | Lines with `lineId`, `id`, `title`, `serviceName`, `description`, `categories`, `source`, `fsdServiceId` (FSD_ID) |
 
 Filters use **service-line** grain via `expandServiceLines()` in `directory-data.js`.
 
@@ -84,7 +85,22 @@ Envelope:
 }
 ```
 
-(`published` = catalog cards, not raw FSD row count.)
+(`published` = catalog cards, not raw FSD row count. `community` / `fsd` / `duplicatesHidden` are merge **input** sizes.)
+
+### Catalog row mapping (Phase 2)
+
+Pure functions — no database. `catalogToRows(envelope, overrides)` decomposes the published catalog into `organizations`, `services`, and `overrides` rows; `buildCatalogEnvelope({ organizations, services })` rebuilds the Option B envelope. A committed-catalog round-trip is lossless except `generatedAt` (`tests/catalog-roundtrip.test.mjs`).
+
+**Grain is stored, not inferred.** `render_grain` is `'flat'` or `'organization'` copied from the existing entry (`kind`). Line count must not decide this: many org cards have one service line, and some single FSD services stay flat. Re-running `applyOrgGrouping()` on read would change those public ids and break saved My list entries.
+
+**Two FSD id columns** on each service row:
+
+| Column | Meaning | Envelope field |
+|--------|---------|----------------|
+| `fsd_service_id` | CSV `SERVICE_ID` (future diff key). Not in today's JSON — derived from the `fsd-` public id. | public `id` / `lineId` |
+| `fsd_legacy_id` | CSV `FSD_ID` | `fsdServiceId` (unchanged) |
+
+Reconstruction reuses `flatRowToServiceLine` and `buildOrganizationRecord`; it does not call `applyOrgGrouping`. `public_id` is the catalog card id and may collide (two live cards share `org-te-waka-whaiora-trust`); row `id` is unique so service lines stay attached to the correct card.
 
 ---
 
