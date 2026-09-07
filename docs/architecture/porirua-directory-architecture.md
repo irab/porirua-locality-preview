@@ -1,6 +1,6 @@
 # Porirua Services Directory — Architecture
 
-**Status:** Phase 1 live at directory.bsky.nz (nginx + baked JSON). Phase 2 catalog store and public read API are in this repo; the UI still reads the static file until the fallback task lands.  
+**Status:** Phase 1 live at directory.bsky.nz (nginx + baked JSON). Phase 2 catalog store, public read API, UI fallback, Directus editor, and weekly FSD runner are in this repo; the first live stack is the **dev** tenant at directory-dev.bsky.nz.  
 **Public URL (target):** [https://directory.bsky.nz](https://directory.bsky.nz)  
 **App code:** [`porirua_directory/`](../../porirua_directory/)  
 **Connections Map (parallel):** [`porirua_connections_map/`](../../porirua_connections_map/)
@@ -83,7 +83,7 @@ No admin database in Phase 1.
 | DNS / TLS edge | Cloudflare (`directory.bsky.nz`, proxied) |
 | Origin | blackbox `101.100.135.172:4443` → Traefik → Service → nginx |
 | App | Vanilla HTML/JS/CSS, Leaflet, OpenStreetMap tiles; ES modules (`*.mjs`) — nginx must serve them as `application/javascript` ([`infra/nginx.conf`](../../porirua_directory/infra/nginx.conf)) |
-| Data | `GET /data/services.json` (static file, still the live UI source) |
+| Data | `GET /api/catalog` (live snapshot); `GET /data/services.json` is a baked copy used only if the API is unreachable |
 
 Traffic path (see blackbox `infra/cloudflare/bsky.nz/README.md`):
 
@@ -99,7 +99,7 @@ ExternalDNS on prod creates the `directory` record when Ingress is applied.
 
 ## Phase 2 — catalog store (in repo now)
 
-Public traffic still uses the Phase 1 nginx + `data/services.json` path until the UI fallback and prod-tenant routing tasks land. The **canonical model** and read API are already implemented here:
+The **canonical model** is Postgres. The UI reads `/api/catalog` first and falls back to the baked `data/services.json` if the API is missing or returns the wrong body.
 
 | Piece | Path |
 |-------|------|

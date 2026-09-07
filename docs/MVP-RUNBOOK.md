@@ -24,7 +24,7 @@ This runs:
 
 **Hide FSD rows:** add ids to `porirua_directory/data/overrides.json` → re-run `npm run merge:services`.
 
-Commit `data/services.json` when ready to deploy.
+The public UI reads **`GET /api/catalog`** first (live snapshot; the API re-checks which snapshot is current on a 30-second TTL, so a publish reaches the site within about a minute with no restart). **`data/services.json`** is a **point-in-time copy** still shipped in the nginx image so the site stays up when Postgres is down. It is **not** the live catalog: it only changes when the image is rebuilt (nightly). Commit it when you intend to refresh that baked fallback, not as a substitute for publishing through the catalog API.
 
 ---
 
@@ -234,8 +234,8 @@ Configuration is in git, not clicked-in state:
 
 ## Deploy
 
-1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the nginx and catalog-api container images.
-2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`). The catalog API is not routed in that tenant until the gated prod-tenant task adds the Deployment, Service, `DATABASE_URL` secret, optional `CATALOG_CURRENT_TTL_MS`, and Traefik `/api` path. Publishing a snapshot does not require rolling the API pod.
+1. Push the app branch or `main` so CI can build and push the four images (nginx, catalog API, sync worker, operations sidecar). Live listings come from `/api/catalog`; refresh baked `data/services.json` only when you intend to update the offline fallback.
+2. ArgoCD syncs the **dev** tenant `porirua-directory` (`clusters/dev/tenants/porirua-directory/`) at `https://directory-dev.bsky.nz`. Production stays the Phase 1 nginx pin until a separate, gated prod task. Publishing a snapshot does not require rolling the API pod.
 3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
 4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
    - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
