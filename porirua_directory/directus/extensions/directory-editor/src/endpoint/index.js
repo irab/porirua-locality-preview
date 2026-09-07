@@ -35,10 +35,19 @@ async function proxy(req, res, env, pathname) {
     return;
   }
   const search = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+  const actor = req.accountability?.user ?? undefined;
+  const body =
+    req.method === "GET" || req.method === "HEAD"
+      ? undefined
+      : JSON.stringify({
+          ...(req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {}),
+          createdBy: actor,
+          user: actor,
+        });
   const response = await fetch(`${base}${pathname}${search}`, {
     method: req.method,
     headers: { "content-type": "application/json" },
-    body: req.method === "GET" || req.method === "HEAD" ? undefined : JSON.stringify(req.body ?? {}),
+    body,
   });
   const text = await response.text();
   let data = null;
@@ -96,5 +105,6 @@ export default {
     router.post("/keep-community", (req, res) => proxy(req, res, env, "/keep-community"));
     router.post("/review-undo", (req, res) => proxy(req, res, env, "/review-undo"));
     router.post("/publish", (req, res) => proxy(req, res, env, "/publish"));
+    router.post("/undo-publish", (req, res) => proxy(req, res, env, "/undo-publish"));
   },
 };

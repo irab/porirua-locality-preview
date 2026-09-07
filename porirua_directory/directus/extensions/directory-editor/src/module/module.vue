@@ -24,10 +24,23 @@
         >
           {{ waitingBandLabel }}
         </button>
+        <button
+          v-if="canUndoPublish"
+          type="button"
+          class="band"
+          :disabled="undoingPublish"
+          @click="undoLastPublish"
+        >
+          Undo last publish
+        </button>
       </div>
+      <p v-if="canUndoPublish && queue.length" class="hint sync-note">
+        Government updates arrived after you published. Undo publish only changes the public site.
+      </p>
 
       <div v-if="toast" class="toast" role="status">
-        <v-button v-if="toast.undoId" small ref="undoBtn" @click="undoLast">Undo</v-button>
+        <v-button v-if="toast.undoPublish" small ref="undoBtn" @click="undoLastPublish">Undo publish</v-button>
+        <v-button v-else-if="toast.undoId" small ref="undoBtn" @click="undoLast">Undo</v-button>
         <span>{{ toast.message }}</span>
         <v-button v-if="toast.showNext && nextActiveItem" small secondary ref="nextBtn" @click="openNext">
           Next
@@ -314,8 +327,9 @@ export default {
       tab: "listings",
       listings: [],
       queue: [],
-      publishStatus: { unpublished: false, unpublishedCount: 0 },
+      publishStatus: { unpublished: false, unpublishedCount: 0, canUndoPublish: false },
       publishing: false,
+      undoingPublish: false,
       listError: "",
       queueError: "",
       listLoading: false,
@@ -360,6 +374,9 @@ export default {
     },
     hasUnpublished() {
       return this.unpublishedCount == null ? Boolean(this.publishStatus.unpublished) : this.unpublishedCount > 0;
+    },
+    canUndoPublish() {
+      return this.publishStatus.canUndoPublish === true;
     },
     reviewTabLabel() {
       return this.queue.length ? `Review (${this.queue.length})` : "Review";
@@ -421,6 +438,13 @@ export default {
       this.openId = this.activeQueue[0]?.id || this.queue[0]?.id || null;
     }
     this.$nextTick(() => this.$refs.searchInput?.focus?.());
+    this.onVisibility = () => {
+      if (document.visibilityState === "visible") this.refreshPublish();
+    };
+    document.addEventListener("visibilitychange", this.onVisibility);
+  },
+  beforeUnmount() {
+    if (this.onVisibility) document.removeEventListener("visibilitychange", this.onVisibility);
   },
   methods: {
     reviewCountLabel,
@@ -463,7 +487,7 @@ export default {
       try {
         this.publishStatus = await this.api("/publish-status");
       } catch {
-        this.publishStatus = { unpublished: false, unpublishedCount: 0 };
+        this.publishStatus = { unpublished: false, unpublishedCount: 0, canUndoPublish: false };
       }
     },
     openReview() {
@@ -483,9 +507,9 @@ export default {
     primaryPath(item) {
       return item.kind === "removed" ? "/hide" : "/approve";
     },
-    showToast({ message, undoId = null, showNext = false }) {
+    showToast({ message, undoId = null, showNext = false, undoPublish = false }) {
       if (this.toastTimer) clearTimeout(this.toastTimer);
-      this.toast = { message, undoId, showNext };
+      this.toast = { message, undoId, showNext, undoPublish };
       this.notifyStore?.add?.({ title: message, type: "success" });
       this.$nextTick(() => {
         const undo = this.$refs.undoBtn;
@@ -496,7 +520,10 @@ export default {
         else if (typeof nextEl?.focus === "function") nextEl.focus();
       });
       this.toastTimer = setTimeout(() => {
-        if (this.toast) this.toast.undoId = null;
+        if (this.toast) {
+          this.toast.undoId = null;
+          this.toast.undoPublish = false;
+        }
         this.$nextTick(() => {
           const next = this.$refs.nextBtn;
           (next?.$el || next)?.focus?.();
@@ -581,12 +608,33 @@ export default {
       try {
         await this.api("/publish", { method: "POST", body: {} });
         this.reviewedThisSession = 0;
-        this.showToast({ message: actionSuccessMessage({ action: "publish" }) });
         await this.refreshPublish();
+        this.showToast({
+          message: actionSuccessMessage({ action: "publish" }),
+          undoPublish: this.canUndoPublish,
+        });
       } catch (error) {
         this.queueError = error.message || "Could not publish. Try again.";
       } finally {
         this.publishing = false;
+      }
+    },
+    async undoLastPublish() {
+      const expectedVersion = this.publishStatus.currentVersion;
+      if (expectedVersion == null) return;
+      this.undoingPublish = true;
+      try {
+        await this.api("/undo-publish", {
+          method: "POST",
+          body: { expectedVersion },
+        });
+        this.showToast({ message: actionSuccessMessage({ action: "undo-publish" }) });
+        await this.refreshPublish();
+      } catch (error) {
+        this.queueError = error.message || "Could not undo that publish.";
+        await this.refreshPublish();
+      } finally {
+        this.undoingPublish = false;
       }
     },
     startCreate(kind) {

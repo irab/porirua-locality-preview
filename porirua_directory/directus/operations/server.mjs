@@ -44,6 +44,7 @@ import {
   undoReviewDecision,
   wrapReviewUndo,
 } from "../../scripts/review-actions.mjs";
+import { undoPublish } from "../../scripts/undo-publish.mjs";
 import { keepCurationReviewItem } from "../../scripts/approve-review.mjs";
 
 const PORT = Number(process.env.OPERATIONS_PORT || 8790);
@@ -397,6 +398,19 @@ export function createOperationsHandler({ db } = {}) {
       if (url.pathname === "/review-undo") {
         if (!trigger.undoId) throw new HttpError(400, "review-undo requires undoId");
         send(res, 200, await undoReviewDecision({ db: executor, undoId: trigger.undoId }));
+        return;
+      }
+      if (url.pathname === "/undo-publish") {
+        send(
+          res,
+          200,
+          await undoPublish({
+            db: executor,
+            expectedVersion: trigger.expectedVersion ?? trigger.version,
+            undoneBy: actor(trigger),
+            purge: typeof body.purge === "function" ? body.purge : undefined,
+          })
+        );
         return;
       }
       if (url.pathname === "/sticky-curation") {
