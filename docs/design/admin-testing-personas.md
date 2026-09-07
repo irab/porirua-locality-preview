@@ -190,8 +190,8 @@ Each job is written as *When … I want to … so I can …*. Steps assume `cd p
 
 | Step | Check | Result |
 |------|--------|--------|
-| 1 | Data Studio → **Directory** → Listings. Find the organisation, or **Add** a new community organisation / a service line on an existing one | |
-| 2 | Edit Address, Phone, Website, Help types. Leaving Name on a new listing warns if a near-name already exists (including archived). Open the existing one, or Create anyway | |
+| 1 | Sign in lands on **Directory**. Listings: type to find the organisation (A–Z). Click a row to select it, **Edit** to change it, or **Add** a new community organisation / a service line on the selected one | |
+| 2 | Edit Address, Phone, Website, Help types. Search an address then drag the pin — no latitude numbers. Leaving Name on a new listing warns if a near-name already exists (including archived). Open the existing one, or Create anyway | |
 | 3 | Save. The row is published in the database. **No** review-queue item appears for this create or edit | |
 | 4 | The unpublished-changes banner shows. **Publish**. Search the org on the public site: name, description, phone, website, pin, and org-type chip match what she typed | |
 
@@ -323,15 +323,17 @@ These jobs **pass** when Kahu can do them in the Directory module. They **fail**
 **Persona:** Kahu  
 **When** a weekly FSD sync arrives, **I want to** accept government updates, keep my ticks, or take a dropped service off the site, **so I can** finish in about 1–2 hours.
 
-| Kind | Primary actions |
-|------|-----------------|
-| `changed` | Accept / Take government value, Keep yours (when she already set that field), Reject (unlocked-only), Edit |
-| `new` | Accept (FSD-proposed listing), Reject, Edit |
-| `removed` | **Take it off the site** (archives; not labelled Accept) and Keep it |
-| `geocode_flag` | The pin is fine / Move the pin / Keep it |
+| What she sees | Primary actions |
+|---------------|-----------------|
+| Details changed | Accept, Keep yours (when she already set that field), Don't use this change |
+| New service | Accept, Don't add this |
+| Gone from the government list | **Take it off the site** (archives; not labelled Accept) |
+| Check the pin | The pin is fine, Skip this pin check |
 
-**Pass if:** the queue is FSD-only; a removed row’s primary button is “Take it off the site”; that action hides the service and writes the hide override so next week’s sync does not resurrect it.  
-**Fail if:** Accept on a removed row republishes the dropped service.
+Each card shows a field-by-field change (`Phone: 04 237 7749 → 04 237 9608`) or the map for a pin check. No raw `changed` / `new` / `geocode_flag` labels.
+
+**Pass if:** the queue is FSD-only; she can see what will change before she acts; a removed row’s primary button is “Take it off the site”; that action hides the service and writes the hide override so next week’s sync does not resurrect it.  
+**Fail if:** Accept on a removed row republishes the dropped service, or the card has no before-and-after.
 
 #### P-02 — One public card (create-time check)
 

@@ -7,7 +7,8 @@ Working design material for **Your Porirua Directory**. Product requirements sta
 | [persona-journey-ana-support.html](./persona-journey-ana-support.html) | Stakeholders | Public **Find support** journey (help-seeker) |
 | [persona-journey-sam-community.html](./persona-journey-sam-community.html) | Stakeholders | Public **Connect with community** journey |
 | [admin-testing-personas.md](./admin-testing-personas.md) | Locality testers, Coshop | Admin / editor personas and jobs to be done for **design + Directory module** review |
-| [editor-guide.md](./editor-guide.md) | Moana, Kahu | Short editor one-pager (Review, Listings, Publish, name warning) |
+| [editor-interface-design.md](./editor-interface-design.md) | Moana, Kahu, Aroha | **Interface design for approval** — screens, flows, copy. Not the current Vue sketch |
+| [editor-guide.md](./editor-guide.md) | Moana, Kahu | Short editor one-pager (rewrite after the design is accepted) |
 | [org-service-grouping-options.md](./org-service-grouping-options.md) | Product, developers | FSD org + subservice grouping (Option B implemented) |
 
 Serve HTML posters from the **repository root** (same as other docs):

@@ -29,6 +29,7 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Developers | FSD Salvation Army duplicates, org→service roadmap |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |
 | [design/admin-testing-personas.md](./design/admin-testing-personas.md) | Locality testers, Coshop | Admin / editor personas and jobs to be done — Directory module + public design |
+| [design/editor-interface-design.md](./design/editor-interface-design.md) | Moana, Kahu, Aroha | Directory editor interface design (approve before more Vue) |
 | [design/editor-guide.md](./design/editor-guide.md) | Moana, Kahu | Short editor one-pager |
 | [design/README.md](./design/README.md) | Team | Design folder index |
 | [issues/open-duplicate-org-cards.md](./issues/open-duplicate-org-cards.md) | Developers | Four live duplicate org cards; merge-tool seed backlog |
