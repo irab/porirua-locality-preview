@@ -35,7 +35,7 @@ Keep doc updates in the **same commit** as the related code when you ask the age
 - Messages should be **full sentences** explaining **why**, not bullet dumps of filenames.
 - Do not bypass git hooks; do not commit `.env` or credentials.
 - Group logical changes together; split only when you want separate review units.
-- For large or novel agent-built features, mention **AI assistance** in the commit body or PR so reviewers know what to scrutinize.
+- For large or novel agent-built features, mention **AI assistance** in the commit body or PR so reviewers know what to scrutinize. Keep it tool-neutral ("Agent-assisted") — do not name Cursor, Claude, or any other product, and do not add co-author trailers.
 
 ## Verification
 
