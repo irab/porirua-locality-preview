@@ -36,7 +36,7 @@ Public site: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)
 Admin (live publisher): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)
 Admin (Payload, side-by-side, not the publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)
 
-One publisher: `CATALOG_PUBLISHER` is `directus` or `payload` (default `directus`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev stays Directus. Flipping to Payload needs the same value on both admin Deployments and a Directus image that includes the gate — report that blackbox change; do not dual-enable.
+One publisher: `CATALOG_PUBLISHER` is `directus` or `payload` (default `directus`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev stays Directus. **Flipping to `payload` is not a Payload-only env change.** The Directus image must already include the same gate (otherwise Directus keeps publishing while Payload also can). Set the same value on both admin Deployments in one change. Report that blackbox change; do not dual-enable.
 Manifests: blackbox `clusters/dev/tenants/porirua-directory/`
 Namespace: `dev-porirua-directory`
 

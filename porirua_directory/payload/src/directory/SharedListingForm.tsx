@@ -152,7 +152,7 @@ export function SharedListingForm({
         </div>
       ) : null}
       <p className="directory-hint">
-        Search an address, then drag the pin if the place is wrong. You can save an address with no pin.
+        Search an address to set the pin, or type one and save without a pin. There is no map to drag.
       </p>
       <label className={fieldMark("phone") || youSet("phone") ? "marked" : undefined} data-field="phone">
         Phone

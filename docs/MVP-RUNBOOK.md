@@ -229,13 +229,14 @@ Open **http://127.0.0.1:18055**
 | Administrator | `admin@example.com` | `admin-local` |
 | Editor | `editor@example.com` | `editor-local` |
 
-Payload is the replacement admin path. **Directus remains the live publisher** (`CATALOG_PUBLISHER=directus`). Own Postgres on **54351**, admin on **18100**:
+Payload is the replacement Directory path. **Directus remains the live publisher** (`CATALOG_PUBLISHER=directus`). Own Postgres on **54351**, admin on **18100**. Playwright `e2e/payload-directory-editor.spec.js` probes this host (then `admin-payload-directory-dev.bsky.nz`) and **skips cleanly** if neither is up — it must not fail only because nothing is deployed.
 
 ```bash
 cd porirua_directory
 npm run payload:up
 # http://127.0.0.1:18100/admin
-# Point OPERATIONS_URL at the Directus sidecar :18790 when you want catalog reads
+# Point OPERATIONS_URL at the Directus sidecar :18790 when you want live catalog reads
+# npm run test:e2e:payload
 ```
 
 | Account | Email | Password |
@@ -243,6 +244,9 @@ npm run payload:up
 | Admin | `admin@example.com` | `admin-local` |
 | Editor | `editor@example.com` | `editor-local` |
 | Reviewer | `reviewer@example.com` | `reviewer-local` |
+| Viewer | `viewer@example.com` | `viewer-local` (API only — 403 on Directory; cannot open admin) |
+
+**Two admin hosts on directory-dev.** Public site: `directory-dev.bsky.nz`. Directus: `admin-directory-dev.bsky.nz` (publisher). Payload: `admin-payload-directory-dev.bsky.nz` (Review / Listings / status band; publish refused). Flipping `CATALOG_PUBLISHER` to `payload` requires the Directus image to include that same refuse-if-not-publisher gate **first**, then the same env value on both Deployments in one change. If Directus is still an un-gated publisher, the two hosts dual-publish.
 
 Tests against this stack (`:18055`) use those compose passwords even if live-dev `ADMIN_*` / `EDITOR_*` are in the shell. Override only with `DIRECTUS_TEST_*`.
 
@@ -255,9 +259,21 @@ Configuration is in git, not clicked-in state:
 | `porirua_directory/directus/operations/` | Sidecar the Flows POST to (sticky, approve, hide, reject, publish, rollback, alias). Can publish, approve, and rewrite `raw_import`. **Cluster-internal only — no Ingress.** Local compose binds host `18790` for tests. Approve/hide/reject import `scripts/approve-review.mjs`. |
 | `porirua_directory/scripts/directus/bootstrap.mjs` | Applies the workspace to a fresh Directus |
 
-### Editor daily path
+### Editor daily path (Payload Directory)
 
-1. Sign in as **Editor**.
+Moana’s jobs are Review and Listings. She does not need Directus Content.
+
+1. Open [admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz) (or local `:18100/admin`). Sign in as **Editor**.
+2. Land on **Directory**. Status band at the top; tabs **Needs confirmation**, **Review**, **Listings**.
+3. **Listings:** type in **Find an organisation**, open a result, **Edit** / **Add a service line**. Save does not publish.
+4. **Review:** open a government card, decide (or **Needs confirmation**). After a decision the next heading is focused, not **Accept**.
+5. The waiting count is visible. **Publish from Directus** while `CATALOG_PUBLISHER=directus`. Payload will refuse `POST /publish`.
+
+The accepted jobs and copy are the [editor one-pager](./design/editor-guide.md).
+
+### Editor daily path (Directus Data Studio)
+
+1. Sign in as **Editor** on `admin-directory-dev.bsky.nz` (local `:18055`).
 2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line). Related **service lines** are on the organisation record (read-only). Open a line to edit it; do not re-parent from the organisation form.
 3. Edit ordinary fields (address, phone, description). On an FSD-sourced record, saving triggers **Sticky curation on save**, which upserts one `overrides` row `{target_type, target_id, action: "patch", patch}` and merges keys into that row. You never type patch JSON.
 4. Open **Review queue** in the sidebar (`review_queue_items`, preset filtered to pending). The list shows kind, the related listing, and a `change_summary` of what actually moved — not the raw `proposed` JSON. **Approve**, **Hide**, and **Reject** work from the list (tick many rows) and from the item. The sidecar loops every selected id, does not undo earlier successes when a later row fails, and reports succeeded/failed counts (a mixed batch is a 409, not a silent first-row success). **Edit-and-approve** is item-only — it carries one payload and cannot mean anything across a multi-row selection. Those Flows call the shared `approveReviewItem` in `scripts/approve-review.mjs` — apply `proposed.after`, **refresh `raw_import`**, publish only when the row is not already `hidden`, promote a draft organisation, mark the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week. Do not click a `pending_review` collection — that view is SQL-only and 403s in Directus.
@@ -283,8 +299,9 @@ Configuration is in git, not clicked-in state:
 ### Dev (Phase 2 stack)
 
 Public: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)  
-Admin: [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)  
-Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet git-scans `tenants/*`).
+Admin (publisher): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)  
+Admin (Payload Directory, not the publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)  
+Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet git-scans `tenants/*`). Directus is still the catalog publisher (`CATALOG_PUBLISHER=directus`).
 
 1. From a branch, build the four images without changing what `main` pushes today:
 

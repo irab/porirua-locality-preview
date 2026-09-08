@@ -98,3 +98,25 @@ test("Review panel uses the shared form and government-queue routes, not the pen
   assert.doesNotMatch(panel, /HELP_TYPES|COMMUNITY_GROUPS/);
   assert.match(panel, /helpTypeOptions|communityGroupOptions/);
 });
+
+test("Review follows design §14: heading focus, Needs confirmation first, equal removal actions", () => {
+  const panel = readFileSync(join(PAYLOAD, "src/directory/ReviewPanel.tsx"), "utf8");
+  const tabs = readFileSync(join(PAYLOAD, "src/directory/DirectoryTabs.tsx"), "utf8");
+  const home = readFileSync(join(PAYLOAD, "src/directory/DirectoryHome.tsx"), "utf8");
+  const form = readFileSync(join(PAYLOAD, "src/directory/SharedListingForm.tsx"), "utf8");
+  const verify = readFileSync(join(PAYLOAD, "src/directory/VerificationBar.tsx"), "utf8");
+  assert.match(panel, /focusAfterReviewDecision/);
+  assert.match(panel, /headingButtonName/);
+  assert.match(panel, /shouldAutoOpenItem/);
+  assert.match(panel, /type="button"/);
+  assert.match(panel, /equal-action/);
+  assert.match(panel, /tab === "review" && active\[0\]/);
+  assert.doesNotMatch(panel, /leaflet|Leaflet|L\.map/);
+  assert.match(home, /landingTab/);
+  assert.match(tabs, /role="tablist"/);
+  assert.match(form, /Pin is set/);
+  assert.match(form, /There is no map to drag/);
+  assert.doesNotMatch(form, /drag the pin if the place is wrong/);
+  assert.match(verify, /verify-map/);
+  assert.doesNotMatch(verify, /leaflet|Leaflet|L\.map/);
+});

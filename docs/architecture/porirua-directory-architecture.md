@@ -18,7 +18,7 @@ One public directory for Porirua that serves three audiences:
 2. **Community connection** — find and contact community groups (Connections Map, `orgType` filters).
 3. **Civic & community places** — marae, councils, Pātaka Kai, and similar organisations curated locally.
 
-Phase 1 is a **static site + generated JSON**. Phase 2 makes **PostgreSQL** the canonical store and serves a materialised Option B snapshot. Directus is the editor UI on directory-dev today; Payload is the replacement path (`porirua_directory/payload/`, planned host `admin-payload-directory-dev.bsky.nz`). **Cloudflare D1 + Workers** is a documented **exit** if that admin plane is withdrawn — export Postgres and keep the snapshot envelope. It is not the path being built.
+Phase 1 is a **static site + generated JSON**. Phase 2 makes **PostgreSQL** the canonical store and serves a materialised Option B snapshot. directory-dev has **two** admin hosts: Directus on `admin-directory-dev.bsky.nz` (live publisher) and Payload on `admin-payload-directory-dev.bsky.nz` (replacement Directory). **Cloudflare D1 + Workers** is a documented **exit** if that admin plane is withdrawn — export Postgres and keep the snapshot envelope. It is not the path being built.
 
 ---
 
@@ -106,7 +106,7 @@ Authoritative detail: [porirua-directory-deployment.md](./porirua-directory-depl
 | Canonical store | Postgres. Publish materialises `catalog_snapshots` and flips `is_current` |
 | Public read | `GET /api/catalog` (envelope as stored), `GET /api/health` |
 | UI | Live API first; baked `data/services.json` if the API is missing, hung, or the wrong body |
-| Admin | Directus Directory module on `admin-directory-dev.bsky.nz` is the live publisher (`CATALOG_PUBLISHER=directus`). Payload at `porirua_directory/payload/` is the replacement path on `admin-payload-directory-dev.bsky.nz`; its proxy refuses catalog publish until that env is flipped |
+| Admin | Two hosts on directory-dev. Directus (`admin-directory-dev.bsky.nz`) is the live publisher (`CATALOG_PUBLISHER=directus`). Payload (`admin-payload-directory-dev.bsky.nz`, `porirua_directory/payload/`) is the replacement Directory and refuses `POST /publish` and `/undo-publish` until that env is `payload`. Flipping the env to `payload` is one coordinated change: the Directus image must already include the same publisher gate, and both Deployments must get the new value together. If Directus is still an un-gated publisher when Payload is also enabled, both hosts can publish. Do not dual-enable. |
 | Writes | Unauthenticated operations sidecar, ClusterIP only. Directus `/directory-editor` and the Payload `/api/directory-editor` proxy are the auth gates. Do not widen NetworkPolicy to `app: payload` until that Payload proxy is in the image |
 | Weekly FSD | `npm run sync:fsd` / CronJob — fills `review_queue_items`, **never publishes**. Suspended on directory-dev |
 | Images | Five SHA-pinned app images from `workflow_dispatch`. `main` still builds nginx only |
@@ -130,7 +130,7 @@ See [Phase 1 spec](../porirua-directory-phase1-spec.md#service-record). Summary:
 
 - Public site: read-only, no login, no PII collection from searchers.
 - Prod (Phase 1): no admin host. Sheet + git-managed overrides were the Phase 1 editor path.
-- Dev (Phase 2): Directus session on the **admin** host (Editor / Admin). Payload uses the same `isEditorOrAdmin` gate (Admin / Editor / Reviewer) before proxying. The operations sidecar has no auth of its own ([007](../decisions/007-operations-sidecar-networkpolicy.md)).
+- Dev (Phase 2): two admin sessions. Directus on `admin-directory-dev.bsky.nz` (Editor / Admin) and Payload on `admin-payload-directory-dev.bsky.nz` (Admin / Editor / Reviewer). Both use the same `isEditorOrAdmin` gate before proxying; Viewers get **403** on Directory reads as well as writes. The operations sidecar has no auth of its own ([007](../decisions/007-operations-sidecar-networkpolicy.md)). Directus is still the catalog publisher.
 - Cloudflare Access + Worker is **not** what is built. It is part of the D1 exit, not an alternative admin path running today.
 
 ---

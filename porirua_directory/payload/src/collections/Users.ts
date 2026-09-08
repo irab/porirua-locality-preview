@@ -36,6 +36,7 @@ export const Users: CollectionConfig = {
         { label: "Admin", value: "admin" },
         { label: "Editor", value: "editor" },
         { label: "Reviewer", value: "reviewer" },
+        { label: "Viewer", value: "viewer" },
       ],
       access: {
         update: ({ req: { user } }) => userRole(user) === "admin",

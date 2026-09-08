@@ -9,7 +9,7 @@ Payload 3 replacement surface for the Directus Directory module. Catalog data st
 The sidecar has no authentication. Every Directory route except local `GET /api/directory-editor/health` goes through `editor-core/operations-proxy.mjs`:
 
 - Unauthenticated → 401
-- Viewer / other roles → 403
+- Viewer / other roles → 403 (seeded `viewer@example.com` / `viewer-local`; API login only)
 - Admin, Editor, Reviewer → proxied (`isEditorOrAdmin`)
 - Mutations overwrite `createdBy` / `user` with the Payload user id
 
@@ -22,6 +22,8 @@ Do not let the browser call `OPERATIONS_URL`. Do not widen the operations Networ
 docker compose -p porirua-payload -f docker-compose.payload.yml up -d --wait
 # http://127.0.0.1:18100/admin
 # editor@example.com / editor-local
+# viewer@example.com / viewer-local — 403 on /api/directory-editor
+# Playwright: npm run test:e2e:payload (skips if this host is down)
 ```
 
 Or without Docker, after the compose Postgres is up:

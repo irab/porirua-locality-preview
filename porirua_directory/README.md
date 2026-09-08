@@ -28,6 +28,7 @@ npm run test:sync     # collapse/diff/runner (needs npm run db:sync-test:up — 
 npm run test:e2e      # Playwright against a local static server (Chromium)
 npm run test:e2e:dev  # same public specs against https://directory-dev.bsky.nz (never production)
 npm run test:e2e:dev:publish  # Data Studio as Editor (needs DIRECTORY_DEV_SECRETS)
+npm run test:e2e:payload # Payload Directory as Editor (skips if :18100 and admin-payload-directory-dev are down)
 npm run start:api     # GET /api/catalog on :3000 (needs DATABASE_URL)
 npm run payload:up    # Payload admin on :18100 (own Postgres :54351). Point OPERATIONS_URL at the Directus sidecar :18790
 npm run payload:dev   # same app via Next, after `cd payload && npm install` and a local DATABASE_URL
@@ -37,7 +38,7 @@ npm run payload:dev   # same app via Next, after `cd payload && npm install` and
 
 | Environment | Coverage |
 |-------------|----------|
-| **Chromium** | Automated: `npm run test:e2e` (local static server, including catalog-fallback mocks). Live public chain: `npm run test:e2e:dev`. Data Studio: `npm run test:e2e:dev:publish` with secrets. CI runs the local suite only. |
+| **Chromium** | Automated: `npm run test:e2e` (local static server, including catalog-fallback mocks, plus Payload Directory specs that skip if the admin host is down). Live public chain: `npm run test:e2e:dev`. Data Studio: `npm run test:e2e:dev:publish` with secrets. Payload admin: `npm run test:e2e:payload`. CI runs the local suite only. |
 | **Firefox / WebKit** | Not configured in `playwright.config.js` (Chromium only). Smoke-test scroll-collapse manually if you change browse chrome CSS/JS. |
 | **Android Chrome / iOS Safari** | **Manual** on a real device: open [https://directory.bsky.nz](https://directory.bsky.nz) → **Find support** → scroll the listing down/up and confirm filters/map collapse without visible tile flicker; tap **Show filters** to expand while mid-list (scrolling up should not reopen chips until the top). |
 

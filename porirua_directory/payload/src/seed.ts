@@ -16,6 +16,11 @@ const SEED = [
     password: process.env.REVIEWER_PASSWORD || "reviewer-local",
     role: "reviewer" as const,
   },
+  {
+    email: process.env.VIEWER_EMAIL || "viewer@example.com",
+    password: process.env.VIEWER_PASSWORD || "viewer-local",
+    role: "viewer" as const,
+  },
 ];
 
 export async function seedDirectoryUsers(payload: Payload): Promise<void> {

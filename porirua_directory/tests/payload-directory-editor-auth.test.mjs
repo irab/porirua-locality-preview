@@ -84,12 +84,20 @@ test("the Payload proxy covers every Directory sidecar route the Directus gate e
 test("unauthenticated Directory reads are 401; health stays open", async () => {
   const result = await handleDirectoryEditorRequest({
     method: "GET",
-    path: "/listings",
+    path: "/publish-status",
     identity: null,
     operationsUrl: "http://127.0.0.1:9",
   });
   assert.equal(result.status, 401);
   assert.match(result.body.error, /authentication required/i);
+
+  const listings = await handleDirectoryEditorRequest({
+    method: "GET",
+    path: "/listings",
+    identity: null,
+    operationsUrl: "http://127.0.0.1:9",
+  });
+  assert.equal(listings.status, 401);
 
   const health = await handleDirectoryEditorRequest({
     method: "GET",

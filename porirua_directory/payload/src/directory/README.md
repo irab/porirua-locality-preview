@@ -8,7 +8,7 @@ Listings, Review, and Publish import these instead of rebuilding them.
 | `ListingsPanel` | `ListingsPanel.tsx` | Find → open → add/edit/archive. Calls listings routes only; Save does not Review or Publish |
 | `StatusBand` | `StatusBand.tsx` | Persistent band, `role="status"`. Counts from `/publish-status`. Publish/undo live in `editor-core/publish-view.mjs` |
 | `DirectoryTabs` | `DirectoryTabs.tsx` | Needs confirmation, Review, Listings — count in the label when non-zero |
-| `VerificationBar` | `VerificationBar.tsx` | Website (new tab; omitted from the tab order when there is no URL), phone, address, map slot |
+| `VerificationBar` | `VerificationBar.tsx` | Website (new tab; omitted from the tab order when there is no URL), phone, address, Now/Proposed pin placeholder (no Leaflet) |
 | `SharedListingForm` | `SharedListingForm.tsx` | Add organisation, add line, edit, Accept and edit. Prefill via `value`. Marks via `formHighlightFields` |
 
 Copy, DTO, highlight, authorize, and the sidecar proxy stay in `porirua_directory/editor-core/`. Do not add `copy.js` here.

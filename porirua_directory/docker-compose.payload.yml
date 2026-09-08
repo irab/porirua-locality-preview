@@ -35,6 +35,7 @@ services:
       OPERATIONS_URL: http://host.docker.internal:18790
       DIRECTORY_EDITOR_BASE: /api/directory-editor
       CATALOG_PUBLISHER: directus
+      PAYLOAD_PUSH_SCHEMA: "1"
       PAYLOAD_PUBLIC_SERVER_URL: http://127.0.0.1:18100
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: admin-local
@@ -42,6 +43,8 @@ services:
       EDITOR_PASSWORD: editor-local
       REVIEWER_EMAIL: reviewer@example.com
       REVIEWER_PASSWORD: reviewer-local
+      VIEWER_EMAIL: viewer@example.com
+      VIEWER_PASSWORD: viewer-local
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

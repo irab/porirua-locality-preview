@@ -34,6 +34,9 @@ export default buildConfig({
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },
   db: postgresAdapter({
+    // Local compose uses a tmpfs Postgres. Production images do not push
+    // schema unless PAYLOAD_PUSH_SCHEMA=1 — otherwise onInit seeds a missing users table.
+    push: process.env.PAYLOAD_PUSH_SCHEMA === "1" || process.env.NODE_ENV !== "production",
     pool: {
       connectionString: process.env.DATABASE_URL || "",
     },
