@@ -4,7 +4,7 @@ Self-contained app: public **Your Porirua Directory** (need categories, search, 
 
 **Data sources:**
 
-- **Directory editor** (Data Studio → Directory) — community listings. See [editor one-pager](../docs/design/editor-guide.md).
+- **Directory editor** — Directus on [admin-directory-dev](https://admin-directory-dev.bsky.nz) today; Payload at `payload/` is the replacement path. See [editor one-pager](../docs/design/editor-guide.md).
 - **NZ Family Services Directory** — weekly sync into the review queue; editors never write those queue rows themselves.
 - [`../porirua_connections_map/`](../porirua_connections_map/) — Connections Map still uses the Google Sheet / CSV.
 
@@ -29,6 +29,8 @@ npm run test:e2e      # Playwright against a local static server (Chromium)
 npm run test:e2e:dev  # same public specs against https://directory-dev.bsky.nz (never production)
 npm run test:e2e:dev:publish  # Data Studio as Editor (needs DIRECTORY_DEV_SECRETS)
 npm run start:api     # GET /api/catalog on :3000 (needs DATABASE_URL)
+npm run payload:up    # Payload admin on :18100 (own Postgres :54351). Point OPERATIONS_URL at the Directus sidecar :18790
+npm run payload:dev   # same app via Next, after `cd payload && npm install` and a local DATABASE_URL
 ```
 
 ## Browser testing
@@ -52,7 +54,8 @@ porirua_directory/
   directory.js            # UI logic
   group-services.mjs      # runtime FSD org clustering (Option B spike)
   directory.css
-  editor-core/            # shared editor DTOs (sidecar + weekly sync images copy this)
+  editor-core/            # shared editor DTOs, authorize, sidecar proxy (sidecar + Payload + weekly sync)
+  payload/                # Payload 3 Directory admin (auth gate + shared shells; no second listing model)
   scripts/                # FSD import + merge + Phase 2 catalog (schema, bootstrap, publish, weekly sync)
   directus/               # snapshot, Flows, operations sidecar (cluster-internal; no Ingress)
   data/services.json      # baked snapshot shipped in the nginx image (offline fallback; not the live catalog)
@@ -68,6 +71,7 @@ porirua_directory/
   Dockerfile.api          # Node catalog API image
   Dockerfile.sync         # weekly FSD worker
   Dockerfile.operations   # Directus sidecar + bootstrap Jobs (ClusterIP only)
+  Dockerfile.payload      # Payload admin image (dev side-by-side host)
 ```
 
 ## Data pipeline (Milestone A — implemented)

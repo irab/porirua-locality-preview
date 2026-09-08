@@ -54,6 +54,7 @@ npm run serve         # http://localhost:5173/index.html
 npm test              # unit tests in parallel, then Directus-dependent files sequentially
 npm run sync:fsd      # weekly FSD review queue (DATABASE_URL; never publishes)
 npm run test:e2e      # Playwright
+npm run payload:up    # Payload admin on :18100 (own Postgres :54351)
 ```
 
 **Connections Map (static preview):**

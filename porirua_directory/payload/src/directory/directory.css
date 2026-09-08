@@ -1,0 +1,153 @@
+.directory-home {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem;
+  color: #2a2f3d;
+}
+
+.directory-home h1 {
+  margin: 0 0 1rem;
+  font-size: 1.75rem;
+}
+
+.status-band {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.status-band .band {
+  border: 1px solid #c5c9d4;
+  background: #fff;
+  color: #2a2f3d;
+  padding: 0.6rem 0.9rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.status-band .band.zero,
+.status-band .band:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.directory-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid #c5c9d4;
+  margin-bottom: 1rem;
+}
+
+.directory-tabs button {
+  border: 0;
+  background: none;
+  font: inherit;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  color: #2a2f3d;
+}
+
+.directory-tabs button.active {
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 currentColor;
+}
+
+.directory-panel {
+  min-height: 8rem;
+}
+
+.directory-hint {
+  color: #2a2f3d;
+}
+
+.verify {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: stretch;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.verify-link {
+  color: #1d4f91;
+}
+
+.verify-address {
+  margin: 0;
+  width: 100%;
+}
+
+.verify-note {
+  display: block;
+  font-weight: 600;
+}
+
+.verify-map {
+  width: 100%;
+  min-height: 8rem;
+  background: #eef1f6;
+  display: grid;
+  place-items: center;
+}
+
+.listing-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.listing-form label,
+.listing-form fieldset {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.listing-form fieldset {
+  border: 0;
+  padding: 0;
+}
+
+.listing-form input,
+.listing-form textarea {
+  padding: 0.5rem;
+  font: inherit;
+}
+
+.listing-form .marked {
+  box-shadow: inset 4px 0 0 currentColor;
+  padding-left: 0.65rem;
+}
+
+.listing-form .mark {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.listing-form .check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.listing-form .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.listing-form .error {
+  color: #8b1e1e;
+}
+
+.listing-form .matches {
+  background: #f4f5f8;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.listing-form .matches .not-on-site {
+  border-left: 4px dashed #8b909c;
+  padding-left: 0.65rem;
+}

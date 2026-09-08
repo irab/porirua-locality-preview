@@ -1,0 +1,47 @@
+# Payload admin only. Catalog writes go through the authorizing proxy to
+# OPERATIONS_URL (the Directus compose sidecar on host 18790 when that stack is up).
+#
+#   docker compose -p porirua-payload -f docker-compose.payload.yml up -d --wait
+#   open http://127.0.0.1:18100/admin
+name: porirua-payload
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: porirua
+      POSTGRES_PASSWORD: porirua
+      POSTGRES_DB: porirua_payload
+    ports:
+      - "54351:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U porirua -d porirua_payload"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  payload:
+    build:
+      context: .
+      dockerfile: Dockerfile.payload
+    image: porirua-directory-payload:local
+    ports:
+      - "18100:3000"
+    environment:
+      DATABASE_URL: postgres://porirua:porirua@postgres:5432/porirua_payload
+      PAYLOAD_SECRET: payload-local-secret
+      OPERATIONS_URL: http://host.docker.internal:18790
+      DIRECTORY_EDITOR_BASE: /api/directory-editor
+      PAYLOAD_PUBLIC_SERVER_URL: http://127.0.0.1:18100
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: admin-local
+      EDITOR_EMAIL: editor@example.com
+      EDITOR_PASSWORD: editor-local
+      REVIEWER_EMAIL: reviewer@example.com
+      REVIEWER_PASSWORD: reviewer-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy

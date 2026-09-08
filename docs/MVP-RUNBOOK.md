@@ -229,6 +229,21 @@ Open **http://127.0.0.1:18055**
 | Administrator | `admin@example.com` | `admin-local` |
 | Editor | `editor@example.com` | `editor-local` |
 
+Payload is the replacement admin path (not the live publisher yet). Own Postgres on **54351**, admin on **18100**:
+
+```bash
+cd porirua_directory
+npm run payload:up
+# http://127.0.0.1:18100/admin
+# Point OPERATIONS_URL at the Directus sidecar :18790 when you want catalog reads
+```
+
+| Account | Email | Password |
+|---------|--------|----------|
+| Admin | `admin@example.com` | `admin-local` |
+| Editor | `editor@example.com` | `editor-local` |
+| Reviewer | `reviewer@example.com` | `reviewer-local` |
+
 Tests against this stack (`:18055`) use those compose passwords even if live-dev `ADMIN_*` / `EDITOR_*` are in the shell. Override only with `DIRECTUS_TEST_*`.
 
 Configuration is in git, not clicked-in state:

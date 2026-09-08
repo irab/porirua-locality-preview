@@ -32,7 +32,8 @@ Manifests were read from blackbox **`origin/main`** via `git show`, not from the
 ### Dev (`dev-porirua-directory`)
 
 Public site: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)
-Admin: [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)
+Admin (live publisher): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)
+Admin (Payload replacement path, not pinned yet): `https://admin-payload-directory-dev.bsky.nz`
 Manifests: blackbox `clusters/dev/tenants/porirua-directory/`
 Namespace: `dev-porirua-directory`
 
@@ -42,7 +43,8 @@ Namespace: `dev-porirua-directory`
 | `catalog-api` | `GET /api/catalog`, `GET /api/health` | **Yes** — UI falls back to baked JSON (stale) |
 | Postgres `postgres:16-alpine` + PVC | Canonical store, snapshots, queue | API serves the last in-process snapshot if it already had one; otherwise `503`; UI then falls back |
 | `operations` ClusterIP `:8790` | Publish, review, listings writes, purge | Public site unchanged (last snapshot). Editors cannot save or publish |
-| Directus + Directory module image | Admin UI | Public site unchanged |
+| Directus + Directory module image | Admin UI (live publisher) | Public site unchanged |
+| Payload admin (app in repo; image not pinned yet) | Replacement Directory admin + `/api/directory-editor` auth gate | Public site unchanged. Deploy child must not widen operations NetworkPolicy until this proxy is in the image |
 | `fsd-sync` CronJob | Weekly review-queue fill | Public site unchanged. **`suspend: true` in dev** |
 | `catalog-bootstrap` / `directus-bootstrap` Jobs | First sync / each Argo hook | N/A after first success; a bad Directus bootstrap can hide the module |
 
