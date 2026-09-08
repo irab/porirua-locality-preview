@@ -30,7 +30,9 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 | [`docs/porirua-services-directory-requirements.md`](docs/porirua-services-directory-requirements.md) | Longer v1 draft — phases detail, changelog |
 | [`docs/potential-changes-and-insights.md`](docs/potential-changes-and-insights.md) | MVP gaps, org/subservices deficit, roadmap options |
 | [`docs/issues/README.md`](docs/issues/README.md) | Fixed and recurring bugs (issues directory) |
-| [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | System context, hosting |
+| [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | Product system context (Phase 1 prod / Phase 2 dev) |
+| [`docs/architecture/porirua-directory-deployment.md`](docs/architecture/porirua-directory-deployment.md) | Services, cache path, images, secrets, failure modes |
+| [`docs/decisions/README.md`](docs/decisions/README.md) | Phase 2 decisions (why, what was rejected) |
 | [`docs/porirua-directory-phase1-spec.md`](docs/porirua-directory-phase1-spec.md) | Data model, FSD rules, merge, overrides |
 | [`docs/fsd-porirua-filter-rationale.md`](docs/fsd-porirua-filter-rationale.md) | FSD geo filter rationale, exclusion audit |
 | [`docs/MVP-RUNBOOK.md`](docs/MVP-RUNBOOK.md) | Rebuild data, deploy, test |

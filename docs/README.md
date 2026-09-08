@@ -22,7 +22,9 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Team, implementers | Longer v1 working draft (UX detail, tech notes, changelog) |
 | [potential-changes-and-insights.md](./potential-changes-and-insights.md) | Team, stakeholders | MVP gaps, [click-minimisation UX](./potential-changes-and-insights.md#ux-inspiration-from-directory-examples-click-minimisation), [landing map-first](./potential-changes-and-insights.md#landing-map-first-design-options), Phase 1.5/2 |
 | [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements v1 (regenerate after md changes) |
-| [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | System context, data flow, hosting at directory.bsky.nz |
+| [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | Product system context (Phase 1 prod / Phase 2 dev) |
+| [architecture/porirua-directory-deployment.md](./architecture/porirua-directory-deployment.md) | Developers, ops | **Verified** services, request path, images, secrets, failure modes — as of 8 Sep 2026 |
+| [decisions/README.md](./decisions/README.md) | Developers | Phase 2 decision records (why, rejected alternatives, revisit) |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Developers | Phase 1 data model, FSD rules, merge, overrides |
 | [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) | Developers, data editors | FSD geo filter rationale, reason codes, import audit |
 | [issues/README.md](./issues/README.md) | Developers | **Issues directory** (fixed & recurring bugs) |
