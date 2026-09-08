@@ -10,7 +10,8 @@
     "build": "cross-env NODE_OPTIONS=--no-deprecation next build",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start -p 3000",
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
-    "start:migrate": "npm run migrate && npm run start",
+    "seed": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed-cli.ts",
+    "start:migrate": "npm run migrate && npm run seed && npm run start",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types"
   },

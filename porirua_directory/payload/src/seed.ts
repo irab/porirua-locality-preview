@@ -35,5 +35,6 @@ export async function seedDirectoryUsers(payload: Payload): Promise<void> {
       collection: "users",
       data: account,
     });
+    payload.logger.info(`Seeded ${account.role} account ${account.email}.`);
   }
 }
