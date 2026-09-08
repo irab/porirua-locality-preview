@@ -1,10 +1,25 @@
-export function directoryEditorUrl(path) {
-  const suffix = path.startsWith("/") ? path : `/${path}`;
-  return `/directory-editor${suffix}`;
+export const DEFAULT_DIRECTORY_EDITOR_BASE = "/directory-editor";
+
+function normalizeBase(base) {
+  const raw =
+    typeof base === "object" && base
+      ? base.base
+      : base;
+  const value = String(raw ?? DEFAULT_DIRECTORY_EDITOR_BASE).trim();
+  const stripped = value.replace(/\/$/, "");
+  return stripped || DEFAULT_DIRECTORY_EDITOR_BASE;
 }
 
-export async function directoryEditorFetch(path, { method = "GET", body, headers } = {}) {
-  const response = await fetch(directoryEditorUrl(path), {
+export function directoryEditorUrl(path, base) {
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizeBase(base)}${suffix}`;
+}
+
+export async function directoryEditorFetch(
+  path,
+  { method = "GET", body, headers, base, fetchImpl = fetch } = {}
+) {
+  const response = await fetchImpl(directoryEditorUrl(path, base), {
     method,
     credentials: "same-origin",
     headers: {
