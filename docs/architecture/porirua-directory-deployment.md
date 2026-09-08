@@ -12,12 +12,13 @@ Checked on 8 Sep 2026. Do not treat a later pin as implied.
 
 | What | Value that day |
 |------|----------------|
-| App tree this document was written against | `8a5f30b` (`feature/payload-directory-ed-oi4` — Payload `image-dev` pin) |
+| App tree this document was written against | `4e3a3d1` (`feature/payload-directory-ed-oi4` — Payload `image-dev` pin) |
 | `origin/main` of this repo | `db282d3` — Phase 1 only |
 | blackbox `origin/main` (before this Payload pin) | `bf0dae2` |
 | directory-dev catalog / Directus / sidecar pin | `b65e5d723e344f6ea36b29d23219cde27c022a93` — unchanged; Directus stays the publisher (`CATALOG_PUBLISHER=directus`) |
-| directory-dev Payload pin | `8a5f30bebbd6147f32c5a0dfb5df6a26ffaeab67` — `ghcr.io/irab/porirua-directory-payload` only (blackbox `4141cf7`, PR #104) |
+| directory-dev Payload pin | `4e3a3d1227748c190583a19e7b9254228d4c9984` — `ghcr.io/irab/porirua-directory-payload` only (blackbox `e077b59`, PR #105) |
 | Live Payload editor sign-in | `200` as Editor on `https://admin-payload-directory-dev.bsky.nz`; `/publish-status` 143 unpublished, `/queue` 13 to review, `/listings` real organisations |
+| Live Payload editor map | Leaflet on OpenStreetMap tiles. Review card that moves a pin: 6/6 tiles. Listing form: 3/3 tiles, draggable marker, `© OpenStreetMap` credited. The Taeaomanino Trust card is 267px tall, not the 1301px it was when a bare `.verify` inherited Payload's `min-height: 100vh` |
 | Payload editor e2e against that host | 6 passed, 1 skipped (`createdBy` needs the local operations mock). The Review decision step also skipped: it will not decide a real government row |
 | Prod image pin | `ghcr.io/irab/porirua-directory:ec5c102a9fcbcfa5af356508ac4b8dea5cda6262` (nginx only) |
 | Live `GET https://directory-dev.bsky.nz/api/catalog` | `200` `application/json`, `Cache-Control: public, max-age=60, s-maxage=86400`, `ETag: "13"`, `generatedAt` `2026-09-08T10:06:15.248Z`, 145 services |

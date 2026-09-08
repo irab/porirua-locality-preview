@@ -129,6 +129,49 @@ test("Editor lands on Directory, not stock collections", async ({ page }) => {
   await expect(page.getByRole("link", { name: /collections/i })).toHaveCount(0);
 });
 
+test("the listing form draws an OpenStreetMap pin and the verification bar stays its own height", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  if (mock) mock.reset();
+  await loginPayloadInBrowser(page, origin, accounts.editor);
+  await expect(page.getByRole("heading", { name: "Directory", level: 1 })).toBeVisible({
+    timeout: 30_000,
+  });
+
+  // A bare .verify inherited Payload's verify-email rule (min-height: 100vh)
+  // and stretched this bar into a blank screen-high gap.
+  const viewport = page.viewportSize()?.height ?? 720;
+  const bars = page.locator(".directory-verify");
+  await expect(page.locator(".verify")).toHaveCount(0);
+  for (let i = 0; i < (await bars.count()); i++) {
+    const box = await bars.nth(i).boundingBox();
+    if (box) expect(box.height).toBeLessThan(viewport / 2);
+  }
+
+  await page.getByRole("tab", { name: /^Listings$/ }).click();
+  const search = page.getByLabel("Find an organisation");
+  await expect(search).toBeVisible();
+  await search.fill("Whanau");
+  const result = page.getByRole("button", { name: /Porirua Whānau Centre|Whanau/i }).first();
+  await expect(result).toBeVisible();
+  await result.click();
+  await page.getByRole("button", { name: "Edit", exact: true }).first().click();
+
+  const canvas = page.locator(".pin-map-canvas.leaflet-container");
+  await expect(canvas).toBeVisible();
+  await expect(page.locator("img.leaflet-tile").first()).toHaveAttribute(
+    "src",
+    /tile\.openstreetmap\.org/
+  );
+  await expect(page.locator(".leaflet-control-attribution").first()).toContainText("OpenStreetMap");
+
+  // The map removes itself when no tile arrives, so surviving the absence
+  // window is what proves the tiles actually drew.
+  await page.waitForTimeout(4000);
+  await expect(canvas).toBeVisible();
+});
+
 test("status band, tabs, Listings, and Review match the accepted jobs", async ({ page }) => {
   test.setTimeout(90_000);
   if (mock) mock.reset();
