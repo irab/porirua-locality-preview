@@ -1,4 +1,12 @@
 import { isEditorOrAdmin, unauthorizedError } from "./authorize.mjs";
+import {
+  CATALOG_PUBLISHER_PAYLOAD,
+  annotatePublishStatus,
+  catalogPublisherFromEnv,
+  isPublishMutationPath,
+  publishHostForbiddenMessage,
+  thisHostCanPublish,
+} from "./catalog-publisher.mjs";
 
 export const DIRECTORY_EDITOR_PROXIED_ROUTES = [
   { method: "GET", path: "/listings/name-matches" },
@@ -91,6 +99,9 @@ export async function handleDirectoryEditorRequest({
   identity,
   operationsUrl,
   fetchImpl = fetch,
+  thisHost = CATALOG_PUBLISHER_PAYLOAD,
+  catalogPublisher,
+  env = process.env,
 } = {}) {
   const pathname = normalizePath(path);
   if (String(method).toUpperCase() === "GET" && pathname === "/health") {
@@ -106,6 +117,11 @@ export async function handleDirectoryEditorRequest({
   const route = matchDirectoryEditorRoute(method, pathname);
   if (!route) {
     return jsonResult(404, { error: "Not found" });
+  }
+
+  const publisher = resolvePublisher(catalogPublisher, env);
+  if (isPublishMutationPath(route.sidecarPath) && !thisHostCanPublish(thisHost, publisher)) {
+    return jsonResult(403, { error: publishHostForbiddenMessage(publisher) });
   }
 
   const base = String(operationsUrl || "").replace(/\/$/, "");
@@ -130,5 +146,14 @@ export async function handleDirectoryEditorRequest({
       data = { error: text };
     }
   }
+  if (route.sidecarPath === "/publish-status" && response.status === 200) {
+    data = annotatePublishStatus(data, { thisHost, catalogPublisher: publisher });
+  }
   return jsonResult(response.status, data);
+}
+
+function resolvePublisher(catalogPublisher, env) {
+  return catalogPublisher != null && catalogPublisher !== ""
+    ? catalogPublisherFromEnv({ CATALOG_PUBLISHER: catalogPublisher })
+    : catalogPublisherFromEnv(env);
 }

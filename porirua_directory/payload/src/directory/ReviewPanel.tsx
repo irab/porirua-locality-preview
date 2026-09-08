@@ -95,6 +95,7 @@ type ReviewPanelProps = {
   onKeepReviewingLater?: () => void;
   onRequestTab?: (tab: DirectoryTabId) => void;
   onPublish?: () => void;
+  publishing?: boolean;
 };
 
 function DiffLines({ rows }: { rows: Array<{ field: string; line: string }> }) {
@@ -118,6 +119,7 @@ export function ReviewPanel({
   onKeepReviewingLater,
   onRequestTab,
   onPublish,
+  publishing = false,
 }: ReviewPanelProps) {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [recent, setRecent] = useState<RecentItem[]>([]);
@@ -531,7 +533,7 @@ export function ReviewPanel({
             {finish.heading}
           </h2>
           <div className="actions">
-            <button type="button" disabled={!onPublish || !waitingCount} onClick={onPublish}>
+            <button type="button" disabled={!onPublish || !waitingCount || publishing} onClick={onPublish}>
               {REVIEW_COPY.publishNow}
             </button>
             {finish.showKeepReviewingLater ? (

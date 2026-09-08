@@ -229,7 +229,7 @@ Open **http://127.0.0.1:18055**
 | Administrator | `admin@example.com` | `admin-local` |
 | Editor | `editor@example.com` | `editor-local` |
 
-Payload is the replacement admin path (not the live publisher yet). Own Postgres on **54351**, admin on **18100**:
+Payload is the replacement admin path. **Directus remains the live publisher** (`CATALOG_PUBLISHER=directus`). Own Postgres on **54351**, admin on **18100**:
 
 ```bash
 cd porirua_directory

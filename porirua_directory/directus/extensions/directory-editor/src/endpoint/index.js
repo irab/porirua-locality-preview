@@ -1,4 +1,11 @@
 import { isEditorOrAdmin } from "./authorize.js";
+import {
+  CATALOG_PUBLISHER_DIRECTUS,
+  catalogPublisherFromEnv,
+  isPublishMutationPath,
+  publishHostForbiddenMessage,
+  thisHostCanPublish,
+} from "./catalog-publisher.js";
 
 const MUTATING = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
@@ -28,7 +35,16 @@ async function assertAuthorized(req, context) {
   throw error;
 }
 
+function refusePublishIfNotPublisher(res, env, pathname) {
+  if (!isPublishMutationPath(pathname)) return false;
+  const publisher = catalogPublisherFromEnv(env);
+  if (thisHostCanPublish(CATALOG_PUBLISHER_DIRECTUS, publisher)) return false;
+  res.status(403).json({ error: publishHostForbiddenMessage(publisher) });
+  return true;
+}
+
 async function proxy(req, res, env, pathname) {
+  if (refusePublishIfNotPublisher(res, env, pathname)) return;
   const base = String(env.OPERATIONS_URL || process.env.OPERATIONS_URL || "").replace(/\/$/, "");
   if (!base) {
     res.status(500).json({ error: "OPERATIONS_URL is not configured" });

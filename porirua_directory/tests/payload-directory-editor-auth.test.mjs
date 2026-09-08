@@ -133,6 +133,7 @@ test("Editor, Admin, and Reviewer may call every proxied route", async () => {
         identity: EDITOR,
         body: method === "POST" ? { name: "Test" } : undefined,
         operationsUrl: ops.url,
+        catalogPublisher: "payload",
       });
       assert.equal(editor.status, 200, `${method} ${resolved} editor ${editor.status}`);
     }
@@ -141,6 +142,7 @@ test("Editor, Admin, and Reviewer may call every proxied route", async () => {
       path: "/publish-status",
       identity: REVIEWER,
       operationsUrl: ops.url,
+      catalogPublisher: "payload",
     });
     assert.equal(reviewer.status, 200);
     assert.equal(isEditorOrAdmin(REVIEWER), true);
@@ -159,12 +161,61 @@ test("client-supplied createdBy and user are replaced with the authenticated act
       identity: EDITOR,
       body: { createdBy: "attacker", user: "attacker", confirmLargeDelta: true },
       operationsUrl: ops.url,
+      catalogPublisher: "payload",
     });
     assert.equal(result.status, 200);
     assert.equal(ops.received.length, 1);
     assert.equal(ops.received[0].body.createdBy, "user-editor");
     assert.equal(ops.received[0].body.user, "user-editor");
     assert.equal(ops.received[0].body.confirmLargeDelta, true);
+  } finally {
+    await ops.close();
+  }
+});
+
+test("Payload refuses publish and undo-publish while Directus is the catalog publisher", async () => {
+  const ops = await startMockOperations();
+  try {
+    const publish = await handleDirectoryEditorRequest({
+      method: "POST",
+      path: "/publish",
+      identity: EDITOR,
+      body: { confirmLargeDelta: true },
+      operationsUrl: ops.url,
+      catalogPublisher: "directus",
+    });
+    assert.equal(publish.status, 403);
+    assert.match(publish.body.error, /admin-directory-dev\.bsky\.nz/);
+
+    const undo = await handleDirectoryEditorRequest({
+      method: "POST",
+      path: "/undo-publish",
+      identity: EDITOR,
+      body: { expectedVersion: 4 },
+      operationsUrl: ops.url,
+      catalogPublisher: "directus",
+    });
+    assert.equal(undo.status, 403);
+    assert.equal(ops.received.length, 0);
+  } finally {
+    await ops.close();
+  }
+});
+
+test("publish-status stays readable on Payload and names whether this host can publish", async () => {
+  const ops = await startMockOperations();
+  try {
+    const status = await handleDirectoryEditorRequest({
+      method: "GET",
+      path: "/publish-status",
+      identity: EDITOR,
+      operationsUrl: ops.url,
+      catalogPublisher: "directus",
+    });
+    assert.equal(status.status, 200);
+    assert.equal(status.body.thisHostCanPublish, false);
+    assert.equal(status.body.catalogPublisher, "directus");
+    assert.equal(ops.received.length, 1);
   } finally {
     await ops.close();
   }

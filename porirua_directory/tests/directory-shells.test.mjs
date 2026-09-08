@@ -63,6 +63,14 @@ test("status band uses role=status and publish-status counts", () => {
   assert.equal(quiet.review.disabled, true);
   assert.equal(quiet.waiting.disabled, true);
   assert.equal(quiet.undo.visible, false);
+
+  const otherHost = statusBandFromPublishStatus(
+    { unpublishedCount: 2, canUndoPublish: true, thisHostCanPublish: false },
+    { reviewCount: 0 }
+  );
+  assert.equal(otherHost.waiting.label, "2 waiting to go on the site");
+  assert.equal(otherHost.waiting.disabled, true);
+  assert.equal(otherHost.undo.visible, false);
 });
 
 test("verification bar opens the website in a new tab and hides it from the tab order without a URL", () => {

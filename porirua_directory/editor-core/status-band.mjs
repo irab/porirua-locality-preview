@@ -4,9 +4,11 @@ export function statusBandModel({
   reviewCount = 0,
   unpublishedCount = 0,
   canUndoPublish = false,
+  thisHostCanPublish = true,
 } = {}) {
   const review = Number(reviewCount) || 0;
   const waiting = Number(unpublishedCount) || 0;
+  const canPublish = thisHostCanPublish !== false;
   return {
     role: "status",
     review: {
@@ -17,10 +19,10 @@ export function statusBandModel({
     waiting: {
       count: waiting,
       label: waitingCountLabel(waiting),
-      disabled: waiting === 0,
+      disabled: waiting === 0 || !canPublish,
     },
     undo: {
-      visible: Boolean(canUndoPublish),
+      visible: Boolean(canUndoPublish) && canPublish,
       label: "Undo last publish",
     },
   };
@@ -37,5 +39,6 @@ export function statusBandFromPublishStatus(status = {}, { reviewCount = 0 } = {
     reviewCount,
     unpublishedCount,
     canUndoPublish: status.canUndoPublish === true,
+    thisHostCanPublish: status.thisHostCanPublish !== false,
   });
 }

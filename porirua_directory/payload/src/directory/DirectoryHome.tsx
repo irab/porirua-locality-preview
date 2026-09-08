@@ -1,8 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { directoryEditorFetch } from "../../../editor-core/client.mjs";
 import { directoryTabsModel, DIRECTORY_TAB_ORDER } from "../../../editor-core/directory-tabs.mjs";
+import {
+  largeDeltaState,
+  parsePublishFailure,
+  parseUndoFailure,
+  publishBody,
+  PUBLISH_ROUTES,
+  publisherHint,
+  publishToastModel,
+  thisHostCanPublishFromStatus,
+  undoPublishBody,
+  undoPublishToastModel,
+} from "../../../editor-core/publish-view.mjs";
 import { landingTab } from "../../../editor-core/queue-dto.mjs";
 import { statusBandFromPublishStatus } from "../../../editor-core/status-band.mjs";
 import { DirectoryTabs } from "./DirectoryTabs";
@@ -13,6 +25,22 @@ import "./directory.css";
 import type { DirectoryTabId } from "./types";
 
 const CLIENT_BASE = "/api/directory-editor";
+const TOAST_MS = 20000;
+
+type PublishToast = {
+  role: "status";
+  message: string;
+  undoPublish: boolean;
+  undoLabel: string;
+  undoFirst: boolean;
+};
+
+type PublishFailure = {
+  kind: string;
+  message: string;
+  confirmLabel?: string;
+  delta?: { published?: number } | null;
+};
 
 export function DirectoryHome() {
   const [tab, setTab] = useState<DirectoryTabId>("listings");
@@ -22,13 +50,69 @@ export function DirectoryHome() {
   const [loadError, setLoadError] = useState("");
   const [reviewFocusNonce, setReviewFocusNonce] = useState(0);
   const [listingFocusId, setListingFocusId] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [undoing, setUndoing] = useState(false);
+  const [publishToast, setPublishToast] = useState<PublishToast | null>(null);
+  const [publishFailure, setPublishFailure] = useState<PublishFailure | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastUndoRef = useRef<HTMLButtonElement | null>(null);
 
   async function refreshPublish() {
     try {
-      const status = await directoryEditorFetch("/publish-status", { base: CLIENT_BASE });
-      setPublishStatus(status && typeof status === "object" ? status : {});
+      const status = await directoryEditorFetch(PUBLISH_ROUTES.status, { base: CLIENT_BASE });
+      const next = status && typeof status === "object" ? status : {};
+      setPublishStatus(next);
+      return next as Record<string, unknown>;
     } catch {
       setPublishStatus({});
+      return {};
+    }
+  }
+
+  function showPublishToast(next: PublishToast) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setPublishToast(next);
+    toastTimer.current = setTimeout(() => setPublishToast(null), TOAST_MS);
+  }
+
+  async function publishCatalog({ confirmLargeDelta = false } = {}) {
+    if (publishing) return;
+    setPublishing(true);
+    setPublishFailure(null);
+    try {
+      await directoryEditorFetch(PUBLISH_ROUTES.publish, {
+        method: "POST",
+        base: CLIENT_BASE,
+        body: publishBody({ confirmLargeDelta }),
+      });
+      const next = await refreshPublish();
+      showPublishToast(publishToastModel({ canUndoPublish: next.canUndoPublish === true }));
+    } catch (error) {
+      setPublishFailure(parsePublishFailure(error));
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function undoLastPublish() {
+    if (undoing) return;
+    setUndoing(true);
+    setPublishFailure(null);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setPublishToast(null);
+    try {
+      await directoryEditorFetch(PUBLISH_ROUTES.undoPublish, {
+        method: "POST",
+        base: CLIENT_BASE,
+        body: undoPublishBody(publishStatus),
+      });
+      await refreshPublish();
+      showPublishToast(undoPublishToastModel());
+    } catch (error) {
+      setPublishFailure(parseUndoFailure(error));
+      await refreshPublish();
+    } finally {
+      setUndoing(false);
     }
   }
 
@@ -37,7 +121,7 @@ export function DirectoryHome() {
     async function load() {
       try {
         const [status, queue] = await Promise.all([
-          directoryEditorFetch("/publish-status", { base: CLIENT_BASE }),
+          directoryEditorFetch(PUBLISH_ROUTES.status, { base: CLIENT_BASE }),
           directoryEditorFetch("/queue", { base: CLIENT_BASE }),
         ]);
         if (cancelled) return;
@@ -57,8 +141,13 @@ export function DirectoryHome() {
     load();
     return () => {
       cancelled = true;
+      if (toastTimer.current) clearTimeout(toastTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (publishToast?.undoFirst) toastUndoRef.current?.focus();
+  }, [publishToast]);
 
   const tabs = useMemo(
     () => directoryTabsModel({ deferredCount, reviewCount }),
@@ -68,15 +157,47 @@ export function DirectoryHome() {
     () => statusBandFromPublishStatus(publishStatus, { reviewCount }),
     [publishStatus, reviewCount]
   );
+  const canPublishHere = thisHostCanPublishFromStatus(publishStatus);
+  const publishAction = canPublishHere && !publishing ? () => void publishCatalog() : undefined;
+  const undoAction = canPublishHere && !undoing ? () => void undoLastPublish() : undefined;
+  const largeDelta = largeDeltaState(publishFailure);
   return (
     <div className="directory-home">
       <h1>Directory</h1>
+      {publishToast ? (
+        <p className="toast" role="status">
+          {publishToast.undoPublish ? (
+            <button
+              ref={toastUndoRef}
+              type="button"
+              className="toast-undo"
+              disabled={undoing || !undoAction}
+              onClick={undoAction}
+            >
+              {publishToast.undoLabel}
+            </button>
+          ) : null}
+          <span>{publishToast.message}</span>
+        </p>
+      ) : null}
       <StatusBand
         model={band}
         onReview={() => {
           setTab("review");
           setReviewFocusNonce((count) => count + 1);
         }}
+        onPublish={publishAction}
+        onUndoPublish={band.undo.visible ? undoAction : undefined}
+        onConfirmLargeDelta={
+          largeDelta && canPublishHere && !publishing
+            ? () => void publishCatalog({ confirmLargeDelta: true })
+            : undefined
+        }
+        publishing={publishing}
+        undoing={undoing}
+        publisherHint={publisherHint(publishStatus)}
+        largeDelta={largeDelta}
+        error={publishFailure && !largeDelta ? publishFailure.message : ""}
       />
       <DirectoryTabs tabs={tabs} active={tab} onChange={setTab}>
         <section
@@ -91,6 +212,7 @@ export function DirectoryHome() {
               tab={tab}
               unpublishedCount={Number(publishStatus.unpublishedCount) || 0}
               reviewFocusNonce={reviewFocusNonce}
+              publishing={publishing}
               onQueueChanged={({ activeCount, deferredCount: nextDeferred }) => {
                 setReviewCount(activeCount);
                 setDeferredCount(nextDeferred);
@@ -102,6 +224,7 @@ export function DirectoryHome() {
               }}
               onKeepReviewingLater={() => setTab("needs")}
               onRequestTab={setTab}
+              onPublish={publishAction}
             />
           ) : null}
           {tab === "listings" ? (

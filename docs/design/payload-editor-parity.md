@@ -227,9 +227,9 @@ Always visible on Directory.
 
 `POST /undo-publish` must send the version this tab believes is current (`expectedVersion` / `undoPublishVersion` / `currentVersion`). If someone else has published, the server refuses: **Someone else has published since. Your undo would remove their changes too.** First-ever publish (no previous snapshot) has no undo.
 
-**Sidecar leftover vs design:** `/publish` still 409s on a ≥15% published-count delta unless `confirmLargeDelta: true` (`catalogCountPreflight`). The accepted design **removed** the publish confirmation dialog. Payload should follow the design: either pre-set `confirmLargeDelta` for the editor path, or drop the dialog and treat the 409 as a server fault to fix in the sidecar — do not reintroduce a named confirmation screen.
+**Sidecar leftover vs design:** `/publish` still 409s on a ≥15% published-count delta unless `confirmLargeDelta: true` (`catalogCountPreflight`). That is a server-side guard against a bad bulk import, not the confirmation step decision #4 removed. Payload does **not** reintroduce a general “are you sure?” dialog and does **not** blanket-set `confirmLargeDelta`. A 409 is an error state on the status band that names the delta and offers **Publish this large change** for that one request.
 
-**One publisher.** Directus on `admin-directory-dev.bsky.nz` stays the live publisher until the Publish child flips a kill-switch. Two admin hosts may save; only one host may `POST /publish`.
+**One publisher.** `CATALOG_PUBLISHER` is `directus` or `payload` (default `directus`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev stays Directus on `admin-directory-dev.bsky.nz`. Two admin hosts may save; only one host may publish.
 
 ---
 
@@ -270,7 +270,7 @@ Always visible on Directory.
 | Host | Role (this chain) |
 |------|-------------------|
 | https://directory-dev.bsky.nz | Public site + `/api/catalog` |
-| https://admin-directory-dev.bsky.nz | Directus Directory module — **keep**; remains publisher until the Publish child says otherwise |
+| https://admin-directory-dev.bsky.nz | Directus Directory module — **keep**; live publisher while `CATALOG_PUBLISHER=directus` |
 | **https://admin-payload-directory-dev.bsky.nz** | Payload Directory admin — **dev only**. Do not touch prod manifests or choose a production admin hostname here |
 
 Namespace: `dev-porirua-directory`. Manifests: blackbox `clusters/dev/tenants/porirua-directory/`. Image pin style: immutable SHA, never a floating `:dev`.
@@ -306,6 +306,6 @@ Fail the jobs if: Save writes a Review row; Save publishes; a removal’s only p
 | Scaffold | Auth gate + reuse limits + host name | Payload 3, roles, Directory home stub, configurable editor-core client base, **authorizing proxy before any NetworkPolicy change** |
 | Listings | Listings table + [010](../decisions/010-archive-create-through-name-check.md) | Call listings routes; name-check; no Review enqueue |
 | Review | Review table + [019](../decisions/019-three-way-lock-sticky-curation.md) / [022](../decisions/022-review-inbox-on-queue-table.md) | Government queue only; equal removal actions; defer / keep-community / review-undo |
-| Publish / undo | Status band + [003](../decisions/003-immutable-snapshots-ttl-pointer.md) / [004](../decisions/004-cloudflare-purge-on-publish.md) / [018](../decisions/018-undo-publish-version-guard.md) | `publishStatus` fields; version guard; one publisher kill-switch |
+| Publish / undo | Status band + [003](../decisions/003-immutable-snapshots-ttl-pointer.md) / [004](../decisions/004-cloudflare-purge-on-publish.md) / [018](../decisions/018-undo-publish-version-guard.md) | `publishStatus` fields; version guard; `CATALOG_PUBLISHER` kill-switch (directory-dev stays Directus) |
 | Dev deploy | Auth gate + host | `admin-payload-directory-dev.bsky.nz`; widen policy only after the proxy exists |
 | E2E / docs | This file + editor-guide | Editor: login → Directory home → Listings → one Review decision if fixture → status band |

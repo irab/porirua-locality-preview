@@ -1,6 +1,6 @@
 # Directory editor — one-pager
 
-**Who this is for:** Moana and Kahu. On directory-dev the door is still Data Studio → Directory. Payload (`admin-payload-directory-dev.bsky.nz`, once deployed) is the replacement path for the same jobs.  
+**Who this is for:** Moana and Kahu. On directory-dev the door is still Data Studio → Directory on `admin-directory-dev.bsky.nz` — that host is the one that publishes. Payload (`admin-payload-directory-dev.bsky.nz`) is the replacement path for the same jobs; it shows the waiting count but does not publish while Directus is the publisher.  
 **Approved design:** [editor-interface-design.md](./editor-interface-design.md). That document wins.  
 **Not this doc:** rebuilds, Kubernetes, or `npm test` — that is the [MVP runbook](../MVP-RUNBOOK.md).
 

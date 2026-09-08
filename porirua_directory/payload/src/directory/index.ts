@@ -11,6 +11,7 @@ export type {
   DirectoryTabsProps,
   FormHighlight,
   GeoResult,
+  LargeDeltaState,
   ListingFormValues,
   NameMatch,
   SharedListingFormProps,

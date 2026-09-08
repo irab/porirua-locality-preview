@@ -1,4 +1,5 @@
 import type { Endpoint, PayloadRequest } from "payload";
+import { CATALOG_PUBLISHER_PAYLOAD } from "../../../editor-core/catalog-publisher.mjs";
 import {
   DIRECTORY_EDITOR_PROXIED_ROUTES,
   handleDirectoryEditorRequest,
@@ -25,6 +26,8 @@ async function directoryEditorHandler(req: PayloadRequest): Promise<Response> {
     body,
     identity: identityFromPayloadUser(req.user),
     operationsUrl: process.env.OPERATIONS_URL,
+    thisHost: CATALOG_PUBLISHER_PAYLOAD,
+    catalogPublisher: process.env.CATALOG_PUBLISHER,
   });
   return Response.json(result.body, { status: result.status });
 }

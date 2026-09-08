@@ -32,6 +32,17 @@
   cursor: default;
 }
 
+.status-band-meta {
+  flex-basis: 100%;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.status-band .band-confirm {
+  justify-self: start;
+  font-weight: 700;
+}
+
 .directory-tabs {
   display: flex;
   gap: 0.25rem;

@@ -4,7 +4,7 @@ Self-contained app: public **Your Porirua Directory** (need categories, search, 
 
 **Data sources:**
 
-- **Directory editor** — Directus on [admin-directory-dev](https://admin-directory-dev.bsky.nz) today; Payload at `payload/` is the replacement path. See [editor one-pager](../docs/design/editor-guide.md).
+- **Directory editor** — Directus on [admin-directory-dev](https://admin-directory-dev.bsky.nz) is the live publisher; Payload at `payload/` is the replacement path (`CATALOG_PUBLISHER=directus`). See [editor one-pager](../docs/design/editor-guide.md).
 - **NZ Family Services Directory** — weekly sync into the review queue; editors never write those queue rows themselves.
 - [`../porirua_connections_map/`](../porirua_connections_map/) — Connections Map still uses the Google Sheet / CSV.
 

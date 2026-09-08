@@ -106,7 +106,7 @@ Authoritative detail: [porirua-directory-deployment.md](./porirua-directory-depl
 | Canonical store | Postgres. Publish materialises `catalog_snapshots` and flips `is_current` |
 | Public read | `GET /api/catalog` (envelope as stored), `GET /api/health` |
 | UI | Live API first; baked `data/services.json` if the API is missing, hung, or the wrong body |
-| Admin | Directus Directory module on `admin-directory-dev.bsky.nz` (live publisher today). Payload at `porirua_directory/payload/` is the replacement path (`admin-payload-directory-dev.bsky.nz` on directory-dev once the deploy child pins it) |
+| Admin | Directus Directory module on `admin-directory-dev.bsky.nz` is the live publisher (`CATALOG_PUBLISHER=directus`). Payload at `porirua_directory/payload/` is the replacement path on `admin-payload-directory-dev.bsky.nz`; its proxy refuses catalog publish until that env is flipped |
 | Writes | Unauthenticated operations sidecar, ClusterIP only. Directus `/directory-editor` and the Payload `/api/directory-editor` proxy are the auth gates. Do not widen NetworkPolicy to `app: payload` until that Payload proxy is in the image |
 | Weekly FSD | `npm run sync:fsd` / CronJob — fills `review_queue_items`, **never publishes**. Suspended on directory-dev |
 | Images | Five SHA-pinned app images from `workflow_dispatch`. `main` still builds nginx only |

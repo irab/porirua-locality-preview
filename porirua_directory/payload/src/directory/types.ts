@@ -90,13 +90,23 @@ export type SharedListingFormProps = {
   onArchive?: () => void;
 };
 
+export type LargeDeltaState = {
+  visible: boolean;
+  message: string;
+  confirmLabel: string;
+};
+
 export type StatusBandProps = {
   model: StatusBandModel;
   onReview?: () => void;
   onPublish?: () => void;
   onUndoPublish?: () => void;
+  onConfirmLargeDelta?: () => void;
   publishing?: boolean;
   undoing?: boolean;
+  publisherHint?: string;
+  largeDelta?: LargeDeltaState | null;
+  error?: string;
 };
 
 export type VerificationBarProps = {

@@ -15,7 +15,7 @@ Checked on 8 Sep 2026. Do not treat a later pin as implied.
 | App tree this document was written against | `8951881` (`feature/payload-directory-ed-oi4` — Payload `image-dev` pin) |
 | `origin/main` of this repo | `db282d3` — Phase 1 only |
 | blackbox `origin/main` (before this Payload pin) | `bf0dae2` |
-| directory-dev catalog / Directus / sidecar pin | `b65e5d723e344f6ea36b29d23219cde27c022a93` — unchanged; Directus stays the publisher |
+| directory-dev catalog / Directus / sidecar pin | `b65e5d723e344f6ea36b29d23219cde27c022a93` — unchanged; Directus stays the publisher (`CATALOG_PUBLISHER=directus`) |
 | directory-dev Payload pin | `8951881f581aec7215453cf977acea3a922c575c` — `ghcr.io/irab/porirua-directory-payload` only |
 | Prod image pin | `ghcr.io/irab/porirua-directory:ec5c102a9fcbcfa5af356508ac4b8dea5cda6262` (nginx only) |
 | Live `GET https://directory-dev.bsky.nz/api/catalog` | `200` `application/json`, `Cache-Control: public, max-age=60, s-maxage=86400`, `ETag: "13"`, `generatedAt` `2026-09-08T10:06:15.248Z`, 145 services |
@@ -35,6 +35,8 @@ Catalog / Directus / sidecar manifests stay on blackbox `origin/main` (`bf0dae2`
 Public site: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)
 Admin (live publisher): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)
 Admin (Payload, side-by-side, not the publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)
+
+One publisher: `CATALOG_PUBLISHER` is `directus` or `payload` (default `directus`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev stays Directus. Flipping to Payload needs the same value on both admin Deployments and a Directus image that includes the gate — report that blackbox change; do not dual-enable.
 Manifests: blackbox `clusters/dev/tenants/porirua-directory/`
 Namespace: `dev-porirua-directory`
 
@@ -45,7 +47,7 @@ Namespace: `dev-porirua-directory`
 | Postgres `postgres:16-alpine` + PVC | Canonical store, snapshots, queue | API serves the last in-process snapshot if it already had one; otherwise `503`; UI then falls back |
 | `operations` ClusterIP `:8790` | Publish, review, listings writes, purge | Public site unchanged (last snapshot). Editors cannot save or publish |
 | Directus + Directory module image | Admin UI (live publisher) | Public site unchanged |
-| Payload admin | Replacement Directory admin + `/api/directory-editor` auth gate. Own `porirua_payload` database. Does not publish the catalog | Public site unchanged |
+| Payload admin | Replacement Directory admin + `/api/directory-editor` auth gate. Own `porirua_payload` database. Publish/undo are refused while `CATALOG_PUBLISHER=directus` | Public site unchanged |
 | `fsd-sync` CronJob | Weekly review-queue fill | Public site unchanged. **`suspend: true` in dev** |
 | `catalog-bootstrap` / `directus-bootstrap` / `payload-db-init` Jobs | First sync / each Argo hook / create `porirua_payload` if missing | N/A after first success; a bad Directus bootstrap can hide the module |
 
@@ -110,7 +112,7 @@ sequenceDiagram
 
 Creates never insert `review_queue_items` ([010](../decisions/010-archive-create-through-name-check.md)). Review is government-only. Status writes do not go live until Publish. A failed purge restores the previous `is_current` ([004](../decisions/004-cloudflare-purge-on-publish.md)). Undo publish is version-checked ([018](../decisions/018-undo-publish-version-guard.md)).
 
-The sidecar has no auth. NetworkPolicy is the boundary ([007](../decisions/007-operations-sidecar-networkpolicy.md)). `operations-from-directus-only` admits pods labelled `app: directus` **or** `app: payload` to `:8790`. Directus stays the live publisher; Payload may save through the same sidecar but must not be treated as the catalog publisher until the Publish child flips that. The browser never calls `:8790`. The sidecar stays ClusterIP with no Ingress.
+The sidecar has no auth. NetworkPolicy is the boundary ([007](../decisions/007-operations-sidecar-networkpolicy.md)). `operations-from-directus-only` admits pods labelled `app: directus` **or** `app: payload` to `:8790`. Directus stays the live publisher (`CATALOG_PUBLISHER=directus`). Payload may save through the same sidecar; its proxy refuses `/publish` and `/undo-publish` unless that env is `payload`. The browser never calls `:8790`. The sidecar stays ClusterIP with no Ingress. Never set `CATALOG_SKIP_PURGE` on a tenant.
 
 Editor-facing copy of this path belongs to the handover task. This section is the technical path only.
 
@@ -226,7 +228,7 @@ ConfigMap `porirua-directory-config`: `CATALOG_PUBLIC_URL=https://directory-dev.
 | Sidecar down | Last snapshot, unchanged | Module actions fail |
 | Bad publish / purge fail | Previous snapshot stays current | Publish errors; `is_current` is not left on the new row |
 | Directus down / module 401 | Unchanged | Login or “Page Not Found”; pin is not done |
-| Payload down / auth gate 401 | Unchanged | Payload admin unavailable; Directus still publishes |
+| Payload down / auth gate 401 | Unchanged | Payload admin unavailable; Directus still publishes (`CATALOG_PUBLISHER=directus`) |
 | Weekly CronJob fail / sanity abort | Unchanged | Queue does not grow; `import_runs.status='failed'` |
 | Nginx down | Site down | Admin may still work on the other hosts |
 
