@@ -38,6 +38,7 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 | [`docs/MVP-RUNBOOK.md`](docs/MVP-RUNBOOK.md) | Rebuild data, deploy, test |
 | [`docs/design/admin-testing-personas.md`](docs/design/admin-testing-personas.md) | Admin / editor personas and JTBD for design + Directory module review |
 | [`docs/design/editor-guide.md`](docs/design/editor-guide.md) | Short editor one-pager |
+| [`docs/design/payload-editor-parity.md`](docs/design/payload-editor-parity.md) | Payload replacement contracts (sidecar routes, auth gate, what must stay) |
 | [`porirua_directory/README.md`](porirua_directory/README.md) | Directory app layout & npm scripts |
 | [`porirua_connections_map/README.md`](porirua_connections_map/README.md) | Map embed & sheet |
 

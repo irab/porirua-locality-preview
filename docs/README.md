@@ -32,6 +32,7 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |
 | [design/admin-testing-personas.md](./design/admin-testing-personas.md) | Locality testers, Coshop | Admin / editor personas and jobs to be done — Directory module + public design |
 | [design/editor-interface-design.md](./design/editor-interface-design.md) | Moana, Kahu, Aroha | Directory editor interface design (accepted 8 Sep 2026) |
+| [design/payload-editor-parity.md](./design/payload-editor-parity.md) | Payload children | Directus Directory contracts for the Payload replacement (routes, auth gate, reuse) |
 | [design/editor-guide.md](./design/editor-guide.md) | Moana, Kahu | Short editor one-pager |
 | [design/README.md](./design/README.md) | Team | Design folder index |
 | [issues/open-duplicate-org-cards.md](./issues/open-duplicate-org-cards.md) | Developers | Four live duplicate org cards; merge-tool seed backlog |

@@ -8,6 +8,7 @@ Working design material for **Your Porirua Directory**. Product requirements sta
 | [persona-journey-sam-community.html](./persona-journey-sam-community.html) | Stakeholders | Public **Connect with community** journey |
 | [admin-testing-personas.md](./admin-testing-personas.md) | Locality testers, Coshop | Admin / editor personas and jobs to be done for **design + Directory module** review |
 | [editor-interface-design.md](./editor-interface-design.md) | Moana, Kahu, Aroha | **Accepted interface design** (8 Sep 2026) — screens, flows, copy. Not the current Vue sketch |
+| [payload-editor-parity.md](./payload-editor-parity.md) | Payload children | Contract pack: Review/Listings/publish routes, auth gate, editor-core reuse. Design wins over Vue |
 | [editor-guide.md](./editor-guide.md) | Moana, Kahu | Short editor one-pager (rewrite to match the accepted design as the module is rebuilt) |
 | [org-service-grouping-options.md](./org-service-grouping-options.md) | Product, developers | FSD org + subservice grouping (Option B implemented) |
 
