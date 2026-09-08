@@ -56,6 +56,14 @@ export function DirectoryHome() {
   const [publishFailure, setPublishFailure] = useState<PublishFailure | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastUndoRef = useRef<HTMLButtonElement | null>(null);
+  const tabChosen = useRef(false);
+
+  // The landing tab is only a default. Once anything has moved the editor on
+  // purpose, the first queue load must not drag them back.
+  function chooseTab(next: DirectoryTabId) {
+    tabChosen.current = true;
+    setTab(next);
+  }
 
   async function refreshPublish() {
     try {
@@ -131,7 +139,9 @@ export function DirectoryHome() {
         setPublishStatus(status && typeof status === "object" ? status : {});
         setReviewCount(active);
         setDeferredCount(deferred);
-        setTab(landingTab({ activeCount: active, deferredCount: deferred }) as DirectoryTabId);
+        if (!tabChosen.current) {
+          setTab(landingTab({ activeCount: active, deferredCount: deferred }) as DirectoryTabId);
+        }
         setLoadError("");
       } catch (error) {
         if (cancelled) return;
@@ -183,7 +193,7 @@ export function DirectoryHome() {
       <StatusBand
         model={band}
         onReview={() => {
-          setTab("review");
+          chooseTab("review");
           setReviewFocusNonce((count) => count + 1);
         }}
         onPublish={publishAction}
@@ -199,7 +209,7 @@ export function DirectoryHome() {
         largeDelta={largeDelta}
         error={publishFailure && !largeDelta ? publishFailure.message : ""}
       />
-      <DirectoryTabs tabs={tabs} active={tab} onChange={setTab}>
+      <DirectoryTabs tabs={tabs} active={tab} onChange={chooseTab}>
         <section
           id={`${tab}-panel`}
           className="directory-panel"
@@ -220,10 +230,10 @@ export function DirectoryHome() {
               onCatalogChanged={refreshPublish}
               onOpenListing={(organizationId) => {
                 setListingFocusId(organizationId);
-                setTab("listings");
+                chooseTab("listings");
               }}
-              onKeepReviewingLater={() => setTab("needs")}
-              onRequestTab={setTab}
+              onKeepReviewingLater={() => chooseTab("needs")}
+              onRequestTab={chooseTab}
               onPublish={publishAction}
             />
           ) : null}
