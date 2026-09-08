@@ -10,11 +10,25 @@ function normalizeBase(base) {
   return stripped || DEFAULT_DIRECTORY_EDITOR_BASE;
 }
 
+/**
+ * @param {string} path
+ * @param {string | { base?: string }} [base]
+ */
 export function directoryEditorUrl(path, base) {
   const suffix = path.startsWith("/") ? path : `/${path}`;
   return `${normalizeBase(base)}${suffix}`;
 }
 
+/**
+ * @param {string} path
+ * @param {{
+ *   method?: string,
+ *   body?: unknown,
+ *   headers?: Record<string, string>,
+ *   base?: string | { base?: string },
+ *   fetchImpl?: typeof fetch,
+ * }} [options]
+ */
 export async function directoryEditorFetch(
   path,
   { method = "GET", body, headers, base, fetchImpl = fetch } = {}
