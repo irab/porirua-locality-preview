@@ -34,7 +34,7 @@ Do not leave docs stale after code or pipeline changes.
 - **Only commit when the user explicitly asks.** If unclear, ask first.
 - Follow the user’s git safety rules: no `--no-verify`, no secrets (`.env`, credentials), no force-push to main unless requested.
 - Messages: **complete sentences**, focus on **why**; group logically related changes; include doc updates with related code.
-- If a feature or large change was materially **agent-assisted**, note that in the commit body or PR description.
+- If a feature or large change was materially **agent-assisted**, note that in the commit body or PR description. Say "Agent-assisted" only — never name the tool or model (no Cursor, Claude, Copilot) and no co-author trailers.
 
 ## Verification before “done”
 

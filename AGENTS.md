@@ -69,7 +69,7 @@ python3 -m http.server 8080
 
 - Do **not** commit unless the user explicitly asks.
 - When committing: complete-sentence messages (why), include related doc updates, never skip hooks, never commit secrets.
-- Note materially agent-assisted work in commit body or PR when relevant.
+- Note materially agent-assisted work in commit body or PR when relevant — as plain "Agent-assisted", never naming the tool or model, and never as a co-author trailer.
 
 ## Verification checklist
 
