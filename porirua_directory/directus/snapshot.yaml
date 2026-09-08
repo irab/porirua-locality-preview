@@ -2594,6 +2594,56 @@ permissions:
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
     collection: organizations
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: organizations
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: organizations
+    action: update
+    fields:
+      - name
+      - description
+      - phone
+      - url
+      - email
+      - address
+      - lat
+      - lng
+      - org_type
+      - community_filters
+      - status
+      - source_primary
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: organizations
+    action: update
+    fields:
+      - name
+      - description
+      - phone
+      - url
+      - email
+      - address
+      - lat
+      - lng
+      - org_type
+      - community_filters
+      - status
+      - source_primary
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: organizations
     action: update
     fields:
       - name
@@ -2615,6 +2665,54 @@ permissions:
     action: read
     fields:
       - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: services
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: services
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: services
+    action: update
+    fields:
+      - title
+      - service_name
+      - description
+      - phone
+      - url
+      - address
+      - lat
+      - lng
+      - categories
+      - badges
+      - status
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: services
+    action: update
+    fields:
+      - title
+      - service_name
+      - description
+      - phone
+      - url
+      - address
+      - lat
+      - lng
+      - categories
+      - badges
+      - status
     permissions: {}
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
@@ -2644,6 +2742,38 @@ permissions:
         _eq: pending
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
+    collection: pending_review
+    action: read
+    fields:
+      - "*"
+    permissions:
+      status:
+        _eq: pending
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: pending_review
+    action: read
+    fields:
+      - "*"
+    permissions:
+      status:
+        _eq: pending
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: review_queue_items
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: review_queue_items
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
     collection: review_queue_items
     action: read
     fields:
@@ -2652,6 +2782,34 @@ permissions:
     policy: b0b7aad5-e707-4a0b-b564-496c35039518
   -
     collection: catalog_snapshots
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: catalog_snapshots
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: catalog_snapshots
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: directus_files
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: directus_files
     action: read
     fields:
       - "*"
