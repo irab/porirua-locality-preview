@@ -491,7 +491,7 @@ export default {
       return reviewStatusBandLabel(this.queue);
     },
     waitingBandLabel() {
-      if (this.unpublishedCount == null) return "Changes waiting to go on the site";
+      if (this.unpublishedCount == null) return "Unpublished changes";
       return waitingCountLabel(this.unpublishedCount);
     },
     hasUnpublished() {

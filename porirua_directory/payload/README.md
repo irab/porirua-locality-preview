@@ -1,8 +1,8 @@
 # Payload Directory admin
 
-Payload 3 replacement surface for the Directus Directory module. Catalog data stays in Postgres via the operations sidecar. Listings, Review, and the status-band publish path are wired; directory-dev still publishes from Directus.
+Payload 3 Directory editor. Catalog data stays in Postgres via the operations sidecar. Listings, Review, and publish live here.
 
-**Dev** host: `https://admin-payload-directory-dev.bsky.nz`. Directus on `admin-directory-dev.bsky.nz` is the live catalog publisher. `CATALOG_PUBLISHER` (`directus` | `payload`, default `directus`) is the kill-switch: only that host may `POST /publish` or `/undo-publish`. Do not set both hosts to publish.
+**Dev** host: `https://admin-payload-directory-dev.bsky.nz`. This host is the catalog publisher (`CATALOG_PUBLISHER=payload`). The old Directus host redirects here and its Deployment is scaled to zero. `CATALOG_PUBLISHER` (`payload` | `directus`, default `payload`) is the kill-switch: only that host may `POST /publish` or `/undo-publish`.
 
 ## Auth
 

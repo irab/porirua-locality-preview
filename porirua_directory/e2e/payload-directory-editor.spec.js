@@ -71,27 +71,27 @@ test("an Editor session is allowed through on a read route", async () => {
   expect(status.status, `editor publish-status ${status.status}`).not.toBe(401);
   expect(status.status, `editor publish-status ${status.status}`).not.toBe(403);
   if (status.status === 200) {
-    expect(status.data.thisHostCanPublish).toBe(false);
-    expect(status.data.catalogPublisher).toBe("directus");
+    expect(status.data.thisHostCanPublish).toBe(true);
+    expect(status.data.catalogPublisher).toBe("payload");
   }
 });
 
-test("Payload refuses publish rather than succeeding", async () => {
+test("Payload is allowed to publish, and e2e does not flip the live catalog", async () => {
   const editor = await loginPayload(origin, accounts.editor);
   expect(editor.token, JSON.stringify(editor.data)).toBeTruthy();
+  if (!mock) {
+    skips.push("not publishing the live catalog from e2e");
+    const status = await directoryEditorRequest(origin, "/publish-status", { token: editor.token });
+    expect(status.status).toBe(200);
+    expect(status.data.thisHostCanPublish).toBe(true);
+    return;
+  }
   const publish = await directoryEditorRequest(origin, "/publish", {
     token: editor.token,
     method: "POST",
     body: { createdBy: "attacker", user: "attacker" },
   });
-  expect(publish.status, JSON.stringify(publish.data)).toBe(403);
-  expect(JSON.stringify(publish.data)).toMatch(/admin-directory-dev\.bsky\.nz/);
-  const undo = await directoryEditorRequest(origin, "/undo-publish", {
-    token: editor.token,
-    method: "POST",
-    body: { expectedVersion: 13, createdBy: "attacker" },
-  });
-  expect(undo.status, JSON.stringify(undo.data)).toBe(403);
+  expect(publish.status, JSON.stringify(publish.data)).toBe(200);
 });
 
 test("a client-supplied createdBy does not reach the audit trail", async () => {
@@ -194,10 +194,10 @@ test("status band, tabs, Listings, and Review match the accepted jobs", async ({
   await expect(band).toBeVisible();
   if (catalogUp && mock) {
     await expect(band.getByRole("button", { name: "3 changes to review" })).toBeVisible();
-    const waiting = band.getByRole("button", { name: "2 waiting to go on the site" });
+    const waiting = band.getByRole("button", { name: "2 unpublished" });
     await expect(waiting).toBeVisible();
-    await expect(waiting).toBeDisabled();
-    await expect(page.getByText("Publish lives on admin-directory-dev.bsky.nz.")).toBeVisible();
+    await expect(waiting).toBeEnabled();
+    await expect(page.getByText("Publish lives on admin-directory-dev.bsky.nz.")).toHaveCount(0);
   } else {
     await expect(band.getByRole("button").first()).toBeVisible();
   }

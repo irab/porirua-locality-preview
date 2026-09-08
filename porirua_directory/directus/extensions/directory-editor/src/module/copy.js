@@ -2,10 +2,10 @@
 
 export function actionSuccessMessage({ action, kind, unpublished = true, name } = {}) {
   const who = String(name || "").trim();
-  const publishNext = unpublished ? " It will go on the public site when you publish." : "";
+  const publishNext = unpublished ? " It stays unpublished until you publish." : "";
   if (action === "publish") return "Published. The public site is up to date.";
   if (action === "undo-publish") {
-    return "Publish undone. Those changes are waiting to go on the site again.";
+    return "Publish undone. Those changes are unpublished again.";
   }
   if (action === "defer") {
     return who
@@ -94,8 +94,8 @@ export function reviewStatusBandLabel(items = []) {
 
 export function waitingCountLabel(count) {
   const n = Number(count) || 0;
-  if (n === 0) return "Nothing waiting to go on the site";
-  return n === 1 ? "1 waiting to go on the site" : `${n} waiting to go on the site`;
+  if (n === 0) return "All published";
+  return n === 1 ? "1 unpublished" : `${n} unpublished`;
 }
 
 export function reviewFinishedLabel(count) {

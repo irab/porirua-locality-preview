@@ -229,7 +229,7 @@ Open **http://127.0.0.1:18055**
 | Administrator | `admin@example.com` | `admin-local` |
 | Editor | `editor@example.com` | `editor-local` |
 
-Payload is the replacement Directory path. **Directus remains the live publisher** (`CATALOG_PUBLISHER=directus`). Own Postgres on **54351**, admin on **18100**. Playwright `e2e/payload-directory-editor.spec.js` probes this host (then `admin-payload-directory-dev.bsky.nz`) and **skips cleanly** if neither is up — it must not fail only because nothing is deployed.
+Payload is the Directory editor and the catalog publisher (`CATALOG_PUBLISHER=payload`). Own Postgres on **54351**, admin on **18100**. Playwright `e2e/payload-directory-editor.spec.js` probes this host (then `admin-payload-directory-dev.bsky.nz`) and **skips cleanly** if neither is up — it must not fail only because nothing is deployed. Do not also publish from the Directus compose stack.
 
 ```bash
 cd porirua_directory
@@ -246,7 +246,7 @@ npm run payload:up
 | Reviewer | `reviewer@example.com` | `reviewer-local` |
 | Viewer | `viewer@example.com` | `viewer-local` (API only — 403 on Directory; cannot open admin) |
 
-**Two admin hosts on directory-dev.** Public site: `directory-dev.bsky.nz`. Directus: `admin-directory-dev.bsky.nz` (publisher). Payload: `admin-payload-directory-dev.bsky.nz` (Review / Listings / status band; publish refused). Flipping `CATALOG_PUBLISHER` to `payload` requires the Directus image to include that same refuse-if-not-publisher gate **first**, then the same env value on both Deployments in one change. If Directus is still an un-gated publisher, the two hosts dual-publish.
+**One admin host on directory-dev.** Public site: `directory-dev.bsky.nz`. Editor and publisher: `admin-payload-directory-dev.bsky.nz`. The old Directus hostname redirects there. Directus stays in the tenant at zero replicas so a rollback is a pin change, not a rebuild.
 
 Tests against this stack (`:18055`) use those compose passwords even if live-dev `ADMIN_*` / `EDITOR_*` are in the shell. Override only with `DIRECTUS_TEST_*`.
 
@@ -267,13 +267,15 @@ Moana’s jobs are Review and Listings. She does not need Directus Content.
 2. Land on **Directory**. Status band at the top; tabs **Needs confirmation**, **Review**, **Listings**.
 3. **Listings:** type in **Find an organisation**, open a result, **Edit** / **Add a service line**. Save does not publish.
 4. **Review:** open a government card, decide (or **Needs confirmation**). After a decision the next heading is focused, not **Accept**.
-5. The waiting count is visible. **Publish from Directus** while `CATALOG_PUBLISHER=directus`. Payload will refuse `POST /publish`.
+5. **N unpublished** on the status band publishes immediately. A ≥15% swing in published count 409s until you confirm that one request.
 
 The accepted jobs and copy are the [editor one-pager](./design/editor-guide.md).
 
-### Editor daily path (Directus Data Studio)
+### Editor daily path (Directus Data Studio) — retired on directory-dev
 
-1. Sign in as **Editor** on `admin-directory-dev.bsky.nz` (local `:18055`).
+Kept for local compose and a rollback. Do not use `admin-directory-dev.bsky.nz` on the cluster; it redirects to Payload.
+
+1. Sign in as **Editor** on local `:18055`.
 2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line). Related **service lines** are on the organisation record (read-only). Open a line to edit it; do not re-parent from the organisation form.
 3. Edit ordinary fields (address, phone, description). On an FSD-sourced record, saving triggers **Sticky curation on save**, which upserts one `overrides` row `{target_type, target_id, action: "patch", patch}` and merges keys into that row. You never type patch JSON.
 4. Open **Review queue** in the sidebar (`review_queue_items`, preset filtered to pending). The list shows kind, the related listing, and a `change_summary` of what actually moved — not the raw `proposed` JSON. **Approve**, **Hide**, and **Reject** work from the list (tick many rows) and from the item. The sidecar loops every selected id, does not undo earlier successes when a later row fails, and reports succeeded/failed counts (a mixed batch is a 409, not a silent first-row success). **Edit-and-approve** is item-only — it carries one payload and cannot mean anything across a multi-row selection. Those Flows call the shared `approveReviewItem` in `scripts/approve-review.mjs` — apply `proposed.after`, **refresh `raw_import`**, publish only when the row is not already `hidden`, promote a draft organisation, mark the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week. Do not click a `pending_review` collection — that view is SQL-only and 403s in Directus.
@@ -299,9 +301,9 @@ The accepted jobs and copy are the [editor one-pager](./design/editor-guide.md).
 ### Dev (Phase 2 stack)
 
 Public: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)  
-Admin (publisher): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)  
-Admin (Payload Directory, not the publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)  
-Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet git-scans `tenants/*`). Directus is still the catalog publisher (`CATALOG_PUBLISHER=directus`).
+Admin (editor and publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)  
+Old Directus hostname (redirect): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)  
+Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet git-scans `tenants/*`). Payload is the catalog publisher (`CATALOG_PUBLISHER=payload`). Directus is scaled to zero.
 
 1. From a branch, build the four images without changing what `main` pushes today:
 

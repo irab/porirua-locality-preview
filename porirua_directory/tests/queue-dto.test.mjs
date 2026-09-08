@@ -424,7 +424,7 @@ test("new items do not treat the already-inserted live row as a before side", ()
 test("success copy says what happens next", () => {
   assert.equal(
     actionSuccessMessage({ action: "approve", kind: "changed" }),
-    "Accepted. It will go on the public site when you publish."
+    "Accepted. It stays unpublished until you publish."
   );
   assert.equal(
     actionSuccessMessage({
@@ -432,7 +432,7 @@ test("success copy says what happens next", () => {
       kind: "changed",
       name: "Workmates Supported Employment Agency — Supported Employment Service",
     }),
-    "Accepted Workmates Supported Employment Agency — Supported Employment Service. It will go on the public site when you publish."
+    "Accepted Workmates Supported Employment Agency — Supported Employment Service. It stays unpublished until you publish."
   );
   assert.equal(
     actionSuccessMessage({ action: "defer" }),
@@ -471,7 +471,8 @@ test("success copy says what happens next", () => {
   );
   assert.equal(actionSuccessMessage({ action: "keep" }), "Kept your details. They stay as you set them.");
   assert.equal(reviewDeferredFinishLabel(2), "You've decided the ones you can. 2 need confirmation.");
-  assert.equal(waitingCountLabel(2), "2 waiting to go on the site");
+  assert.equal(waitingCountLabel(2), "2 unpublished");
+  assert.equal(waitingCountLabel(0), "All published");
   assert.equal(
     actionSuccessMessage({ action: "reject", kind: "new" }),
     "Rejected. It will not go on the public site."

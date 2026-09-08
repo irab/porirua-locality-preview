@@ -4,31 +4,31 @@
 **Approved design:** [editor-interface-design.md](./editor-interface-design.md). That document wins.  
 **Not this doc:** rebuilds, Kubernetes, or `npm test` — that is the [MVP runbook](../MVP-RUNBOOK.md).
 
-## Two doors, one catalog
+## One door, one catalog
 
-On directory-dev you can do Review and Listings from either admin host. They write the same catalog. You do not need Directus Content / collections to maintain listings.
+The Directory editor is Payload. You do not need Directus Content / collections to maintain listings. Directus is retired on directory-dev: its Deployment is scaled to zero, and the old hostname redirects here.
 
 | Host | URL | What it is for |
 |------|-----|----------------|
-| Payload Directory | [admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz) (local: `http://127.0.0.1:18100/admin`) | Replacement Directory. Sign in as Editor. You land on **Directory**. |
-| Directus Directory | [admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz) | The older Directory module. **This host is still the publisher.** |
+| Payload Directory | [admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz) (local: `http://127.0.0.1:18100/admin`) | Editor and publisher. Sign in as Editor. You land on **Directory**. |
+| Old Directus hostname | [admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz) | Redirects to Payload. Do not scale Directus back up. |
 
-**Publish today is Directus only.** Payload shows how many saves are waiting and will not put them on the public site (`CATALOG_PUBLISHER=directus`). The waiting control is visible and refused, so the two hosts cannot publish at once. When you mean to update the public directory, publish from Directus.
+**Publish lives on Payload** (`CATALOG_PUBLISHER=payload`). The **N unpublished** control publishes immediately — there is no confirmation dialog, unless the change is large enough that the server asks you to confirm.
 
 ## Open Directory
 
 Sign in. You land on **Directory**, not a list of collections. Three tabs, in this order: **Needs confirmation**, **Review**, **Listings**. Review opens first if there is active work; Needs confirmation opens if only parked items remain; otherwise Listings.
 
-The status band at the top says how many government updates need a decision, and how many of your saves are waiting to go on the public site. On the publisher host, **Waiting to go on the site** publishes immediately — there is no confirmation dialog. On Payload that control stays visible and disabled, with a note that publish lives on the Directus host.
+The status band at the top says how many government updates need a decision, and how many organisations are **unpublished** (saved in the editor, not yet on the public site). **N unpublished** publishes immediately. When there is nothing to put live, it reads **All published** and is not clickable.
 
 ## Listings — find, then open
 
 1. Type in **Find an organisation**. The list filters as you type and stays A–Z.
-2. Open a result to see the organisation, its service lines, and a check of website / phone / address. If a pin exists, a **Now** / **Proposed** placeholder can appear — it is not a map you can drag.
+2. Open a result to see the organisation, its service lines, and a check of website / phone / address. If a pin exists, the map shows it.
 3. **Edit** a line, **Add a service line**, or **Add organisation**. Those open the same form.
 4. Tick **Show listings that are not on the site** to restore one with **Put it back on the site**.
 5. When you leave **Name**, we look for a similar organisation — including ones not on the site, and names that only share a distinctive word (so **Whanau** warns about **Porirua Whānau Centre**). **Open the existing one** or **Create anyway**.
-6. Save writes the listing. It does **not** put a row on Review. The public site updates when you publish (from the publisher host).
+6. Save writes the listing. It does **not** put a row on Review. The listing stays unpublished until you publish from the status band.
 7. Fields you already curated show **You set this earlier**. The weekly government feed will not overwrite those unless you accept a later change.
 8. The government feed misspells. **Porirua Respiritory Support group - Ora Toa** is how it arrives; you can correct the name (and the rest) yourself. That is why the editor exists.
 
@@ -59,7 +59,7 @@ If a change is almost right, **Accept and edit** opens the form on that card, he
 
 After every decision: **Undo** on the toast, and the next active card opens on its own. Focus lands on that card’s **heading** (the organisation name), not on **Accept**, so Enter will not accept by accident.
 
-When the last active item is done: **Publish now** puts the work on the public site immediately — on the publisher host. On Payload that finish action is refused for the same reason as the status band. **Undo publish** is on the toast, then **Undo last publish** on the status band, until the next publish or 24 hours. If someone else has published since, undo is refused.
+When the last active item is done: **Publish now** puts the work on the public site immediately. **Undo publish** is on the toast, then **Undo last publish** on the status band, until the next publish or 24 hours. If someone else has published since, undo is refused.
 
 ## Take a service off the site from Listings
 

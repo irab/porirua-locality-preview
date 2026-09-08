@@ -67,7 +67,7 @@ services:
       WEBSOCKETS_ENABLED: "false"
       PUBLIC_URL: http://127.0.0.1:18055
       OPERATIONS_URL: http://operations:8790
-      CATALOG_PUBLISHER: directus
+      CATALOG_PUBLISHER: payload
       FLOWS_ENV_ALLOW_LIST: OPERATIONS_URL,CATALOG_PUBLISHER
       CONTENT_SECURITY_POLICY_DIRECTIVES__IMG_SRC: "array:'self',data:,blob:,https://raw.githubusercontent.com,https://avatars.githubusercontent.com,https://*.tile.openstreetmap.org,https://tile.openstreetmap.org,https://*.basemaps.cartocdn.com"
     depends_on:

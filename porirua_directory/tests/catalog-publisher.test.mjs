@@ -19,11 +19,11 @@ import {
   thisHostCanPublish as directusCanPublish,
 } from "../directus/extensions/directory-editor/src/endpoint/catalog-publisher.js";
 
-test("directory-dev defaults to a single Directus publisher", () => {
-  assert.equal(DEFAULT_CATALOG_PUBLISHER, CATALOG_PUBLISHER_DIRECTUS);
-  assert.equal(resolveCatalogPublisher(undefined), "directus");
-  assert.equal(resolveCatalogPublisher("payload"), "payload");
-  assert.equal(catalogPublisherFromEnv({}), "directus");
+test("directory-dev defaults to a single Payload publisher", () => {
+  assert.equal(DEFAULT_CATALOG_PUBLISHER, CATALOG_PUBLISHER_PAYLOAD);
+  assert.equal(resolveCatalogPublisher(undefined), "payload");
+  assert.equal(resolveCatalogPublisher("directus"), "directus");
+  assert.equal(catalogPublisherFromEnv({}), "payload");
   assert.equal(thisHostCanPublish("payload", "directus"), false);
   assert.equal(thisHostCanPublish("directus", "directus"), true);
   assert.equal(thisHostCanPublish("payload", "payload"), true);

@@ -85,7 +85,7 @@ test("publish toast offers undo only when the server still can, and first-ever p
   assert.equal(first.undoFirst, false);
 
   const undone = undoPublishToastModel();
-  assert.equal(undone.message, "Publish undone. Those changes are waiting to go on the site again.");
+  assert.equal(undone.message, "Publish undone. Those changes are unpublished again.");
   assert.equal(undone.undoPublish, false);
 });
 

@@ -15,7 +15,7 @@ Checked on 8 Sep 2026. Do not treat a later pin as implied.
 | App tree this document was written against | `4e3a3d1` (`feature/payload-directory-ed-oi4` — Payload `image-dev` pin) |
 | `origin/main` of this repo | `db282d3` — Phase 1 only |
 | blackbox `origin/main` (before this Payload pin) | `bf0dae2` |
-| directory-dev catalog / Directus / sidecar pin | `b65e5d723e344f6ea36b29d23219cde27c022a93` — unchanged; Directus stays the publisher (`CATALOG_PUBLISHER=directus`) |
+| directory-dev catalog / sidecar pin | `b65e5d723e344f6ea36b29d23219cde27c022a93` — unchanged. Directus Deployment is scaled to zero |
 | directory-dev Payload pin | `4e3a3d1227748c190583a19e7b9254228d4c9984` — `ghcr.io/irab/porirua-directory-payload` only (blackbox `e077b59`, PR #105) |
 | Live Payload editor sign-in | `200` as Editor on `https://admin-payload-directory-dev.bsky.nz`; `/publish-status` 143 unpublished, `/queue` 13 to review, `/listings` real organisations |
 | Live Payload editor map | Leaflet on OpenStreetMap tiles. Review card that moves a pin: 6/6 tiles. Listing form: 3/3 tiles, draggable marker, `© OpenStreetMap` credited. The Taeaomanino Trust card is 267px tall, not the 1301px it was when a bare `.verify` inherited Payload's `min-height: 100vh` |
@@ -36,10 +36,10 @@ Catalog / Directus / sidecar manifests stay on blackbox `origin/main` (`bf0dae2`
 ### Dev (`dev-porirua-directory`)
 
 Public site: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)
-Admin (live publisher): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)
-Admin (Payload, side-by-side, not the publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)
+Admin (editor and publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)
+Old Directus hostname (redirect): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)
 
-One publisher: `CATALOG_PUBLISHER` is `directus` or `payload` (default `directus`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev stays Directus. **Flipping to `payload` is not a Payload-only env change.** The Directus image must already include the same gate (otherwise Directus keeps publishing while Payload also can). Set the same value on both admin Deployments in one change. Report that blackbox change; do not dual-enable.
+One publisher: `CATALOG_PUBLISHER` is `payload` or `directus` (default `payload`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev publishes from Payload. Directus is scaled to zero — do not bring it back without a gated image, or both hosts can publish.
 Manifests: blackbox `clusters/dev/tenants/porirua-directory/`
 Namespace: `dev-porirua-directory`
 
@@ -49,8 +49,8 @@ Namespace: `dev-porirua-directory`
 | `catalog-api` | `GET /api/catalog`, `GET /api/health` | **Yes** — UI falls back to baked JSON (stale) |
 | Postgres `postgres:16-alpine` + PVC | Canonical store, snapshots, queue | API serves the last in-process snapshot if it already had one; otherwise `503`; UI then falls back |
 | `operations` ClusterIP `:8790` | Publish, review, listings writes, purge | Public site unchanged (last snapshot). Editors cannot save or publish |
-| Directus + Directory module image | Admin UI (live publisher) | Public site unchanged |
-| Payload admin | Replacement Directory admin + `/api/directory-editor` auth gate. Own `porirua_payload` database. Publish/undo are refused while `CATALOG_PUBLISHER=directus` | Public site unchanged |
+| Directus + Directory module image | Retired. Replicas 0. Manifests kept for rollback | Public site unchanged |
+| Payload admin | Directory editor + `/api/directory-editor` auth gate and publisher. Own `porirua_payload` database | Public site unchanged until she publishes |
 | `fsd-sync` CronJob | Weekly review-queue fill | Public site unchanged. **`suspend: true` in dev** |
 | `catalog-bootstrap` / `directus-bootstrap` / `payload-db-init` Jobs | First sync / each Argo hook / create `porirua_payload` if missing | N/A after first success; a bad Directus bootstrap can hide the module |
 
@@ -115,7 +115,7 @@ sequenceDiagram
 
 Creates never insert `review_queue_items` ([010](../decisions/010-archive-create-through-name-check.md)). Review is government-only. Status writes do not go live until Publish. A failed purge restores the previous `is_current` ([004](../decisions/004-cloudflare-purge-on-publish.md)). Undo publish is version-checked ([018](../decisions/018-undo-publish-version-guard.md)).
 
-The sidecar has no auth. NetworkPolicy is the boundary ([007](../decisions/007-operations-sidecar-networkpolicy.md)). `operations-from-directus-only` admits pods labelled `app: directus` **or** `app: payload` to `:8790`. Directus stays the live publisher (`CATALOG_PUBLISHER=directus`). Payload may save through the same sidecar; its proxy refuses `/publish` and `/undo-publish` unless that env is `payload`. The browser never calls `:8790`. The sidecar stays ClusterIP with no Ingress. Never set `CATALOG_SKIP_PURGE` on a tenant.
+The sidecar has no auth. NetworkPolicy is the boundary ([007](../decisions/007-operations-sidecar-networkpolicy.md)). `operations-from-directus-only` admits pods labelled `app: payload` (and still lists `app: directus` for a rollback) to `:8790`. Payload is the live publisher (`CATALOG_PUBLISHER=payload`). The browser never calls `:8790`. The sidecar stays ClusterIP with no Ingress. Never set `CATALOG_SKIP_PURGE` on a tenant.
 
 Editor-facing copy of this path belongs to the handover task. This section is the technical path only.
 
@@ -192,7 +192,7 @@ SealedSecret `porirua-payload-secrets` (separate — do not copy the catalog `DA
 
 SealedSecrets cannot unseal until the namespace exists. After first sync, copy `ghcr-io` from `dev-polis` (private GHCR). Do not copy either SealedSecret toward prod.
 
-ConfigMap `porirua-directory-config`: `CATALOG_PUBLIC_URL=https://directory-dev.bsky.nz/api/catalog`, `CATALOG_CURRENT_TTL_MS=5000`, `DIRECTUS_PUBLIC_URL=https://admin-directory-dev.bsky.nz`, `PAYLOAD_PUBLIC_URL=https://admin-payload-directory-dev.bsky.nz`, `PAYLOAD_DB=porirua_payload`, `OPERATIONS_URL=http://operations:8790`. Never set `CATALOG_SKIP_PURGE` on the tenant.
+ConfigMap `porirua-directory-config`: `CATALOG_PUBLIC_URL=https://directory-dev.bsky.nz/api/catalog`, `CATALOG_CURRENT_TTL_MS=5000`, `CATALOG_PUBLISHER=payload`, `DIRECTUS_PUBLIC_URL=https://admin-directory-dev.bsky.nz`, `PAYLOAD_PUBLIC_URL=https://admin-payload-directory-dev.bsky.nz`, `PAYLOAD_DB=porirua_payload`, `OPERATIONS_URL=http://operations:8790`. Never set `CATALOG_SKIP_PURGE` on the tenant.
 
 ### Ingress and DNS
 
@@ -200,8 +200,8 @@ ConfigMap `porirua-directory-config`: `CATALOG_PUBLIC_URL=https://directory-dev.
 - TLS: Cloudflare Universal on `*.bsky.nz`. No in-cluster TLS secret.
 - Cloudflare Flexible → origin `:4443` → Traefik. Public URLs do not include `:4443`.
 - `/api` Ingress priority 200; `/` priority 100 ([021](../decisions/021-split-api-ingress.md)).
-- Directus admin is `admin-directory-dev.bsky.nz` → Directus `:8055`.
-- Payload admin is a fourth Ingress on `admin-payload-directory-dev.bsky.nz` → Payload `:3000`. Dev only.
+- `admin-directory-dev.bsky.nz` redirects to `admin-payload-directory-dev.bsky.nz`. Directus replicas are 0.
+- Payload admin is `admin-payload-directory-dev.bsky.nz` → Payload `:3000`. Dev only. This host publishes.
 - Ingress health checks are disabled: Traefik never writes `status.loadBalancer`.
 
 ### Boot order
@@ -210,7 +210,7 @@ ConfigMap `porirua-directory-config`: `CATALOG_PUBLIC_URL=https://directory-dev.
 |------|-----------|
 | 0 | ConfigMap, SealedSecrets, NetworkPolicies, Postgres |
 | 1 (Sync hook) | `catalog-bootstrap` — schema + `db-import-from-json.mjs` + first publish if no `is_current`. `payload-db-init` — `CREATE DATABASE porirua_payload` if missing |
-| 2 | operations, catalog-api, nginx, Directus, Payload, FSD CronJob (suspended) |
+| 2 | operations, catalog-api, nginx, Directus (replicas 0), Payload, FSD CronJob (suspended) |
 | 3 (Sync hook) | `directus-bootstrap` + `https-proto` middleware — **before** Ingress |
 | 4 | Ingresses (`DisableResourceHealthCheck`) |
 
@@ -232,8 +232,8 @@ ConfigMap `porirua-directory-config`: `CATALOG_PUBLIC_URL=https://directory-dev.
 | API down, hung >4s, or non-JSON (including HTML) | Baked `data/services.json` (stale). Playwright asserts which source was consumed | Publish may still write Postgres; the public site looks unchanged until the API returns |
 | Sidecar down | Last snapshot, unchanged | Module actions fail |
 | Bad publish / purge fail | Previous snapshot stays current | Publish errors; `is_current` is not left on the new row |
-| Directus down / module 401 | Unchanged | Login or “Page Not Found”; pin is not done |
-| Payload down / auth gate 401 | Unchanged | Payload admin unavailable; Directus still publishes (`CATALOG_PUBLISHER=directus`) |
+| Directus down / scaled to zero | Unchanged | Expected. Use Payload. |
+| Payload down / auth gate 401 | Unchanged | Editor and publish unavailable. Directus is retired and cannot stand in. |
 | Weekly CronJob fail / sanity abort | Unchanged | Queue does not grow; `import_runs.status='failed'` |
 | Nginx down | Site down | Admin may still work on the other hosts |
 
@@ -245,10 +245,10 @@ HEAD `/api/catalog` returning 404 is not a visitor path (the UI uses GET). It is
 
 | | directory-dev | directory.bsky.nz (prod) |
 |--|---------------|---------------------------|
-| Stack | Five catalog images + Payload admin + Postgres + Directus + sidecar + suspended CronJob | nginx only |
+| Stack | Five catalog images + Payload admin + Postgres + sidecar + Directus scaled to 0 + suspended CronJob | nginx only |
 | `/api/catalog` | JSON snapshot (ETag 13 on 8 Sep 2026) | HTML homepage |
-| Admin host | `admin-directory-dev.bsky.nz` (publisher) and `admin-payload-directory-dev.bsky.nz` | **None** |
-| Publish | Snapshot + Cloudflare purge from Directus | Rebuild + pin nginx SHA |
+| Admin host | `admin-payload-directory-dev.bsky.nz` (publisher). `admin-directory-dev.bsky.nz` redirects | **None** |
+| Publish | Snapshot + Cloudflare purge from Payload | Rebuild + pin nginx SHA |
 | Weekly FSD | Runner exists, CronJob suspended | Not present |
 | Image build | `workflow_dispatch` six SHAs | `main` push builds nginx |
 

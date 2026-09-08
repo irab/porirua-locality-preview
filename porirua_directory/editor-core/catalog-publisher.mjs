@@ -1,18 +1,18 @@
 /**
  * One admin host may POST /publish and /undo-publish. Both authorizing
  * proxies (Payload and Directus) read CATALOG_PUBLISHER and refuse when
- * they are not that host. Default is Directus so directory-dev cannot
- * dual-publish against the same snapshot pointer.
+ * they are not that host. Default is Payload: Directus is retired on
+ * directory-dev. Set CATALOG_PUBLISHER=directus only to roll that back.
  */
 export const CATALOG_PUBLISHER_DIRECTUS = "directus";
 export const CATALOG_PUBLISHER_PAYLOAD = "payload";
-export const DEFAULT_CATALOG_PUBLISHER = CATALOG_PUBLISHER_DIRECTUS;
+export const DEFAULT_CATALOG_PUBLISHER = CATALOG_PUBLISHER_PAYLOAD;
 
 export const PUBLISH_MUTATION_PATHS = ["/publish", "/undo-publish"];
 
 export function resolveCatalogPublisher(value) {
   const raw = String(value ?? "").trim().toLowerCase();
-  return raw === CATALOG_PUBLISHER_PAYLOAD ? CATALOG_PUBLISHER_PAYLOAD : CATALOG_PUBLISHER_DIRECTUS;
+  return raw === CATALOG_PUBLISHER_DIRECTUS ? CATALOG_PUBLISHER_DIRECTUS : CATALOG_PUBLISHER_PAYLOAD;
 }
 
 export function catalogPublisherFromEnv(env = process.env) {

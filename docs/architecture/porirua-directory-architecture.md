@@ -1,6 +1,6 @@
 # Porirua Services Directory — Architecture
 
-**Status (8 Sep 2026):** Phase 1 is live at [directory.bsky.nz](https://directory.bsky.nz) (nginx + baked JSON). Phase 2 (Postgres catalog, public read API, UI fallback, Directus Directory module, weekly FSD runner) is live on the **dev** tenant only: [directory-dev.bsky.nz](https://directory-dev.bsky.nz) and [admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz). **Prod Phase 2 is not built.**
+**Status (9 Sep 2026):** Phase 1 is live at [directory.bsky.nz](https://directory.bsky.nz) (nginx + baked JSON). Phase 2 (Postgres catalog, public read API, UI fallback, Payload Directory, weekly FSD runner) is live on the **dev** tenant only: [directory-dev.bsky.nz](https://directory-dev.bsky.nz) and [admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz). Directus is retired on directory-dev. **Prod Phase 2 is not built.**
 
 This file is product-level system context. The verified services, cache path, images, secrets, and failure modes live in the companion [porirua-directory-deployment.md](./porirua-directory-deployment.md). Why the stack was chosen lives in [docs/decisions/](../decisions/README.md).
 
@@ -18,7 +18,7 @@ One public directory for Porirua that serves three audiences:
 2. **Community connection** — find and contact community groups (Connections Map, `orgType` filters).
 3. **Civic & community places** — marae, councils, Pātaka Kai, and similar organisations curated locally.
 
-Phase 1 is a **static site + generated JSON**. Phase 2 makes **PostgreSQL** the canonical store and serves a materialised Option B snapshot. directory-dev has **two** admin hosts: Directus on `admin-directory-dev.bsky.nz` (live publisher) and Payload on `admin-payload-directory-dev.bsky.nz` (replacement Directory). **Cloudflare D1 + Workers** is a documented **exit** if that admin plane is withdrawn — export Postgres and keep the snapshot envelope. It is not the path being built.
+Phase 1 is a **static site + generated JSON**. Phase 2 makes **PostgreSQL** the canonical store and serves a materialised Option B snapshot. directory-dev’s admin is Payload on `admin-payload-directory-dev.bsky.nz` (editor and publisher). **Cloudflare D1 + Workers** is a documented **exit** if that admin plane is withdrawn — export Postgres and keep the snapshot envelope. It is not the path being built.
 
 ---
 
@@ -27,10 +27,9 @@ Phase 1 is a **static site + generated JSON**. Phase 2 makes **PostgreSQL** the 
 ```mermaid
 flowchart TB
   subgraph editors [Editors]
-    Directus[Directus admin-directory-dev.bsky.nz]
     Payload[Payload admin-payload-directory-dev.bsky.nz]
     Ops[operations sidecar ClusterIP]
-    Module[Directory module Review and Listings]
+    Module[Directory Review and Listings]
   end
   subgraph external [External data]
     FSD[FSD CSV data.govt.nz]
@@ -46,11 +45,11 @@ flowchart TB
     Nginx[nginx static + baked fallback]
     UI[directory UI]
   end
-  Module --> Directus
+  Module --> Payload
   Payload -->|authorizing proxy| Ops
   FSD --> Sync[weekly CronJob suspended in dev]
   Sync --> PG
-  Directus --> Ops --> PG
+  Ops --> PG
   Ops -->|publish + purge| Snap
   Ops -->|purge files| CF
   PG --> Snap --> API
@@ -72,7 +71,7 @@ On **prod** today the editor, API, Postgres, and CronJob subgraphs do not exist.
 |----------|------|
 | `porirua-locality-preview` | Directory app, merge scripts, docs, Connections Map |
 | `blackbox` | K8s tenants. Dev: `clusters/dev/tenants/porirua-directory/`. Prod: `clusters/prod/tenants/porirua-directory/` (Phase 1 nginx pin) |
-| Porirua Locality Google Sheet | **Connections Map only.** Directory community listings are created in the Directory module. Nothing syncs between them ([009](../decisions/009-google-sheet-retired-for-directory.md)) |
+| Porirua Locality Google Sheet | **Connections Map only.** Directory community listings are created in Payload Directory. Nothing syncs between them ([009](../decisions/009-google-sheet-retired-for-directory.md)) |
 
 ---
 
@@ -106,8 +105,8 @@ Authoritative detail: [porirua-directory-deployment.md](./porirua-directory-depl
 | Canonical store | Postgres. Publish materialises `catalog_snapshots` and flips `is_current` |
 | Public read | `GET /api/catalog` (envelope as stored), `GET /api/health` |
 | UI | Live API first; baked `data/services.json` if the API is missing, hung, or the wrong body |
-| Admin | Two hosts on directory-dev. Directus (`admin-directory-dev.bsky.nz`) is the live publisher (`CATALOG_PUBLISHER=directus`). Payload (`admin-payload-directory-dev.bsky.nz`, `porirua_directory/payload/`) is the replacement Directory and refuses `POST /publish` and `/undo-publish` until that env is `payload`. Flipping the env to `payload` is one coordinated change: the Directus image must already include the same publisher gate, and both Deployments must get the new value together. If Directus is still an un-gated publisher when Payload is also enabled, both hosts can publish. Do not dual-enable. |
-| Writes | Unauthenticated operations sidecar, ClusterIP only. Directus `/directory-editor` and the Payload `/api/directory-editor` proxy are the auth gates. Do not widen NetworkPolicy to `app: payload` until that Payload proxy is in the image |
+| Admin | Payload on `admin-payload-directory-dev.bsky.nz` (`porirua_directory/payload/`) is the editor and the catalog publisher (`CATALOG_PUBLISHER=payload`). Directus is retired on directory-dev (replicas 0; `admin-directory-dev.bsky.nz` redirects here). Do not scale Directus back up: the live Directus pin has no publisher gate and would dual-publish. |
+| Writes | Unauthenticated operations sidecar, ClusterIP only. The Payload `/api/directory-editor` proxy is the auth gate. NetworkPolicy admits `app: payload` (and still lists `app: directus` for a rollback). |
 | Weekly FSD | `npm run sync:fsd` / CronJob — fills `review_queue_items`, **never publishes**. Suspended on directory-dev |
 | Images | Five SHA-pinned app images from `workflow_dispatch`. `main` still builds nginx only |
 
@@ -130,7 +129,7 @@ See [Phase 1 spec](../porirua-directory-phase1-spec.md#service-record). Summary:
 
 - Public site: read-only, no login, no PII collection from searchers.
 - Prod (Phase 1): no admin host. Sheet + git-managed overrides were the Phase 1 editor path.
-- Dev (Phase 2): two admin sessions. Directus on `admin-directory-dev.bsky.nz` (Editor / Admin) and Payload on `admin-payload-directory-dev.bsky.nz` (Admin / Editor / Reviewer). Both use the same `isEditorOrAdmin` gate before proxying; Viewers get **403** on Directory reads as well as writes. The operations sidecar has no auth of its own ([007](../decisions/007-operations-sidecar-networkpolicy.md)). Directus is still the catalog publisher.
+- Dev (Phase 2): one admin session. Payload on `admin-payload-directory-dev.bsky.nz` (Admin / Editor / Reviewer). The `/api/directory-editor` proxy uses `isEditorOrAdmin`; Viewers get **403** on Directory reads as well as writes. The operations sidecar has no auth of its own ([007](../decisions/007-operations-sidecar-networkpolicy.md)). Payload is the catalog publisher.
 - Cloudflare Access + Worker is **not** what is built. It is part of the D1 exit, not an alternative admin path running today.
 
 ---

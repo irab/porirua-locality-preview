@@ -54,7 +54,7 @@ test("status band uses role=status and publish-status counts", () => {
   assert.equal(band.role, "status");
   assert.equal(band.review.label, "4 changes to review");
   assert.equal(band.review.disabled, false);
-  assert.equal(band.waiting.label, "2 waiting to go on the site");
+  assert.equal(band.waiting.label, "2 unpublished");
   assert.equal(band.waiting.disabled, false);
   assert.equal(band.undo.visible, true);
   assert.equal(band.undo.label, "Undo last publish");
@@ -68,7 +68,7 @@ test("status band uses role=status and publish-status counts", () => {
     { unpublishedCount: 2, canUndoPublish: true, thisHostCanPublish: false },
     { reviewCount: 0 }
   );
-  assert.equal(otherHost.waiting.label, "2 waiting to go on the site");
+  assert.equal(otherHost.waiting.label, "2 unpublished");
   assert.equal(otherHost.waiting.disabled, true);
   assert.equal(otherHost.undo.visible, false);
 });

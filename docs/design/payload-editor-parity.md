@@ -216,10 +216,10 @@ Always visible on Directory.
 | She sees | Behaviour | Source |
 |----------|-----------|--------|
 | **N changes to review** / **Nothing to review** | Opens Review (first active item). Subdued and not clickable when zero | `GET /queue` active count. Use `unpublishedCount` from the server — do not invent the integer in the browser |
-| **N waiting to go on the site** / **Nothing waiting to go on the site** | **Publishes immediately** (no confirmation dialog) | `GET /publish-status` → `unpublishedCount`, `unpublishedNames` |
+| **N unpublished** / **All published** | **Publishes immediately** (no confirmation dialog) | `GET /publish-status` → `unpublishedCount`, `unpublishedNames` |
 | **Undo last publish** | On the band while `canUndoPublish` | Server window: until next publish or 24h, not a client timer |
 | After Publish toast | **Published. The public site is up to date.** + **Undo publish** (~20s) | Then the band action remains |
-| After Undo toast | **Publish undone. Those changes are waiting to go on the site again.** | Live rows / queue / overrides are **not** rewound |
+| After Undo toast | **Publish undone. Those changes are unpublished again.** | Live rows / queue / overrides are **not** rewound |
 | Finish | **You’ve reviewed everything. Put N changes on the public site.** **Publish now** | Immediate publish |
 | Finish with deferrals | **You’ve decided the ones you can. N need confirmation.** **Publish now** · **Keep reviewing later** | |
 
@@ -229,7 +229,7 @@ Always visible on Directory.
 
 **Sidecar leftover vs design:** `/publish` still 409s on a ≥15% published-count delta unless `confirmLargeDelta: true` (`catalogCountPreflight`). That is a server-side guard against a bad bulk import, not the confirmation step decision #4 removed. Payload does **not** reintroduce a general “are you sure?” dialog and does **not** blanket-set `confirmLargeDelta`. A 409 is an error state on the status band that names the delta and offers **Publish this large change** for that one request.
 
-**One publisher.** `CATALOG_PUBLISHER` is `directus` or `payload` (default `directus`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev stays Directus on `admin-directory-dev.bsky.nz`. Two admin hosts may save; only one host may publish.
+**One publisher.** `CATALOG_PUBLISHER` is `payload` or `directus` (default `payload`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev publishes from Payload on `admin-payload-directory-dev.bsky.nz`. Directus is retired there.
 
 ---
 
@@ -270,8 +270,8 @@ Always visible on Directory.
 | Host | Role (this chain) |
 |------|-------------------|
 | https://directory-dev.bsky.nz | Public site + `/api/catalog` |
-| https://admin-directory-dev.bsky.nz | Directus Directory module — **keep**; live publisher while `CATALOG_PUBLISHER=directus` |
-| **https://admin-payload-directory-dev.bsky.nz** | Payload Directory admin — **dev only**. Do not touch prod manifests or choose a production admin hostname here |
+| https://admin-directory-dev.bsky.nz | Retired Directus hostname — **redirects** to Payload. Do not scale Directus back up |
+| **https://admin-payload-directory-dev.bsky.nz** | Payload Directory admin and publisher — **dev only**. Do not touch prod manifests or choose a production admin hostname here |
 
 Namespace: `dev-porirua-directory`. Manifests: blackbox `clusters/dev/tenants/porirua-directory/`. Image pin style: immutable SHA, never a floating `:dev`.
 
@@ -306,6 +306,6 @@ Fail the jobs if: Save writes a Review row; Save publishes; a removal’s only p
 | Scaffold | Auth gate + reuse limits + host name | Payload 3, roles, Directory home stub, configurable editor-core client base, **authorizing proxy before any NetworkPolicy change** |
 | Listings | Listings table + [010](../decisions/010-archive-create-through-name-check.md) | Call listings routes; name-check; no Review enqueue |
 | Review | Review table + [019](../decisions/019-three-way-lock-sticky-curation.md) / [022](../decisions/022-review-inbox-on-queue-table.md) | Government queue only; equal removal actions; defer / keep-community / review-undo |
-| Publish / undo | Status band + [003](../decisions/003-immutable-snapshots-ttl-pointer.md) / [004](../decisions/004-cloudflare-purge-on-publish.md) / [018](../decisions/018-undo-publish-version-guard.md) | `publishStatus` fields; version guard; `CATALOG_PUBLISHER` kill-switch (directory-dev stays Directus) |
+| Publish / undo | Status band + [003](../decisions/003-immutable-snapshots-ttl-pointer.md) / [004](../decisions/004-cloudflare-purge-on-publish.md) / [018](../decisions/018-undo-publish-version-guard.md) | `publishStatus` fields; version guard; `CATALOG_PUBLISHER` kill-switch (directory-dev is Payload) |
 | Dev deploy | Auth gate + host | `admin-payload-directory-dev.bsky.nz`; widen policy only after the proxy exists |
 | E2E / docs | This file + editor-guide | Editor: login → Directory home → Listings → one Review decision if fixture → status band |

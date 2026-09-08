@@ -95,19 +95,19 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 | Moment | Words |
 |--------|--------|
 | Status band, review | **4 changes to review** |
-| Status band, unpublished | **2 waiting to go on the site** |
-| After Accept | **Accepted {name}. It will go on the public site when you publish.** |
+| Status band, unpublished | **2 unpublished** |
+| After Accept | **Accepted {name}. It stays unpublished until you publish.** |
 | After Keep yours | **Kept your details on {name}. They stay as you set them.** |
 | After Reject (changed) | **Rejected the change to {name}. The listing stays as it is.** |
 | After Reject (new) | **Rejected {name}. It will not go on the public site.** |
 | After Take it off the site | **Took {name} off the site. It will leave the public site when you publish.** |
 | After Keep it as a community listing | **Kept {name} as a community listing. Next week’s government feed will not take it off.** |
 | After Needs confirmation | **Needs confirmation. {name} is waiting on the Needs confirmation tab.** |
-| After Save | **Saved. It will go on the public site when you publish.** |
-| After restore | **Put back on the site. It will go on the public site when you publish.** |
+| After Save | **Saved. It stays unpublished until you publish.** |
+| After restore | **Put back on the site. It stays unpublished until you publish.** |
 | Queue empty after work | **You’ve reviewed everything. Put 4 changes on the public site.** |
 | After Publish | **Published. The public site is up to date.** **Undo publish** |
-| After Undo publish | **Publish undone. Those changes are waiting to go on the site again.** |
+| After Undo publish | **Publish undone. Those changes are unpublished again.** |
 | After any Review decision | Same sentence as above, plus **Undo** on the toast (see 7.4) |
 | Proposal changed under a defer | **This update changed since you set it aside.** (row returns to the active list) |
 | FSD listed a community-kept row again | **The government listed this again** |
@@ -123,13 +123,13 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 Always visible at the top of Directory, both tabs.
 
 ```
-[ 4 changes to review ]   [ 2 waiting to go on the site ]
+[ 4 changes to review ]   [ 2 unpublished ]
 ```
 
 - Both parts are buttons.
 - **4 changes to review** opens Review (and scrolls to the first item that is not deferred).
-- **2 waiting to go on the site** publishes immediately (no confirmation). Disabled while a publish is in flight.
-- If a count is zero, show it subdued, still visible, not clickable: **Nothing to review** · **Nothing waiting to go on the site**.
+- **2 unpublished** publishes immediately (no confirmation). Disabled while a publish is in flight.
+- If a count is zero, show it subdued, still visible, not clickable: **Nothing to review** · **All published**.
 - While Undo publish is available (7.5), the band also shows **Undo last publish**.
 - This answers “what should I be doing?” without a home screen.
 
@@ -422,8 +422,8 @@ flowchart TD
   warn -->|Create anyway| fields[Shared form]
   dup -->|no| fields
   fields --> save[Save]
-  save --> toast[Saved. It will go on the public site when you publish.]
-  toast --> pub[Status band: waiting to go on the site]
+  save --> toast[Saved. It stays unpublished until you publish.]
+  toast --> pub[Status band: unpublished]
   pub --> live[Publish immediately]
   live --> undoPub[Undo publish — 7.5]
 ```
@@ -536,7 +536,7 @@ Every Review decision is one click and applied immediately. Nothing is public un
 
 **Undo** sits on the confirmation toast:
 
-> **Accepted. It will go on the public site when you publish.** [Undo]
+> **Accepted. It stays unpublished until you publish.** [Undo]
 
 - Shown after every Review decision (including defer, decline, keep-as-community, keep yours).  
 - Lasts until she starts another decision or 20 seconds pass — whichever is first. Auto-advance does **not** dismiss it.  
@@ -572,7 +572,7 @@ Calls the existing sidecar rollback onto the snapshot that was current **immedia
 
 Who published and who undid is written to `catalog_publish_events` (actor, timestamp, snapshot version). It is not shown in the module yet.
 
-After undo: the public site is the previous snapshot. The work she just published is still in the database, so the status band shows it waiting again. Toast: **Publish undone. Those changes are waiting to go on the site again.** No undo-the-undo; she can Publish again.
+After undo: the public site is the previous snapshot. The work she just published is still in the database, so the status band shows it unpublished again. Toast: **Publish undone. Those changes are unpublished again.** No undo-the-undo; she can Publish again.
 
 If she edited more **after** publishing, then undoes: those newer edits stay in the database and will go out with the next Publish, together with the undone work. Do not try to split them.
 
@@ -641,7 +641,7 @@ Job: update a community org’s phone and put it on the public site.
 | Check the website | 1 | New tab; she does not lose the listing |
 | **Edit** the line | 1 | Shared form |
 | Change Phone, **Save** | 1 | Toast |
-| Status band **waiting to go on the site** | 1 | Publishes immediately |
+| Status band **unpublished** | 1 | Publishes immediately |
 
 **Clicks: 4–5.**  
 The extra click versus “click the table row and you are already in the form” is **open listing detail**. It buys: the right line, verification, and not editing because she meant to add a line. There is no confirmation click.

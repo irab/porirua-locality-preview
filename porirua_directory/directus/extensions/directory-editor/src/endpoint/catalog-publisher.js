@@ -4,13 +4,13 @@
  */
 export const CATALOG_PUBLISHER_DIRECTUS = "directus";
 export const CATALOG_PUBLISHER_PAYLOAD = "payload";
-export const DEFAULT_CATALOG_PUBLISHER = CATALOG_PUBLISHER_DIRECTUS;
+export const DEFAULT_CATALOG_PUBLISHER = CATALOG_PUBLISHER_PAYLOAD;
 
 export const PUBLISH_MUTATION_PATHS = ["/publish", "/undo-publish"];
 
 export function resolveCatalogPublisher(value) {
   const raw = String(value ?? "").trim().toLowerCase();
-  return raw === CATALOG_PUBLISHER_PAYLOAD ? CATALOG_PUBLISHER_PAYLOAD : CATALOG_PUBLISHER_DIRECTUS;
+  return raw === CATALOG_PUBLISHER_DIRECTUS ? CATALOG_PUBLISHER_DIRECTUS : CATALOG_PUBLISHER_PAYLOAD;
 }
 
 export function catalogPublisherFromEnv(env = {}) {
