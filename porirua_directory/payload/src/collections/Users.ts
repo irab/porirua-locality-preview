@@ -2,8 +2,10 @@ import type { CollectionConfig } from "payload";
 
 const directoryRoles = ["admin", "editor", "reviewer"] as const;
 
-function userRole(user: { role?: string } | null | undefined) {
-  return user?.role;
+function userRole(user: unknown) {
+  if (!user || typeof user !== "object" || !("role" in user)) return undefined;
+  const role = (user as { role?: unknown }).role;
+  return typeof role === "string" ? role : undefined;
 }
 
 export const Users: CollectionConfig = {
