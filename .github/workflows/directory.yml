@@ -19,6 +19,7 @@ env:
   IMAGE_SYNC: ghcr.io/irab/porirua-directory-sync
   IMAGE_OPERATIONS: ghcr.io/irab/porirua-directory-operations
   IMAGE_DIRECTUS: ghcr.io/irab/porirua-directory-directus
+  IMAGE_PAYLOAD: ghcr.io/irab/porirua-directory-payload
 
 defaults:
   run:
@@ -125,3 +126,10 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE_DIRECTUS }}:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./porirua_directory
+          file: ./porirua_directory/Dockerfile.payload
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE_PAYLOAD }}:${{ github.sha }}
