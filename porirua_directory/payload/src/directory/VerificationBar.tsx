@@ -27,9 +27,10 @@ export function VerificationBar({ model }: VerificationBarProps) {
           {model.address}
         </p>
       ) : null}
-      {model.showMap && model.pin ? (
-        <div className="verify-map" data-lat={model.pin.lat} data-lng={model.pin.lng}>
-          Map pin
+      {model.showMap && (model.pin || model.comparePin) ? (
+        <div className="verify-map">
+          {model.pin ? <span>Now</span> : null}
+          {model.comparePin ? <span>Proposed</span> : null}
         </div>
       ) : null}
     </div>

@@ -55,7 +55,7 @@ porirua_directory/
   group-services.mjs      # runtime FSD org clustering (Option B spike)
   directory.css
   editor-core/            # shared editor DTOs, authorize, sidecar proxy (sidecar + Payload + weekly sync)
-  payload/                # Payload 3 Directory admin (auth gate + shared shells; no second listing model)
+  payload/                # Payload 3 Directory admin (auth gate, Listings, Review; no second listing model)
   scripts/                # FSD import + merge + Phase 2 catalog (schema, bootstrap, publish, weekly sync)
   directus/               # snapshot, Flows, operations sidecar (cluster-internal; no Ingress)
   data/services.json      # baked snapshot shipped in the nginx image (offline fallback; not the live catalog)

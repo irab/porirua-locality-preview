@@ -139,7 +139,15 @@ function ArchiveDialog({
   );
 }
 
-export function ListingsPanel({ onCatalogChanged }: { onCatalogChanged?: () => void }) {
+export function ListingsPanel({
+  onCatalogChanged,
+  openOrganizationId,
+  onOpened,
+}: {
+  onCatalogChanged?: () => void;
+  openOrganizationId?: string | null;
+  onOpened?: () => void;
+}) {
   const searchRef = useRef<HTMLInputElement>(null);
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -230,6 +238,12 @@ export function ListingsPanel({ onCatalogChanged }: { onCatalogChanged?: () => v
   useEffect(() => {
     if (!detail && !formOpen) searchRef.current?.focus();
   }, [detail, formOpen]);
+
+  useEffect(() => {
+    if (!openOrganizationId) return;
+    void openDetail(openOrganizationId);
+    onOpened?.();
+  }, [openOrganizationId]);
 
   function startCreate(kind: "organization" | "serviceLine") {
     setFormKind(kind);

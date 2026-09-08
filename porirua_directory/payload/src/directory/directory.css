@@ -234,6 +234,10 @@
 }
 
 .toast {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
   background: #eef1f6;
   padding: 0.65rem 0.85rem;
   border-radius: 8px;
@@ -277,4 +281,112 @@
   height: 3.5rem;
   background: #eef1f6;
   border-radius: 8px;
+}
+
+.toast-undo {
+  font: inherit;
+  font-weight: 700;
+}
+
+.review-title,
+.review-panel .heading {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.review-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.review-card {
+  border: 1px solid #c5c9d4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.review-row {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.75rem 0.85rem;
+  display: grid;
+  gap: 0.2rem;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.review-row .kind,
+.recent .kind,
+.line-name {
+  font-size: 0.95rem;
+}
+
+.review-body {
+  padding: 0 0.85rem 0.85rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.diff {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.badge,
+.banner-note {
+  font-weight: 600;
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.review-actions button,
+.review-actions .decide,
+.review-actions .equal-action {
+  font: inherit;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid #c5c9d4;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.review-actions.equal button {
+  font-weight: 600;
+}
+
+.review-card.is-inert {
+  pointer-events: none;
+}
+
+.other-toggle {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #1d4f91;
+  cursor: pointer;
+  text-align: left;
+}
+
+.recent ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.recent li {
+  display: grid;
+  gap: 0.2rem;
 }

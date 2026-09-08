@@ -50,6 +50,7 @@ test("Payload image copies editor-core so the proxy can stay shared", () => {
   assert.match(dockerfile, /COPY config-directory\.js/);
   assert.ok(existsSync(join(PAYLOAD, "src/directory/SharedListingForm.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/ListingsPanel.tsx")));
+  assert.ok(existsSync(join(PAYLOAD, "src/directory/ReviewPanel.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/StatusBand.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/VerificationBar.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/DirectoryTabs.tsx")));
@@ -70,4 +71,30 @@ test("Listings panel uses the shared form and proxied listings routes, not a sec
   assert.doesNotMatch(panel, /review_queue_items/);
   assert.doesNotMatch(panel, /["']\/publish["']/);
   assert.doesNotMatch(panel, /HELP_TYPES|COMMUNITY_GROUPS/);
+});
+
+test("Review panel uses the shared form and government-queue routes, not the pending_review view", () => {
+  const home = readFileSync(join(PAYLOAD, "src/directory/DirectoryHome.tsx"), "utf8");
+  const panel = readFileSync(join(PAYLOAD, "src/directory/ReviewPanel.tsx"), "utf8");
+  const view = readFileSync(join(ROOT, "editor-core/review-view.mjs"), "utf8");
+  assert.match(home, /ReviewPanel/);
+  assert.match(panel, /SharedListingForm/);
+  assert.match(panel, /VerificationBar/);
+  assert.match(panel, /REVIEW_ROUTES/);
+  assert.match(panel, /reviewActionButtons/);
+  assert.match(panel, /reviewUndo|review-undo/);
+  assert.match(view, /\/approve/);
+  assert.match(view, /\/keep-curation/);
+  assert.match(view, /\/hide/);
+  assert.match(view, /\/reject/);
+  assert.match(view, /\/edit-and-approve/);
+  assert.match(view, /\/defer/);
+  assert.match(view, /\/keep-community/);
+  assert.match(view, /\/review-undo/);
+  assert.match(panel, /role="status"/);
+  assert.doesNotMatch(panel, /pending_review/);
+  assert.doesNotMatch(view, /pending_review/);
+  assert.doesNotMatch(panel, /["']\/publish["']/);
+  assert.doesNotMatch(panel, /HELP_TYPES|COMMUNITY_GROUPS/);
+  assert.match(panel, /helpTypeOptions|communityGroupOptions/);
 });

@@ -1,6 +1,7 @@
 export { DirectoryHome } from "./DirectoryHome";
 export { DirectoryTabs } from "./DirectoryTabs";
 export { ListingsPanel } from "./ListingsPanel";
+export { ReviewPanel } from "./ReviewPanel";
 export { SharedListingForm } from "./SharedListingForm";
 export { StatusBand } from "./StatusBand";
 export { VerificationBar } from "./VerificationBar";
