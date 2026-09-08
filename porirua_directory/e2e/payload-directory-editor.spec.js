@@ -188,7 +188,8 @@ test("status band, tabs, Listings, and Review match the accepted jobs", async ({
     await expect(result).toBeVisible();
     await result.click();
     await expect(page.getByRole("heading", { name: /Porirua Whānau Centre|Whanau/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
+    // The mock organisation has one service; a real one has several, each with its own Edit.
+    await expect(page.getByRole("button", { name: "Edit", exact: true }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Edit organisation" })).toBeVisible();
   });
 
