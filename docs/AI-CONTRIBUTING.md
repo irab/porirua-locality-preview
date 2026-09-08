@@ -21,7 +21,8 @@ Persistent Cursor rules:
 
 | If you changed… | Update |
 |-----------------|--------|
-| Hosting, nginx, Cloudflare, high-level data flow | [`architecture/porirua-directory-architecture.md`](./architecture/porirua-directory-architecture.md) |
+| Hosting, nginx, Cloudflare, high-level data flow | [`architecture/porirua-directory-architecture.md`](./architecture/porirua-directory-architecture.md) (product context); [`architecture/porirua-directory-deployment.md`](./architecture/porirua-directory-deployment.md) (services / pins / failure modes) |
+| Why a Phase 2 constraint exists (cache, sidecar, status writes, …) | [`decisions/README.md`](./decisions/README.md) — do not paraphrase the code |
 | FSD filters, merge logic, JSON schema, overrides | [`porirua-directory-phase1-spec.md`](./porirua-directory-phase1-spec.md) |
 | Rebuild, deploy, editor workflow | [`MVP-RUNBOOK.md`](./MVP-RUNBOOK.md) |
 | Phase scope, budget, stakeholder requirements | [`porirua-services-directory-requirements-v2.md`](./porirua-services-directory-requirements-v2.md) (concise SOW); changelog in [`porirua-services-directory-requirements.md`](./porirua-services-directory-requirements.md) (v1) |

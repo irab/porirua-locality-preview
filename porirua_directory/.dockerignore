@@ -1,4 +1,6 @@
 node_modules
+directus/extensions/directory-editor/node_modules
+directus/extensions/directory-editor/dist
 data/fsd-porirua.raw.json
 tests
 e2e

@@ -1,0 +1,122 @@
+import { test, expect } from "@playwright/test";
+import { pickSupportPath } from "./helpers/browse.js";
+import { attachCatalogCapture, waitForDirectoryData } from "./helpers/catalog.js";
+
+const API_PROBE_NAME = "Catalog API Probe Org";
+const STATIC_KNOWN_NAME = "Little People";
+
+function apiProbeEnvelope() {
+  return {
+    generatedAt: "2026-09-08T00:00:00.000Z",
+    counts: { community: 0, fsd: 1, published: 1 },
+    services: [
+      {
+        id: "fsd-catalog-api-probe",
+        name: API_PROBE_NAME,
+        serviceName: "Catalog probe",
+        description: "Listing that exists only on the live catalog API stub.",
+        source: "fsd",
+        categories: ["support"],
+        communityFilters: [],
+        badges: [],
+      },
+    ],
+  };
+}
+
+test("browse consumes the catalog API and never requests the static file", async ({ page }) => {
+  const seen = attachCatalogCapture(page);
+
+  await page.route("**/api/catalog*", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(apiProbeEnvelope()),
+    });
+  });
+  await page.route("**/data/services.json", async (route) => {
+    await route.abort("failed");
+  });
+
+  await page.goto("/index.html");
+  await waitForDirectoryData(seen);
+  await pickSupportPath(page);
+
+  await expect(page.getByRole("article").filter({ hasText: API_PROBE_NAME })).toBeVisible();
+  await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toHaveCount(0);
+  await seen.settle();
+  expect(seen.apiRequests).toHaveLength(1);
+  expect(seen.staticFile).toHaveLength(0);
+});
+
+test("browse falls back to the baked file when the catalog API is unreachable", async ({
+  page,
+}) => {
+  const seen = attachCatalogCapture(page);
+
+  await page.route("**/api/catalog*", async (route) => {
+    await route.abort("failed");
+  });
+
+  await page.goto("/index.html");
+  await waitForDirectoryData(seen);
+  await pickSupportPath(page);
+
+  await expect(page.getByRole("article").first()).toBeVisible();
+  await page.getByRole("searchbox", { name: "Search organisations" }).fill(STATIC_KNOWN_NAME);
+  await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toBeVisible();
+  await expect(page.getByRole("article").filter({ hasText: API_PROBE_NAME })).toHaveCount(0);
+  await seen.settle();
+  expect(seen.apiRequests.length).toBeGreaterThanOrEqual(1);
+  expect(seen.staticFile).toHaveLength(1);
+});
+
+test("browse falls back when /api/catalog returns 200 HTML", async ({ page }) => {
+  const seen = attachCatalogCapture(page);
+
+  await page.route("**/api/catalog*", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<!DOCTYPE html><html><body><h1>index</h1></body></html>",
+    });
+  });
+
+  await page.goto("/index.html");
+  await waitForDirectoryData(seen);
+  await pickSupportPath(page);
+
+  await expect(page.getByText(/We couldn’t load the listings/i)).toHaveCount(0);
+  await expect(page.getByRole("article").first()).toBeVisible();
+  await page.getByRole("searchbox", { name: "Search organisations" }).fill(STATIC_KNOWN_NAME);
+  await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toBeVisible();
+  await seen.settle();
+  expect(seen.apiRequests.length).toBeGreaterThanOrEqual(1);
+  expect(seen.staticFile).toHaveLength(1);
+});
+
+test("browse falls back to the baked file when the catalog API returns 503", async ({
+  page,
+}) => {
+  const seen = attachCatalogCapture(page);
+
+  await page.route("**/api/catalog*", async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "catalog unavailable", retryAfterSeconds: 30 }),
+    });
+  });
+
+  await page.goto("/index.html");
+  await waitForDirectoryData(seen);
+  await pickSupportPath(page);
+
+  await expect(page.getByRole("article").first()).toBeVisible();
+  await page.getByRole("searchbox", { name: "Search organisations" }).fill(STATIC_KNOWN_NAME);
+  await expect(page.getByRole("article").filter({ hasText: STATIC_KNOWN_NAME })).toBeVisible();
+  await expect(page.getByRole("article").filter({ hasText: API_PROBE_NAME })).toHaveCount(0);
+  await seen.settle();
+  expect(seen.apiRequests.length).toBeGreaterThanOrEqual(1);
+  expect(seen.staticFile).toHaveLength(1);
+});

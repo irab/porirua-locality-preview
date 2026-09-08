@@ -30,10 +30,14 @@ Human-oriented companion: [`docs/AI-CONTRIBUTING.md`](docs/AI-CONTRIBUTING.md)
 | [`docs/porirua-services-directory-requirements.md`](docs/porirua-services-directory-requirements.md) | Longer v1 draft — phases detail, changelog |
 | [`docs/potential-changes-and-insights.md`](docs/potential-changes-and-insights.md) | MVP gaps, org/subservices deficit, roadmap options |
 | [`docs/issues/README.md`](docs/issues/README.md) | Fixed and recurring bugs (issues directory) |
-| [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | System context, hosting |
+| [`docs/architecture/porirua-directory-architecture.md`](docs/architecture/porirua-directory-architecture.md) | Product system context (Phase 1 prod / Phase 2 dev) |
+| [`docs/architecture/porirua-directory-deployment.md`](docs/architecture/porirua-directory-deployment.md) | Services, cache path, images, secrets, failure modes |
+| [`docs/decisions/README.md`](docs/decisions/README.md) | Phase 2 decisions (why, what was rejected) |
 | [`docs/porirua-directory-phase1-spec.md`](docs/porirua-directory-phase1-spec.md) | Data model, FSD rules, merge, overrides |
 | [`docs/fsd-porirua-filter-rationale.md`](docs/fsd-porirua-filter-rationale.md) | FSD geo filter rationale, exclusion audit |
 | [`docs/MVP-RUNBOOK.md`](docs/MVP-RUNBOOK.md) | Rebuild data, deploy, test |
+| [`docs/design/admin-testing-personas.md`](docs/design/admin-testing-personas.md) | Admin / editor personas and JTBD for design + Directory module review |
+| [`docs/design/editor-guide.md`](docs/design/editor-guide.md) | Short editor one-pager |
 | [`porirua_directory/README.md`](porirua_directory/README.md) | Directory app layout & npm scripts |
 | [`porirua_connections_map/README.md`](porirua_connections_map/README.md) | Map embed & sheet |
 
@@ -46,7 +50,8 @@ cd porirua_directory
 npm install
 npm run build:data    # import FSD + merge → data/services.json
 npm run serve         # http://localhost:5173/index.html
-npm test              # unit tests (import/merge)
+npm test              # unit tests in parallel, then Directus-dependent files sequentially
+npm run sync:fsd      # weekly FSD review queue (DATABASE_URL; never publishes)
 npm run test:e2e      # Playwright
 ```
 
@@ -76,3 +81,4 @@ python3 -m http.server 8080
 - Data/script changes → `cd porirua_directory && npm test`
 - Merge/import/rule changes → also `npm run build:data` and update phase1 spec if needed
 - UI flow changes → consider `npm run test:e2e`; map app → manual smoke test
+- After any directory-dev pin: sign in as Editor on https://admin-directory-dev.bsky.nz (fresh session) and confirm the Directory module — not Directus “Page Not Found”. Do not move the pin without that click.

@@ -38,7 +38,7 @@ Do not leave docs stale after code or pipeline changes.
 
 ## Verification before “done”
 
-- **Directory data/scripts:** `cd porirua_directory && npm test` (and `npm run build:data` when touching merge/import).
+- **Directory data/scripts:** `cd porirua_directory && npm test` (unit files in parallel, then Directus-dependent files sequentially; also `npm run build:data` when touching merge/import).
 - **Directory E2E:** `npm run test:e2e` when UI or critical flows change.
 - **Static UI:** no automated suite in map app — state what was checked manually (local serve, key filters/search).
 
