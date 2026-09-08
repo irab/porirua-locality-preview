@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { PinMap } from "./PinMap";
 import type { SharedListingFormProps } from "./types";
 
 function emptyHighlight() {
@@ -27,8 +28,10 @@ export function SharedListingForm({
   onOpenExisting,
   onCreateAnyway,
   onArchive,
+  onPinMove,
 }: SharedListingFormProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const [tilesFailed, setTilesFailed] = useState(false);
   const marks = highlight || emptyHighlight();
 
   useEffect(() => {
@@ -146,13 +149,16 @@ export function SharedListingForm({
           ))}
         </ul>
       ) : null}
-      {value.lat != null && value.lng != null ? (
-        <div className="form-map" aria-label="Map pin is set">
-          Pin is set. Search an address to move it.
-        </div>
-      ) : null}
+      {tilesFailed ? null : (
+        <PinMap
+          pin={value.lat != null && value.lng != null ? { lat: value.lat, lng: value.lng } : null}
+          draggable
+          onMove={onPinMove}
+          onTilesFailed={() => setTilesFailed(true)}
+        />
+      )}
       <p className="directory-hint">
-        Search an address to set the pin, or type one and save without a pin. There is no map to drag.
+        Search an address, then drag the pin if the place is wrong. You can save an address with no pin.
       </p>
       <label className={fieldMark("phone") || youSet("phone") ? "marked" : undefined} data-field="phone">
         Phone

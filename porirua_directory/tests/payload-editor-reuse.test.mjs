@@ -114,9 +114,30 @@ test("Review follows design §14: heading focus, Needs confirmation first, equal
   assert.doesNotMatch(panel, /leaflet|Leaflet|L\.map/);
   assert.match(home, /landingTab/);
   assert.match(tabs, /role="tablist"/);
-  assert.match(form, /Pin is set/);
-  assert.match(form, /There is no map to drag/);
-  assert.doesNotMatch(form, /drag the pin if the place is wrong/);
-  assert.match(verify, /verify-map/);
-  assert.doesNotMatch(verify, /leaflet|Leaflet|L\.map/);
+  assert.match(form, /drag the pin if the place is wrong/);
+  assert.doesNotMatch(form, /There is no map to drag/);
+  assert.match(form, /<PinMap/);
+  assert.match(verify, /<PinMap/);
+});
+
+test("the pin map draws OpenStreetMap tiles and credits them", () => {
+  const map = readFileSync(join(PAYLOAD, "src/directory/PinMap.tsx"), "utf8");
+  assert.match(map, /tile\.openstreetmap\.org/);
+  assert.match(map, /OpenStreetMap/);
+  assert.match(map, /"use client"/);
+  // Leaflet reads window on import, so it must stay out of the server bundle.
+  assert.match(map, /import\("leaflet"\)/);
+  assert.doesNotMatch(map, /^import L from "leaflet"/m);
+  // A pane that is sized after mount stays grey without this.
+  assert.match(map, /invalidateSize/);
+});
+
+test("the verification bar does not reuse Payload's own .verify class", () => {
+  const css = readFileSync(join(PAYLOAD, "src/directory/directory.css"), "utf8");
+  const bar = readFileSync(join(PAYLOAD, "src/directory/VerificationBar.tsx"), "utf8");
+  // Payload's verify-email view styles a bare .verify with min-height: 100vh
+  // and text-align: center, which stretched this bar into a screen-high gap.
+  assert.doesNotMatch(css, /(^|[\s,])\.verify\s*[,{]/m);
+  assert.doesNotMatch(bar, /className="verify"/);
+  assert.match(bar, /className="directory-verify"/);
 });

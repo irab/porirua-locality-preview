@@ -72,7 +72,9 @@
   color: #2a2f3d;
 }
 
-.verify {
+/* Namespaced: a bare .verify collides with Payload's verify-email view, which
+   sets min-height: 100vh and centres its text. */
+.directory-verify {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
@@ -80,26 +82,83 @@
   margin: 0.75rem 0 0.25rem;
 }
 
-.verify-link {
+.directory-verify-link {
   color: #1d4f91;
 }
 
-.verify-address {
+.directory-verify-address {
   margin: 0;
   width: 100%;
 }
 
-.verify-note {
+.directory-verify-note {
   display: block;
   font-weight: 600;
 }
 
-.verify-map {
+.pin-map {
+  flex: 1 1 100%;
   width: 100%;
-  min-height: 8rem;
-  background: #eef1f6;
-  display: grid;
-  place-items: center;
+  min-width: 100%;
+}
+
+.pin-map-canvas {
+  width: 100%;
+  height: 160px;
+  min-height: 160px;
+  border-radius: 8px;
+  z-index: 1;
+  background: #ddd;
+}
+
+.pin-map.compare .pin-map-canvas {
+  height: 200px;
+  min-height: 200px;
+}
+
+/* The admin caps image widths, which would shrink tiles into grey gaps. */
+.pin-map-canvas.leaflet-container img.leaflet-tile {
+  max-width: none;
+  max-height: none;
+}
+
+.pin-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #2a2f3d;
+}
+
+.directory-pin {
+  background: transparent;
+  border: 0;
+  text-align: center;
+}
+
+.directory-pin-caption {
+  display: block;
+  font: 600 11px/1.2 system-ui, sans-serif;
+  color: #172940;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff;
+}
+
+.directory-pin-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 2px auto 0;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #6644ff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.directory-pin-now .directory-pin-dot {
+  background: #fff;
+  border: 3px solid #172940;
+  box-sizing: border-box;
 }
 
 .listing-form {
@@ -161,14 +220,6 @@
 .listing-form .matches .not-on-site {
   border-left: 4px dashed #8b909c;
   padding-left: 0.65rem;
-}
-
-.listing-form .form-map {
-  min-height: 3rem;
-  background: #eef1f6;
-  display: grid;
-  place-items: center;
-  padding: 0.5rem;
 }
 
 .search {

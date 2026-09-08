@@ -34,9 +34,11 @@ The status band at the top says how many government updates need a decision, and
 
 ## Address and pin
 
-The address field is a complete path. Search an address to set the pin (the form then says **Pin is set**), or type an address and save with no pin. There is no Leaflet map and nothing to drag. If the pin is wrong, search a different address or type the right one.
+The address field is a complete path. Search an address to set the pin, then drag the pin on the map if the place is wrong. You can also click the map to put the pin there, or type an address and save with no pin.
 
-On Review, **I'll move the pin** opens that same form on the card — it does not open a map.
+The map draws OpenStreetMap tiles. If those tiles cannot load, the map hides itself and the rest of the form keeps working — you can still save an address without a pin.
+
+On Review, a card shows the pin whenever the update moves it: **Now** is what is on the site and **Proposed** is the update. **I'll move the pin** opens the same form, where the pin is draggable.
 
 ## Review — government updates only
 
