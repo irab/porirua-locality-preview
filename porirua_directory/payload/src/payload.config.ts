@@ -6,6 +6,7 @@ import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { buildConfig } from "payload";
 import { Users } from "./collections/Users";
 import { directoryEditorEndpoints } from "./directory/endpoints";
+import { migrations } from "./migrations";
 import { seedDirectoryUsers } from "./seed";
 
 const filename = fileURLToPath(import.meta.url);
@@ -34,9 +35,12 @@ export default buildConfig({
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },
   db: postgresAdapter({
-    // Local compose uses a tmpfs Postgres. Production images do not push
-    // schema unless PAYLOAD_PUSH_SCHEMA=1 — otherwise onInit seeds a missing users table.
-    push: process.env.PAYLOAD_PUSH_SCHEMA === "1" || process.env.NODE_ENV !== "production",
+    // The adapter never pushDevSchema when NODE_ENV is production. Built images
+    // apply src/migrations via `payload migrate` (start:migrate) and again from
+    // this list when Next connects. Keep push for `next dev` only.
+    push: process.env.NODE_ENV !== "production",
+    prodMigrations: migrations,
+    migrationDir: path.resolve(dirname, "migrations"),
     pool: {
       connectionString: process.env.DATABASE_URL || "",
     },

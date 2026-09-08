@@ -23,4 +23,4 @@ COPY --from=build /app/config-directory.js ./config-directory.js
 COPY --from=build /app/payload ./payload
 WORKDIR /app/payload
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start:migrate"]
