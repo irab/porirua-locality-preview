@@ -12,11 +12,11 @@ Checked on 8 Sep 2026. Do not treat a later pin as implied.
 
 | What | Value that day |
 |------|----------------|
-| App tree this document was written against | `8951881` (`feature/payload-directory-ed-oi4` — Payload `image-dev` pin) |
+| App tree this document was written against | `224c0cf` (`feature/payload-directory-ed-oi4` — Payload `image-dev` pin) |
 | `origin/main` of this repo | `db282d3` — Phase 1 only |
 | blackbox `origin/main` (before this Payload pin) | `bf0dae2` |
 | directory-dev catalog / Directus / sidecar pin | `b65e5d723e344f6ea36b29d23219cde27c022a93` — unchanged; Directus stays the publisher (`CATALOG_PUBLISHER=directus`) |
-| directory-dev Payload pin | `8951881f581aec7215453cf977acea3a922c575c` — `ghcr.io/irab/porirua-directory-payload` only |
+| directory-dev Payload pin | `224c0cfc5cbb9ac57c524681ddb86c67e51b6506` — `ghcr.io/irab/porirua-directory-payload` only |
 | Prod image pin | `ghcr.io/irab/porirua-directory:ec5c102a9fcbcfa5af356508ac4b8dea5cda6262` (nginx only) |
 | Live `GET https://directory-dev.bsky.nz/api/catalog` | `200` `application/json`, `Cache-Control: public, max-age=60, s-maxage=86400`, `ETag: "13"`, `generatedAt` `2026-09-08T10:06:15.248Z`, 145 services |
 | Live `GET https://directory-dev.bsky.nz/api/health` | `{"ok":true,"database":"reachable"}` |
@@ -165,7 +165,7 @@ gh workflow run directory.yml --ref <branch>
 
 A push to `main` still builds nginx only (`4927491`). That is why a merge-to-main cannot produce the pins a Phase 2 prod tenant would need (blackbox PR #79).
 
-**Running version** = the SHA in the blackbox pin, not “whatever is on `main`”, and not necessarily this repo’s HEAD. On 8 Sep 2026 directory-dev catalog/Directus/sidecar ran `b65e5d7` while Payload was pinned separately at `8951881`.
+**Running version** = the SHA in the blackbox pin, not “whatever is on `main`”, and not necessarily this repo’s HEAD. On 8 Sep 2026 directory-dev catalog/Directus/sidecar ran `b65e5d7` while Payload was pinned separately at `224c0cf`.
 
 Never pin `:dev` or a floating `:latest` on the tenant. A pin is not done until an Editor session after the roll shows Review / Listings (`e76d04c`).
 
