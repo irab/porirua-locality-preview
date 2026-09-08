@@ -297,6 +297,13 @@ export function reviewDeferredFinishLabel(count) {
     : `You've decided the ones you can. ${n} need confirmation.`;
 }
 
+export function foldSearch(text) {
+  return String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export function waitingCountLabel(count) {
   const n = Number(count) || 0;
   if (n === 0) return "Nothing waiting to go on the site";

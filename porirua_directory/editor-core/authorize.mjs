@@ -1,7 +1,7 @@
 export function isEditorOrAdmin({ admin, roleName } = {}) {
   if (admin === true) return true;
   const name = String(roleName ?? "").trim().toLowerCase();
-  return name === "editor" || name === "administrator";
+  return name === "editor" || name === "administrator" || name === "reviewer";
 }
 
 export function unauthorizedError() {

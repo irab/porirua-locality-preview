@@ -1,7 +1,17 @@
 import { fieldLabel } from "./fields.mjs";
 import { listIdDelta } from "./queue-dto.mjs";
 
-const FORM_FIELDS = ["name", "description", "address", "phone", "url", "categories", "communityFilters"];
+export const SHARED_FORM_FIELDS = [
+  "name",
+  "description",
+  "address",
+  "phone",
+  "url",
+  "categories",
+  "communityFilters",
+];
+
+const FORM_FIELDS = SHARED_FORM_FIELDS;
 
 function asText(field, value) {
   if (field === "categories" || field === "communityFilters") {
