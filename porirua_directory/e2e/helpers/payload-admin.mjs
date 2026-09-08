@@ -138,11 +138,22 @@ export async function probeUrl(url, { timeoutMs = 4000 } = {}) {
   }
 }
 
+// directory-dev is a real editor host, so it is opt-in: reach for it only when
+// the run was pointed at it or carries its credentials. Without this a CI run
+// with no local stack silently drives the live admin with the local passwords.
+export function remotePayloadAllowed() {
+  return Boolean(
+    process.env.PAYLOAD_ORIGIN ||
+      process.env.DIRECTORY_DEV_SECRETS ||
+      process.env.PAYLOAD_EDITOR_PASSWORD
+  );
+}
+
 export async function probePayloadOrigin() {
   const candidates = [
     process.env.PAYLOAD_ORIGIN,
     LOCAL_PAYLOAD_ORIGIN,
-    DEV_PAYLOAD_ORIGIN,
+    ...(remotePayloadAllowed() ? [DEV_PAYLOAD_ORIGIN] : []),
   ].filter(Boolean);
   const seen = new Set();
   for (const origin of candidates) {
