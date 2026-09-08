@@ -5,10 +5,9 @@ import { directoryEditorFetch } from "../../../editor-core/client.mjs";
 import { directoryTabsModel, DIRECTORY_TAB_ORDER } from "../../../editor-core/directory-tabs.mjs";
 import { landingTab } from "../../../editor-core/queue-dto.mjs";
 import { statusBandFromPublishStatus } from "../../../editor-core/status-band.mjs";
-import { verificationBarModel } from "../../../editor-core/verification-bar.mjs";
 import { DirectoryTabs } from "./DirectoryTabs";
+import { ListingsPanel } from "./ListingsPanel";
 import { StatusBand } from "./StatusBand";
-import { VerificationBar } from "./VerificationBar";
 import "./directory.css";
 import type { DirectoryTabId } from "./types";
 
@@ -20,6 +19,15 @@ export function DirectoryHome() {
   const [deferredCount, setDeferredCount] = useState(0);
   const [publishStatus, setPublishStatus] = useState<Record<string, unknown>>({});
   const [loadError, setLoadError] = useState("");
+
+  async function refreshPublish() {
+    try {
+      const status = await directoryEditorFetch("/publish-status", { base: CLIENT_BASE });
+      setPublishStatus(status && typeof status === "object" ? status : {});
+    } catch {
+      setPublishStatus({});
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -57,8 +65,6 @@ export function DirectoryHome() {
     () => statusBandFromPublishStatus(publishStatus, { reviewCount }),
     [publishStatus, reviewCount]
   );
-  const sampleVerify = useMemo(() => verificationBarModel({}), []);
-
   return (
     <div className="directory-home">
       <h1>Directory</h1>
@@ -81,14 +87,7 @@ export function DirectoryHome() {
               Review is government-queue only. The Review sibling wires Accept, Keep yours, and the rest.
             </p>
           ) : null}
-          {tab === "listings" ? (
-            <div>
-              <p className="directory-hint">
-                Find an organisation. The Listings sibling wires search, detail, and save.
-              </p>
-              <VerificationBar model={sampleVerify} />
-            </div>
-          ) : null}
+          {tab === "listings" ? <ListingsPanel onCatalogChanged={refreshPublish} /> : null}
         </section>
       </DirectoryTabs>
       <p className="directory-hint">

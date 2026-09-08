@@ -49,8 +49,25 @@ test("Payload image copies editor-core so the proxy can stay shared", () => {
   assert.match(dockerfile, /COPY editor-core/);
   assert.match(dockerfile, /COPY config-directory\.js/);
   assert.ok(existsSync(join(PAYLOAD, "src/directory/SharedListingForm.tsx")));
+  assert.ok(existsSync(join(PAYLOAD, "src/directory/ListingsPanel.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/StatusBand.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/VerificationBar.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/DirectoryTabs.tsx")));
   assert.equal(existsSync(join(PAYLOAD, "src/directory/copy.js")), false);
+});
+
+test("Listings panel uses the shared form and proxied listings routes, not a second catalog", () => {
+  const home = readFileSync(join(PAYLOAD, "src/directory/DirectoryHome.tsx"), "utf8");
+  const panel = readFileSync(join(PAYLOAD, "src/directory/ListingsPanel.tsx"), "utf8");
+  assert.match(home, /ListingsPanel/);
+  assert.match(panel, /SharedListingForm/);
+  assert.match(panel, /\/listings\/name-matches|nameMatchesPath/);
+  assert.match(panel, /\/listings\/update/);
+  assert.match(panel, /\/listings\/archive/);
+  assert.match(panel, /\/listings\/restore/);
+  assert.match(panel, /confirmCreateAnyway/);
+  assert.match(panel, /helpTypeOptions|communityGroupOptions/);
+  assert.doesNotMatch(panel, /review_queue_items/);
+  assert.doesNotMatch(panel, /["']\/publish["']/);
+  assert.doesNotMatch(panel, /HELP_TYPES|COMMUNITY_GROUPS/);
 });

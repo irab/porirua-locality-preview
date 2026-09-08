@@ -21,6 +21,7 @@ export type NameMatch = {
   phone?: string;
   status?: string;
   statusLabel?: string;
+  organizationId?: string;
 };
 
 export type GeoResult = {

@@ -146,6 +146,11 @@ export function SharedListingForm({
           ))}
         </ul>
       ) : null}
+      {value.lat != null && value.lng != null ? (
+        <div className="form-map" aria-label="Map pin is set">
+          Pin is set. Search an address to move it.
+        </div>
+      ) : null}
       <p className="directory-hint">
         Search an address, then drag the pin if the place is wrong. You can save an address with no pin.
       </p>
