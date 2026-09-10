@@ -1,0 +1,47 @@
+{
+  "name": "Approve",
+  "icon": "check",
+  "color": "#0B6E4F",
+  "description": "Apply proposed.after, refresh raw_import, and accept each selected queue item. List-view multi-select is real: each row is processed independently.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "manual",
+  "options": {
+    "collections": ["review_queue_items"],
+    "requireSelection": true,
+    "location": "both"
+  },
+  "operation": "request_approve",
+  "operations": [
+    {
+      "identifier": "request_approve",
+      "name": "Approve item",
+      "key": "request_approve",
+      "type": "request",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "method": "POST",
+        "url": "http://operations:8790/approve",
+        "body": "{{$trigger}}"
+      },
+      "resolve": null,
+      "reject": "notify_failure"
+    },
+    {
+      "identifier": "notify_failure",
+      "name": "Notify failure",
+      "key": "notify_failure",
+      "type": "trigger",
+      "position_x": 37,
+      "position_y": 17,
+      "options": {
+        "flow": "failure-notification",
+        "payload": {
+          "flow": "Approve",
+          "error": "{{$last}}"
+        }
+      }
+    }
+  ]
+}

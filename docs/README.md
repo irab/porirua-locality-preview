@@ -22,12 +22,20 @@ Product code lives in the two app folders; **planning and stakeholder material s
 | [porirua-services-directory-requirements.md](./porirua-services-directory-requirements.md) | Team, implementers | Longer v1 working draft (UX detail, tech notes, changelog) |
 | [potential-changes-and-insights.md](./potential-changes-and-insights.md) | Team, stakeholders | MVP gaps, [click-minimisation UX](./potential-changes-and-insights.md#ux-inspiration-from-directory-examples-click-minimisation), [landing map-first](./potential-changes-and-insights.md#landing-map-first-design-options), Phase 1.5/2 |
 | [porirua-services-directory-requirements.pdf](./porirua-services-directory-requirements.pdf) | Same (print/PDF) | Export of requirements v1 (regenerate after md changes) |
-| [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | System context, data flow, hosting at directory.bsky.nz |
+| [architecture/porirua-directory-architecture.md](./architecture/porirua-directory-architecture.md) | Developers, ops | Product system context (Phase 1 prod / Phase 2 dev) |
+| [architecture/porirua-directory-deployment.md](./architecture/porirua-directory-deployment.md) | Developers, ops | **Verified** services, request path, images, secrets, failure modes — as of 8 Sep 2026 |
+| [decisions/README.md](./decisions/README.md) | Developers | Phase 2 decision records (why, rejected alternatives, revisit) |
 | [porirua-directory-phase1-spec.md](./porirua-directory-phase1-spec.md) | Developers | Phase 1 data model, FSD rules, merge, overrides |
 | [fsd-porirua-filter-rationale.md](./fsd-porirua-filter-rationale.md) | Developers, data editors | FSD geo filter rationale, reason codes, import audit |
 | [issues/README.md](./issues/README.md) | Developers | **Issues directory** (fixed & recurring bugs) |
 | [plans/fsd-org-subservices-and-geo-filter.md](./plans/fsd-org-subservices-and-geo-filter.md) | Developers | FSD Salvation Army duplicates, org→service roadmap |
 | [MVP-RUNBOOK.md](./MVP-RUNBOOK.md) | Editors, developers | Rebuild data, deploy, test |
+| [design/admin-testing-personas.md](./design/admin-testing-personas.md) | Locality testers, Coshop | Admin / editor personas and jobs to be done — Directory module + public design |
+| [design/editor-interface-design.md](./design/editor-interface-design.md) | Moana, Kahu, Aroha | Directory editor interface design (accepted 8 Sep 2026) |
+| [design/payload-editor-parity.md](./design/payload-editor-parity.md) | Payload children | Directus Directory contracts for the Payload replacement (routes, auth gate, reuse) |
+| [design/editor-guide.md](./design/editor-guide.md) | Moana, Kahu | Short editor one-pager |
+| [design/README.md](./design/README.md) | Team | Design folder index |
+| [issues/open-duplicate-org-cards.md](./issues/open-duplicate-org-cards.md) | Developers | Four live duplicate org cards; merge-tool seed backlog |
 | [human-services-directory-examples-overview.md](./human-services-directory-examples-overview.md) | Team, stakeholders | Comparable directories (Ask Izzy, 211, FSD, etc.) |
 | [human-services-directory-examples-overview.pdf](./human-services-directory-examples-overview.pdf) | Same (print/PDF) | Export of examples overview |
 | [slides/directory-mvp-walkthrough.html](./slides/directory-mvp-walkthrough.html) | Stakeholders | Reveal.js MVP walkthrough (live directory embeds) |

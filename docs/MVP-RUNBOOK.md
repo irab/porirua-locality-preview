@@ -24,7 +24,7 @@ This runs:
 
 **Hide FSD rows:** add ids to `porirua_directory/data/overrides.json` → re-run `npm run merge:services`.
 
-Commit `data/services.json` when ready to deploy.
+The public UI reads **`GET /api/catalog`** first (live snapshot; the API re-checks which snapshot is current on a 30-second TTL, so a publish reaches the site within about a minute with no restart). **`data/services.json`** is a **point-in-time copy** still shipped in the nginx image so the site stays up when Postgres is down. It is **not** the live catalog: it only changes when the image is rebuilt (nightly). Commit it when you intend to refresh that baked fallback, not as a substitute for publishing through the catalog API.
 
 ---
 
@@ -104,19 +104,232 @@ npm test
 npm run test:e2e
 ```
 
-CI (`.github/workflows/directory.yml`) runs unit + e2e on PRs; builds and pushes `ghcr.io/irab/porirua-directory:latest` on push to `main`.
+`npm test` runs pure unit files in parallel, then the Directus-dependent files one at a time (`--test-concurrency=1`). Those files share one Directus and one Postgres and call `bootstrapDirectus()`, so a single parallel glob races them. Database-backed catalog tests (`tests/db-*.test.mjs`) **skip** when Postgres is not reachable, so CI and laptops without Docker stay green. Local Directus is compose project `porirua-directus`; `npm run directus:down` includes `-v`.
+
+### Playwright against directory-dev
+
+Local `npm run test:e2e` cannot prove Cloudflare → Traefik → catalog-api → Postgres, or that an Editor can see Flows in Data Studio. It stays on a local static server. The live suite refuses `directory.bsky.nz`.
+
+```bash
+cd porirua_directory
+npm run test:e2e:dev
+# equivalent: BASE_URL=https://directory-dev.bsky.nz npm run test:e2e
+```
+
+That runs `directory.spec.js`, `catalog-fetch.spec.js`, and `e2e/dev-deployment.spec.js` against the live host (no local `webServer`). It does not need Directus credentials.
+
+For structured admin / editor testing (personas + jobs), use [design/admin-testing-personas.md](./design/admin-testing-personas.md). Editors use the [Directory one-pager](./design/editor-guide.md). Public journeys remain [Ana](./design/persona-journey-ana-support.html) and [Sam](./design/persona-journey-sam-community.html).
+
+A Data Studio approve + publish + rollback cycle is **opt-in** (mutates the shared review queue and snapshots, then cleans up):
+
+```bash
+cd porirua_directory
+export DIRECTORY_DEV_SECRETS=/path/to/secrets/dev/porirua-directory-admin.txt
+# or EDITOR_EMAIL / EDITOR_PASSWORD / ADMIN_EMAIL / ADMIN_PASSWORD
+npm run test:e2e:dev:publish
+```
+
+`e2e/dev-deployment.spec.js` drives the **public** site and asserts the page consumed `GET /api/catalog` JSON (including bootstrap ids `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`), falls back to `data/services.json` when the browser intercepts `/api/catalog`, and that ETag / `?version=N` / My list / search behave on the live envelope.
+
+`e2e/dev-studio.spec.js` drives **Data Studio as the Editor** (login form → sidebar → real buttons). It seeds throwaway `e2e-*` organisations and services only — never existing FSD rows — then asserts multi-select Approve against those ids in Postgres, and that Publish / Roll back move the public ETag relative to the snapshot that was current when the test started.
+
+Leave the weekly FSD CronJob suspended. Do not run this suite against [https://directory.bsky.nz](https://directory.bsky.nz).
+
+### Phase 2 catalog database (local)
+
+Disposable Postgres for the integration suite and for trying bootstrap/publish:
+
+```bash
+cd porirua_directory
+npm run db:test:up          # docker compose -f docker-compose.test.yml up -d --wait
+export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54329/porirua_test
+npm run test:db             # schema, bootstrap, publish, rollback
+npm run db:import           # load data/services.json + data/overrides.json
+npm run catalog:publish     # insert catalog_snapshots and flip is_current
+npm run catalog:publish -- --rollback 1
+npm run db:test:down
+```
+
+The import CLI applies `scripts/db-schema.sql` when the tables are missing. A second `db:import` is idempotent (same ids and row counts). `raw_import` is written for every FSD line.
+
+Publish never includes `draft`, `hidden`, `pending_review`, or merged-away organizations. Exactly one snapshot has `is_current`. Rollback points that flag at an earlier `version`.
+
+The public site still reads `data/services.json` until the UI task wires `/api/catalog`. These commands do not deploy anything.
+
+Publish and rollback also purge the public catalog URL (`https://directory.bsky.nz/api/catalog` by default). Locally, set `CATALOG_SKIP_PURGE=1` or pass a stub `purge` function. In an environment that should actually drop the Cloudflare shared cache, set `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`. A failed purge is a failed publish — the previous `is_current` snapshot is restored. Never set `CATALOG_SKIP_PURGE` on a tenant.
+
+### Weekly FSD sync (Phase 2 runner)
+
+`npm run sync:fsd` fetches the national CSV, applies the same Porirua filter and geocode QA as `import:fsd` (`buildFsdImportReport`), attaches `SERVICE_ID` / `FSD_ID` from the CSV, collapses duplicate SERVICE_ID groups, and diffs against `services.raw_import`. It writes **one** `import_runs` row and `review_queue_items` for new, changed, removed, and geocode-flag rows. It **never** creates a `catalog_snapshots` row or changes the live catalog. A `changed` item leaves `services.status` as the editor left it; only a genuinely new FSD insert is written `pending_review`. A later run refreshes an existing **pending** item for the same entity and kind instead of stacking another row. A `geocode_flag` that an editor already accepted or rejected (same flag code) is not raised again.
+
+```bash
+cd porirua_directory
+export DATABASE_URL=postgres://…   # catalog Postgres
+npm run sync:fsd                   # node scripts/fsd-sync-run.mjs
+```
+
+Worker image: `Dockerfile.sync` (Node; installs `csv-parse` even though it is a devDependency). The CronJob manifest lives in the blackbox tenant.
+
+**Sanity abort:** if this week's `includedCount` is strictly below 75% of the last successful FSD run, the job finishes `import_runs.status='failed'`, writes **zero** removal queue rows, and raises an alert (`stats.alert`, `error_message`). A missing or zero baseline does not trip the guard.
+
+**Locks:** `status=hidden` and open `overrides` rows (`action=hide|patch`, locked fields = keys on `patch`) stay on the published columns. The curated Ngāti Toa Street patch on `fsd-2964` must not be proposed for reversion.
+
+**Approval:** `scripts/approve-review.mjs` exporting **`approveReviewItem`** is the single implementation (Directus imports the same module; `npm run review:approve -- --approve <queueItemId>` calls it). It applies `proposed.after`, publishes a row that is not already `hidden` (a deliberate hide stays off the site), promotes a draft organisation, and **refreshes `raw_import`**: overlay keys present in the payload onto the previous baseline, then fill missing fingerprint keys (`serviceName`, `url`, `address`, `description`, `phone`, `name`, `lat`, `lng`, `categories`, `fsd_service_id`, `fsd_legacy_id`). An absent key never overwrites a known url or category list. Both `service_name` / `serviceName` and `title` spellings write the live columns. Reject of a new FSD row hides it (same hide override as a removal) so it stays off the site and the next sync cannot raise it as new. Reject of any other kind restores modified columns from `raw_import` and does not write `status`; it never promotes a `hidden` row to `published`. Approve does **not** record who approved — `review_queue_items` has no actor column yet (handover gap). Then `npm run catalog:publish` materialises a new snapshot. Draft organisations created for unmatched SERVICE_IDs stay out of snapshots until that approval. New SERVICE_IDs seed `raw_import` on insert so the following week is `unchanged`, not `missing_raw_import`.
+
+**Expected first run** (bootstrapped catalog vs current feed): 162 collapsed SERVICE_IDs; most lines unchanged; about 17 category enrichments (collapse unions categories the Phase 1 pipeline drops); `fsd-2964` locked; plus standalone geocode-flag items. If every line is `changed`, SERVICE_ID matching is broken.
+
+Isolated runner tests use a **separate** compose project so they do not share port 54329 with other worktrees:
+
+```bash
+npm run db:sync-test:up    # host port 54339, project weekly-fsd-sync-l2yyxlzr
+npm run test:sync
+npm run db:sync-test:down
+```
+
+---
+
+## Phase 2 — catalog API (local)
+
+Same-origin public read service. It returns the current `catalog_snapshots` envelope unchanged (shape-identical to `data/services.json`, except bootstrap may disambiguate `org-te-waka-whaiora-trust` and `community-te-wahi-tiaki-tatou`).
+
+```bash
+cd porirua_directory
+npm run db:test:up
+export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54329/porirua_test
+npm run db:import
+npm run catalog:publish
+npm run start:api
+# GET http://127.0.0.1:3000/api/catalog
+# GET http://127.0.0.1:3000/api/catalog?version=1
+# GET http://127.0.0.1:3000/api/health
+```
+
+`ETag` is the snapshot version. Send `If-None-Match` for a 304. Envelope bodies are cached in process by version and are never re-fetched (snapshots are immutable). The API re-checks only `SELECT version FROM catalog_snapshots WHERE is_current` on a short TTL (default 30 seconds, override with `CATALOG_CURRENT_TTL_MS` in `config.mjs` / the environment — use a small value in dev). After that TTL a new publish is served without restarting the process. If Postgres is briefly unreachable, the last known pointer and envelope stay in service. With an empty cache and no database it returns `503` `{ "error": "catalog unavailable" }` — never a stack trace.
+
+`Dockerfile` stays nginx-only. `Dockerfile.api` is the Node image (`ghcr.io/irab/porirua-directory-api`). Do not add Node to the static image.
+
+---
+
+## Phase 2 — Directus editor workspace (local)
+
+Do **not** start `docker-compose.test.yml` (host port 54329) from this worktree if another Phase 2 task is also running — that compose file is shared and will collide or truncate tables. Use the Directus compose project and port **54341**:
+
+```bash
+cd porirua_directory
+npm run directus:up
+export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54341/porirua_directus
+npm run db:import            # optional: load committed services.json
+npm run directus:bootstrap   # collections, Editor role, presets, Flows, snapshot
+```
+
+Open **http://127.0.0.1:18055**
+
+| Account | Email | Password |
+|---------|--------|----------|
+| Administrator | `admin@example.com` | `admin-local` |
+| Editor | `editor@example.com` | `editor-local` |
+
+Payload is the Directory editor and the catalog publisher (`CATALOG_PUBLISHER=payload`). Own Postgres on **54351**, admin on **18100**. Playwright `e2e/payload-directory-editor.spec.js` probes this host (then `admin-payload-directory-dev.bsky.nz`) and **skips cleanly** if neither is up — it must not fail only because nothing is deployed. Do not also publish from the Directus compose stack.
+
+```bash
+cd porirua_directory
+npm run payload:up
+# http://127.0.0.1:18100/admin
+# Point OPERATIONS_URL at the Directus sidecar :18790 when you want live catalog reads
+# npm run test:e2e:payload
+```
+
+| Account | Email | Password |
+|---------|--------|----------|
+| Admin | `admin@example.com` | `admin-local` |
+| Editor | `editor@example.com` | `editor-local` |
+| Reviewer | `reviewer@example.com` | `reviewer-local` |
+| Viewer | `viewer@example.com` | `viewer-local` (API only — 403 on Directory; cannot open admin) |
+
+**One admin host on directory-dev.** Public site: `directory-dev.bsky.nz`. Editor and publisher: `admin-payload-directory-dev.bsky.nz`. The old Directus hostname redirects there. Directus stays in the tenant at zero replicas so a rollback is a pin change, not a rebuild.
+
+Tests against this stack (`:18055`) use those compose passwords even if live-dev `ADMIN_*` / `EDITOR_*` are in the shell. Override only with `DIRECTUS_TEST_*`.
+
+Configuration is in git, not clicked-in state:
+
+| Path | What it is |
+|------|------------|
+| `porirua_directory/directus/snapshot.yaml` | Collections, fields, Interfaces, relations, plus roles / permissions / presets exported with the running instance |
+| `porirua_directory/directus/flows/` | Sticky curation, Publish directory, Roll back, review actions, failure notification |
+| `porirua_directory/directus/operations/` | Sidecar the Flows POST to (sticky, approve, hide, reject, publish, rollback, alias). Can publish, approve, and rewrite `raw_import`. **Cluster-internal only — no Ingress.** Local compose binds host `18790` for tests. Approve/hide/reject import `scripts/approve-review.mjs`. |
+| `porirua_directory/scripts/directus/bootstrap.mjs` | Applies the workspace to a fresh Directus |
+
+### Editor daily path (Payload Directory)
+
+Moana’s jobs are Review and Listings. She does not need Directus Content.
+
+1. Open [admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz) (or local `:18100/admin`). Sign in as **Editor**.
+2. Land on **Directory**. Status band at the top; tabs **Needs confirmation**, **Review**, **Listings**.
+3. **Listings:** type in **Find an organisation**, open a result, **Edit** / **Add a service line**. Save does not publish.
+4. **Review:** open a government card, decide (or **Needs confirmation**). After a decision the next heading is focused, not **Accept**.
+5. **N unpublished** on the status band publishes immediately. A ≥15% swing in published count 409s until you confirm that one request.
+
+The accepted jobs and copy are the [editor one-pager](./design/editor-guide.md).
+
+### Editor daily path (Directus Data Studio) — retired on directory-dev
+
+Kept for local compose and a rollback. Do not use `admin-directory-dev.bsky.nz` on the cluster; it redirects to Payload.
+
+1. Sign in as **Editor** on local `:18055`.
+2. Open **Organizations**. Status is the prominent field. Internals (`cluster_key`, merge fields, timestamps) are hidden. `public_id` and `render_grain` are visible but **not writable** — they decide the public URL and whether a provider is an org card or a flat listing. Changing grain is an **Admin** action (it must write a `public_id_aliases` row; 44 of 76 org cards have only one line). Related **service lines** are on the organisation record (read-only). Open a line to edit it; do not re-parent from the organisation form.
+3. Edit ordinary fields (address, phone, description). On an FSD-sourced record, saving triggers **Sticky curation on save**, which upserts one `overrides` row `{target_type, target_id, action: "patch", patch}` and merges keys into that row. You never type patch JSON.
+4. Open **Review queue** in the sidebar (`review_queue_items`, preset filtered to pending). The list shows kind, the related listing, and a `change_summary` of what actually moved — not the raw `proposed` JSON. **Approve**, **Hide**, and **Reject** work from the list (tick many rows) and from the item. The sidecar loops every selected id, does not undo earlier successes when a later row fails, and reports succeeded/failed counts (a mixed batch is a 409, not a silent first-row success). **Edit-and-approve** is item-only — it carries one payload and cannot mean anything across a multi-row selection. Those Flows call the shared `approveReviewItem` in `scripts/approve-review.mjs` — apply `proposed.after`, **refresh `raw_import`**, publish only when the row is not already `hidden`, promote a draft organisation, mark the queue item accepted. Skipping the `raw_import` refresh would re-queue the same change every week. Do not click a `pending_review` collection — that view is SQL-only and 403s in Directus.
+5. Status changes stay in Postgres. They do **not** go public until you publish.
+
+### Publish
+
+1. Open **Catalog snapshots** (the collection, not a past version's detail page).
+2. Run the **Publish directory** Flow from the collection. It shows a preflight of counts against the live snapshot and warns if published count moves by 15% or more (confirm to continue). The Editor role must be able to `GET /flows` (`directus_flows` read) or those buttons do not render.
+3. `publish-catalog.mjs` writes a new `is_current` snapshot, purges the edge, then reports the version that went live.
+
+### Roll back
+
+1. Open **Catalog snapshots** and open the **one** version to restore (item action — not a list multi-select).
+2. Run the **Roll back** Flow. It points `is_current` at that version and purges the edge the same way as publish. The sidecar **400s** if more than one key is sent. No developer required.
+
+`npm run test:directus` covers permission boundaries, sticky override shape (read back from Postgres), Approve `raw_import` refresh, and cache invalidation. Live Cloudflare purge is not exercised in this environment.
 
 ---
 
 ## Deploy
 
-1. Push to `main` with updated `data/services.json` (if needed) — workflow builds and pushes the container image.
-2. ArgoCD syncs blackbox prod tenant **`porirua-directory`** (`clusters/prod/tenants/porirua-directory/`).
-3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
-4. Verify [https://directory.bsky.nz](https://directory.bsky.nz) — headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add **directory.bsky.nz** to the kit’s allowed domains in Adobe Fonts.
-   - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
+### Dev (Phase 2 stack)
 
-**Pin a SHA:** edit `deployment.yaml` image tag to `:sha` instead of `:latest` for reproducible rollouts.
+Public: [https://directory-dev.bsky.nz](https://directory-dev.bsky.nz)  
+Admin (editor and publisher): [https://admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz)  
+Old Directus hostname (redirect): [https://admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz)  
+Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet git-scans `tenants/*`). Payload is the catalog publisher (`CATALOG_PUBLISHER=payload`). Directus is scaled to zero.
+
+1. From a branch, build the four images without changing what `main` pushes today:
+
+   ```bash
+   gh workflow run directory.yml --ref <branch>
+   ```
+
+   That job tags `ghcr.io/irab/porirua-directory`, `-api`, `-sync`, `-operations`, and `-directus` with the git SHA. Pin every container in the tenant to that SHA (not `:dev` or `:latest`). The Directus image must allow OpenStreetMap tiles in `img-src` or the Review map is an empty box.
+2. Push the tenant directory to blackbox `main`. After the first sync creates `dev-porirua-directory`, copy `ghcr-io` from `dev-polis`. SealedSecrets cannot unseal until that namespace exists.
+3. **Do not call the pin done until someone has signed in as Editor after the roll** (fresh private window or hard reload) and seen the Directory module — Review / Listings — not Directus “Page Not Found”. The module script (`/extensions/sources/index.js`) is cookie-auth only; a leftover session cookie from the previous pod 401s it and no module registers. Tests and sidecar checks do not catch that.
+4. Catalog-bootstrap Job: `db-import-from-json.mjs` from committed `data/services.json` + `data/overrides.json`, then the first `catalog:publish` (real Cloudflare purge — do not set `CATALOG_SKIP_PURGE`). Expect two colliding public ids to become `org-te-waka-whaiora-trust-342f` and `community-te-wahi-tiaki-tatou-ea82`.
+5. Directus-bootstrap Job (Argo wave 3, before Ingress) applies `directus/snapshot.yaml`, Flows, Editor role, and the pending-review view. Do not put that hook after the Ingress wave — Traefik never writes Ingress ADDRESS, and Argo will sit on “waiting for healthy Ingress”. The Job image must be able to finish without writing the committed snapshot (it exports to `DIRECTUS_SNAPSHOT_OUT` or `/tmp` when `/app/directus` is read-only). **Do not PATCH the Editor password on every sync.** Directus deletes that user’s `directus_sessions` rows whenever `password` is in the payload; the leftover cookie then 401s `/extensions/sources/index.js` and the Directory module never registers. Only write the password when create or a failed login proves it is wrong.
+6. Public routing: `/api` must be its **own** Ingress with a higher Traefik `router.priority` than `/`. A shared priority on one Ingress lets nginx answer `/api/catalog` with HTML.
+7. Weekly FSD CronJob is **suspended** in dev. The Job waits for Postgres (busybox init, same as catalog-bootstrap) before connecting. Prove it with a one-off Job from the CronJob; it must write `review_queue_items` and must not publish.
+
+`CATALOG_CURRENT_TTL_MS=5000` in dev so a publish is visible without waiting 30s. Publishing does not require rolling the API pod.
+
+### Production (Phase 1, unchanged)
+
+Production remains the nginx pin at [https://directory.bsky.nz](https://directory.bsky.nz) until a **separate, gated** prod-tenant task. Do not copy this database or these SealedSecrets toward prod.
+
+1. Push to `main` with an updated baked `data/services.json` only when you intend to refresh the offline fallback — workflow still builds only the nginx image. Dev’s four SHA-tagged images come from `workflow_dispatch`, not from a `main` push.
+2. ArgoCD syncs `clusters/prod/tenants/porirua-directory/`.
+3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
+4. Verify headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add the hostname to the kit’s allowed domains.
+   - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
 
 ---
 

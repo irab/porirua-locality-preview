@@ -20,7 +20,8 @@ export const FSD_CSV_URL =
   process.env.FSD_CSV_URL ||
   "https://catalogue.data.govt.nz/dataset/3e967faa-c44b-4f64-989d-2df574b3adf3/resource/35de6bf8-b254-4025-89f5-da9eb6adf9a0/download/fsd_provider_dia_rpt.csv";
 
-export const DATA_DIR = path.join(REPO_ROOT, "porirua_directory", "data");
+export const DATA_DIR =
+  process.env.DATA_DIR || path.join(REPO_ROOT, "porirua_directory", "data");
 export const FSD_RAW_JSON = path.join(DATA_DIR, "fsd-porirua.raw.json");
 /** Rows rejected by Porirua geo filter; written on `import:fsd` for audit (gitignored). */
 export const FSD_EXCLUDED_JSON = path.join(DATA_DIR, "fsd-porirua-excluded.json");
@@ -31,3 +32,20 @@ export const FSD_GEOCODE_FLAGS_JSON = path.join(
 );
 export const SERVICES_JSON = path.join(DATA_DIR, "services.json");
 export const OVERRIDES_JSON = path.join(DATA_DIR, "overrides.json");
+
+/** Postgres connection string. Required for bootstrap, publish, and the catalog API. */
+export const DATABASE_URL = process.env.DATABASE_URL || "";
+
+export const TEST_DATABASE_URL =
+  process.env.DATABASE_URL ||
+  "postgres://porirua:porirua@127.0.0.1:54329/porirua_test";
+
+function catalogCurrentTtlMs(raw = process.env.CATALOG_CURRENT_TTL_MS) {
+  if (raw == null || raw === "") return 30_000;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return 30_000;
+  return n;
+}
+
+/** How often the API re-checks `catalog_snapshots.is_current`. Envelope bodies stay cached by version. */
+export const CATALOG_CURRENT_TTL_MS = catalogCurrentTtlMs();

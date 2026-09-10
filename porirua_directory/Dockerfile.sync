@@ -1,0 +1,16 @@
+# Weekly FSD sync worker. Parses the national CSV, diffs against Postgres, writes
+# the review queue. Never publishes a catalog snapshot.
+FROM node:20-alpine
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+# csv-parse is a devDependency of the Phase 1 importer and is required here.
+RUN npm ci --include=dev
+
+COPY scripts ./scripts
+COPY editor-core ./editor-core
+COPY config-directory.js ./config-directory.js
+
+ENV NODE_ENV=production
+USER node
+CMD ["node", "scripts/fsd-sync-run.mjs"]
