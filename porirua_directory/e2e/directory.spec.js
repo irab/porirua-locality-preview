@@ -101,8 +101,8 @@ test("landing — welcome, path cards, no duplicate path choice, crisis footer, 
   await expect(page.getByRole("link", { name: PRODUCT_TITLE })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "About" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Where would you like to start?" })).toBeVisible();
-  await expect(page.getByText(/Nau mai, haere mai/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Nau mai, haere mai/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Where would you like to start?" })).toHaveCount(0);
   await expect(page.getByText(/Your Porirua Directory — find support or connect with community/i)).toBeVisible();
   await expect(page.getByRole("searchbox", { name: /Search for food/i })).toBeVisible();
   await expect(page.getByRole("button", { name: "Food / kai" })).toBeVisible();
