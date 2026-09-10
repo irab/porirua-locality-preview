@@ -74,6 +74,34 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./porirua_directory
+          file: ./porirua_directory/Dockerfile.api
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE_API }}:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./porirua_directory
+          file: ./porirua_directory/Dockerfile.operations
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE_OPERATIONS }}:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./porirua_directory
+          file: ./porirua_directory/Dockerfile.payload
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE_PAYLOAD }}:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./porirua_directory
+          file: ./porirua_directory/Dockerfile.sync
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE_SYNC }}:${{ github.sha }}
 
   # Dev tenant images from a branch. Does not run on push to main.
   # Trigger: gh workflow run directory.yml --ref <branch>

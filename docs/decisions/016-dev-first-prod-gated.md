@@ -25,3 +25,7 @@ This repository’s docs must not describe prod as if it had Postgres, `/api/cat
 ## Revisit if
 
 A human names production in the same turn (“pin `clusters/prod/…`”, “promote to prod”) **and** the image story is decided (build five images on `main`, or accept dispatch SHAs). Until then, treat any prod Phase 2 sentence as false.
+
+## Revisited 11 Sep 2026
+
+Same-turn authorisation: merge Payload and deploy it to production. First prod roll pins the dev-proven SHAs (nginx `f62b8fb`, catalog/sidecar `b65e5d7`, Payload `ad815ab`). The `image` job on `main` now also builds API, operations, Payload, and sync so later pins can come from a merge SHA. Directus stays off prod. New prod PVC and newly sealed secrets; dev volume and dev SealedSecret blobs are not copied.

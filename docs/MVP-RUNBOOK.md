@@ -321,14 +321,19 @@ Manifests: blackbox `clusters/dev/tenants/porirua-directory/` (ApplicationSet gi
 
 `CATALOG_CURRENT_TTL_MS=5000` in dev so a publish is visible without waiting 30s. Publishing does not require rolling the API pod.
 
-### Production (Phase 1, unchanged)
+### Production (Phase 2)
 
-Production remains the nginx pin at [https://directory.bsky.nz](https://directory.bsky.nz) until a **separate, gated** prod-tenant task. Do not copy this database or these SealedSecrets toward prod.
+Public: [https://yourporirua.nz](https://yourporirua.nz)  
+Catalog: [https://yourporirua.nz/api/catalog](https://yourporirua.nz/api/catalog)  
+Payload editor: [https://admin.yourporirua.nz](https://admin.yourporirua.nz)  
+Legacy: [https://directory.bsky.nz](https://directory.bsky.nz) 301s to the apex.
 
-1. Push to `main` with an updated baked `data/services.json` only when you intend to refresh the offline fallback — workflow still builds only the nginx image. Dev’s four SHA-tagged images come from `workflow_dispatch`, not from a `main` push.
-2. ArgoCD syncs `clusters/prod/tenants/porirua-directory/`.
-3. ExternalDNS upserts `directory.bsky.nz` when the Ingress is healthy (see [blackbox bsky.nz README](file:///Users/ira/repos/blackbox/infra/cloudflare/bsky.nz/README.md)).
-4. Verify headings **Recoleta**, body **Aktiv Grotesk** (Adobe Typekit kit `xcy1epi`). If body font falls back to Poppins/system sans, add the hostname to the kit’s allowed domains.
+Manifests: blackbox `clusters/prod/tenants/porirua-directory/`. Payload is the publisher. Directus is not deployed. Do not copy the dev PVC or dev SealedSecret blobs.
+
+1. A push to `main` that touches `porirua_directory/**` builds nginx, API, operations, Payload, and sync images tagged with the git SHA. First production roll is pinned to the dev-proven SHAs already running on directory-dev (see the prod tenant README).
+2. ArgoCD syncs `clusters/prod/tenants/porirua-directory/`. Catalog-bootstrap imports committed `data/services.json` into a **new** Postgres PVC and publishes the first snapshot if none is current.
+3. `directory.bsky.nz` stays on ExternalDNS and Traefik 301s it to the apex. `admin.yourporirua.nz` is a static OpenTofu A record in `infra/cloudflare/yourporirua.nz/`.
+4. Verify [https://yourporirua.nz/api/catalog](https://yourporirua.nz/api/catalog) is JSON, [https://yourporirua.nz/api/health](https://yourporirua.nz/api/health) is reachable, the public site still browses, and an Editor can sign in at [https://admin.yourporirua.nz](https://admin.yourporirua.nz).
    - **Smoke:** landing **Find support** / **Connect with community** switch to browse; **Urgent help** footer shows numbers. If buttons do nothing, check browser devtools for module MIME errors — static nginx must serve `*.mjs` as `application/javascript` (see `porirua_directory/infra/nginx.conf`).
 
 ---

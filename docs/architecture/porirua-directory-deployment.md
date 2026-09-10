@@ -54,11 +54,14 @@ Namespace: `dev-porirua-directory`
 | `fsd-sync` CronJob | Weekly review-queue fill | Public site unchanged. **`suspend: true` in dev** |
 | `catalog-bootstrap` / `directus-bootstrap` / `payload-db-init` Jobs | First sync / each Argo hook / create `porirua_payload` if missing | N/A after first success; a bad Directus bootstrap can hide the module |
 
-### Prod (`prod-porirua-directory`) — Phase 1 only
+### Prod (`prod-porirua-directory`) — Phase 2 (11 Sep 2026)
 
-Public site: [https://directory.bsky.nz](https://directory.bsky.nz)
+Public site: [https://yourporirua.nz](https://yourporirua.nz)  
+Catalog: [https://yourporirua.nz/api/catalog](https://yourporirua.nz/api/catalog)  
+Payload editor: [https://admin.yourporirua.nz](https://admin.yourporirua.nz)  
+Legacy: [https://directory.bsky.nz](https://directory.bsky.nz) 301s to the apex.
 
-One Deployment, one Service, one Ingress, nginx image pinned to `ec5c102…`. No Postgres, no API, no Directus, no sidecar, no CronJob. A visitor who requests `/api/catalog` receives the homepage HTML.
+Same shape as dev: nginx + catalog-api + Postgres (new PVC) + operations + Payload publisher. Directus is not deployed. FSD CronJob is suspended. First pins are the dev-proven SHAs (nginx `f62b8fb`, catalog/sidecar `b65e5d7`, Payload `ad815ab`). Secrets and the volume are new — dev blobs are not copied.
 
 ---
 
@@ -76,7 +79,7 @@ flowchart LR
   Browser -->|"fallback ./data/services.json"| Nginx
 ```
 
-On **prod** the Traefik `/api` hop does not exist. Cloudflare → origin `:4443` → Traefik → nginx:8080 → baked JSON loaded as `./data/services.json` (the UI still *tries* `./api/catalog` first, gets HTML, fails the shape check, and falls back).
+On **prod** the same split applies on `yourporirua.nz`: Cloudflare Flexible → origin `:443` → sslh → Traefik. `/api` (priority 200) goes to catalog-api; `/` (priority 100) goes to nginx. The UI falls back to baked `data/services.json` if the API is down or returns non-JSON.
 
 ### Cache layers (dev)
 
@@ -241,31 +244,22 @@ HEAD `/api/catalog` returning 404 is not a visitor path (the UI uses GET). It is
 
 ---
 
-## What differs between dev and prod today
+## What differs between dev and prod
 
-| | directory-dev | directory.bsky.nz (prod) |
+| | dev.yourporirua.nz | yourporirua.nz (prod) |
 |--|---------------|---------------------------|
-| Stack | Five catalog images + Payload admin + Postgres + sidecar + Directus scaled to 0 + suspended CronJob | nginx only |
-| `/api/catalog` | JSON snapshot (ETag 13 on 8 Sep 2026) | HTML homepage |
-| Admin host | `admin-payload-directory-dev.bsky.nz` (publisher). `admin-directory-dev.bsky.nz` redirects | **None** |
-| Publish | Snapshot + Cloudflare purge from Payload | Rebuild + pin nginx SHA |
-| Weekly FSD | Runner exists, CronJob suspended | Not present |
-| Image build | `workflow_dispatch` six SHAs | `main` push builds nginx |
+| Stack | Catalog images + Payload admin + Postgres + sidecar + Directus scaled to 0 + suspended CronJob | Same, without Directus |
+| `/api/catalog` | JSON snapshot | JSON snapshot after bootstrap |
+| Admin host | `admin-dev.yourporirua.nz` | `admin.yourporirua.nz` |
+| Publish | Snapshot + Cloudflare purge from Payload | Same |
+| Weekly FSD | Runner exists, CronJob suspended | Same (suspended) |
+| Image build | `workflow_dispatch` six SHAs | `main` push builds nginx, API, operations, Payload, sync |
 
-## What prod still requires (not yet true)
+## What is still gated
 
-Do not read this list as a description of prod.
-
-- A same-turn human authorisation to touch `clusters/prod/**` ([016](../decisions/016-dev-first-prod-gated.md)).
-- A decision on how to obtain API / sync / operations / Directus images: build them on `main`, or pin `image-dev` SHAs. As the workflow stands, a merge-to-main cannot produce those four tags.
-- Postgres + a **new** PVC. Do not copy the directory-dev volume.
-- Re-sealed secrets. Do not copy the directory-dev SealedSecret.
-- Split `/api` Ingress, an admin hostname (not chosen), NetworkPolicy around operations, real purge with a prod `CATALOG_PUBLIC_URL`.
 - CronJob unsuspended only when editors are ready for a weekly queue.
-- The Directory module image — do not pin stock `directus/directus`.
-- Editor `last_page` / session-cookie lessons; pin-not-done-until-Editor-click.
-
-The gated sibling task `2d2a4674-4e61-4479-9bac-f8defe131088` owns that work. This document does not start it.
+- Re-pin every image to one merge SHA after the first roll if you want a single version.
+- Editor sign-in after Argo rolls — pin is not done until Review / Listings / unpublished load on `admin.yourporirua.nz`.
 
 ---
 

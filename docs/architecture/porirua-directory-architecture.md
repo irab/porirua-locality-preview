@@ -1,10 +1,11 @@
 # Porirua Services Directory — Architecture
 
-**Status (9 Sep 2026):** Phase 1 is live at [directory.bsky.nz](https://directory.bsky.nz) (nginx + baked JSON). Phase 2 (Postgres catalog, public read API, UI fallback, Payload Directory, weekly FSD runner) is live on the **dev** tenant only: [directory-dev.bsky.nz](https://directory-dev.bsky.nz) and [admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz). Directus is retired on directory-dev. **Prod Phase 2 is not built.**
+**Status (11 Sep 2026):** Phase 2 is being promoted to production on [yourporirua.nz](https://yourporirua.nz) (catalog API + Payload editor). Dev remains the proven editor host: [dev.yourporirua.nz](https://dev.yourporirua.nz) and [admin-dev.yourporirua.nz](https://admin-dev.yourporirua.nz). Legacy [directory.bsky.nz](https://directory.bsky.nz) 301s to the apex. Directus is not deployed on prod.
 
 This file is product-level system context. The verified services, cache path, images, secrets, and failure modes live in the companion [porirua-directory-deployment.md](./porirua-directory-deployment.md). Why the stack was chosen lives in [docs/decisions/](../decisions/README.md).
 
-**Public URL (prod, Phase 1):** [https://directory.bsky.nz](https://directory.bsky.nz)
+**Public URL (prod):** [https://yourporirua.nz](https://yourporirua.nz)  
+**Editor (prod):** [https://admin.yourporirua.nz](https://admin.yourporirua.nz)
 **App code:** [`porirua_directory/`](../../porirua_directory/)
 **Connections Map (parallel):** [`porirua_connections_map/`](../../porirua_connections_map/)
 
@@ -61,7 +62,7 @@ flowchart TB
   BB -->|/| Nginx
 ```
 
-On **prod** today the editor, API, Postgres, and CronJob subgraphs do not exist. Traffic is Cloudflare → origin `:4443` → Traefik → nginx:8080 → baked `data/services.json`.
+On **prod** the same subgraphs exist as dev (Payload publisher, catalog API, Postgres, suspended CronJob). Public traffic is Cloudflare Flexible → origin `:443` → sslh → Traefik. `/api` (priority 200) goes to catalog-api; `/` (priority 100) goes to nginx. The UI still falls back to baked `data/services.json` if the API is down.
 
 ---
 
@@ -70,7 +71,7 @@ On **prod** today the editor, API, Postgres, and CronJob subgraphs do not exist.
 | Location | Role |
 |----------|------|
 | `porirua-locality-preview` | Directory app, merge scripts, docs, Connections Map |
-| `blackbox` | K8s tenants. Dev: `clusters/dev/tenants/porirua-directory/`. Prod: `clusters/prod/tenants/porirua-directory/` (Phase 1 nginx pin) |
+| `blackbox` | K8s tenants. Dev: `clusters/dev/tenants/porirua-directory/`. Prod: `clusters/prod/tenants/porirua-directory/` (Phase 2 catalog + Payload) |
 | Porirua Locality Google Sheet | **Connections Map only.** Directory community listings are created in Payload Directory. Nothing syncs between them ([009](../decisions/009-google-sheet-retired-for-directory.md)) |
 
 ---
