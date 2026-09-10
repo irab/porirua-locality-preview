@@ -97,16 +97,33 @@ function matchesCommunity(service, activeFilters) {
   return service.communityFilters?.some((f) => activeFilters.has(f));
 }
 
+function isKaiCommunity(service) {
+  return service.communityFilters?.includes("kai_initiatives");
+}
+
 function filterServices(services, state) {
   let list = services;
 
   if (state.mode === "support") {
-    list = list.filter(
+    let supportList = list.filter(
       (s) => s.source === "fsd" || (s.categories?.length ?? 0) > 0
     );
     if (state.activeNeeds.size > 0) {
-      list = expandNeedFilterLines(list, state.activeNeeds);
+      supportList = expandNeedFilterLines(supportList, state.activeNeeds);
     }
+    if (state.activeNeeds.has("food")) {
+      const seen = new Set(
+        supportList.map((s) => `${s.id}:${s.lineId ?? ""}`)
+      );
+      for (const row of list.filter(isKaiCommunity)) {
+        const key = `${row.id}:${row.lineId ?? ""}`;
+        if (!seen.has(key)) {
+          supportList.push(row);
+          seen.add(key);
+        }
+      }
+    }
+    list = supportList;
   } else if (state.mode === "community") {
     list = list.filter((s) => matchesCommunity(s, state.activeCommunityFilters));
   } else {
@@ -444,6 +461,28 @@ function displayItemsFromFiltered(catalogEntries, filteredLines) {
   return groupForDisplay(filteredLines);
 }
 
+const LOCAL_HINT =
+  /porirua|cannons creek|titahi|waitangirua|whitby|plimmerton|takap[ūu]w[āa]hia|p[āa]uatahanui|pukerua|ascot park|elsdon|kenepuru|ranui|onepoto|hongoeka|ng[āa]ti toa/i;
+
+function displayItemHay(item) {
+  if (item.type === "org") {
+    return `${item.org.name} ${item.org.address ?? ""}`;
+  }
+  return `${item.service.name} ${item.service.address ?? ""}`;
+}
+
+function displayItemName(item) {
+  return item.type === "org" ? item.org.name : item.service.name;
+}
+
+function sortDisplayItems(items) {
+  return [...items].sort((a, b) => {
+    const local = Number(LOCAL_HINT.test(displayItemHay(a))) - Number(LOCAL_HINT.test(displayItemHay(b)));
+    if (local) return -local;
+    return displayItemName(a).localeCompare(displayItemName(b), "en-NZ");
+  });
+}
+
 function mapTargetsFromFiltered(catalogEntries, filtered, activeNeeds, browseMode) {
   const items = displayItemsFromFiltered(catalogEntries, filtered);
   const targets = [];
@@ -480,18 +519,24 @@ const FAVORITES_STORAGE_KEY = "porirua-directory-favorites";
 
 function loadFavoriteIds() {
   try {
-    const raw = sessionStorage.getItem(FAVORITES_STORAGE_KEY);
+    const raw =
+      localStorage.getItem(FAVORITES_STORAGE_KEY) ??
+      sessionStorage.getItem(FAVORITES_STORAGE_KEY);
     if (!raw) return new Set();
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return new Set();
-    return new Set(parsed.filter((id) => typeof id === "string" && id.length > 0));
+    const ids = new Set(parsed.filter((id) => typeof id === "string" && id.length > 0));
+    if (ids.size && !localStorage.getItem(FAVORITES_STORAGE_KEY)) {
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...ids]));
+    }
+    return ids;
   } catch {
     return new Set();
   }
 }
 
 function persistFavoriteIds(ids) {
-  sessionStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...ids]));
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...ids]));
 }
 
 function parseHash() {
@@ -616,6 +661,10 @@ async function main() {
   const browseChromeExpand = document.getElementById("browse-chrome-expand");
   const browseSidebarBody = document.querySelector(".browse-sidebar__body");
   const siteTopnav = document.querySelector(".site-topnav");
+  const mapToggle = document.getElementById("map-toggle");
+  const otherPathHint = document.getElementById("other-path-hint");
+  const landingSearchForm = document.getElementById("landing-search-form");
+  const landingSearchInput = document.getElementById("landing-search-input");
 
   function syncSiteTopnavStickyHeight() {
     if (!siteTopnav) return;
@@ -657,6 +706,7 @@ async function main() {
   }
   let mapResizeFrame = null;
   let mapTransitionResizeHandler = null;
+  let mapUserHidden = !threeColumnDesktopMq.matches;
 
   const demoQuery = parseDemoQuery();
   let browseLayout = applyBrowseLayout(demoQuery.layout);
@@ -857,9 +907,17 @@ async function main() {
     return haversineKm(state.nearMe.lat, state.nearMe.lng, target.lat, target.lng);
   }
 
-  function setMapBlockVisible(visible) {
-    mapBlock.hidden = !visible;
-    mapBlock.classList.toggle("map-block--hidden", !visible);
+  function setMapBlockVisible(hasData) {
+    const show =
+      hasData && (isThreeColumnDesktopLayout() || !mapUserHidden);
+    mapBlock.hidden = !show;
+    mapBlock.classList.toggle("map-block--hidden", !show);
+    if (mapToggle) {
+      const stacked = !threeColumnDesktopMq.matches;
+      mapToggle.hidden = !hasData || !stacked;
+      mapToggle.setAttribute("aria-pressed", show ? "true" : "false");
+      mapToggle.textContent = show ? "Hide map" : "Show map";
+    }
   }
 
   function distanceKmToService(service) {
@@ -994,6 +1052,10 @@ async function main() {
   function updateNavMylistCurrent() {
     if (!navMylist) return;
     const onMylist = document.body.dataset.view === "mylist";
+    const n = favoriteIds.size;
+    const show = n > 0 || onMylist;
+    navMylist.hidden = !show;
+    navMylist.textContent = n > 0 ? `My list (${n})` : "My list";
     navMylist.classList.toggle("site-nav__link--current", onMylist);
     if (onMylist) navMylist.setAttribute("aria-current", "page");
     else navMylist.removeAttribute("aria-current");
@@ -1090,8 +1152,10 @@ async function main() {
 
   window.addEventListener("scroll", onBrowseWindowScroll, { passive: true });
   threeColumnDesktopMq.addEventListener("change", () => {
+    mapUserHidden = !threeColumnDesktopMq.matches;
     syncBrowseChromeForViewport();
     syncMapLayoutForViewport();
+    if (state.mode) refresh();
   });
   syncBrowseChromeForViewport();
   syncMapLayoutForViewport();
@@ -1105,8 +1169,9 @@ async function main() {
     viewBrowse.hidden = landing || mylist;
     if (viewMylist) viewMylist.hidden = !mylist;
     if (siteSubnav) {
-      siteSubnav.hidden = true;
-      siteSubnav.setAttribute("aria-hidden", "true");
+      const showSubnav = view === "browse";
+      siteSubnav.hidden = !showSubnav;
+      siteSubnav.setAttribute("aria-hidden", showSubnav ? "false" : "true");
     }
     if (view !== "browse") {
       resetBrowseChrome();
@@ -1141,7 +1206,7 @@ async function main() {
     if (!hasItems) {
       if (mylistStatus) mylistStatus.textContent = "";
       mylistResults.innerHTML =
-        '<p class="empty-state">Your list is empty. Browse organisations and services, then tap <strong>Add to your list</strong> on any place you want to keep for this visit.</p>';
+        '<p class="empty-state">Nothing saved yet. Open a place and tap <strong>Add to your list</strong> to keep it on this device.</p>';
     } else {
       if (mylistStatus) {
         const n = items.length;
@@ -1213,6 +1278,7 @@ async function main() {
     if (favoriteIds.has(id)) favoriteIds.delete(id);
     else favoriteIds.add(id);
     persistFavoriteIds(favoriteIds);
+    updateNavMylistCurrent();
     const view = document.body.dataset.view;
     if (view === "browse") refresh();
     else if (view === "mylist") renderMyList();
@@ -1268,18 +1334,20 @@ async function main() {
     return true;
   }
 
-  function setMode(mode, { fromHash = false } = {}) {
+  function setMode(mode, { fromHash = false, keepSearch = false, needs, community } = {}) {
     if (mode !== "support" && mode !== "community") {
       mode = null;
     }
 
     if (mode) {
       state.mode = mode;
-      state.activeNeeds.clear();
-      state.activeCommunityFilters.clear();
-      state.search = "";
-      clearNearMe();
-      clearSearchField();
+      state.activeNeeds = new Set(needs ?? []);
+      state.activeCommunityFilters = new Set(community ?? []);
+      if (!keepSearch) {
+        state.search = "";
+        clearNearMe();
+        clearSearchField();
+      }
       setView("browse");
     } else {
       state.mode = null;
@@ -1288,10 +1356,12 @@ async function main() {
       state.search = "";
       clearNearMe();
       clearSearchField();
+      if (landingSearchInput) landingSearchInput.value = "";
       setView("landing");
       statusLine.textContent = "";
       resultsEl.innerHTML = "";
       setMapBlockVisible(false);
+      hideOtherPathHint();
     }
 
     supportFilters.classList.toggle("filters--hidden", mode !== "support");
@@ -1311,6 +1381,37 @@ async function main() {
     if (mode) refresh();
   }
 
+  function hideOtherPathHint() {
+    if (!otherPathHint) return;
+    otherPathHint.hidden = true;
+    otherPathHint.innerHTML = "";
+  }
+
+  function updateOtherPathHint() {
+    if (!otherPathHint) return;
+    const q = state.search.trim();
+    if (!q || !state.mode) {
+      hideOtherPathHint();
+      return;
+    }
+    const other = state.mode === "support" ? "community" : "support";
+    const hits = filterServices(serviceLines, {
+      mode: other,
+      activeNeeds: new Set(),
+      activeCommunityFilters: new Set(),
+      search: q,
+      nearMe: null,
+    }).length;
+    if (!hits) {
+      hideOtherPathHint();
+      return;
+    }
+    const noun = hits === 1 ? "place" : "places";
+    const side = other === "community" ? "community" : "support";
+    otherPathHint.hidden = false;
+    otherPathHint.innerHTML = `Also ${hits} ${side} ${noun}. <button type="button" data-switch-mode="${other}">Show ${side}</button>`;
+  }
+
   function refresh() {
     if (!state.mode) return;
 
@@ -1319,6 +1420,7 @@ async function main() {
       filtered = applyNearMeListFilter(filtered);
     }
     syncMapForFiltered(filtered);
+    updateOtherPathHint();
 
     if (filtered.length === 0) {
       if (state.nearMe) {
@@ -1333,20 +1435,18 @@ async function main() {
           '<p class="empty-state">We couldn’t find anything. Try clearing your choices or using a wider search.</p>';
       }
     } else {
-      const displayItems = displayItemsFromFiltered(catalogEntries, filtered);
+      const displayItems = sortDisplayItems(
+        displayItemsFromFiltered(catalogEntries, filtered)
+      );
       const highlight = {
         activeNeeds: state.activeNeeds,
         search: state.search,
       };
-      let status;
-      const matchingLineCount =
-        state.activeNeeds.size > 0
-          ? filtered.filter((s) => lineMatchesNeed(s, state.activeNeeds)).length
-          : filtered.length;
-      if (displayItems.length !== filtered.length) {
-        status = `${displayItems.length} organisation${displayItems.length === 1 ? "" : "s"} (${matchingLineCount} matching service line${matchingLineCount === 1 ? "" : "s"})`;
-      } else {
-        status = `${filtered.length} listing${filtered.length === 1 ? "" : "s"}`;
+      const n = displayItems.length;
+      let status = `${n} ${n === 1 ? "place" : "places"}`;
+      if (state.activeNeeds.size === 1) {
+        const label = needLabelById[[...state.activeNeeds][0]];
+        if (label) status += ` for ${label.toLowerCase()}`;
       }
       if (state.nearMe) {
         status += ` within ${nearMeRadiusKm} km`;
@@ -1358,11 +1458,68 @@ async function main() {
     }
   }
 
+  function enterLandingSearch(query) {
+    const q = String(query ?? "").trim();
+    if (!q) return;
+    state.search = q;
+    if (searchInput) searchInput.value = q;
+    syncSearchClearButton();
+    const supportHits = filterServices(serviceLines, {
+      mode: "support",
+      activeNeeds: new Set(),
+      activeCommunityFilters: new Set(),
+      search: q,
+      nearMe: null,
+    }).length;
+    const communityHits = filterServices(serviceLines, {
+      mode: "community",
+      activeNeeds: new Set(),
+      activeCommunityFilters: new Set(),
+      search: q,
+      nearMe: null,
+    }).length;
+    const mode = communityHits > supportHits ? "community" : "support";
+    setMode(mode, { keepSearch: true });
+  }
+
   document.querySelectorAll("[data-mode]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (document.body.dataset.view === "browse") return;
-      setMode(btn.dataset.mode);
+      const next = btn.dataset.mode;
+      if (document.body.dataset.view === "browse") {
+        if (state.mode === next) return;
+        setMode(next, { keepSearch: true });
+        return;
+      }
+      setMode(next);
     });
+  });
+
+  document.querySelectorAll("[data-shortcut-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.shortcutMode;
+      const need = btn.dataset.shortcutNeed;
+      const community = btn.dataset.shortcutCommunity;
+      setMode(mode, {
+        needs: need ? [need] : [],
+        community: community ? [community] : [],
+      });
+    });
+  });
+
+  landingSearchForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    enterLandingSearch(landingSearchInput?.value ?? "");
+  });
+
+  otherPathHint?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-switch-mode]");
+    if (!btn) return;
+    setMode(btn.dataset.switchMode, { keepSearch: true });
+  });
+
+  mapToggle?.addEventListener("click", () => {
+    mapUserHidden = !mapUserHidden;
+    refresh();
   });
 
   backBtn.addEventListener("click", () => setMode(null));

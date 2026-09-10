@@ -26,7 +26,7 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-topnav">
     <div class="site-topnav__inner">
-      <a class="site-logo" href="https://www.porirualocality.co.nz/" rel="noopener noreferrer">
+      <a class="site-logo" href="index.html">
         <img
           class="site-logo__img"
           src="https://images.squarespace-cdn.com/content/v1/64d9585e944b8f367e746a03/ad2abb52-c652-4ba7-a01f-6c0bd17320ea/Te+Wa%CC%84hi+Tiaki+Ta%CC%84tou+RGB.png?format=500w"
@@ -36,19 +36,15 @@
           decoding="async"
         />
       </a>
-      <a
-        class="site-product-title site-product-title--current"
-        href="index.html"
-        aria-current="page"
-      >Your Porirua Directory</a>
+      <a class="site-product-title" href="index.html">Your Porirua Directory</a>
       <nav class="site-nav" aria-label="Site">
         <button type="button" id="back-to-landing" class="site-nav__link site-nav__back" hidden>← Back</button>
-        <a class="site-nav__link" href="#mylist" id="nav-mylist">My list</a>
+        <a class="site-nav__link" href="#mylist" id="nav-mylist" hidden>My list</a>
         <a class="site-nav__link" href="about.html">About</a>
       </nav>
     </div>
     <div id="site-subnav" class="site-subnav" hidden aria-hidden="true" aria-label="What would you like to do">
-      <p id="landing-prompt" class="site-subnav__prompt">I would like to…</p>
+        <p id="landing-prompt" class="site-subnav__prompt">Looking at</p>
       <div class="path-mode-switch" role="group" aria-label="Choose a path">
         <button type="button" class="path-mode-switch__btn" data-mode="support">Find support</button>
         <button type="button" class="path-mode-switch__btn" data-mode="community">Connect with community</button>
@@ -59,10 +55,29 @@
   <main id="main" class="main">
     <section id="view-landing" class="view-landing" aria-labelledby="landing-heading">
       <div class="landing-intro">
+        <p class="landing-welcome" lang="mi">Nau mai, haere mai</p>
         <h1 id="landing-heading" class="landing-heading">Where would you like to start?</h1>
         <p class="landing-lead">
-          Find support services or connect with community groups and organisations across our city.
+          Your Porirua Directory — find support or connect with community groups across our city. No login.
         </p>
+      </div>
+      <form id="landing-search-form" class="landing-search" role="search">
+        <label class="visually-hidden" for="landing-search-input">Search for food, a marae, or a name</label>
+        <input
+          id="landing-search-input"
+          type="search"
+          placeholder="Search for food, a marae, or a name"
+          autocomplete="off"
+          enterkeyhint="search"
+        />
+        <button type="submit" class="landing-search__go">Search</button>
+      </form>
+      <div class="landing-shortcuts" aria-label="Popular topics">
+        <button type="button" class="landing-shortcut" data-shortcut-mode="support" data-shortcut-need="food">Food / kai</button>
+        <button type="button" class="landing-shortcut" data-shortcut-mode="support" data-shortcut-need="housing">Housing / a place to stay</button>
+        <button type="button" class="landing-shortcut" data-shortcut-mode="support" data-shortcut-need="safety">Feeling unsafe</button>
+        <button type="button" class="landing-shortcut" data-shortcut-mode="community" data-shortcut-community="marae_iwi">Marae and iwi</button>
+        <button type="button" class="landing-shortcut" data-shortcut-mode="community" data-shortcut-community="community_groups">Community groups</button>
       </div>
       <div class="landing-paths" aria-labelledby="landing-heading">
         <button type="button" class="landing-path-card" data-mode="support">
@@ -102,9 +117,9 @@
             <button type="button" id="mylist-print" class="mylist-print" hidden disabled>Print list</button>
           </div>
         </div>
-        <p class="mylist-intro">Places and organisations you’ve saved for this visit.</p>
+        <p class="mylist-intro">Places you have saved on this device. Nothing is stored on a server.</p>
         <p class="mylist-disclaimer" role="note">
-          Your saved places stay on this device while you keep this page open. We don’t store them on a server, and they clear when you close the tab. If you share a link, anyone with that link can see those places.
+          Your list stays on this phone or computer. If you share a link, anyone with that link can see those places.
         </p>
         <p id="mylist-status" class="status-line" role="status"></p>
         <div id="mylist-results" class="results" aria-live="polite"></div>
@@ -123,12 +138,12 @@
                     <path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                   </svg>
                 </span>
-                <label class="visually-hidden" for="search-input">Search organisations</label>
+                <label class="visually-hidden" for="search-input">Search for food, a marae, or a name</label>
                 <input
                   id="search-input"
                   type="text"
                   role="searchbox"
-                  placeholder="Search organisations…"
+                  placeholder="Search for food, a marae, or a name"
                   autocomplete="off"
                   enterkeyhint="search"
                 />
@@ -192,7 +207,11 @@
         </div>
 
         <div class="browse-main">
-          <p id="status-line" class="status-line" role="status"></p>
+          <div class="browse-main__meta">
+            <p id="status-line" class="status-line" role="status"></p>
+            <button type="button" id="map-toggle" class="map-toggle" hidden aria-pressed="false">Show map</button>
+            <p id="other-path-hint" class="other-path-hint" hidden></p>
+          </div>
           <div id="directory-results" class="results" aria-live="polite"></div>
         </div>
 
