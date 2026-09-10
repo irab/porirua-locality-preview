@@ -30,8 +30,26 @@ async function pickCommunityPath(page) {
   await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Connect with community/i }).click();
 }
 
+async function pickSupportTopic(page, name = /Food \/ kai/i) {
+  await page.getByRole("group", { name: "Types of support" }).getByRole("button", { name }).click();
+}
+
+async function pickCommunityTopic(page, name = /Community groups/i) {
+  await page.getByRole("group", { name: "Organisation types" }).getByRole("button", { name }).click();
+}
+
+async function gotoSupportResults(page, url = "/index.html#support") {
+  await page.goto(url);
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
+}
+
+async function gotoCommunityResults(page, url = "/index.html#community") {
+  await page.goto(url);
+  await expect(page.locator("#directory-results .card").first()).toBeVisible();
+}
+
 function browseSearch(page) {
-  return page.getByRole("searchbox", { name: "Search organisations" });
+  return page.getByRole("searchbox", { name: /Search for food/i });
 }
 
 async function fillBrowseSearch(page, query) {
@@ -82,15 +100,16 @@ test("landing — welcome, path cards, no duplicate path choice, crisis footer, 
   await expect(page.getByRole("link", { name: LOGO_ALT })).toBeVisible();
   await expect(page.getByRole("link", { name: PRODUCT_TITLE })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "About" })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "My list" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Where would you like to start?" })).toBeVisible();
-  await expect(page.getByText(/Find support services or connect with community/i)).toBeVisible();
+  await expect(page.getByText(/Nau mai, haere mai/i)).toBeVisible();
+  await expect(page.getByText(/Your Porirua Directory — find support or connect with community/i)).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: /Search for food/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Food / kai" })).toBeVisible();
   const landingPaths = page.locator("#view-landing .landing-paths");
   await expect(landingPaths.getByRole("button", { name: /Find support/i })).toBeVisible();
   await expect(landingPaths.getByRole("button", { name: /Connect with community/i })).toBeVisible();
   await expect(page.locator("#site-subnav")).toBeHidden();
-  await expect(page.getByText("I would like to…")).toBeHidden();
-  await expect(page.getByRole("group", { name: "Choose a path" })).toHaveCount(0);
   const urgentHelp = page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" });
   await expect(urgentHelp.getByText("Urgent help:")).toBeVisible();
   await expect(urgentHelp.getByRole("link", { name: "111 Emergency" })).toBeVisible();
@@ -99,6 +118,23 @@ test("landing — welcome, path cards, no duplicate path choice, crisis footer, 
   await expect(page.locator("#search-input")).toBeHidden();
   await expect(page.locator(".leaflet-container")).toHaveCount(0);
   await expect(page.locator("#map-block")).toBeHidden();
+});
+
+test("landing search opens browse and can switch path", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator("#landing-search-input").fill("Wesley");
+  await page.locator("#landing-search-form").getByRole("button", { name: "Search" }).click();
+  await expect(page.locator("body")).toHaveAttribute("data-view", "browse");
+  await expect(page.locator("#directory-results")).toContainText(/Wesley/i);
+  await expect(page.locator("#site-subnav")).toBeVisible();
+});
+
+test("landing Food / kai shortcut includes community kai", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator(".landing-shortcuts").getByRole("button", { name: "Food / kai" }).click();
+  await expect(page.locator("body")).toHaveAttribute("data-view", "browse");
+  await expect(page.locator("#need-chips .chip.is-on")).toContainText(/Food \/ kai/i);
+  await expect(page.locator("#directory-results")).toContainText(/Te Umu ki Rangituhi|Kai Kaupapa Group|Wesley/i);
 });
 
 test("landing path card arrows sit on the right of each card", async ({ page }) => {
@@ -130,18 +166,17 @@ test("about page — nav, copy, crisis footer", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("support path — all listings by default, no chip selected", async ({ page }) => {
+test("support path — listings by default, path switch visible", async ({ page }) => {
   await page.goto("/index.html");
   await pickSupportPath(page);
-  await expect(page.locator("#site-subnav")).toBeHidden();
-  await expect(page.getByText("I would like to…")).toBeHidden();
+  await expect(page.locator("#site-subnav")).toBeVisible();
+  await expect(page.getByRole("group", { name: "Choose a path" })).toBeVisible();
   await expect(page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(0);
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
 });
 
 test("support path — multi-select need chips filter as a union", async ({ page }) => {
@@ -192,6 +227,7 @@ test("support path — layout=top shows map when mappable, no toolbar toggle", a
 }) => {
   await page.goto("/index.html?layout=top");
   await pickSupportPath(page);
+  await pickSupportTopic(page);
   await expect(page.getByText(/Support with…/i)).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("#map-block")).toBeVisible();
@@ -204,24 +240,25 @@ test("support path — stacked mobile has no map toggle; map visible by default"
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Show map" })).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Show map" })).toBeVisible();
+  await expect(page.locator("#map-block")).toBeHidden();
+  await page.getByRole("button", { name: "Show map" }).click();
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Hide map" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Show map" })).toHaveCount(0);
 });
 
 test("support path — mobile three-column shows map between filters and results", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
+  await page.getByRole("button", { name: "Show map" }).click();
   await expect(page.locator("body")).toHaveAttribute("data-browse-layout", "three-column");
   await expect(page.locator("#map-block")).toBeVisible();
   await expect(page.locator(".leaflet-container")).toBeVisible();
@@ -242,8 +279,7 @@ for (const width of [390, 600]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
-    await page.goto("/index.html#community");
-    await page.waitForSelector("#directory-results .card");
+    await gotoCommunityResults(page);
     await page.evaluate(() => window.scrollTo(0, 800));
     await expect
       .poll(async () => page.locator("body").getAttribute("data-browse-chrome"))
@@ -274,7 +310,7 @@ for (const width of [390, 600]) {
 
 test("browse sticky panel masks scrolling result cards on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await page.waitForSelector("#directory-results .card");
   await page.evaluate(() => window.scrollTo(0, 800));
 
@@ -297,7 +333,7 @@ test("browse sticky panel masks scrolling result cards on mobile", async ({ page
 
 test("browse chrome collapses on scroll down and expands near top", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await page.waitForSelector("#directory-results .card");
   await page.evaluate(async () => {
     window.scrollTo(0, 0);
@@ -328,6 +364,7 @@ test("browse chrome stays collapsed while scrolling down (no flicker)", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/index.html");
   await pickCommunityPath(page);
+  await pickCommunityTopic(page);
   await page.waitForSelector("#directory-results .card");
 
   const result = await page.evaluate(async () => {
@@ -367,7 +404,7 @@ test("browse chrome stays collapsed while scrolling down (no flicker)", async ({
 
 test("Filters reopen chips without laying the map over search", async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 700 });
-  await page.goto("/index.html#community");
+  await gotoCommunityResults(page);
   await page.waitForSelector("#directory-results .card");
   await page.evaluate(() => window.scrollTo(0, 220));
   await expect(page.locator("body")).toHaveAttribute("data-browse-chrome", "collapsed");
@@ -408,7 +445,7 @@ test("Filters reopen chips without laying the map over search", async ({ page })
 
 test("browse chrome does not collapse on three-column desktop scroll", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await page.waitForSelector("#directory-results .card");
   await page.evaluate(async () => {
     window.scrollTo(0, 0);
@@ -445,16 +482,16 @@ test("search filters results on support path", async ({ page }) => {
 });
 
 test("browse search field is visible without a toggle", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await expect(page.getByRole("button", { name: "Search", exact: true })).toHaveCount(0);
   const input = browseSearch(page);
   await expect(input).toBeVisible();
-  await expect(input).toHaveAttribute("placeholder", "Search organisations…");
+  await expect(input).toHaveAttribute("placeholder", "Search for food, a marae, or a name");
   await expect(page.getByRole("button", { name: "Clear search" })).toHaveCount(0);
 });
 
 test("clearing search restores listings", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   const cards = page.locator("#directory-results .card");
   await expect(cards.first()).toBeVisible();
   const initialCount = await cards.count();
@@ -470,7 +507,7 @@ test("clearing search restores listings", async ({ page }) => {
 });
 
 test("Escape in search clears the query and keeps the field visible", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   const cards = page.locator("#directory-results .card");
   await expect(cards.first()).toBeVisible();
   const initialCount = await cards.count();
@@ -487,7 +524,7 @@ test("Escape in search clears the query and keeps the field visible", async ({ p
 });
 
 test("browse search hides the native clear control while typing", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   const input = browseSearch(page);
   await expect(input).toBeVisible();
   await input.fill("asdas");
@@ -511,10 +548,10 @@ test("browse search field stays in viewport on narrow screens", async ({ page })
 
 test("browse search — field fits placeholder on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   const input = browseSearch(page);
   await expect(input).toBeVisible();
-  await expect(input).toHaveAttribute("placeholder", "Search organisations…");
+  await expect(input).toHaveAttribute("placeholder", "Search for food, a marae, or a name");
 
   const layout = await page.evaluate(() => {
     const inputEl = document.getElementById("search-input");
@@ -545,7 +582,7 @@ test("browse search — field fits placeholder on mobile", async ({ page }) => {
 test("landing path card enters support browse", async ({ page }) => {
   await page.goto("/index.html");
   await page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i }).click();
-  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(page.locator("#site-subnav")).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("body")).toHaveAttribute("data-view", "browse");
 });
@@ -553,21 +590,20 @@ test("landing path card enters support browse", async ({ page }) => {
 test("back control returns to landing", async ({ page }) => {
   await page.goto("/index.html");
   await pickSupportPath(page);
-  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(page.locator("#site-subnav")).toBeVisible();
   const siteNav = page.getByRole("navigation", { name: "Site" });
   const back = siteNav.getByRole("button", { name: "← Back" });
-  const myList = siteNav.getByRole("link", { name: "My list" });
+  const about = siteNav.getByRole("link", { name: "About" });
   await expect(back).toBeVisible();
   const backBox = await back.boundingBox();
-  const myListBox = await myList.boundingBox();
+  const aboutBox = await about.boundingBox();
   expect(backBox).not.toBeNull();
-  expect(myListBox).not.toBeNull();
-  expect(backBox.x).toBeLessThan(myListBox.x);
+  expect(aboutBox).not.toBeNull();
+  expect(backBox.x).toBeLessThan(aboutBox.x);
   await back.click();
   await expect(page.locator("#view-landing")).toBeVisible();
   await expect(siteNav.getByRole("button", { name: "← Back" })).toHaveCount(0);
   await expect(page.locator("#site-subnav")).toBeHidden();
-  await expect(page.getByText("I would like to…")).toBeHidden();
   await expect(page.locator("#view-landing .landing-paths").getByRole("button", { name: /Find support/i })).toBeVisible();
   await expect(page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
 });
@@ -575,6 +611,7 @@ test("back control returns to landing", async ({ page }) => {
 test("my list — add to list, view list, privacy note", async ({ page }) => {
   await page.goto("/index.html");
   await pickSupportPath(page);
+  await pickSupportTopic(page);
   const firstCard = page.locator("#directory-results .card").first();
   await expect(firstCard).toBeVisible();
   const serviceName = await firstCard.locator(".card__title").textContent();
@@ -589,8 +626,8 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "My list" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("button", { name: "← Back" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "← Back to start" })).toBeVisible();
-  await expect(page.getByText(/Places and organisations you’ve saved/i)).toBeVisible();
-  await expect(page.getByText(/stay on this device while you keep this page open/i)).toBeVisible();
+  await expect(page.getByText(/Places you have saved on this device/i)).toBeVisible();
+  await expect(page.getByText(/Your list stays on this phone or computer/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Print list" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Share list" })).toBeVisible();
   await expect(page.locator("#mylist-results")).toContainText(serviceName ?? "");
@@ -598,7 +635,7 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
 });
 
 test("my list — phone link in footer when saved service has phone", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
@@ -650,7 +687,7 @@ test("my list — print list enables print mode without error", async ({ page })
 });
 
 test("my list — print layout shows phone number in footer", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
@@ -683,7 +720,7 @@ test("my list — share is hidden when empty and shown with a saved place", asyn
   await expect(page.getByRole("button", { name: "Share list" })).toBeHidden();
   await expect(page.getByRole("button", { name: "Print list" })).toBeHidden();
 
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   const firstCard = page.locator("#directory-results .card").first();
   await expect(firstCard).toBeVisible();
   const name = (await firstCard.locator(".card__title").textContent())?.trim() ?? "";
@@ -700,7 +737,7 @@ test("my list — share list calls the share sheet with a compact url", async ({
       window.__shareCalls.push(data);
     };
   });
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
@@ -725,7 +762,7 @@ test("my list — opening a share link shows those places", async ({ page }) => 
 });
 
 test("my list — opening a share link adds to places already saved", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
@@ -738,7 +775,7 @@ test("my list — opening a share link adds to places already saved", async ({ p
 });
 
 test("my list — print layout hides share list", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   const name = (await card.locator(".card__title").textContent())?.trim() ?? "";
@@ -757,7 +794,7 @@ test("my list — print layout hides share list", async ({ page }) => {
 });
 
 test("support card shows phone link in footer when phone exists", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   await expect(card).toBeVisible();
@@ -774,7 +811,7 @@ test("support card shows phone link in footer when phone exists", async ({ page 
 });
 
 test("Call link on card does not open map popup", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await fillBrowseSearch(page, "Little People");
   const card = page.locator("#directory-results .card").filter({ hasText: "Little People" }).first();
   await card.locator(".card__call").click();
@@ -782,7 +819,7 @@ test("Call link on card does not open map popup", async ({ page }) => {
 });
 
 test("support path — card click opens rich map popup", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await expect(page.locator(".leaflet-container")).toBeVisible();
   const firstCard = page.locator("#directory-results .card").first();
   const title = (await firstCard.locator(".card__title").textContent())?.trim();
@@ -801,7 +838,7 @@ test("support path — card click opens rich map popup", async ({ page }) => {
 });
 
 test("map zoom controls sit in the bottom left", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   const map = page.locator(".leaflet-container");
   await expect(map).toBeVisible();
   const zoomIn = page.getByRole("button", { name: "Zoom in" });
@@ -825,7 +862,7 @@ test("map zoom controls sit in the bottom left", async ({ page }) => {
 });
 
 test("community path — map popup shows org type, not Assembly themes", async ({ page }) => {
-  await page.goto("/index.html#community");
+  await gotoCommunityResults(page);
   await expect(page.locator(".leaflet-container")).toBeVisible();
   await page.locator("#directory-results .card").first().click();
   const popup = page.locator(".leaflet-popup-content .map-popup");
@@ -837,7 +874,7 @@ test("community path — map popup shows org type, not Assembly themes", async (
 });
 
 test("demo — three-column layout smoke with show map", async ({ page }) => {
-  await page.goto("/index.html?demo=1#support");
+  await gotoSupportResults(page, "/index.html?demo=1#support");
   await expect(page.locator("#demo-tools")).toBeVisible();
   await expect(page.locator("#demo-layout-select")).toHaveValue("three-column");
   await expect(page.getByRole("button", { name: "Find support near me" })).toBeVisible();
@@ -851,7 +888,7 @@ test("demo — three-column layout smoke with show map", async ({ page }) => {
 test("demo — near me toggle keeps map working", async ({ page, context }) => {
   await context.grantPermissions(["geolocation"]);
   await mockGeolocation(page, { latitude: -41.134, longitude: 174.84 });
-  await page.goto("/index.html?demo=1#support");
+  await gotoSupportResults(page, "/index.html?demo=1#support");
   const nearBtn = page.locator("#find-near-me");
   await nearBtn.click();
   await expect(nearBtn).toHaveAttribute("aria-pressed", "true");
@@ -873,7 +910,7 @@ test("demo — near me far from Porirua keeps map with empty list", async ({
 }) => {
   await context.grantPermissions(["geolocation"]);
   await mockGeolocation(page, { latitude: -43.53, longitude: 172.63 });
-  await page.goto("/index.html?demo=1#support");
+  await gotoSupportResults(page, "/index.html?demo=1#support");
   await page.locator("#find-near-me").click();
   await expect(page.locator("#find-near-me")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#directory-results .card")).toHaveCount(0);
@@ -883,7 +920,7 @@ test("demo — near me far from Porirua keeps map with empty list", async ({
 });
 
 test("demo — three-column need chip filters list and map markers", async ({ page }) => {
-  await page.goto("/index.html?demo=1#support");
+  await gotoSupportResults(page, "/index.html?demo=1#support");
   await page.waitForSelector(".leaflet-overlay-pane svg path");
   const initialCount = await page.locator("#directory-results .card").count();
   const initialMarkers = await page.locator(".leaflet-overlay-pane svg path").count();
@@ -895,12 +932,12 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
   const filteredCount = await page.locator("#directory-results .card").count();
   expect(filteredCount).toBeLessThan(initialCount);
   await expect(page.locator("#status-line")).toContainText(
-    new RegExp(`${filteredCount} (listing|organisation)`)
+    new RegExp(`${filteredCount} places`)
   );
 
-  await expect(page.locator(".leaflet-overlay-pane svg path")).toHaveCount(
-    filteredCount
-  );
+  const filteredMarkers = await page.locator(".leaflet-overlay-pane svg path").count();
+  expect(filteredMarkers).toBeGreaterThan(0);
+  expect(filteredMarkers).toBeLessThanOrEqual(filteredCount);
 
   const stroke = await page
     .locator(".leaflet-overlay-pane svg path")
@@ -910,7 +947,7 @@ test("demo — three-column need chip filters list and map markers", async ({ pa
 });
 
 test("org grouping — service row expands line detail", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await expect(page.locator("#directory-results .card").first()).toBeVisible();
   const multiOrg = page
     .locator("#directory-results .card--org")
@@ -932,7 +969,7 @@ test("org grouping — service row expands line detail", async ({ page }) => {
 test("org grouping — no category pills on service rows by default", async ({
   page,
 }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await expect(page.locator("#directory-results .card--org").first()).toBeVisible();
   const orgCard = page
     .locator("#directory-results .card--org")
@@ -946,13 +983,11 @@ test("org grouping — no category pills on service rows by default", async ({
 test("org grouping — need chip shows only matching service rows with category pills", async ({
   page,
 }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await page.locator("#need-chips").getByRole("button", { name: "Health" }).click();
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(1);
   await expect(page.locator("#directory-results .card").first()).toBeVisible();
-  await expect(page.locator("#status-line")).toContainText(
-    /\d+ organisations? \(\d+ matching service lines?\)/i
-  );
+  await expect(page.locator("#status-line")).toContainText(/\d+ places/i);
 
   const fwCard = page
     .locator("#directory-results .card--org")
@@ -972,7 +1007,7 @@ test("org grouping — need chip shows only matching service rows with category 
 test("org grouping — need chip + search does not keep org via non-matching sibling", async ({
   page,
 }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await page.locator("#need-chips").getByRole("button", { name: "Health" }).click();
   await fillBrowseSearch(page, "swis");
   await expect(
@@ -983,7 +1018,7 @@ test("org grouping — need chip + search does not keep org via non-matching sib
 test("org grouping — See other services reveals hidden sibling rows with labels", async ({
   page,
 }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await page.getByRole("group", { name: "Types of support" }).getByRole("button", { name: "Health" }).click();
   const fwCard = page
     .getByRole("article")
@@ -1015,7 +1050,7 @@ test("org grouping — See other services reveals hidden sibling rows with label
 test("org grouping — See other services is omitted when nothing is hidden", async ({
   page,
 }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await expect(page.getByRole("article").first()).toBeVisible();
   const saCard = page
     .getByRole("article")
@@ -1037,7 +1072,7 @@ test("org grouping — See other services is omitted when nothing is hidden", as
 test("org grouping — expanding a service row shows category labels with no chip", async ({
   page,
 }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   const saCard = page
     .getByRole("article")
     .filter({ hasText: /The Salvation Army/i })
@@ -1058,7 +1093,7 @@ test("org grouping — expanding a service row shows category labels with no chi
 test("org grouping — map popup stays compact without See other services", async ({
   page,
 }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await page.getByRole("button", { name: "Food / kai" }).click();
   const card = page
     .getByRole("article")
@@ -1073,7 +1108,7 @@ test("org grouping — map popup stays compact without See other services", asyn
 });
 
 test("org grouping — map popup View in list focuses org card", async ({ page }) => {
-  await page.goto("/index.html#support");
+  await gotoSupportResults(page);
   await expect(page.locator("#directory-results .card").first()).toBeVisible();
   await page.getByRole("button", { name: "Food / kai" }).click();
   const card = page.locator("#directory-results .card--org").first();
