@@ -1,0 +1,82 @@
+# Local Directus + catalog Postgres for this worktree only.
+# Do not use docker-compose.test.yml (host port 54329) — that file is shared
+# with the catalog API task and will collide or truncate tables mid-test.
+#
+#   docker compose -p porirua-directus -f docker-compose.directus.yml up -d --wait
+#   export DATABASE_URL=postgres://porirua:porirua@127.0.0.1:54341/porirua_directus
+name: porirua-directus
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: porirua
+      POSTGRES_PASSWORD: porirua
+      POSTGRES_DB: porirua_directus
+    ports:
+      - "54341:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ./scripts/db-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./directus/pending-review.sql:/docker-entrypoint-initdb.d/02-pending-review.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U porirua -d porirua_directus"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  operations:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+      - operations_node_modules:/app/node_modules
+    environment:
+      DATABASE_URL: postgres://porirua:porirua@postgres:5432/porirua_directus
+      CATALOG_PUBLIC_URL: https://directory.bsky.nz/api/catalog
+      CATALOG_SKIP_PURGE: "1"
+      OPERATIONS_PORT: "8790"
+    command: ["sh", "-c", "npm ci --omit=dev && node directus/operations/server.mjs"]
+    ports:
+      - "18790:8790"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  directus:
+    build:
+      context: .
+      dockerfile: Dockerfile.directus
+    image: porirua-directory-directus:local
+    ports:
+      - "18055:8055"
+    environment:
+      SECRET: directus-local-secret
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: admin-local
+      # Editor is created by `npm run directus:bootstrap`. Tests targeting
+      # this stack ignore live-dev ADMIN_* / EDITOR_* from the shell.
+      EDITOR_EMAIL: editor@example.com
+      EDITOR_PASSWORD: editor-local
+      DB_CLIENT: pg
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: porirua_directus
+      DB_USER: porirua
+      DB_PASSWORD: porirua
+      WEBSOCKETS_ENABLED: "false"
+      PUBLIC_URL: http://127.0.0.1:18055
+      OPERATIONS_URL: http://operations:8790
+      CATALOG_PUBLISHER: payload
+      FLOWS_ENV_ALLOW_LIST: OPERATIONS_URL,CATALOG_PUBLISHER
+      CONTENT_SECURITY_POLICY_DIRECTIVES__IMG_SRC: "array:'self',data:,blob:,https://raw.githubusercontent.com,https://avatars.githubusercontent.com,https://*.tile.openstreetmap.org,https://tile.openstreetmap.org,https://*.basemaps.cartocdn.com"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      operations:
+        condition: service_started
+    volumes:
+      - ./directus/flows:/directus/flows:ro
+
+volumes:
+  operations_node_modules:

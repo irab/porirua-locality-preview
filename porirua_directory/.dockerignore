@@ -1,4 +1,11 @@
 node_modules
+directus/extensions/directory-editor/node_modules
+directus/extensions/directory-editor/dist
+# Only root-level names match, so nested build output needs naming. A host
+# .next or node_modules copied in here overwrites what the image just built
+# for linux, which serves a stale bundle or a macOS binary.
+payload/node_modules
+payload/.next
 data/fsd-porirua.raw.json
 tests
 e2e

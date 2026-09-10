@@ -1,0 +1,28 @@
+{
+  "name": "Failure notification",
+  "icon": "error",
+  "color": "#B42318",
+  "description": "In-app notice when sticky curation, publish, rollback, or a review action fails.",
+  "status": "active",
+  "accountability": "all",
+  "trigger": "webhook",
+  "options": {
+    "method": "POST"
+  },
+  "operation": "notify_editors",
+  "operations": [
+    {
+      "identifier": "notify_editors",
+      "name": "Notify administrators",
+      "key": "notify_editors",
+      "type": "notification",
+      "position_x": 19,
+      "position_y": 17,
+      "options": {
+        "recipient": ["{{$accountability.user}}"],
+        "subject": "Directory automation failed: {{$trigger.body.flow}}",
+        "message": "{{$trigger.body.error}}"
+      }
+    }
+  ]
+}

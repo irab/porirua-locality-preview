@@ -1,0 +1,2872 @@
+version: 1
+directus: 11.9.3
+vendor: postgres
+collections:
+  -
+    collection: catalog_snapshots
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: catalog_snapshots
+      color: null
+      display_template: "v{{version}}"
+      group: null
+      hidden: false
+      icon: history
+      item_duplication_fields: null
+      note: Published envelopes. Use Publish directory / Roll back — do not edit rows by hand.
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: catalog_snapshots
+  -
+    collection: import_runs
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: import_runs
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: sync
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: import_runs
+  -
+    collection: organizations
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: status
+      archive_value: hidden
+      collapse: open
+      collection: organizations
+      color: null
+      display_template: "{{name}}"
+      group: null
+      hidden: false
+      icon: apartment
+      item_duplication_fields: null
+      note: Providers. public_id and render_grain decide the public URL and org-card vs flat listing.
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: sort_key
+      translations: null
+      unarchive_value: published
+      versioning: false
+    schema:
+      name: organizations
+  -
+    collection: overrides
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: overrides
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: edit_note
+      item_duplication_fields: null
+      note: Written by Flows. Editors never see or type patch JSON.
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: overrides
+  -
+    collection: public_id_aliases
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: public_id_aliases
+      color: null
+      display_template: null
+      group: null
+      hidden: true
+      icon: alternate_email
+      item_duplication_fields: null
+      note: Admin grain / public_id changes only.
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: public_id_aliases
+  -
+    collection: review_queue_items
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: review_queue_items
+      color: null
+      display_template: "{{kind}} — {{change_summary}}"
+      group: null
+      hidden: false
+      icon: rate_review
+      item_duplication_fields: null
+      note: Editor inbox. Pending FSD changes. Approve, hide, or reject — then Publish directory.
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: review_queue_items
+  -
+    collection: services
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: status
+      archive_value: hidden
+      collapse: open
+      collection: services
+      color: null
+      display_template: "{{title}}"
+      group: null
+      hidden: false
+      icon: handshake
+      item_duplication_fields: null
+      note: Service lines. FSD saves write an overrides patch behind the editor.
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: published
+      versioning: false
+    schema:
+      name: services
+fields:
+  -
+    collection: catalog_snapshots
+    field: version
+    type: bigInteger
+    meta: null
+    schema:
+      name: version
+      table: catalog_snapshots
+      data_type: bigint
+      default_value: "nextval('catalog_snapshots_version_seq'::regclass)"
+      max_length: null
+      numeric_precision: 64
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: catalog_snapshots
+    field: envelope
+    type: json
+    meta: null
+    schema:
+      name: envelope
+      table: catalog_snapshots
+      data_type: jsonb
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: catalog_snapshots
+    field: counts
+    type: json
+    meta: null
+    schema:
+      name: counts
+      table: catalog_snapshots
+      data_type: jsonb
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: catalog_snapshots
+    field: generated_at
+    type: timestamp
+    meta: null
+    schema:
+      name: generated_at
+      table: catalog_snapshots
+      data_type: timestamp with time zone
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: catalog_snapshots
+    field: published_by
+    type: text
+    meta: null
+    schema:
+      name: published_by
+      table: catalog_snapshots
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: catalog_snapshots
+    field: is_current
+    type: boolean
+    meta: null
+    schema:
+      name: is_current
+      table: catalog_snapshots
+      data_type: boolean
+      default_value: false
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: id
+    type: uuid
+    meta: null
+    schema:
+      name: id
+      table: import_runs
+      data_type: uuid
+      default_value: gen_random_uuid()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: source
+    type: text
+    meta: null
+    schema:
+      name: source
+      table: import_runs
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: status
+    type: text
+    meta: null
+    schema:
+      name: status
+      table: import_runs
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: fsd_csv_url
+    type: text
+    meta: null
+    schema:
+      name: fsd_csv_url
+      table: import_runs
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: started_at
+    type: timestamp
+    meta: null
+    schema:
+      name: started_at
+      table: import_runs
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: finished_at
+    type: timestamp
+    meta: null
+    schema:
+      name: finished_at
+      table: import_runs
+      data_type: timestamp with time zone
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: error_message
+    type: text
+    meta: null
+    schema:
+      name: error_message
+      table: import_runs
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: stats
+    type: json
+    meta: null
+    schema:
+      name: stats
+      table: import_runs
+      data_type: jsonb
+      default_value: {}
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: import_runs
+    field: notes
+    type: text
+    meta: null
+    schema:
+      name: notes
+      table: import_runs
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: status
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: labels
+      display_options: null
+      field: status
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: Status is prominent. Changing it does not go public until Publish directory runs.
+      options:
+        choices:
+          -
+            text: Draft
+            value: draft
+          -
+            text: Published
+            value: published
+          -
+            text: Hidden
+            value: hidden
+      readonly: false
+      required: true
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: status
+      table: organizations
+      data_type: text
+      default_value: published
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: public_id
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: public_id
+      group: null
+      hidden: false
+      interface: input
+      note: Public URL id. Read-only for Editors. Changing it breaks saved My list entries unless an alias is written.
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: public_id
+      table: organizations
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: render_grain
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: render_grain
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: Admin only. 44 of 76 org cards have one line — flipping grain changes the public id.
+      options:
+        choices:
+          -
+            text: Flat listing
+            value: flat
+          -
+            text: Organisation card
+            value: organization
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: render_grain
+      table: organizations
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: name
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: name
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: description
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: description
+      group: null
+      hidden: false
+      interface: input-multiline
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: description
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: cluster_key
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: cluster_key
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: cluster_key
+      table: organizations
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: sort_key
+    type: integer
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: sort_key
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: sort_key
+      table: organizations
+      data_type: integer
+      default_value: 0
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: merged_into
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: merged_into
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: merged_into
+      table: organizations
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: organizations
+      foreign_key_column: id
+  -
+    collection: organizations
+    field: merge_reason
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: merge_reason
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: merge_reason
+      table: organizations
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: duplicate_of
+    type: text
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: duplicate_of
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: duplicate_of
+      table: organizations
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: organizations
+      foreign_key_column: id
+  -
+    collection: organizations
+    field: created_at
+    type: timestamp
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: created_at
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: created_at
+      table: organizations
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: updated_at
+    type: timestamp
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: updated_at
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: updated_at
+      table: organizations
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: published_at
+    type: timestamp
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: published_at
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: published_at
+      table: organizations
+      data_type: timestamp with time zone
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: community_meta
+    type: json
+    meta:
+      collection: organizations
+      conditions: null
+      display: null
+      display_options: null
+      field: community_meta
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: community_meta
+      table: organizations
+      data_type: jsonb
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: service_lines
+    type: alias
+    meta:
+      collection: organizations
+      conditions: null
+      display: related-values
+      display_options:
+        template: "{{title}}"
+      field: service_lines
+      group: null
+      hidden: false
+      interface: list-o2m
+      note: Related service lines. Open a line to edit it. Editors cannot re-parent from this form.
+      options:
+        template: "{{title}}"
+      readonly: true
+      required: false
+      sort: 30
+      special:
+        - o2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+  -
+    collection: organizations
+    field: id
+    type: text
+    meta: null
+    schema:
+      name: id
+      table: organizations
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: phone
+    type: text
+    meta: null
+    schema:
+      name: phone
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: url
+    type: text
+    meta: null
+    schema:
+      name: url
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: email
+    type: text
+    meta: null
+    schema:
+      name: email
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: address
+    type: text
+    meta: null
+    schema:
+      name: address
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: lat
+    type: integer
+    meta: null
+    schema:
+      name: lat
+      table: organizations
+      data_type: numeric
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: lng
+    type: integer
+    meta: null
+    schema:
+      name: lng
+      table: organizations
+      data_type: numeric
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: org_type
+    type: text
+    meta: null
+    schema:
+      name: org_type
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: community_filters
+    type: json
+    meta: null
+    schema:
+      name: community_filters
+      table: organizations
+      data_type: jsonb
+      default_value: []
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: organizations
+    field: source_primary
+    type: text
+    meta: null
+    schema:
+      name: source_primary
+      table: organizations
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: id
+    type: text
+    meta: null
+    schema:
+      name: id
+      table: overrides
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: target_type
+    type: text
+    meta: null
+    schema:
+      name: target_type
+      table: overrides
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: target_id
+    type: text
+    meta: null
+    schema:
+      name: target_id
+      table: overrides
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: action
+    type: text
+    meta: null
+    schema:
+      name: action
+      table: overrides
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: patch
+    type: json
+    meta: null
+    schema:
+      name: patch
+      table: overrides
+      data_type: jsonb
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: reason
+    type: text
+    meta: null
+    schema:
+      name: reason
+      table: overrides
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: status
+    type: text
+    meta: null
+    schema:
+      name: status
+      table: overrides
+      data_type: text
+      default_value: open
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: created_by
+    type: text
+    meta: null
+    schema:
+      name: created_by
+      table: overrides
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: overrides
+    field: created_at
+    type: timestamp
+    meta: null
+    schema:
+      name: created_at
+      table: overrides
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: public_id_aliases
+    field: old_public_id
+    type: text
+    meta: null
+    schema:
+      name: old_public_id
+      table: public_id_aliases
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: public_id_aliases
+    field: new_public_id
+    type: text
+    meta: null
+    schema:
+      name: new_public_id
+      table: public_id_aliases
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: public_id_aliases
+    field: entity_type
+    type: text
+    meta: null
+    schema:
+      name: entity_type
+      table: public_id_aliases
+      data_type: text
+      default_value: organization
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: public_id_aliases
+    field: created_at
+    type: timestamp
+    meta: null
+    schema:
+      name: created_at
+      table: public_id_aliases
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: id
+    type: uuid
+    meta: null
+    schema:
+      name: id
+      table: review_queue_items
+      data_type: uuid
+      default_value: gen_random_uuid()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: import_run_id
+    type: uuid
+    meta: null
+    schema:
+      name: import_run_id
+      table: review_queue_items
+      data_type: uuid
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: import_runs
+      foreign_key_column: id
+  -
+    collection: review_queue_items
+    field: entity_type
+    type: text
+    meta: null
+    schema:
+      name: entity_type
+      table: review_queue_items
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: entity_id
+    type: text
+    meta: null
+    schema:
+      name: entity_id
+      table: review_queue_items
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: kind
+    type: text
+    meta: null
+    schema:
+      name: kind
+      table: review_queue_items
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: proposed
+    type: json
+    meta: null
+    schema:
+      name: proposed
+      table: review_queue_items
+      data_type: jsonb
+      default_value: {}
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: status
+    type: text
+    meta: null
+    schema:
+      name: status
+      table: review_queue_items
+      data_type: text
+      default_value: pending
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: created_at
+    type: timestamp
+    meta: null
+    schema:
+      name: created_at
+      table: review_queue_items
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: review_queue_items
+    field: updated_at
+    type: timestamp
+    meta: null
+    schema:
+      name: updated_at
+      table: review_queue_items
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: status
+    type: text
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: status
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: null
+      options:
+        choices:
+          -
+            text: Draft
+            value: draft
+          -
+            text: Published
+            value: published
+          -
+            text: Hidden
+            value: hidden
+          -
+            text: Pending review
+            value: pending_review
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: status
+      table: services
+      data_type: text
+      default_value: published
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: sort_key
+    type: integer
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: sort_key
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: sort_key
+      table: services
+      data_type: integer
+      default_value: 0
+      max_length: null
+      numeric_precision: 32
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: duplicate_of
+    type: text
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: duplicate_of
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: duplicate_of
+      table: services
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: services
+      foreign_key_column: id
+  -
+    collection: services
+    field: raw_import
+    type: json
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: raw_import
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: raw_import
+      table: services
+      data_type: jsonb
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: created_at
+    type: timestamp
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: created_at
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: created_at
+      table: services
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: updated_at
+    type: timestamp
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: updated_at
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: updated_at
+      table: services
+      data_type: timestamp with time zone
+      default_value: now()
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: fsd_legacy_id
+    type: text
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: fsd_legacy_id
+      group: null
+      hidden: true
+      interface: null
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: fsd_legacy_id
+      table: services
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: organization_id
+    type: text
+    meta:
+      collection: services
+      conditions: null
+      display: null
+      display_options: null
+      field: organization_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Parent organisation. Open it to edit related lines together.
+      options:
+        template: "{{name}}"
+      readonly: false
+      required: false
+      sort: null
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: organization_id
+      table: services
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: organizations
+      foreign_key_column: id
+  -
+    collection: services
+    field: id
+    type: text
+    meta: null
+    schema:
+      name: id
+      table: services
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: line_id
+    type: text
+    meta: null
+    schema:
+      name: line_id
+      table: services
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: title
+    type: text
+    meta: null
+    schema:
+      name: title
+      table: services
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: service_name
+    type: text
+    meta: null
+    schema:
+      name: service_name
+      table: services
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: description
+    type: text
+    meta: null
+    schema:
+      name: description
+      table: services
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: phone
+    type: text
+    meta: null
+    schema:
+      name: phone
+      table: services
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: url
+    type: text
+    meta: null
+    schema:
+      name: url
+      table: services
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: address
+    type: text
+    meta: null
+    schema:
+      name: address
+      table: services
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: lat
+    type: integer
+    meta: null
+    schema:
+      name: lat
+      table: services
+      data_type: numeric
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: lng
+    type: integer
+    meta: null
+    schema:
+      name: lng
+      table: services
+      data_type: numeric
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: categories
+    type: json
+    meta: null
+    schema:
+      name: categories
+      table: services
+      data_type: jsonb
+      default_value: []
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: badges
+    type: json
+    meta: null
+    schema:
+      name: badges
+      table: services
+      data_type: jsonb
+      default_value: []
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: source
+    type: text
+    meta: null
+    schema:
+      name: source
+      table: services
+      data_type: text
+      default_value: ""
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  -
+    collection: services
+    field: fsd_service_id
+    type: text
+    meta: null
+    schema:
+      name: fsd_service_id
+      table: services
+      data_type: text
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+relations:
+  -
+    collection: organizations
+    field: duplicate_of
+    related_collection: organizations
+    meta: null
+    schema:
+      table: organizations
+      column: duplicate_of
+      foreign_key_table: organizations
+      foreign_key_column: id
+      constraint_name: organizations_duplicate_of_fkey
+      on_update: NO ACTION
+      on_delete: NO ACTION
+  -
+    collection: organizations
+    field: merged_into
+    related_collection: organizations
+    meta: null
+    schema:
+      table: organizations
+      column: merged_into
+      foreign_key_table: organizations
+      foreign_key_column: id
+      constraint_name: organizations_merged_into_fkey
+      on_update: NO ACTION
+      on_delete: NO ACTION
+  -
+    collection: review_queue_items
+    field: import_run_id
+    related_collection: import_runs
+    meta: null
+    schema:
+      table: review_queue_items
+      column: import_run_id
+      foreign_key_table: import_runs
+      foreign_key_column: id
+      constraint_name: review_queue_items_import_run_id_fkey
+      on_update: NO ACTION
+      on_delete: NO ACTION
+  -
+    collection: services
+    field: organization_id
+    related_collection: organizations
+    meta:
+      junction_field: null
+      many_collection: services
+      many_field: organization_id
+      one_allowed_collections: null
+      one_collection: organizations
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: service_lines
+      sort_field: sort_key
+    schema:
+      table: services
+      column: organization_id
+      foreign_key_table: organizations
+      foreign_key_column: id
+      constraint_name: services_organization_id_fkey
+      on_update: NO ACTION
+      on_delete: NO ACTION
+  -
+    collection: services
+    field: duplicate_of
+    related_collection: services
+    meta: null
+    schema:
+      table: services
+      column: duplicate_of
+      foreign_key_table: services
+      foreign_key_column: id
+      constraint_name: services_duplicate_of_fkey
+      on_update: NO ACTION
+      on_delete: NO ACTION
+roles:
+  -
+    name: Editor
+    icon: edit
+    description: Locality editors. Cannot change public_id or render_grain.
+  -
+    name: Administrator
+    icon: verified
+    description: "$t:admin_description"
+policies:
+  -
+    name: Administrator
+    icon: verified
+    description: "$t:admin_description"
+    app_access: true
+    admin_access: true
+  -
+    name: "$t:public_label"
+    icon: public
+    description: "$t:public_description"
+    app_access: false
+    admin_access: false
+  -
+    name: Editor
+    icon: edit
+    description: App access without admin. public_id and render_grain are omitted from update fields.
+    app_access: true
+    admin_access: false
+permissions:
+  -
+    collection: organizations
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: organizations
+    action: update
+    fields:
+      - name
+      - description
+      - phone
+      - url
+      - email
+      - address
+      - lat
+      - lng
+      - org_type
+      - community_filters
+      - status
+      - source_primary
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: services
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: services
+    action: update
+    fields:
+      - title
+      - service_name
+      - description
+      - phone
+      - url
+      - address
+      - lat
+      - lng
+      - categories
+      - badges
+      - status
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: review_queue_items
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: catalog_snapshots
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: directus_files
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: directus_flows
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: b0b7aad5-e707-4a0b-b564-496c35039518
+  -
+    collection: directus_collections
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_fields
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_relations
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_translations
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_activity
+    action: read
+    fields:
+      - "*"
+    permissions:
+      user:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_comments
+    action: read
+    fields:
+      - "*"
+    permissions:
+      user_created:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_comments
+    action: create
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_comments
+    action: update
+    fields:
+      - comment
+    permissions:
+      user_created:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_comments
+    action: delete
+    fields:
+      - "*"
+    permissions:
+      user_created:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_presets
+    action: read
+    fields:
+      - "*"
+    permissions:
+      _or:
+        -
+          user:
+            _eq: $CURRENT_USER
+        -
+          _and:
+            -
+              user:
+                _null: true
+            -
+              role:
+                _eq: $CURRENT_ROLE
+        -
+          _and:
+            -
+              user:
+                _null: true
+            -
+              role:
+                _null: true
+    policy: null
+  -
+    collection: directus_presets
+    action: create
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_presets
+    action: update
+    fields:
+      - "*"
+    permissions:
+      user:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_presets
+    action: delete
+    fields:
+      - "*"
+    permissions:
+      user:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_roles
+    action: read
+    fields:
+      - "*"
+    permissions:
+      id:
+        _in: $CURRENT_ROLES
+    policy: null
+  -
+    collection: directus_settings
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_translations
+    action: read
+    fields:
+      - "*"
+    permissions: {}
+    policy: null
+  -
+    collection: directus_notifications
+    action: read
+    fields:
+      - "*"
+    permissions:
+      recipient:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_notifications
+    action: update
+    fields:
+      - status
+    permissions:
+      recipient:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_shares
+    action: read
+    fields:
+      - "*"
+    permissions:
+      user_created:
+        _eq: $CURRENT_USER
+    policy: null
+  -
+    collection: directus_users
+    action: read
+    fields:
+      - id
+      - first_name
+      - last_name
+      - last_page
+      - email
+      - password
+      - location
+      - title
+      - description
+      - tags
+      - preferences_divider
+      - avatar
+      - language
+      - appearance
+      - theme_light
+      - theme_dark
+      - tfa_secret
+      - status
+      - role
+    permissions:
+      id:
+        _eq: $CURRENT_USER
+    policy: null
+presets:
+  -
+    bookmark: Organizations
+    collection: organizations
+    layout: tabular
+    layout_query:
+      tabular:
+        fields:
+          - name
+          - status
+          - render_grain
+          - public_id
+          - source_primary
+          - service_lines
+    filter: null
+  -
+    bookmark: Review queue
+    collection: review_queue_items
+    layout: tabular
+    layout_query:
+      tabular:
+        fields:
+          - kind
+          - entity_id
+          - change_summary
+          - created_at
+        sort:
+          - created_at
+    filter:
+      status:
+        _eq: pending

@@ -1,0 +1,454 @@
+.directory-home {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem;
+  color: #2a2f3d;
+}
+
+.directory-home h1 {
+  margin: 0 0 1rem;
+  font-size: 1.75rem;
+}
+
+.status-band {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.status-band .band {
+  border: 1px solid #c5c9d4;
+  background: #fff;
+  color: #2a2f3d;
+  padding: 0.6rem 0.9rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.status-band .band.zero,
+.status-band .band:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.status-band-meta {
+  flex-basis: 100%;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.status-band .band-confirm {
+  justify-self: start;
+  font-weight: 700;
+}
+
+.directory-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid #c5c9d4;
+  margin-bottom: 1rem;
+}
+
+.directory-tabs button {
+  border: 0;
+  background: none;
+  font: inherit;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  color: #2a2f3d;
+}
+
+.directory-tabs button.active {
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 currentColor;
+}
+
+.directory-panel {
+  min-height: 8rem;
+}
+
+.directory-hint {
+  color: #2a2f3d;
+}
+
+/* Namespaced: a bare .verify collides with Payload's verify-email view, which
+   sets min-height: 100vh and centres its text. */
+.directory-verify {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: stretch;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.directory-verify-link {
+  color: #1d4f91;
+}
+
+.directory-verify-address {
+  margin: 0;
+  width: 100%;
+}
+
+.directory-verify-note {
+  display: block;
+  font-weight: 600;
+}
+
+.pin-map {
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 100%;
+}
+
+.pin-map-canvas {
+  width: 100%;
+  height: 160px;
+  min-height: 160px;
+  border-radius: 8px;
+  z-index: 1;
+  background: #ddd;
+}
+
+.pin-map.compare .pin-map-canvas {
+  height: 200px;
+  min-height: 200px;
+}
+
+/* The admin caps image widths, which would shrink tiles into grey gaps. */
+.pin-map-canvas.leaflet-container img.leaflet-tile {
+  max-width: none;
+  max-height: none;
+}
+
+.pin-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #2a2f3d;
+}
+
+.directory-pin {
+  background: transparent;
+  border: 0;
+  text-align: center;
+}
+
+.directory-pin-caption {
+  display: block;
+  font: 600 11px/1.2 system-ui, sans-serif;
+  color: #172940;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff;
+}
+
+.directory-pin-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 2px auto 0;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #6644ff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.directory-pin-now .directory-pin-dot {
+  background: #fff;
+  border: 3px solid #172940;
+  box-sizing: border-box;
+}
+
+.listing-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.listing-form label,
+.listing-form fieldset {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.listing-form fieldset {
+  border: 0;
+  padding: 0;
+}
+
+.listing-form input,
+.listing-form textarea {
+  padding: 0.5rem;
+  font: inherit;
+}
+
+.listing-form .marked {
+  box-shadow: inset 4px 0 0 currentColor;
+  padding-left: 0.65rem;
+}
+
+.listing-form .mark {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.listing-form .check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.listing-form .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.listing-form .error {
+  color: #8b1e1e;
+}
+
+.listing-form .matches {
+  background: #f4f5f8;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.listing-form .matches .not-on-site {
+  border-left: 4px dashed #8b909c;
+  padding-left: 0.65rem;
+}
+
+.search {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 26rem;
+  font-weight: 600;
+}
+
+.search input {
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  font-weight: 400;
+}
+
+.check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.85rem 0;
+}
+
+.toolbar,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.85rem 0;
+}
+
+.results,
+.lines {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.result {
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #c5c9d4;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  display: grid;
+  gap: 0.2rem;
+  font: inherit;
+  color: inherit;
+}
+
+.result.not-on-site,
+.lines li.not-on-site {
+  background: #f4f5f8;
+  border: 1px dashed #8b909c;
+}
+
+.status-off {
+  font-weight: 700;
+}
+
+.lines li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #c5c9d4;
+  border-radius: 8px;
+}
+
+.back {
+  margin-bottom: 0.75rem;
+}
+
+.toast {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  background: #eef1f6;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  margin: 0 0 0.85rem;
+}
+
+.error {
+  color: #8b1e1e;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(42 47 61 / 0.35);
+  display: grid;
+  place-items: center;
+  z-index: 20;
+  padding: 1rem;
+}
+
+.dialog {
+  background: #fff;
+  max-width: 28rem;
+  width: 100%;
+  padding: 1.25rem;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dialog h2 {
+  margin: 0;
+}
+
+.skeleton-lines {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.skeleton {
+  height: 3.5rem;
+  background: #eef1f6;
+  border-radius: 8px;
+}
+
+.toast-undo {
+  font: inherit;
+  font-weight: 700;
+}
+
+.review-title,
+.review-panel .heading {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.review-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.review-card {
+  border: 1px solid #c5c9d4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.review-row {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.75rem 0.85rem;
+  display: grid;
+  gap: 0.2rem;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.review-row .kind,
+.recent .kind,
+.line-name {
+  font-size: 0.95rem;
+}
+
+.review-body {
+  padding: 0 0.85rem 0.85rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.diff {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.badge,
+.banner-note {
+  font-weight: 600;
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.review-actions button,
+.review-actions .decide,
+.review-actions .equal-action {
+  font: inherit;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid #c5c9d4;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.review-actions.equal button {
+  font-weight: 600;
+}
+
+.review-card.is-inert {
+  pointer-events: none;
+}
+
+.other-toggle {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #1d4f91;
+  cursor: pointer;
+  text-align: left;
+}
+
+.recent ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.recent li {
+  display: grid;
+  gap: 0.2rem;
+}

@@ -4,8 +4,9 @@ Self-contained app: public **Your Porirua Directory** (need categories, search, 
 
 **Data sources:**
 
-- [`../porirua_connections_map/`](../porirua_connections_map/) — community organisations (Google Sheet / CSV)
-- **NZ Family Services Directory** — imported via `npm run import:fsd`, filtered to Porirua
+- **Directory editor** — Payload on [admin-payload-directory-dev](https://admin-payload-directory-dev.bsky.nz) is the editor and the catalog publisher (`CATALOG_PUBLISHER=payload`). Directus is retired on directory-dev. See [editor one-pager](../docs/design/editor-guide.md).
+- **NZ Family Services Directory** — weekly sync into the review queue; editors never write those queue rows themselves.
+- [`../porirua_connections_map/`](../porirua_connections_map/) — Connections Map still uses the Google Sheet / CSV.
 
 **Docs:** [docs/README.md](../docs/README.md) · [Architecture](../docs/architecture/porirua-directory-architecture.md) · [Phase 1 spec](../docs/porirua-directory-phase1-spec.md) · [Runbook](../docs/MVP-RUNBOOK.md)
 
@@ -15,15 +16,29 @@ Self-contained app: public **Your Porirua Directory** (need categories, search, 
 npm install
 npm run build:data    # fetch FSD + merge with Connections Map → data/services.json
 npm run serve         # http://localhost:5173/index.html
-npm test              # unit tests (import/merge)
-npm run test:e2e      # Playwright (Chromium; see Browser testing below)
+npm test              # unit files in parallel, then shared Directus files one at a time. db-* skip without Postgres
+npm run test:db       # catalog schema/bootstrap/publish (needs npm run db:test:up)
+npm run directus:up   # local Directus on :18055 against Postgres :54341 (project porirua-directus, not 54329)
+npm run directus:down # stop and remove volumes (avoids a leftover admin user on the next up)
+npm run directus:reset
+npm run directus:bootstrap
+npm run test:directus # same sequential Directus path `npm test` runs second
+npm run sync:fsd      # weekly FSD review-queue job (needs DATABASE_URL; never publishes)
+npm run test:sync     # collapse/diff/runner (needs npm run db:sync-test:up — port 54339)
+npm run test:e2e      # Playwright against a local static server (Chromium)
+npm run test:e2e:dev  # same public specs against https://directory-dev.bsky.nz (never production)
+npm run test:e2e:dev:publish  # Data Studio as Editor (needs DIRECTORY_DEV_SECRETS)
+npm run test:e2e:payload # Payload Directory as Editor (skips if :18100 and admin-payload-directory-dev are down)
+npm run start:api     # GET /api/catalog on :3000 (needs DATABASE_URL)
+npm run payload:up    # Payload admin on :18100 (own Postgres :54351). Point OPERATIONS_URL at the Directus sidecar :18790
+npm run payload:dev   # same app via Next, after `cd payload && npm install` and a local DATABASE_URL
 ```
 
 ## Browser testing
 
 | Environment | Coverage |
 |-------------|----------|
-| **Chromium** | Automated: `npm run test:e2e` (scroll-collapse, sticky panel, layout order, filters/search). CI runs the same on every PR and on push to `main`. |
+| **Chromium** | Automated: `npm run test:e2e` (local static server, including catalog-fallback mocks, plus Payload Directory specs that skip if the admin host is down). Live public chain: `npm run test:e2e:dev`. Data Studio: `npm run test:e2e:dev:publish` with secrets. Payload admin: `npm run test:e2e:payload`. CI runs the local suite only. |
 | **Firefox / WebKit** | Not configured in `playwright.config.js` (Chromium only). Smoke-test scroll-collapse manually if you change browse chrome CSS/JS. |
 | **Android Chrome / iOS Safari** | **Manual** on a real device: open [https://directory.bsky.nz](https://directory.bsky.nz) → **Find support** → scroll the listing down/up and confirm filters/map collapse without visible tile flicker; tap **Show filters** to expand while mid-list (scrolling up should not reopen chips until the top). |
 
@@ -36,20 +51,28 @@ porirua_directory/
   index.html              # public MVP landing + browse
   about.html              # about this directory (shareable)
   config-directory.js     # crisis numbers + need categories
-  directory-data.js       # loads data/services.json
+  directory-data.js       # loads ./api/catalog, then data/services.json if the API is down
   directory.js            # UI logic
   group-services.mjs      # runtime FSD org clustering (Option B spike)
   directory.css
-  scripts/                # FSD import + merge (Node)
-  data/services.json      # generated publishable dataset (commit for deploy)
+  editor-core/            # shared editor DTOs, authorize, sidecar proxy (sidecar + Payload + weekly sync)
+  payload/                # Payload 3 Directory admin (auth gate, Listings, Review; no second listing model)
+  scripts/                # FSD import + merge + Phase 2 catalog (schema, bootstrap, publish, weekly sync)
+  directus/               # snapshot, Flows, operations sidecar (cluster-internal; no Ingress)
+  data/services.json      # baked snapshot shipped in the nginx image (offline fallback; not the live catalog)
   data/overrides.json     # manual hide/patch for FSD rows at merge time
   data/fsd-porirua.raw.json      # generated by import:fsd (gitignored; re-fetchable)
   data/fsd-porirua-excluded.json # geo filter audit (gitignored; see docs/fsd-porirua-filter-rationale.md)
   data/fsd-porirua-geocode-flags.json # suspicious coords on included FSD rows (gitignored; same doc)
-  tests/                  # node:test
+  tests/                  # node:test (including api-*.test.mjs)
   e2e/                    # Playwright
   infra/                  # nginx config for Docker
-  Dockerfile
+  api/                    # public catalog read service (node:http)
+  Dockerfile              # nginx static image
+  Dockerfile.api          # Node catalog API image
+  Dockerfile.sync         # weekly FSD worker
+  Dockerfile.operations   # Directus sidecar + bootstrap Jobs (ClusterIP only)
+  Dockerfile.payload      # Payload admin image (dev side-by-side host)
 ```
 
 ## Data pipeline (Milestone A — implemented)
@@ -74,7 +97,9 @@ Internal browse mode is `support` (not `help`); optional URL hash `#support`, `#
 
 **Target URL:** [https://directory.bsky.nz](https://directory.bsky.nz) (Cloudflare `bsky.nz` → blackbox prod tenant `porirua-directory`). See [MVP runbook](../docs/MVP-RUNBOOK.md) and `.github/workflows/directory.yml`.
 
-Commit **`data/services.json`** when publishing; **`data/fsd-porirua.raw.json`**, **`data/fsd-porirua-excluded.json`**, and **`data/fsd-porirua-geocode-flags.json`** are regenerated by `npm run import:fsd` and are gitignored.
+The live catalog is **`GET /api/catalog`**. An editor publish is visible on the site within about a minute (the API re-checks the current snapshot on a 30-second TTL). **`data/services.json`** is a **point-in-time copy** baked into the nginx image — refreshed when the image is rebuilt (nightly), not interchangeable with the live catalog. It is what keeps the directory up if Postgres or the API is down.
+
+Commit **`data/services.json`** when you intend to refresh that baked fallback; **`data/fsd-porirua.raw.json`**, **`data/fsd-porirua-excluded.json`**, and **`data/fsd-porirua-geocode-flags.json`** are regenerated by `npm run import:fsd` and are gitignored.
 
 ## Connections Map data
 
