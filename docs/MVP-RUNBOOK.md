@@ -347,7 +347,7 @@ Use this checklist when testing the MVP with help-seekers and the Porirua Locali
 | Browse entry | Is **Find support** vs **Connect with community** clear on landing (**I would like to…**)? |
 | Need categories | Are the nine support categories the right plain-language set? |
 | Community filters | Can people find marae, councils, and kai initiatives without schools crowding the view? |
-| Urgent help footer | Sticky bar labelled **Urgent help** readable on mobile; links work from landing, browse, and About? |
+| Urgent help footer | Sticky bar labelled **Urgent help** readable on mobile; links work from landing, browse, and About? On a phone in browse, expand the **Urgent help** control if the numbers have collapsed. |
 | Browse layout | **Back** to change path (subnav hidden); filters left, optional map, results — quick on a phone? |
 | Search & map | Can people find a known service (name or suburb) on a phone? |
 | Trust | Do community org descriptions and org-type chips feel local and accurate? |

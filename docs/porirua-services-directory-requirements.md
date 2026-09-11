@@ -1,7 +1,7 @@
 # Porirua Services Directory — Requirements
 
-**Version:** 1.21 (draft)  
-**Date:** 21 August 2026  
+**Version:** 1.23 (draft)  
+**Date:** 11 September 2026  
 **Prepared for:** Porirua Locality / Te Wāhi Tiaki Tātou  
 **Timeline:** ~5–6 weeks total (MVP first, then iteration)  
 **Budget:** **Phase 1 (MVP):** ~50 hours / NZ$5,000 · **Phase 2:** ~50 hours / NZ$5,000 · **Total:** ~100 hours / NZ$10,000
@@ -131,9 +131,9 @@ Community workers may share the link; the directory is **not** a referral or cas
 
 When someone opens the directory they should be able to:
 
-1. **Site navigation** — Porirua Locality (Te Wāhi Tiaki Tātou) logo; **Your Porirua Directory** as a **centered, prominent** title in the top bar (logo left, **My list** and **About** right). The path subnav (**I would like to…** / path buttons) is **not shown** on landing or browse — path choice lives in the main column only.
-2. **Choose a path** — welcome copy (**Where would you like to start?**) and two **path cards** in the main column (title + short blurb each); filters and results appear after a path is chosen; **Back** returns to landing (only way to change path).
-3. **Emergency and crisis numbers** — compact sticky footer on every page (landing, browse, and About).
+1. **Site navigation** — Porirua Locality (Te Wāhi Tiaki Tātou) logo; **Your Porirua Directory** as a **centered, prominent** title in the top bar on wider screens (logo left, **My list** and **About** right). On small screens the header is **one row** (compact logo + nav) so listings keep most of the viewport. The path subnav is **not shown** on landing. On stacked / phone browse the full-width header switch is hidden; a one-line **Looking at support · Show community** control (and the inverse) in the sticky search bar flips path and keeps search. On desktop three-column a header path switch remains.
+2. **Choose a path** — welcome copy (**Where would you like to start?**) and two **path cards** in the main column (title + short blurb each); filters and results appear after a path is chosen; **Back** returns to landing. On a phone, **Show community** / **Show support** switches lens without starting over.
+3. **Emergency and crisis numbers** — compact sticky footer on every page (landing, browse, and About). On a small-screen browse or My list, the bar **collapses after first paint** to an **Urgent help** control; the same numbers stay reachable when expanded.
 4. **Support categories** (Find support path) — plain language, for example:
    - Food / kai
    - Housing / a place to stay
@@ -527,6 +527,10 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 - [MVP implementation plan](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md)
 
 ---
+
+*Changes in v1.23: Stacked / phone browse — one-line **Looking at support · Show community** (and the inverse) in the sticky search bar flips path and **keeps search**, so the full-width header switch can stay hidden. Desktop header switch unchanged.*
+
+*Changes in v1.22: Phone chrome — one-row header (logo + nav; large stacked title hidden), hide the browse path switch on stacked viewports (**← Back** changes path), and auto-collapse **Urgent help** after first paint on small-screen browse / My list so listings are the majority of the viewport. Numbers stay reachable via the **Urgent help** control. Desktop path switch and landing/About visible numbers are unchanged.*
 
 *Changes in v1.21: Sticky footer label **Crisis** → **Urgent help** (plain language; same numbers).*
 
