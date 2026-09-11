@@ -1,7 +1,7 @@
 # Porirua Services Directory — Requirements
 
-**Version:** 1.23 (draft)  
-**Date:** 11 September 2026  
+**Version:** 1.24 (draft)  
+**Date:** 12 September 2026  
 **Prepared for:** Porirua Locality / Te Wāhi Tiaki Tātou  
 **Timeline:** ~5–6 weeks total (MVP first, then iteration)  
 **Budget:** **Phase 1 (MVP):** ~50 hours / NZ$5,000 · **Phase 2:** ~50 hours / NZ$5,000 · **Total:** ~100 hours / NZ$10,000
@@ -527,6 +527,8 @@ For a wider survey of comparable directories and toolkits, see [Human Services D
 - [MVP implementation plan](./superpowers/plans/2026-07-30-porirua-services-directory-mvp.md)
 
 ---
+
+*Changes in v1.24: Public landing and About no longer end their intro with **No login.** The directory is still browse-only with no account; that phrase is not shown as front-page copy.*
 
 *Changes in v1.23: Stacked / phone browse — one-line **Looking at support · Show community** (and the inverse) in the sticky search bar flips path and **keeps search**, so the full-width header switch can stay hidden. Desktop header switch unchanged.*
 
