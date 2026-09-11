@@ -144,7 +144,7 @@ function renderCrisis(container, emphasis) {
         `<a class="crisis__link" href="${esc(c.href)}" title="${esc(c.description)}">${esc(c.label)}</a>`
     )
     .join("");
-  container.innerHTML = `<div class="crisis__inner"><span class="crisis__label">Urgent help:</span>${links}</div>`;
+  container.innerHTML = `<div class="crisis__inner"><button type="button" class="crisis__toggle" aria-expanded="true" aria-controls="crisis-links" hidden>Urgent help<span class="crisis__toggle-chevron" aria-hidden="true"></span></button><div id="crisis-links" class="crisis__links"><span class="crisis__label">Urgent help:</span>${links}</div></div>`;
 }
 
 function renderChips(container, items, activeSet, attr) {
@@ -663,8 +663,14 @@ async function main() {
   const siteTopnav = document.querySelector(".site-topnav");
   const mapToggle = document.getElementById("map-toggle");
   const otherPathHint = document.getElementById("other-path-hint");
+  const browsePathFlip = document.getElementById("browse-path-flip");
   const landingSearchForm = document.getElementById("landing-search-form");
   const landingSearchInput = document.getElementById("landing-search-input");
+
+  const stackedBrowseMq = window.matchMedia("(max-width: 1023px)");
+  const crisisPhoneMq = window.matchMedia("(max-width: 480px)");
+  let crisisAutoCollapsed = false;
+  let crisisUserExpanded = false;
 
   function syncSiteTopnavStickyHeight() {
     if (!siteTopnav) return;
@@ -676,11 +682,97 @@ async function main() {
     );
   }
 
-  syncSiteTopnavStickyHeight();
-  if (typeof ResizeObserver !== "undefined" && siteTopnav) {
-    new ResizeObserver(syncSiteTopnavStickyHeight).observe(siteTopnav);
+  function syncCrisisStripHeight() {
+    if (!crisisEl) return;
+    const height = Math.ceil(crisisEl.getBoundingClientRect().height);
+    if (!height) return;
+    document.documentElement.style.setProperty(
+      "--crisis-strip-height",
+      `${height}px`
+    );
   }
-  document.fonts?.ready?.then(syncSiteTopnavStickyHeight);
+
+  function syncStickyChromeHeights() {
+    syncSiteTopnavStickyHeight();
+    syncCrisisStripHeight();
+  }
+
+  function crisisCanCollapse(view = document.body.dataset.view) {
+    return crisisPhoneMq.matches && (view === "browse" || view === "mylist");
+  }
+
+  function applyCrisisStripState(view = document.body.dataset.view) {
+    if (!crisisEl) return;
+    const canCollapse = crisisCanCollapse(view);
+    const collapsed = canCollapse && crisisAutoCollapsed && !crisisUserExpanded;
+    if (canCollapse) {
+      document.body.dataset.crisisStrip = collapsed ? "collapsed" : "expanded";
+    } else {
+      delete document.body.dataset.crisisStrip;
+    }
+    const toggle = crisisEl.querySelector(".crisis__toggle");
+    const links = crisisEl.querySelector(".crisis__links");
+    if (toggle) {
+      toggle.hidden = !canCollapse;
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    }
+    if (links) {
+      links.hidden = collapsed;
+    }
+    syncCrisisStripHeight();
+  }
+
+  function scheduleCrisisAutoCollapse(view = document.body.dataset.view) {
+    if (!crisisCanCollapse(view)) {
+      crisisAutoCollapsed = false;
+      crisisUserExpanded = false;
+      applyCrisisStripState(view);
+      return;
+    }
+    crisisAutoCollapsed = false;
+    crisisUserExpanded = false;
+    applyCrisisStripState(view);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!crisisCanCollapse()) return;
+        crisisAutoCollapsed = true;
+        applyCrisisStripState();
+      });
+    });
+  }
+
+  function syncSiteSubnav(view = document.body.dataset.view) {
+    if (!siteSubnav) return;
+    const show = view === "browse" && !stackedBrowseMq.matches;
+    siteSubnav.hidden = !show;
+    siteSubnav.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+
+  syncStickyChromeHeights();
+  if (typeof ResizeObserver !== "undefined") {
+    if (siteTopnav) {
+      new ResizeObserver(syncSiteTopnavStickyHeight).observe(siteTopnav);
+    }
+    if (crisisEl) {
+      new ResizeObserver(syncCrisisStripHeight).observe(crisisEl);
+    }
+  }
+  document.fonts?.ready?.then(syncStickyChromeHeights);
+  stackedBrowseMq.addEventListener("change", () => {
+    syncSiteSubnav();
+    syncSiteTopnavStickyHeight();
+  });
+  crisisPhoneMq.addEventListener("change", () => {
+    scheduleCrisisAutoCollapse();
+  });
+  crisisEl?.addEventListener("click", (e) => {
+    const toggle = e.target.closest(".crisis__toggle");
+    if (!toggle || !crisisCanCollapse()) return;
+    const collapsed = document.body.dataset.crisisStrip === "collapsed";
+    crisisUserExpanded = collapsed;
+    crisisAutoCollapsed = true;
+    applyCrisisStripState();
+  });
 
   const threeColumnDesktopMq = window.matchMedia("(min-width: 1024px)");
   const browseChromeMotionMq = window.matchMedia(
@@ -718,6 +810,32 @@ async function main() {
     search: "",
     nearMe: null,
   };
+
+  function syncBrowsePathFlip(mode = state.mode) {
+    if (!browsePathFlip) return;
+    const show =
+      document.body.dataset.view === "browse" &&
+      stackedBrowseMq.matches &&
+      (mode === "support" || mode === "community");
+    browsePathFlip.hidden = !show;
+    if (!show) return;
+    const current = browsePathFlip.querySelector(".browse-path-flip__current");
+    const btn = browsePathFlip.querySelector(".browse-path-flip__switch");
+    if (!current || !btn) return;
+    if (mode === "support") {
+      current.textContent = "Looking at support";
+      btn.dataset.switchMode = "community";
+      btn.textContent = "Show community";
+    } else {
+      current.textContent = "Looking at community";
+      btn.dataset.switchMode = "support";
+      btn.textContent = "Show support";
+    }
+  }
+
+  stackedBrowseMq.addEventListener("change", () => {
+    syncBrowsePathFlip();
+  });
 
   function syncSearchClearButton() {
     if (!searchClose) return;
@@ -1168,11 +1286,7 @@ async function main() {
     viewLanding.setAttribute("aria-hidden", landing ? "false" : "true");
     viewBrowse.hidden = landing || mylist;
     if (viewMylist) viewMylist.hidden = !mylist;
-    if (siteSubnav) {
-      const showSubnav = view === "browse";
-      siteSubnav.hidden = !showSubnav;
-      siteSubnav.setAttribute("aria-hidden", showSubnav ? "false" : "true");
-    }
+    syncSiteSubnav(view);
     if (view !== "browse") {
       resetBrowseChrome();
     } else {
@@ -1181,6 +1295,8 @@ async function main() {
     if (backBtn) backBtn.hidden = view !== "browse";
     updateNavMylistCurrent();
     syncSiteTopnavStickyHeight();
+    scheduleCrisisAutoCollapse(view);
+    syncBrowsePathFlip();
   }
 
   function renderMyList() {
@@ -1511,10 +1627,22 @@ async function main() {
     enterLandingSearch(landingSearchInput?.value ?? "");
   });
 
+  function switchPathKeepingSearch(next) {
+    if (next !== "support" && next !== "community") return;
+    if (state.mode === next) return;
+    setMode(next, { keepSearch: true });
+  }
+
   otherPathHint?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-switch-mode]");
     if (!btn) return;
-    setMode(btn.dataset.switchMode, { keepSearch: true });
+    switchPathKeepingSearch(btn.dataset.switchMode);
+  });
+
+  browsePathFlip?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-switch-mode]");
+    if (!btn) return;
+    switchPathKeepingSearch(btn.dataset.switchMode);
   });
 
   mapToggle?.addEventListener("click", () => {

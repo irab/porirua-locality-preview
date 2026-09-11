@@ -167,9 +167,9 @@ Applied at merge time. `hiddenIds` removes rows from published output entirely.
 ## Phase 1 UI (Milestone B — not in this doc’s implementation scope)
 
 - URL: `https://directory.bsky.nz`
-- Dual browse: **Find support** vs **Connect with community** (landing subnav only; **Back** from browse).
+- Dual browse: **Find support** vs **Connect with community** (landing path cards; **Back** from browse). On stacked / phone browse the header path switch is hidden; a one-line **Show community** / **Show support** control in the search bar flips path and keeps search. The header switch remains on desktop three-column.
 - **Find support:** full listing by default (no chips selected); multi-select union category chips (tap to add, tap again to remove that topic); org cards show matching service rows when chips are on, with **See other services** to reveal hidden sibling lines on that card; opening a service row shows that line’s category labels; map shown when results have coordinates.
-- Urgent help numbers: compact **sticky footer** labelled **Urgent help** on every page (landing, browse, About).
+- Urgent help numbers: compact **sticky footer** labelled **Urgent help** on every page (landing, browse, About). On small-screen browse / My list the bar collapses after first paint to an **Urgent help** control; the numbers stay reachable.
 - Schools filter: available, **off by default** on community browse.
 
 ---

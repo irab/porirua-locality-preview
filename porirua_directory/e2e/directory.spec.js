@@ -145,6 +145,7 @@ test("support path — listings by default, path switch visible", async ({ page 
   await pickSupportPath(page);
   await expect(page.locator("#site-subnav")).toBeVisible();
   await expect(page.getByRole("group", { name: "Choose a path" })).toBeVisible();
+  await expect(page.locator("#browse-path-flip")).toBeHidden();
   await expect(page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" }).getByRole("link", { name: "111 Emergency" })).toBeVisible();
   await expect(page.locator("#directory-results .card")).not.toHaveCount(0);
   await expect(page.locator("#need-chips .chip.is-on")).toHaveCount(0);
@@ -415,6 +416,109 @@ test("Filters reopen chips without laying the map over search", async ({ page })
   expect(overlap.searchCoveredByMap).toBe(false);
   expect(overlap.mapOverlapsSearch).toBe(false);
   expect(overlap.headingAboveMap).toBe(true);
+});
+
+test("phone chrome — one-row header, no path switch, listings majority", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html");
+  await expect(page.getByRole("link", { name: LOGO_ALT })).toBeVisible();
+  const titleBox = await page.getByRole("link", { name: PRODUCT_TITLE }).boundingBox();
+  expect(titleBox, "product title stays in the document for assistive tech").toBeTruthy();
+  expect(titleBox.width).toBeLessThanOrEqual(2);
+  expect(titleBox.height).toBeLessThanOrEqual(2);
+  const landingHeader = await page.evaluate(() => {
+    const nav = document.querySelector(".site-topnav");
+    const logo = document.querySelector(".site-logo");
+    const about = document.querySelector('.site-nav a[href="about.html"]');
+    const nr = nav?.getBoundingClientRect();
+    const lr = logo?.getBoundingClientRect();
+    const ar = about?.getBoundingClientRect();
+    return {
+      navH: nr ? Math.round(nr.height) : 0,
+      midDelta: lr && ar ? Math.abs(lr.top + lr.height / 2 - (ar.top + ar.height / 2)) : 99,
+    };
+  });
+  expect(landingHeader.navH).toBeGreaterThan(0);
+  expect(landingHeader.navH).toBeLessThan(80);
+  expect(landingHeader.midDelta).toBeLessThan(20);
+  const siteNav = page.getByRole("navigation", { name: "Site" });
+  await expect(siteNav.getByRole("button", { name: "← Back" })).toHaveCount(0);
+  await expect(siteNav.getByRole("link", { name: "My list" })).toHaveCount(0);
+  await expect(siteNav.getByRole("link", { name: "About" })).toBeVisible();
+  const urgentHelp = page.getByRole("contentinfo", { name: "Urgent help and emergency numbers" });
+  await expect(urgentHelp.getByRole("link", { name: "111 Emergency" })).toBeVisible();
+
+  await pickSupportPath(page);
+  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(page.getByRole("group", { name: "Choose a path" })).toHaveCount(0);
+  await expect(page.getByText("Looking at support")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show community" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Site" }).getByRole("button", { name: "← Back" })).toBeVisible();
+  await expect
+    .poll(async () => page.locator("body").getAttribute("data-crisis-strip"))
+    .toBe("collapsed");
+  await expect(urgentHelp.getByRole("button", { name: "Urgent help" })).toBeVisible();
+  await expect(urgentHelp.getByRole("link", { name: "111 Emergency" })).toBeHidden();
+
+  await page.waitForSelector("#directory-results .card");
+  await page.evaluate(() => window.scrollTo(0, 800));
+  await expect(page.locator("body")).toHaveAttribute("data-browse-chrome", "collapsed");
+  await expect(page.getByRole("button", { name: "Show community" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show filters" })).toBeVisible();
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const panel = document.querySelector(".browse-sticky-panel");
+        const crisis = document.getElementById("crisis-strip");
+        if (!panel || !crisis) return 0;
+        const listing =
+          crisis.getBoundingClientRect().top - panel.getBoundingClientRect().bottom;
+        return listing / window.innerHeight;
+      })
+    )
+    .toBeGreaterThan(0.55);
+
+  await urgentHelp.getByRole("button", { name: "Urgent help" }).click();
+  await expect(page.locator("body")).toHaveAttribute("data-crisis-strip", "expanded");
+  await expect(urgentHelp.getByRole("link", { name: "111 Emergency" })).toBeVisible();
+  await urgentHelp.getByRole("button", { name: "Urgent help" }).click();
+  await expect(page.locator("body")).toHaveAttribute("data-crisis-strip", "collapsed");
+
+  await page.getByRole("button", { name: "Show filters" }).click();
+  await expect(page.locator("body")).not.toHaveAttribute("data-browse-chrome", "collapsed");
+  await expect(page.getByRole("heading", { name: "Support with…" })).toBeVisible();
+});
+
+test("phone community browse hides the path switch and keeps Back", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoCommunityResults(page);
+  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(page.getByText("Looking at community")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show support" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Site" }).getByRole("button", { name: "← Back" })).toBeVisible();
+  await expect
+    .poll(async () => page.locator("body").getAttribute("data-crisis-strip"))
+    .toBe("collapsed");
+});
+
+test("phone path flip switches lens and keeps search", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/index.html");
+  await page.locator("#landing-search-input").fill("Wesley");
+  await page.locator("#landing-search-form").getByRole("button", { name: "Search" }).click();
+  await expect(page.locator("body")).toHaveAttribute("data-view", "browse");
+  await expect(browseSearch(page)).toHaveValue("Wesley");
+  await expect(page.locator("#site-subnav")).toBeHidden();
+  const flip = page.locator("#browse-path-flip").getByRole("button");
+  await expect(flip).toBeVisible();
+  const before = (await flip.textContent())?.trim();
+  await flip.click();
+  await expect(browseSearch(page)).toHaveValue("Wesley");
+  await expect(page.locator("#site-subnav")).toBeHidden();
+  await expect(flip).toBeVisible();
+  await expect(flip).not.toHaveText(before ?? "");
 });
 
 test("browse chrome does not collapse on three-column desktop scroll", async ({ page }) => {

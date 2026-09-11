@@ -132,7 +132,7 @@ Each job is written as *When … I want to … so I can …*. Steps assume `cd p
 |------|--------|--------|
 | 1 | Phone-width (or real phone): **Housing / a place to stay** + **Food / kai** | |
 | 2 | At least one card has a working **Call** / `tel:` number | |
-| 3 | **Urgent help** footer (111, 105, 1737, Women's Refuge) stays visible on landing, browse, About, and My list | |
+| 3 | **Urgent help** footer (111, 105, 1737, Women's Refuge) stays reachable on landing, browse, About, and My list (on a phone in browse / My list, expand the **Urgent help** control if the numbers are collapsed) | |
 | 4 | **Share list** or copy-link works; opening the link adds those places (anyone with the link can see them) | |
 
 **Pass if:** Priya can finish on a phone in a few minutes. Fail if the footer covers the last card or Call is missing when a number exists.
