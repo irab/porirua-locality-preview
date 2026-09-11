@@ -707,6 +707,7 @@ test("my list — add to list, view list, privacy note", async ({ page }) => {
   await expect(page.getByRole("navigation", { name: "Site" }).getByRole("button", { name: "← Back" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "← Back to start" })).toBeVisible();
   await expect(page.getByText(/Places you have saved on this device/i)).toBeVisible();
+  await expect(page.getByText(/Nothing is stored on a server/i)).toHaveCount(0);
   await expect(page.getByText(/Your list stays on this phone or computer/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Print list" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Share list" })).toBeVisible();
