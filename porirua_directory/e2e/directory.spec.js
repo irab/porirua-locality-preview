@@ -78,6 +78,7 @@ test("landing — welcome, path cards, no duplicate path choice, crisis footer, 
   await expect(page.getByRole("heading", { name: /Nau mai, haere mai/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Where would you like to start?" })).toHaveCount(0);
   await expect(page.getByText(/Your Porirua Directory — find support or connect with community/i)).toBeVisible();
+  await expect(page.getByText(/No login/i)).toHaveCount(0);
   await expect(page.getByRole("searchbox", { name: /Search for food/i })).toBeVisible();
   await expect(page.getByRole("button", { name: "Food / kai" })).toBeVisible();
   const landingPaths = page.locator("#view-landing .landing-paths");
@@ -132,6 +133,7 @@ test("landing path card arrows sit on the right of each card", async ({ page }) 
 test("about page — nav, copy, crisis footer", async ({ page }) => {
   await page.goto("/about.html");
   await expect(page.getByRole("heading", { name: "About Your Porirua Directory" })).toBeVisible();
+  await expect(page.getByText(/No login/i)).toHaveCount(0);
   await expect(page.getByRole("link", { name: LOGO_ALT })).toBeVisible();
   await expect(page.locator(".site-product-title")).toHaveText(PRODUCT_TITLE);
   await expect(page.getByRole("link", { name: "Back to Your Porirua Directory" })).toBeVisible();
