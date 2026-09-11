@@ -160,7 +160,7 @@ Publish and rollback also purge the public catalog URL (`https://directory.bsky.
 
 ### Weekly FSD sync (Phase 2 runner)
 
-`npm run sync:fsd` fetches the national CSV, applies the same Porirua filter and geocode QA as `import:fsd` (`buildFsdImportReport`), attaches `SERVICE_ID` / `FSD_ID` from the CSV, collapses duplicate SERVICE_ID groups, and diffs against `services.raw_import`. It writes **one** `import_runs` row and `review_queue_items` for new, changed, removed, and geocode-flag rows. It **never** creates a `catalog_snapshots` row or changes the live catalog. A `changed` item leaves `services.status` as the editor left it; only a genuinely new FSD insert is written `pending_review`. A later run refreshes an existing **pending** item for the same entity and kind instead of stacking another row. A `geocode_flag` that an editor already accepted or rejected (same flag code) is not raised again.
+`npm run sync:fsd` fetches the national CSV, applies the same Porirua filter and geocode QA as `import:fsd` (`buildFsdImportReport`), attaches `SERVICE_ID` / `FSD_ID` from the CSV, collapses duplicate SERVICE_ID groups, and diffs against `services.raw_import`. It writes **one** `import_runs` row and `review_queue_items` for new, changed, removed, and geocode-flag rows. Editors can read those runs on the Payload **FSD sync** tab (`GET /import-runs`, date filter on `started_at`). It **never** creates a `catalog_snapshots` row or changes the live catalog. A `changed` item leaves `services.status` as the editor left it; only a genuinely new FSD insert is written `pending_review`. A later run refreshes an existing **pending** item for the same entity and kind instead of stacking another row. A `geocode_flag` that an editor already accepted or rejected (same flag code) is not raised again.
 
 ```bash
 cd porirua_directory
@@ -267,7 +267,7 @@ Moana’s jobs are Review and Listings. She does not need Directus Content.
 2. Land on **Directory**. Status band at the top; tabs **Needs confirmation**, **Review**, **Listings**.
 3. **Listings:** type in **Find an organisation**, open a result, **Edit** / **Add a service line**. Save does not publish.
 4. **Review:** open a government card, decide (or **Needs confirmation**). After a decision the next heading is focused, not **Accept**.
-5. **N unpublished** on the status band publishes immediately. A ≥15% swing in published count 409s until you confirm that one request.
+5. **Publish X changes** on the status band publishes immediately. A ≥15% swing in published count 409s until you confirm that one request. **Published versions** can put an earlier publish back on the public site.
 
 The accepted jobs and copy are the [editor one-pager](./design/editor-guide.md).
 

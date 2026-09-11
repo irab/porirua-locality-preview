@@ -1,4 +1,5 @@
-import { reviewCountLabel, waitingCountLabel } from "./queue-dto.mjs";
+import { PUBLISH_VERSIONS_COPY } from "./publish-versions.mjs";
+import { publishChangesLabel, reviewCountLabel } from "./queue-dto.mjs";
 
 export function statusBandModel({
   reviewCount = 0,
@@ -18,8 +19,13 @@ export function statusBandModel({
     },
     waiting: {
       count: waiting,
-      label: waitingCountLabel(waiting),
+      label: publishChangesLabel(waiting),
       disabled: waiting === 0 || !canPublish,
+      visible: waiting > 0,
+    },
+    versions: {
+      visible: true,
+      label: PUBLISH_VERSIONS_COPY.band,
     },
     undo: {
       visible: Boolean(canUndoPublish) && canPublish,

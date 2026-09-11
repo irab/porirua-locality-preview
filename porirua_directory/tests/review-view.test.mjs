@@ -19,6 +19,7 @@ import {
   queueActionUndoId,
   removalActionsAreEqual,
   reviewActionButtons,
+  reviewActionClass,
   reviewDecisionBody,
   reviewFinishModel,
   reviewToast,
@@ -103,6 +104,24 @@ test("new service is Accept / Reject / Needs confirmation", () => {
   );
 });
 
+test("changed-card actions colour Accept, Accept and edit, and Reject, not Needs confirmation", () => {
+  const buttons = reviewActionButtons({
+    kind: "changed",
+    youSetThis: [],
+    showRejectAction: true,
+    primaryActionLabel: "Accept",
+  });
+  assert.equal(buttons.find((row) => row.id === "approve")?.tone, "accept");
+  assert.equal(buttons.find((row) => row.id === "edit")?.tone, "edit");
+  assert.equal(buttons.find((row) => row.id === "reject")?.tone, "reject");
+  assert.equal(buttons.find((row) => row.id === "defer")?.tone, null);
+  assert.equal(reviewActionClass({ tone: "accept" }), "action-accept");
+  assert.equal(reviewActionClass({ tone: "edit" }), "action-edit");
+  assert.equal(reviewActionClass({ tone: "reject" }), "action-reject");
+  assert.equal(reviewActionClass({ tone: null }), undefined);
+  assert.equal(reviewActionClass({ equal: true, tone: "accept" }), "equal-action");
+});
+
 test("gone-from-FSD actions are equal weight and neither is a keyboard default", () => {
   const buttons = reviewActionButtons({
     kind: "removed",
@@ -115,6 +134,8 @@ test("gone-from-FSD actions are equal weight and neither is a keyboard default",
     ["Take it off the site", "Keep it as a community listing", "Needs confirmation"]
   );
   assert.equal(removalActionsAreEqual(buttons), true);
+  assert.equal(buttons.find((row) => row.id === "hide")?.tone, null);
+  assert.equal(buttons.find((row) => row.id === "keep-community")?.tone, null);
   assert.equal(
     buttons.some((row) => row.keyboardDefault),
     false
@@ -192,6 +213,7 @@ test("finish state only after she worked this session; Needs confirmation never 
   assert.equal(done.kind, "finish");
   assert.match(done.heading, /You've reviewed everything/);
   assert.equal(done.showPublishNow, true);
+  assert.equal(done.publishLabel, "Publish 4 changes");
   const parked = reviewFinishModel({
     activeCount: 0,
     deferredCount: 2,

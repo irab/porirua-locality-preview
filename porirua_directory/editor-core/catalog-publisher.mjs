@@ -1,5 +1,5 @@
 /**
- * One admin host may POST /publish and /undo-publish. Both authorizing
+ * One admin host may POST /publish, /undo-publish, and /rollback. Both authorizing
  * proxies (Payload and Directus) read CATALOG_PUBLISHER and refuse when
  * they are not that host. Default is Payload: Directus is retired on
  * directory-dev. Set CATALOG_PUBLISHER=directus only to roll that back.
@@ -8,7 +8,7 @@ export const CATALOG_PUBLISHER_DIRECTUS = "directus";
 export const CATALOG_PUBLISHER_PAYLOAD = "payload";
 export const DEFAULT_CATALOG_PUBLISHER = CATALOG_PUBLISHER_PAYLOAD;
 
-export const PUBLISH_MUTATION_PATHS = ["/publish", "/undo-publish"];
+export const PUBLISH_MUTATION_PATHS = ["/publish", "/undo-publish", "/rollback"];
 
 export function resolveCatalogPublisher(value) {
   const raw = String(value ?? "").trim().toLowerCase();

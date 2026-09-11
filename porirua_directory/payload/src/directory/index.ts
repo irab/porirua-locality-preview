@@ -4,6 +4,7 @@ export { ListingsPanel } from "./ListingsPanel";
 export { ReviewPanel } from "./ReviewPanel";
 export { SharedListingForm } from "./SharedListingForm";
 export { StatusBand } from "./StatusBand";
+export { SyncLogPanel } from "./SyncLogPanel";
 export { VerificationBar } from "./VerificationBar";
 export type {
   DirectoryTab,

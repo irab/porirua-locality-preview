@@ -33,17 +33,18 @@ test("shared form marks changed and curated fields with text, not colour alone",
   assert.equal(highlight.focusField, "address");
 });
 
-test("three Directory tabs stay Needs confirmation, Review, Listings with counts when non-zero", () => {
-  assert.deepEqual(DIRECTORY_TAB_ORDER, ["needs", "review", "listings"]);
+test("Directory tabs stay Needs confirmation, Review, Listings, FSD sync with counts when non-zero", () => {
+  assert.deepEqual(DIRECTORY_TAB_ORDER, ["needs", "review", "listings", "sync"]);
   const empty = directoryTabsModel({ deferredCount: 0, reviewCount: 0 });
   assert.deepEqual(
     empty.map((tab) => tab.label),
-    ["Needs confirmation", "Review", "Listings"]
+    ["Needs confirmation", "Review", "Listings", "FSD sync"]
   );
   const busy = directoryTabsModel({ deferredCount: 2, reviewCount: 4 });
   assert.equal(busy[0].label, needsConfirmationTabLabel(2));
   assert.equal(busy[1].label, "Review (4)");
   assert.equal(busy[2].label, "Listings");
+  assert.equal(busy[3].label, "FSD sync");
 });
 
 test("status band uses role=status and publish-status counts", () => {
@@ -54,21 +55,26 @@ test("status band uses role=status and publish-status counts", () => {
   assert.equal(band.role, "status");
   assert.equal(band.review.label, "4 changes to review");
   assert.equal(band.review.disabled, false);
-  assert.equal(band.waiting.label, "2 unpublished");
+  assert.equal(band.waiting.label, "Publish 2 changes");
+  assert.equal(band.waiting.visible, true);
   assert.equal(band.waiting.disabled, false);
+  assert.equal(band.versions.label, "Published versions");
+  assert.equal(band.versions.visible, true);
   assert.equal(band.undo.visible, true);
   assert.equal(band.undo.label, "Undo last publish");
 
   const quiet = statusBandModel({});
   assert.equal(quiet.review.disabled, true);
-  assert.equal(quiet.waiting.disabled, true);
+  assert.equal(quiet.waiting.visible, false);
+  assert.equal(quiet.waiting.label, "");
   assert.equal(quiet.undo.visible, false);
 
   const otherHost = statusBandFromPublishStatus(
     { unpublishedCount: 2, canUndoPublish: true, thisHostCanPublish: false },
     { reviewCount: 0 }
   );
-  assert.equal(otherHost.waiting.label, "2 unpublished");
+  assert.equal(otherHost.waiting.label, "Publish 2 changes");
+  assert.equal(otherHost.waiting.visible, true);
   assert.equal(otherHost.waiting.disabled, true);
   assert.equal(otherHost.undo.visible, false);
 });

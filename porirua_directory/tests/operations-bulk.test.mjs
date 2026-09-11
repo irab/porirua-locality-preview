@@ -43,6 +43,73 @@ test("selectionKeys reads the Directus keys array, not only the first item", () 
   ]);
 });
 
+test("GET /publish-versions lists snapshots without envelopes", async () => {
+  const db = {
+    async query() {
+      return {
+        rows: [
+          {
+            version: 13,
+            generated_at: new Date("2026-09-11T00:42:00.000Z"),
+            published_by: "moana",
+            is_current: true,
+            counts: { published: 2 },
+          },
+        ],
+      };
+    },
+  };
+  const { url, close } = await listen(createOperationsHandler({ db }));
+  try {
+    const response = await fetch(`${url}/publish-versions`);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.versions.length, 1);
+    assert.equal(body.versions[0].version, 13);
+    assert.equal(body.versions[0].isCurrent, true);
+    assert.equal(body.versions[0].listingCountLabel, "2 listings");
+    assert.equal("envelope" in body.versions[0], false);
+  } finally {
+    await close();
+  }
+});
+
+test("GET /import-runs returns readable FSD run summaries and rejects a bad date", async () => {
+  const db = {
+    async query() {
+      return {
+        rows: [
+          {
+            id: "run-ops",
+            source: "fsd",
+            status: "success",
+            fsd_csv_url: "https://example.test/fsd.csv",
+            started_at: new Date("2026-09-07T01:00:00+12:00"),
+            finished_at: new Date("2026-09-07T01:02:00+12:00"),
+            error_message: null,
+            stats: { totalCsvRows: 10, includedCount: 4, excludedCount: 6, queued: 1, new: 1 },
+          },
+        ],
+      };
+    },
+  };
+  const { url, close } = await listen(createOperationsHandler({ db }));
+  try {
+    const response = await fetch(`${url}/import-runs?from=2026-09-01T00:00:00.000Z`);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.runs.length, 1);
+    assert.equal(body.runs[0].headline, "Finished successfully");
+    assert.match(body.runs[0].summary, /Queued 1 update for review: 1 new/);
+
+    const bad = await fetch(`${url}/import-runs?from=not-a-date`);
+    assert.equal(bad.status, 400);
+    assert.match((await bad.json()).error, /from is not a valid date/);
+  } finally {
+    await close();
+  }
+});
+
 test("single-target helpers refuse extra keys instead of truncating", () => {
   assert.throws(
     () => requireSingleSelection({ keys: ["1", "2"] }, "edit-and-approve"),

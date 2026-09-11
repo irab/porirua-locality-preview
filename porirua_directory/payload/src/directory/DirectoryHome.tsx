@@ -2,15 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { directoryEditorFetch } from "../../../editor-core/client.mjs";
-import { directoryTabsModel, DIRECTORY_TAB_ORDER } from "../../../editor-core/directory-tabs.mjs";
+import { directoryTabsModel } from "../../../editor-core/directory-tabs.mjs";
 import {
   largeDeltaState,
   parsePublishFailure,
+  parseRollbackFailure,
   parseUndoFailure,
   publishBody,
   PUBLISH_ROUTES,
   publisherHint,
   publishToastModel,
+  rollbackBody,
+  rollbackToastModel,
   thisHostCanPublishFromStatus,
   undoPublishBody,
   undoPublishToastModel,
@@ -19,8 +22,10 @@ import { landingTab } from "../../../editor-core/queue-dto.mjs";
 import { statusBandFromPublishStatus } from "../../../editor-core/status-band.mjs";
 import { DirectoryTabs } from "./DirectoryTabs";
 import { ListingsPanel } from "./ListingsPanel";
+import { PublishVersionsPanel } from "./PublishVersionsPanel";
 import { ReviewPanel } from "./ReviewPanel";
 import { StatusBand } from "./StatusBand";
+import { SyncLogPanel } from "./SyncLogPanel";
 import "./directory.css";
 import type { DirectoryTabId } from "./types";
 
@@ -52,6 +57,9 @@ export function DirectoryHome() {
   const [listingFocusId, setListingFocusId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  const [switchingVersion, setSwitchingVersion] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [versionsNonce, setVersionsNonce] = useState(0);
   const [publishToast, setPublishToast] = useState<PublishToast | null>(null);
   const [publishFailure, setPublishFailure] = useState<PublishFailure | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,6 +102,7 @@ export function DirectoryHome() {
         body: publishBody({ confirmLargeDelta }),
       });
       const next = await refreshPublish();
+      setVersionsNonce((count) => count + 1);
       showPublishToast(publishToastModel({ canUndoPublish: next.canUndoPublish === true }));
     } catch (error) {
       setPublishFailure(parsePublishFailure(error));
@@ -115,12 +124,38 @@ export function DirectoryHome() {
         body: undoPublishBody(publishStatus),
       });
       await refreshPublish();
+      setVersionsNonce((count) => count + 1);
       showPublishToast(undoPublishToastModel());
     } catch (error) {
       setPublishFailure(parseUndoFailure(error));
       await refreshPublish();
     } finally {
       setUndoing(false);
+    }
+  }
+
+  async function switchPublishedVersion(version: number) {
+    if (switchingVersion) return;
+    setSwitchingVersion(true);
+    setPublishFailure(null);
+    try {
+      await directoryEditorFetch(PUBLISH_ROUTES.rollback, {
+        method: "POST",
+        base: CLIENT_BASE,
+        body: rollbackBody({
+          version,
+          expectedVersion: publishStatus.currentVersion,
+        }),
+      });
+      await refreshPublish();
+      setVersionsNonce((count) => count + 1);
+      showPublishToast(rollbackToastModel());
+    } catch (error) {
+      setPublishFailure(parseRollbackFailure(error));
+      await refreshPublish();
+      setVersionsNonce((count) => count + 1);
+    } finally {
+      setSwitchingVersion(false);
     }
   }
 
@@ -198,6 +233,8 @@ export function DirectoryHome() {
         }}
         onPublish={publishAction}
         onUndoPublish={band.undo.visible ? undoAction : undefined}
+        onToggleVersions={() => setVersionsOpen((open) => !open)}
+        versionsOpen={versionsOpen}
         onConfirmLargeDelta={
           largeDelta && canPublishHere && !publishing
             ? () => void publishCatalog({ confirmLargeDelta: true })
@@ -209,6 +246,14 @@ export function DirectoryHome() {
         largeDelta={largeDelta}
         error={publishFailure && !largeDelta ? publishFailure.message : ""}
       />
+      {versionsOpen ? (
+        <PublishVersionsPanel
+          canSwitch={canPublishHere}
+          switching={switchingVersion}
+          onSwitch={(version) => void switchPublishedVersion(version)}
+          refreshNonce={versionsNonce}
+        />
+      ) : null}
       <DirectoryTabs tabs={tabs} active={tab} onChange={chooseTab}>
         <section
           id={`${tab}-panel`}
@@ -244,12 +289,9 @@ export function DirectoryHome() {
               onOpened={() => setListingFocusId(null)}
             />
           ) : null}
+          {tab === "sync" ? <SyncLogPanel /> : null}
         </section>
       </DirectoryTabs>
-      <p className="directory-hint">
-        Tab order is {DIRECTORY_TAB_ORDER.join(", ")}. Shared form, status band, and verification bar live in{" "}
-        <code>payload/src/directory/</code>.
-      </p>
     </div>
   );
 }

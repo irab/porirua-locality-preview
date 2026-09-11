@@ -23,7 +23,6 @@ import {
   loadPublishedRows,
   loadSourceCounts,
   publishCatalog,
-  rollbackCatalog,
 } from "../../scripts/publish-catalog.mjs";
 import { buildCatalogEnvelope } from "../../scripts/catalog-envelope.mjs";
 import {
@@ -46,6 +45,8 @@ import {
 } from "../../scripts/review-actions.mjs";
 import { undoPublish } from "../../scripts/undo-publish.mjs";
 import { keepCurationReviewItem } from "../../scripts/approve-review.mjs";
+import { FsdSyncLogError, listImportRuns } from "../../scripts/fsd-sync-log.mjs";
+import { listPublishVersions, switchPublishedVersion } from "../../scripts/publish-versions.mjs";
 
 const PORT = Number(process.env.OPERATIONS_PORT || 8790);
 
@@ -76,6 +77,7 @@ function errorStatus(error) {
   ) {
     return error.statusCode;
   }
+  if (error instanceof FsdSyncLogError) return error.statusCode;
   return 500;
 }
 
@@ -273,13 +275,13 @@ async function handleRollback(body, db) {
   if (!Number.isFinite(version)) {
     throw new HttpError(400, "rollback requires exactly one snapshot version");
   }
-  const result = await rollbackCatalog({
+  return switchPublishedVersion({
     db,
     version,
-    publishedBy: actor(trigger),
+    expectedVersion: trigger.expectedVersion,
+    switchedBy: actor(trigger),
     purge: typeof body.purge === "function" ? body.purge : undefined,
   });
-  return { ok: true, version: result.version, counts: result.envelope.counts };
 }
 
 export function createOperationsHandler({ db } = {}) {
@@ -312,8 +314,24 @@ export function createOperationsHandler({ db } = {}) {
         send(res, 200, await listQueueItems({ db: executor }));
         return;
       }
+      if (req.method === "GET" && url.pathname === "/import-runs") {
+        send(
+          res,
+          200,
+          await listImportRuns({
+            db: executor,
+            from: url.searchParams.get("from"),
+            to: url.searchParams.get("to"),
+          })
+        );
+        return;
+      }
       if (req.method === "GET" && url.pathname === "/publish-status") {
         send(res, 200, await publishStatus({ db: executor }));
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/publish-versions") {
+        send(res, 200, await listPublishVersions({ db: executor }));
         return;
       }
       if (req.method === "GET" && url.pathname.startsWith("/listings/") && url.pathname !== "/listings/name-matches") {

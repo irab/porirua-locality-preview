@@ -1,6 +1,6 @@
 import { needsConfirmationTabLabel } from "./queue-dto.mjs";
 
-export const DIRECTORY_TAB_ORDER = ["needs", "review", "listings"];
+export const DIRECTORY_TAB_ORDER = ["needs", "review", "listings", "sync"];
 
 export function directoryTabsModel({ deferredCount = 0, reviewCount = 0, listingsCount = 0 } = {}) {
   const review = Number(reviewCount) || 0;
@@ -9,5 +9,6 @@ export function directoryTabsModel({ deferredCount = 0, reviewCount = 0, listing
     { id: "needs", label: needsConfirmationTabLabel(deferredCount) },
     { id: "review", label: review ? `Review (${review})` : "Review" },
     { id: "listings", label: listings ? `Listings (${listings})` : "Listings" },
+    { id: "sync", label: "FSD sync" },
   ];
 }

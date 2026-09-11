@@ -59,7 +59,7 @@ If the policy is widened first, the catalog becomes publishable by **anything th
 
 ### Proxied routes (enumerate)
 
-The endpoint registers **20** sidecar proxies (6 GET + 14 POST). Briefs that said “19” were off by one — count the table, not the brief. Plus local `GET /health` (not proxied).
+The endpoint registers **23** sidecar proxies (8 GET + 15 POST). Plus local `GET /health` (not proxied).
 
 | Method | Path | Script / function | Editor job |
 |--------|------|-------------------|------------|
@@ -67,7 +67,9 @@ The endpoint registers **20** sidecar proxies (6 GET + 14 POST). Briefs that sai
 | GET | `/listings` | `listings.listListings` | Listings search source |
 | GET | `/listings/:id` | `listings.getListing` | Listing detail |
 | GET | `/queue` | `listings.listQueueItems` + `editor-core/queue-dto.mjs` | Review inbox + recently finished |
+| GET | `/import-runs` | `fsd-sync-log.listImportRuns` + `editor-core/fsd-sync-log.mjs` | FSD sync tab (readable run log, date filter) |
 | GET | `/publish-status` | `listings.publishStatus` | Status band |
+| GET | `/publish-versions` | `publish-versions.listPublishVersions` | Published version history |
 | GET | `/geocode` | `operations.geocodeAddress` (Nominatim) | Address lookup |
 | POST | `/listings` | `listings.createListing` | Add organisation / add service line |
 | POST | `/listings/update` | `listings.updateListing` + sticky curation | Edit + “You set this earlier” |
@@ -83,6 +85,7 @@ The endpoint registers **20** sidecar proxies (6 GET + 14 POST). Briefs that sai
 | POST | `/review-undo` | `review-actions.undoReviewDecision` | Toast Undo (Review write) |
 | POST | `/publish` | `publish-catalog.publishCatalog` + purge | Publish immediately |
 | POST | `/undo-publish` | `undo-publish.undoPublish` + purge | Undo last publish ([018](../decisions/018-undo-publish-version-guard.md)) |
+| POST | `/rollback` | `publish-versions.switchPublishedVersion` + purge | Put an earlier published version on the site |
 
 Bulk routes (`/approve`, `/hide`, `/reject`) loop `body.keys` and put `undoId` on the last success. `/edit-and-approve`, `/keep-curation`, `/defer`, `/keep-community` are **single-item** and 400 if more than one key arrives.
 
@@ -94,7 +97,6 @@ Still on the sidecar, leftover from Flows. **Do not** expose them from Payload w
 |------|---------------|---------|
 | `GET /health` | Liveness | Fine for kube probes; no secrets |
 | `POST /sticky-curation` | Old Flow wrapper around `upsertStickyOverride` | Prefer `/listings/update` |
-| `POST /rollback` | Admin-only historical snapshot pick | Out of scope — editors use `/undo-publish` |
 | `POST /public-id-alias` | Admin grain / public id | Stay Admin-only; not a Directory job |
 
 ---
@@ -142,6 +144,7 @@ Help-type and community-group chips are **also** hardcoded in `module.vue` (`HEL
 | Keep as community | `POST /keep-community` | `overrides.action = community_owned`; diff skips `removed` (`fsd-sync-diff.mjs`); reappearance is `changed` + `fsd_returned` |
 | Review undo | `POST /review-undo` | Snapshot in `editor_undo`; restores live columns, overrides, `raw_import`, queue row |
 | Undo publish | `POST /undo-publish` | `expectedVersion` guard ([018](../decisions/018-undo-publish-version-guard.md)); `canUndoPublish` from last `catalog_publish_events` row + 24h; purge on rollback |
+| Published versions | `GET /publish-versions` · `POST /rollback` | Snapshot list without envelopes; switch restores `is_current` and records `rollback` |
 | Landing | Directus-only | Bootstrap `last_page` + write clamp. Payload must land on Directory home by its own mechanism — do not add a Directus `users.read` hook |
 | Queue evidence | Runner | `proposed.before` at queue time; Review DTO still prefers live columns when present |
 
@@ -216,12 +219,13 @@ Always visible on Directory.
 | She sees | Behaviour | Source |
 |----------|-----------|--------|
 | **N changes to review** / **Nothing to review** | Opens Review (first active item). Subdued and not clickable when zero | `GET /queue` active count. Use `unpublishedCount` from the server — do not invent the integer in the browser |
-| **N unpublished** / **All published** | **Publishes immediately** (no confirmation dialog) | `GET /publish-status` → `unpublishedCount`, `unpublishedNames` |
+| **Publish X changes** | **Publishes immediately** (no confirmation dialog). Hidden when the count is zero | `GET /publish-status` → `unpublishedCount`, `unpublishedNames` |
+| **Published versions** | Lists earlier publishes; **Put this version on the site** | `GET /publish-versions` · `POST /rollback` `{ version, expectedVersion }` |
 | **Undo last publish** | On the band while `canUndoPublish` | Server window: until next publish or 24h, not a client timer |
 | After Publish toast | **Published. The public site is up to date.** + **Undo publish** (~20s) | Then the band action remains |
 | After Undo toast | **Publish undone. Those changes are unpublished again.** | Live rows / queue / overrides are **not** rewound |
-| Finish | **You’ve reviewed everything. Put N changes on the public site.** **Publish now** | Immediate publish |
-| Finish with deferrals | **You’ve decided the ones you can. N need confirmation.** **Publish now** · **Keep reviewing later** | |
+| Finish | **You’ve reviewed everything. Put N changes on the public site.** **Publish N changes** | Immediate publish |
+| Finish with deferrals | **You’ve decided the ones you can. N need confirmation.** **Publish N changes** · **Keep reviewing later** | |
 
 `POST /publish` calls `publishCatalog` (new snapshot, flip `is_current`, Cloudflare purge). A failed purge is a failed publish ([004](../decisions/004-cloudflare-purge-on-publish.md)). It also `DELETE FROM editor_undo` — Review-decision undo is gone after Publish.
 
@@ -229,7 +233,7 @@ Always visible on Directory.
 
 **Sidecar leftover vs design:** `/publish` still 409s on a ≥15% published-count delta unless `confirmLargeDelta: true` (`catalogCountPreflight`). That is a server-side guard against a bad bulk import, not the confirmation step decision #4 removed. Payload does **not** reintroduce a general “are you sure?” dialog and does **not** blanket-set `confirmLargeDelta`. A 409 is an error state on the status band that names the delta and offers **Publish this large change** for that one request.
 
-**One publisher.** `CATALOG_PUBLISHER` is `payload` or `directus` (default `payload`). Both authorizing proxies refuse `POST /publish` and `POST /undo-publish` when they are not that host. directory-dev publishes from Payload on `admin-payload-directory-dev.bsky.nz`. Directus is retired there.
+**One publisher.** `CATALOG_PUBLISHER` is `payload` or `directus` (default `payload`). Both authorizing proxies refuse `POST /publish`, `POST /undo-publish`, and `POST /rollback` when they are not that host. directory-dev publishes from Payload on `admin-payload-directory-dev.bsky.nz`. Directus is retired there.
 
 ---
 

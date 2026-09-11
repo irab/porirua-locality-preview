@@ -27,6 +27,7 @@ import {
   reviewFinishedLabel,
   reviewStatusBandLabel,
   statusLabel,
+  publishChangesLabel,
   waitingCountLabel,
 } from "../editor-core/queue-dto.mjs";
 import {
@@ -471,8 +472,12 @@ test("success copy says what happens next", () => {
   );
   assert.equal(actionSuccessMessage({ action: "keep" }), "Kept your details. They stay as you set them.");
   assert.equal(reviewDeferredFinishLabel(2), "You've decided the ones you can. 2 need confirmation.");
-  assert.equal(waitingCountLabel(2), "2 unpublished");
-  assert.equal(waitingCountLabel(0), "All published");
+  assert.equal(publishChangesLabel(2), "Publish 2 changes");
+  assert.equal(publishChangesLabel(1), "Publish 1 change");
+  assert.equal(publishChangesLabel(0), "");
+  assert.equal(waitingCountLabel(2), "Publish 2 changes");
+  assert.equal(waitingCountLabel(0), "");
+  assert.equal(actionSuccessMessage({ action: "rollback" }), "This published version is on the public site now.");
   assert.equal(
     actionSuccessMessage({ action: "reject", kind: "new" }),
     "Rejected. It will not go on the public site."

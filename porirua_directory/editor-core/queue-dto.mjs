@@ -146,6 +146,9 @@ export function actionSuccessMessage({ action, kind, unpublished = true, name } 
   if (action === "undo-publish") {
     return "Publish undone. Those changes are unpublished again.";
   }
+  if (action === "rollback") {
+    return "This published version is on the public site now.";
+  }
   if (action === "defer") {
     return who
       ? `Needs confirmation. ${who} is waiting on the Needs confirmation tab.`
@@ -304,10 +307,14 @@ export function foldSearch(text) {
     .toLowerCase();
 }
 
-export function waitingCountLabel(count) {
+export function publishChangesLabel(count) {
   const n = Number(count) || 0;
-  if (n === 0) return "All published";
-  return n === 1 ? "1 unpublished" : `${n} unpublished`;
+  if (n === 0) return "";
+  return n === 1 ? "Publish 1 change" : `Publish ${n} changes`;
+}
+
+export function waitingCountLabel(count) {
+  return publishChangesLabel(count);
 }
 
 export function nothingToReviewLabel() {

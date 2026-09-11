@@ -7,6 +7,8 @@ export function StatusBand({
   onReview,
   onPublish,
   onUndoPublish,
+  onToggleVersions,
+  versionsOpen = false,
   onConfirmLargeDelta,
   publishing = false,
   undoing = false,
@@ -24,14 +26,27 @@ export function StatusBand({
       >
         {model.review.label}
       </button>
-      <button
-        type="button"
-        className={model.waiting.disabled ? "band zero" : "band"}
-        disabled={model.waiting.disabled || publishing || !onPublish}
-        onClick={onPublish}
-      >
-        {model.waiting.label}
-      </button>
+      {model.waiting.visible ? (
+        <button
+          type="button"
+          className="band band-publish"
+          disabled={model.waiting.disabled || publishing || !onPublish}
+          onClick={onPublish}
+        >
+          {model.waiting.label}
+        </button>
+      ) : null}
+      {model.versions.visible ? (
+        <button
+          type="button"
+          className={versionsOpen ? "band active" : "band"}
+          aria-pressed={versionsOpen}
+          aria-expanded={versionsOpen}
+          onClick={onToggleVersions}
+        >
+          {model.versions.label}
+        </button>
+      ) : null}
       {model.undo.visible ? (
         <button type="button" className="band" disabled={undoing || !onUndoPublish} onClick={onUndoPublish}>
           {model.undo.label}

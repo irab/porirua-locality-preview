@@ -220,7 +220,7 @@ ConfigMap `porirua-directory-config`: `CATALOG_PUBLIC_URL=https://directory-dev.
 
 ### CronJob
 
-`fsd-sync`: `0 1 * * 1`, **suspended**, waits for Postgres. Writes `review_queue_items` and `import_runs` only.
+`fsd-sync`: `0 1 * * 1`, **suspended**, waits for Postgres. Writes `review_queue_items` and `import_runs` only. The Payload **FSD sync** tab reads those `import_runs` rows (`GET /import-runs`).
 
 ---
 

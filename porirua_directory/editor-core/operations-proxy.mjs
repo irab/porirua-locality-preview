@@ -13,7 +13,9 @@ export const DIRECTORY_EDITOR_PROXIED_ROUTES = [
   { method: "GET", path: "/listings" },
   { method: "GET", path: "/listings/:id" },
   { method: "GET", path: "/queue" },
+  { method: "GET", path: "/import-runs" },
   { method: "GET", path: "/publish-status" },
+  { method: "GET", path: "/publish-versions" },
   { method: "GET", path: "/geocode" },
   { method: "POST", path: "/listings" },
   { method: "POST", path: "/listings/update" },
@@ -29,6 +31,7 @@ export const DIRECTORY_EDITOR_PROXIED_ROUTES = [
   { method: "POST", path: "/review-undo" },
   { method: "POST", path: "/publish" },
   { method: "POST", path: "/undo-publish" },
+  { method: "POST", path: "/rollback" },
 ];
 
 function normalizePath(path) {

@@ -5,12 +5,15 @@ import { UNDO_PUBLISH_STALE } from "../editor-core/undo-publish.mjs";
 import {
   largeDeltaState,
   parsePublishFailure,
+  parseRollbackFailure,
   parseUndoFailure,
   publishBody,
   PUBLISH_COPY,
   PUBLISH_ROUTES,
   publisherHint,
   publishToastModel,
+  rollbackBody,
+  rollbackToastModel,
   thisHostCanPublishFromStatus,
   undoPublishBody,
   undoPublishToastModel,
@@ -34,6 +37,11 @@ test("undo publish sends the version this tab believes is current", () => {
   });
   assert.deepEqual(undoPublishBody({ currentVersion: 4 }), { expectedVersion: 4 });
   assert.equal("createdBy" in undoPublishBody({ currentVersion: 4 }), false);
+  assert.deepEqual(rollbackBody({ version: 12, expectedVersion: 13 }), {
+    version: 12,
+    expectedVersion: 13,
+  });
+  assert.equal("createdBy" in rollbackBody({ version: 12, expectedVersion: 13 }), false);
 });
 
 test("a 409 large-delta is a named band error, not a general confirmation dialog", () => {
@@ -87,12 +95,23 @@ test("publish toast offers undo only when the server still can, and first-ever p
   const undone = undoPublishToastModel();
   assert.equal(undone.message, "Publish undone. Those changes are unpublished again.");
   assert.equal(undone.undoPublish, false);
+
+  const rolled = rollbackToastModel();
+  assert.equal(rolled.message, "This published version is on the public site now.");
+  assert.equal(rolled.undoPublish, false);
+  const staleSwitch = parseRollbackFailure({
+    status: 409,
+    data: { error: "Someone else has published since. Refresh and try again." },
+  });
+  assert.equal(staleSwitch.kind, "conflict");
 });
 
 test("Payload consumes publish-status fields and does not invent the waiting count", () => {
   assert.equal(PUBLISH_ROUTES.status, "/publish-status");
+  assert.equal(PUBLISH_ROUTES.versions, "/publish-versions");
   assert.equal(PUBLISH_ROUTES.publish, "/publish");
   assert.equal(PUBLISH_ROUTES.undoPublish, "/undo-publish");
+  assert.equal(PUBLISH_ROUTES.rollback, "/rollback");
   assert.equal(thisHostCanPublishFromStatus({ thisHostCanPublish: false }), false);
   assert.equal(thisHostCanPublishFromStatus({ thisHostCanPublish: true }), true);
   assert.equal(thisHostCanPublishFromStatus({}), true);

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { CATALOG_PUBLIC_URL } from "../scripts/lib/edge-cache.mjs";
 import { publishStatus, updateListing } from "../scripts/listings.mjs";
 import { getCurrentSnapshot, publishCatalog } from "../scripts/publish-catalog.mjs";
+import { listPublishVersions, switchPublishedVersion } from "../scripts/publish-versions.mjs";
 import { undoPublish } from "../scripts/undo-publish.mjs";
 import { UNDO_PUBLISH_STALE } from "../editor-core/undo-publish.mjs";
 import { withDirectusDatabase } from "./helpers/directus-postgres.mjs";
@@ -130,5 +131,51 @@ test("undo publish records who published and who undid alongside the snapshot ve
     assert.equal(Number(events.rows[2].snapshot_version), second.version);
     assert.equal(events.rows[2].actor, "moana");
     assert.ok(events.rows.every((row) => row.actor && Number.isFinite(Number(row.snapshot_version))));
+  });
+});
+
+test("published versions can be listed and an earlier one put back on the site", async (t) => {
+  await withDirectusDatabase(t, async (client) => {
+    await seedListing(client, "First name");
+    const first = await publishCatalog({ db: client, publishedBy: "moana", purge: async () => {} });
+    await client.query(`UPDATE organizations SET name = 'Second name' WHERE id = 'org-1'`);
+    const second = await publishCatalog({ db: client, publishedBy: "kahu", purge: async () => {} });
+
+    const listed = await listPublishVersions({ db: client });
+    assert.equal(listed.versions.length, 2);
+    assert.equal(listed.versions[0].version, second.version);
+    assert.equal(listed.versions[0].isCurrent, true);
+    assert.equal(listed.versions[1].version, first.version);
+    assert.equal(listed.versions[1].isCurrent, false);
+    assert.equal("envelope" in listed.versions[0], false);
+
+    const purged = [];
+    const switched = await switchPublishedVersion({
+      db: client,
+      version: first.version,
+      expectedVersion: second.version,
+      switchedBy: "moana",
+      purge: async (urls) => {
+        purged.push(urls);
+      },
+    });
+    assert.equal(switched.version, first.version);
+    assert.deepEqual(purged, [[CATALOG_PUBLIC_URL]]);
+
+    const current = await getCurrentSnapshot(client);
+    assert.equal(Number(current.version), first.version);
+    assert.equal(listingName(current.envelope), "First name");
+
+    const live = await client.query(`SELECT name FROM organizations WHERE id = 'org-1'`);
+    assert.equal(live.rows[0].name, "Second name");
+
+    const events = await client.query(
+      `SELECT action, snapshot_version, previous_version
+         FROM catalog_publish_events
+        WHERE action = 'rollback'`
+    );
+    assert.equal(events.rows.length, 1);
+    assert.equal(Number(events.rows[0].snapshot_version), first.version);
+    assert.equal(Number(events.rows[0].previous_version), second.version);
   });
 });

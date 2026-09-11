@@ -13,13 +13,13 @@ The Directory editor is Payload. You do not need Directus Content / collections 
 | Payload Directory | [admin-payload-directory-dev.bsky.nz](https://admin-payload-directory-dev.bsky.nz) (local: `http://127.0.0.1:18100/admin`) | Editor and publisher. Sign in as Editor. You land on **Directory**. |
 | Old Directus hostname | [admin-directory-dev.bsky.nz](https://admin-directory-dev.bsky.nz) | Redirects to Payload. Do not scale Directus back up. |
 
-**Publish lives on Payload** (`CATALOG_PUBLISHER=payload`). The **N unpublished** control publishes immediately — there is no confirmation dialog, unless the change is large enough that the server asks you to confirm.
+**Publish lives on Payload** (`CATALOG_PUBLISHER=payload`). **Publish X changes** publishes immediately — there is no confirmation dialog, unless the change is large enough that the server asks you to confirm.
 
 ## Open Directory
 
-Sign in. You land on **Directory**, not a list of collections. Three tabs, in this order: **Needs confirmation**, **Review**, **Listings**. Review opens first if there is active work; Needs confirmation opens if only parked items remain; otherwise Listings.
+Sign in. You land on **Directory**, not a list of collections. Four tabs, in this order: **Needs confirmation**, **Review**, **Listings**, **FSD sync**. Review opens first if there is active work; Needs confirmation opens if only parked items remain; otherwise Listings. **FSD sync** is a log of weekly government feed runs — it is never the landing tab.
 
-The status band at the top says how many government updates need a decision, and how many organisations are **unpublished** (saved in the editor, not yet on the public site). **N unpublished** publishes immediately. When there is nothing to put live, it reads **All published** and is not clickable.
+The status band at the top says how many government updates need a decision. When saved work is waiting, **Publish X changes** puts it on the public site. When there is nothing to put live, that button is hidden. **Published versions** lists earlier publishes so you can put one back on the site.
 
 ## Listings — find, then open
 
@@ -44,7 +44,7 @@ On Review, a card shows the pin whenever the update moves it: **Now** is what is
 
 Your own creates never appear here.
 
-- **Details changed** — field rows like `Phone: 04 237 7749 → 04 237 9608`. Added and removed values are marked in the line (help types as a set difference). A row is omitted when the government payload has no value for that field. A removal says **is coming off the site**, not `→ —`. When two services sit under one organisation, the card shows the organisation and then the service line.
+- **Details changed** — field rows like `Phone: 04 237 7749 → 04 237 9608`. Added and removed values are marked in the line (help types as a set difference), with a highlight on the words that moved — not colour alone. **Accept** is deep green, **Accept and edit** is light green, **Reject** is red. **Needs confirmation** stays uncoloured. A row is omitted when the government payload has no value for that field. A removal says **is coming off the site**, not `→ —`. When two services sit under one organisation, the card shows the organisation and then the service line.
 - **New service**
 - **Gone from the government list**
 - **Check the map pin** — decide from the address and the Now / Proposed placeholder. **The pin is fine** keeps it. **I'll move the pin** opens the form. There is no Skip — that read as a second way of not deciding.
@@ -59,7 +59,13 @@ If a change is almost right, **Accept and edit** opens the form on that card, he
 
 After every decision: **Undo** on the toast, and the next active card opens on its own. Focus lands on that card’s **heading** (the organisation name), not on **Accept**, so Enter will not accept by accident.
 
-When the last active item is done: **Publish now** puts the work on the public site immediately. **Undo publish** is on the toast, then **Undo last publish** on the status band, until the next publish or 24 hours. If someone else has published since, undo is refused.
+When the last active item is done: **Publish X changes** puts the work on the public site immediately. **Undo publish** is on the toast, then **Undo last publish** on the status band, until the next publish or 24 hours. If someone else has published since, undo is refused. **Published versions** can put an earlier publish back on the site after that window.
+
+## FSD sync — what the weekly feed did
+
+**FSD sync** lists each government feed run, newest first. Times are New Zealand time. Each row says whether the run finished, stopped early, or failed, how many Porirua listings it kept, and how many updates it queued for Review. A run never publishes the public site.
+
+Use **All time**, **Last 7 days**, **Last 30 days**, or **From** / **To** and **Show runs**. Open **Numbers from this run** if you want the counts without the sentence.
 
 ## Take a service off the site from Listings
 

@@ -29,6 +29,7 @@ test("directory-dev defaults to a single Payload publisher", () => {
   assert.equal(thisHostCanPublish("payload", "payload"), true);
   assert.equal(isPublishMutationPath("/publish"), true);
   assert.equal(isPublishMutationPath("/undo-publish"), true);
+  assert.equal(isPublishMutationPath("/rollback"), true);
   assert.equal(isPublishMutationPath("/listings"), false);
   assert.match(publishHostForbiddenMessage("directus"), /admin-directory-dev\.bsky\.nz/);
 });

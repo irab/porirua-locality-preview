@@ -41,7 +41,7 @@ test("Payload registers health plus every proxied sidecar route", () => {
   assert.match(source, /DIRECTORY_EDITOR_PROXIED_ROUTES/);
   assert.match(source, /identityFromPayloadUser/);
   assert.match(source, /handleDirectoryEditorRequest/);
-  assert.equal(DIRECTORY_EDITOR_PROXIED_ROUTES.length, 20);
+  assert.equal(DIRECTORY_EDITOR_PROXIED_ROUTES.length, 23);
 });
 
 test("Payload image copies editor-core so the proxy can stay shared", () => {
@@ -52,9 +52,35 @@ test("Payload image copies editor-core so the proxy can stay shared", () => {
   assert.ok(existsSync(join(PAYLOAD, "src/directory/ListingsPanel.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/ReviewPanel.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/StatusBand.tsx")));
+  assert.ok(existsSync(join(PAYLOAD, "src/directory/PublishVersionsPanel.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/VerificationBar.tsx")));
   assert.ok(existsSync(join(PAYLOAD, "src/directory/DirectoryTabs.tsx")));
+  assert.ok(existsSync(join(PAYLOAD, "src/directory/SyncLogPanel.tsx")));
   assert.equal(existsSync(join(PAYLOAD, "src/directory/copy.js")), false);
+});
+
+test("published versions use the shared proxy and do not invent a second catalog store", () => {
+  const home = readFileSync(join(PAYLOAD, "src/directory/DirectoryHome.tsx"), "utf8");
+  const band = readFileSync(join(PAYLOAD, "src/directory/StatusBand.tsx"), "utf8");
+  const panel = readFileSync(join(PAYLOAD, "src/directory/PublishVersionsPanel.tsx"), "utf8");
+  assert.match(home, /PublishVersionsPanel/);
+  assert.match(home, /PUBLISH_ROUTES.rollback|\/rollback/);
+  assert.match(band, /band-publish/);
+  assert.match(band, /model.waiting.visible/);
+  assert.match(panel, /PUBLISH_ROUTES.versions|\/publish-versions/);
+  assert.match(panel, /switchLabel|PUBLISH_VERSIONS_COPY/);
+  assert.doesNotMatch(panel, /review_queue_items/);
+  assert.doesNotMatch(band, /All published|unpublished/);
+});
+
+test("FSD sync tab reads import runs through the shared proxy, not a second store", () => {
+  const home = readFileSync(join(PAYLOAD, "src/directory/DirectoryHome.tsx"), "utf8");
+  const panel = readFileSync(join(PAYLOAD, "src/directory/SyncLogPanel.tsx"), "utf8");
+  assert.match(home, /SyncLogPanel/);
+  assert.match(panel, /importRunsPath|\/import-runs/);
+  assert.match(panel, /datetime-local/);
+  assert.doesNotMatch(panel, /review_queue_items/);
+  assert.doesNotMatch(panel, /["']\/publish["']/);
 });
 
 test("Listings panel uses the shared form and proxied listings routes, not a second catalog", () => {
@@ -82,6 +108,8 @@ test("Review panel uses the shared form and government-queue routes, not the pen
   assert.match(panel, /VerificationBar/);
   assert.match(panel, /REVIEW_ROUTES/);
   assert.match(panel, /reviewActionButtons/);
+  assert.match(panel, /reviewActionClass/);
+  assert.match(panel, /diff-added|row.highlight/);
   assert.match(panel, /reviewUndo|review-undo/);
   assert.match(view, /\/approve/);
   assert.match(view, /\/keep-curation/);
@@ -101,6 +129,7 @@ test("Review panel uses the shared form and government-queue routes, not the pen
 
 test("Review follows design §14: heading focus, Needs confirmation first, equal removal actions", () => {
   const panel = readFileSync(join(PAYLOAD, "src/directory/ReviewPanel.tsx"), "utf8");
+  const view = readFileSync(join(ROOT, "editor-core/review-view.mjs"), "utf8");
   const tabs = readFileSync(join(PAYLOAD, "src/directory/DirectoryTabs.tsx"), "utf8");
   const home = readFileSync(join(PAYLOAD, "src/directory/DirectoryHome.tsx"), "utf8");
   const form = readFileSync(join(PAYLOAD, "src/directory/SharedListingForm.tsx"), "utf8");
@@ -109,7 +138,8 @@ test("Review follows design §14: heading focus, Needs confirmation first, equal
   assert.match(panel, /headingButtonName/);
   assert.match(panel, /shouldAutoOpenItem/);
   assert.match(panel, /type="button"/);
-  assert.match(panel, /equal-action/);
+  assert.match(panel, /reviewActionClass/);
+  assert.match(view, /equal-action/);
   assert.match(panel, /tab === "review" && active\[0\]/);
   assert.doesNotMatch(panel, /leaflet|Leaflet|L\.map/);
   assert.match(home, /landingTab/);

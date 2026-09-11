@@ -18,7 +18,9 @@ const EXPECTED_ROUTES = [
   ["GET", "/listings"],
   ["GET", "/listings/:id"],
   ["GET", "/queue"],
+  ["GET", "/import-runs"],
   ["GET", "/publish-status"],
+  ["GET", "/publish-versions"],
   ["GET", "/geocode"],
   ["POST", "/listings"],
   ["POST", "/listings/update"],
@@ -34,6 +36,7 @@ const EXPECTED_ROUTES = [
   ["POST", "/review-undo"],
   ["POST", "/publish"],
   ["POST", "/undo-publish"],
+  ["POST", "/rollback"],
 ];
 
 function startMockOperations() {
@@ -68,12 +71,12 @@ function startMockOperations() {
   });
 }
 
-test("the Payload proxy covers every Directory sidecar route the Directus gate exposes", () => {
+test("the Payload proxy covers every Directory sidecar route", () => {
   assert.deepEqual(
     DIRECTORY_EDITOR_PROXIED_ROUTES.map((route) => [route.method, route.path]),
     EXPECTED_ROUTES
   );
-  assert.equal(DIRECTORY_EDITOR_PROXIED_ROUTES.length, 20);
+  assert.equal(DIRECTORY_EDITOR_PROXIED_ROUTES.length, 23);
   assert.ok(matchDirectoryEditorRoute("GET", "/listings/name-matches"));
   assert.ok(matchDirectoryEditorRoute("GET", "/listings/org-ora-toa"));
   assert.equal(matchDirectoryEditorRoute("GET", "/listings/org-ora-toa").sidecarPath, "/listings/org-ora-toa");
@@ -204,6 +207,16 @@ test("Payload refuses publish and undo-publish while Directus is the catalog pub
       catalogPublisher: "directus",
     });
     assert.equal(undo.status, 403);
+
+    const rollback = await handleDirectoryEditorRequest({
+      method: "POST",
+      path: "/rollback",
+      identity: EDITOR,
+      body: { version: 3, expectedVersion: 4 },
+      operationsUrl: ops.url,
+      catalogPublisher: "directus",
+    });
+    assert.equal(rollback.status, 403);
     assert.equal(ops.received.length, 0);
   } finally {
     await ops.close();

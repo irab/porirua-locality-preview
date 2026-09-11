@@ -9,6 +9,8 @@ This is a design from **jobs**, not from the code already in the module. Where t
 
 Related: [editor-guide](./editor-guide.md) (today’s one-pager) · [admin-testing-personas](./admin-testing-personas.md) (E-01, P-01–P-03).
 
+**Later addition:** a fourth read-only tab, **FSD sync**, sits after Listings. It shows weekly government feed runs and does not change landing, Review, or publish jobs.
+
 ---
 
 ## 1. Two jobs, two shapes
@@ -95,7 +97,8 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 | Moment | Words |
 |--------|--------|
 | Status band, review | **4 changes to review** |
-| Status band, unpublished | **2 unpublished** |
+| Status band, publish | **Publish 2 changes** |
+| Status band, versions | **Published versions** |
 | After Accept | **Accepted {name}. It stays unpublished until you publish.** |
 | After Keep yours | **Kept your details on {name}. They stay as you set them.** |
 | After Reject (changed) | **Rejected the change to {name}. The listing stays as it is.** |
@@ -123,13 +126,14 @@ Copy is the product. No raw enums, no column names, no JSON. These are the words
 Always visible at the top of Directory, both tabs.
 
 ```
-[ 4 changes to review ]   [ 2 unpublished ]
+[ 4 changes to review ]   [ Publish 4 changes ]   [ Published versions ]
 ```
 
 - Both parts are buttons.
 - **4 changes to review** opens Review (and scrolls to the first item that is not deferred).
-- **2 unpublished** publishes immediately (no confirmation). Disabled while a publish is in flight.
-- If a count is zero, show it subdued, still visible, not clickable: **Nothing to review** · **All published**.
+- **Publish X changes** publishes immediately (no confirmation). Hidden when there is nothing to put live. Disabled while a publish is in flight.
+- If the review count is zero, show it subdued, still visible, not clickable: **Nothing to review**. Do not show an unpublished inventory or **All published**.
+- **Published versions** opens the list of earlier publishes. **Put this version on the site** (then **Yes, put this version on the site**) points the public catalog at that snapshot. Live listing rows, queue items, and overrides are not rewound.
 - While Undo publish is available (7.5), the band also shows **Undo last publish**.
 - This answers “what should I be doing?” without a home screen.
 
@@ -344,7 +348,7 @@ Archived and merged names are included. Opening a match leaves the form and open
 
 ### 5.8 Publish confirmation — removed
 
-A named confirmation before Publish was proposed and **overruled**. The finish state’s **Publish now** and the status band both publish immediately. There is no screen 5.8.
+A named confirmation before Publish was proposed and **overruled**. The finish state’s **Publish X changes** and the status band both publish immediately. There is no screen 5.8.
 
 Safety after Publish is **Undo publish** (7.5). Do not reintroduce a confirmation dialog.
 
@@ -400,8 +404,8 @@ flowchart TD
   next -->|only deferred left| later[Needs confirmation still listed]
   next -->|none left| finish[You've reviewed everything]
   later --> finish
-  finish --> pub{Publish now?}
-  pub -->|Publish now| live[Public site up to date]
+  finish --> pub{Publish X changes?}
+  pub -->|Publish X changes| live[Public site up to date]
   pub -->|Not yet| band
   live --> undoPub[Undo publish — 7.5]
 ```
@@ -423,7 +427,7 @@ flowchart TD
   dup -->|no| fields
   fields --> save[Save]
   save --> toast[Saved. It stays unpublished until you publish.]
-  toast --> pub[Status band: unpublished]
+  toast --> pub[Status band: Publish X changes]
   pub --> live[Publish immediately]
   live --> undoPub[Undo publish — 7.5]
 ```
@@ -572,7 +576,7 @@ Calls the existing sidecar rollback onto the snapshot that was current **immedia
 
 Who published and who undid is written to `catalog_publish_events` (actor, timestamp, snapshot version). It is not shown in the module yet.
 
-After undo: the public site is the previous snapshot. The work she just published is still in the database, so the status band shows it unpublished again. Toast: **Publish undone. Those changes are unpublished again.** No undo-the-undo; she can Publish again.
+After undo: the public site is the previous snapshot. The work she just published is still in the database, so the status band shows **Publish X changes** again. Toast: **Publish undone. Those changes are unpublished again.** No undo-the-undo; she can Publish again.
 
 If she edited more **after** publishing, then undoes: those newer edits stay in the database and will go out with the next Publish, together with the undone work. Do not try to split them.
 
@@ -584,7 +588,7 @@ The weekly sync **does not publish** and **does not close** the window.
 - Queue rows and any new `pending_review` inserts the sync wrote stay. Undo does not accept or reject them.  
 - If she then Publishes again, that new snapshot includes whatever is publishable in the database at that moment (her undone work plus anything she accepted after the sync).
 
-**Out of scope for this control:** restoring a snapshot older than “the one before last Publish”; exposing the admin Flow; a confirmation dialog.
+**Out of scope for this control:** exposing the admin Flow; a confirmation dialog. Putting an older published version on the site is **Published versions**, not this 24-hour undo.
 
 ---
 
@@ -595,14 +599,14 @@ While she works, the status band and the Review title carry the count.
 When the last **active** item is decided:
 
 > **You’ve reviewed everything. Put 4 changes on the public site.**  
-> **Publish now**
+> **Publish 4 changes**
 
 If deferred items remain:
 
 > **You’ve decided the ones you can. 2 need confirmation.**  
-> **Publish now** · **Keep reviewing later** (opens the **Needs confirmation** tab — not Listings)
+> **Publish 2 changes** · **Keep reviewing later** (opens the **Needs confirmation** tab — not Listings)
 
-**Publish now** publishes immediately. The finish is not a second empty table with a banner above it.
+**Publish X changes** publishes immediately. The finish is not a second empty table with a banner above it.
 
 **Current build:** empty table + banner. Replace.
 
@@ -641,7 +645,7 @@ Job: update a community org’s phone and put it on the public site.
 | Check the website | 1 | New tab; she does not lose the listing |
 | **Edit** the line | 1 | Shared form |
 | Change Phone, **Save** | 1 | Toast |
-| Status band **unpublished** | 1 | Publishes immediately |
+| Status band **Publish X changes** | 1 | Publishes immediately |
 
 **Clicks: 4–5.**  
 The extra click versus “click the table row and you are already in the form” is **open listing detail**. It buys: the right line, verification, and not editing because she meant to add a line. There is no confirmation click.
@@ -664,7 +668,7 @@ Assume 4 items, first already expanded, one is Ora Toa, one is a removal, she de
 | **Keep it as a community listing** | 1 | Equal to take-off — not a secondary |
 | Last item: she wants to ring them | 0 | |
 | **Needs confirmation** | 1 | Finish state — only deferred remain |
-| Finish: **Publish now** | 1 | Publishes immediately; deferred remain |
+| Finish: **Publish X changes** | 1 | Publishes immediately; deferred remain |
 
 **Clicks: 6** for four items with one verify, one defer, and auto-advance.  
 Undo on every decision toast. Website / **Needs confirmation** / keep-as-community / immediate Publish each buy a decision she can stand behind. **Undo publish** is the recovery if that last click was wrong.

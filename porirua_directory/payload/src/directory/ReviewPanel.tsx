@@ -15,6 +15,7 @@ import {
   otherDetailsLabel,
   queueActionUndoId,
   reviewActionButtons,
+  reviewActionClass,
   reviewDecisionBody,
   reviewFinishModel,
   reviewToast,
@@ -48,7 +49,15 @@ type QueueItem = {
   fsdReturned?: boolean;
   fsdReturnedLabel?: string;
   youSetThis?: Array<{ field: string; label: string }>;
-  diffRows?: Array<{ field: string; line: string; label: string }>;
+  diffRows?: Array<{
+    field: string;
+    line: string;
+    label?: string;
+    highlight?: {
+      before?: Array<{ text?: string; mark?: string }>;
+      after?: Array<{ text?: string; mark?: string }>;
+    } | null;
+  }>;
   otherRows?: Array<{ field: string; line: string }>;
   after?: Record<string, unknown>;
   before?: Record<string, unknown>;
@@ -98,13 +107,49 @@ type ReviewPanelProps = {
   publishing?: boolean;
 };
 
-function DiffLines({ rows }: { rows: Array<{ field: string; line: string }> }) {
+function DiffMark({ part }: { part: { text?: string; mark?: string } }) {
+  if (part.mark === "removed") return <span className="diff-removed">{part.text}</span>;
+  if (part.mark === "added") return <span className="diff-added">{part.text}</span>;
+  return <span>{part.text}</span>;
+}
+
+function DiffLines({
+  rows,
+}: {
+  rows: Array<{
+    field: string;
+    line: string;
+    label?: string;
+    highlight?: {
+      before?: Array<{ text?: string; mark?: string }>;
+      after?: Array<{ text?: string; mark?: string }>;
+    } | null;
+  }>;
+}) {
   if (!rows.length) return null;
   return (
     <ul className="diff">
-      {rows.map((row) => (
-        <li key={row.field}>{row.line}</li>
-      ))}
+      {rows.map((row) => {
+        const highlight = row.highlight;
+        if (!highlight?.before?.length || !highlight?.after?.length) {
+          return <li key={row.field}>{row.line}</li>;
+        }
+        return (
+          <li key={row.field}>
+            <span className="sr-only">{row.line}</span>
+            <span aria-hidden="true" className="diff-visual">
+              <span className="diff-label">{row.label}:</span>{" "}
+              {highlight.before.map((part, index) => (
+                <DiffMark key={`before-${index}`} part={part} />
+              ))}
+              <span className="diff-arrow"> → </span>
+              {highlight.after.map((part, index) => (
+                <DiffMark key={`after-${index}`} part={part} />
+              ))}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -493,7 +538,7 @@ export function ReviewPanel({
                           <button
                             key={button.id}
                             type="button"
-                            className={button.equal ? "equal-action" : button.id === "approve" ? "decide" : undefined}
+                            className={reviewActionClass(button)}
                             onClick={() => runDecision(item, button)}
                           >
                             {button.label}
@@ -533,8 +578,13 @@ export function ReviewPanel({
             {finish.heading}
           </h2>
           <div className="actions">
-            <button type="button" disabled={!onPublish || !waitingCount || publishing} onClick={onPublish}>
-              {REVIEW_COPY.publishNow}
+            <button
+              type="button"
+              className="band-publish"
+              disabled={!onPublish || !waitingCount || publishing}
+              onClick={onPublish}
+            >
+              {finish.publishLabel || REVIEW_COPY.publishNow}
             </button>
             {finish.showKeepReviewingLater ? (
               <button type="button" onClick={onKeepReviewingLater}>

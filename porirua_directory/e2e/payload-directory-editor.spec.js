@@ -194,9 +194,11 @@ test("status band, tabs, Listings, and Review match the accepted jobs", async ({
   await expect(band).toBeVisible();
   if (catalogUp && mock) {
     await expect(band.getByRole("button", { name: "3 changes to review" })).toBeVisible();
-    const waiting = band.getByRole("button", { name: "2 unpublished" });
-    await expect(waiting).toBeVisible();
-    await expect(waiting).toBeEnabled();
+    const publish = band.getByRole("button", { name: "Publish 2 changes" });
+    await expect(publish).toBeVisible();
+    await expect(publish).toBeEnabled();
+    await expect(band.getByRole("button", { name: "Published versions" })).toBeVisible();
+    await expect(band.getByRole("button", { name: "2 unpublished" })).toHaveCount(0);
     await expect(page.getByText("Publish lives on admin-directory-dev.bsky.nz.")).toHaveCount(0);
   } else {
     await expect(band.getByRole("button").first()).toBeVisible();
@@ -204,10 +206,11 @@ test("status band, tabs, Listings, and Review match the accepted jobs", async ({
 
   const tabs = page.getByRole("tablist", { name: "Directory" });
   const tabButtons = tabs.getByRole("tab");
-  await expect(tabButtons).toHaveCount(3);
-  await expect(tabButtons.nth(0)).toHaveText(/Needs confirmation/);
-  await expect(tabButtons.nth(1)).toHaveText(/^Review/);
-  await expect(tabButtons.nth(2)).toHaveText(/^Listings$/);
+  await expect(tabButtons).toHaveCount(4);
+  await expect(tabs.getByRole("tab", { name: /Needs confirmation/ })).toBeVisible();
+  await expect(tabs.getByRole("tab", { name: /^Review/ })).toBeVisible();
+  await expect(tabs.getByRole("tab", { name: /^Listings$/ })).toBeVisible();
+  await expect(tabs.getByRole("tab", { name: "FSD sync" })).toBeVisible();
 
   if (!catalogUp) return;
 
@@ -219,6 +222,29 @@ test("status band, tabs, Listings, and Review match the accepted jobs", async ({
       await expect(parked).toBeVisible();
       await expect(parked).toHaveAttribute("aria-expanded", "false");
       await expect(page.getByRole("button", { name: "Accept" })).toHaveCount(0);
+    }
+  });
+
+  await test.step("Published versions lists earlier snapshots", async () => {
+    if (mock) {
+      await page.getByRole("button", { name: "Published versions" }).click();
+      await expect(page.getByText("Each publish keeps a version of the public site")).toBeVisible();
+      await expect(page.getByText("On the site now")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Put this version on the site" })).toBeVisible();
+    }
+  });
+
+  await test.step("FSD sync log is readable and has a date filter", async () => {
+    await page.getByRole("tab", { name: "FSD sync" }).click();
+    await expect(page.getByRole("tab", { name: "FSD sync" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByText("Each weekly government feed run")).toBeVisible();
+    await expect(page.getByLabel("From")).toBeVisible();
+    await expect(page.getByLabel("To")).toBeVisible();
+    if (mock) {
+      await expect(page.getByRole("heading", { name: "Finished successfully" })).toBeVisible();
+      await expect(page.getByText(/Queued 7 updates for review/)).toBeVisible();
+      await page.getByRole("button", { name: "Last 7 days" }).click();
+      await expect(page.getByRole("heading", { name: "Finished successfully" })).toBeVisible();
     }
   });
 

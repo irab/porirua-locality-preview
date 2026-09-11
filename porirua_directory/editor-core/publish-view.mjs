@@ -3,8 +3,10 @@ import { actionSuccessMessage } from "./queue-dto.mjs";
 
 export const PUBLISH_ROUTES = {
   status: "/publish-status",
+  versions: "/publish-versions",
   publish: "/publish",
   undoPublish: "/undo-publish",
+  rollback: "/rollback",
 };
 
 export const PUBLISH_COPY = {
@@ -13,6 +15,7 @@ export const PUBLISH_COPY = {
   confirmLargeDelta: "Publish this large change",
   publishError: "Could not publish. Try again.",
   undoError: "Could not undo that publish.",
+  rollbackError: "Could not put that version on the public site.",
 };
 
 export function publishBody({ confirmLargeDelta = false } = {}) {
@@ -24,6 +27,14 @@ export function publishBody({ confirmLargeDelta = false } = {}) {
 export function undoPublishBody(status = {}) {
   const expectedVersion = status.undoPublishVersion ?? status.currentVersion ?? null;
   return { expectedVersion };
+}
+
+export function rollbackBody({ version, expectedVersion } = {}) {
+  const body = { version: Number(version) };
+  if (expectedVersion != null && expectedVersion !== "") {
+    body.expectedVersion = Number(expectedVersion);
+  }
+  return body;
 }
 
 export function parsePublishFailure(error) {
@@ -53,6 +64,26 @@ export function parseUndoFailure(error) {
     message: data.error || error?.message || PUBLISH_COPY.undoError,
     confirmLabel: "",
     delta: null,
+  };
+}
+
+export function parseRollbackFailure(error) {
+  const data = error?.data && typeof error.data === "object" ? error.data : {};
+  return {
+    kind: error?.status === 409 || error?.status === 400 ? "conflict" : "error",
+    message: data.error || error?.message || PUBLISH_COPY.rollbackError,
+    confirmLabel: "",
+    delta: null,
+  };
+}
+
+export function rollbackToastModel() {
+  return {
+    role: "status",
+    message: actionSuccessMessage({ action: "rollback" }),
+    undoPublish: false,
+    undoLabel: "",
+    undoFirst: false,
   };
 }
 

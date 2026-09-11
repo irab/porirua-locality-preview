@@ -2,6 +2,7 @@ import { formHighlightFields } from "./form-highlight.mjs";
 import {
   actionSuccessMessage,
   correctHeading,
+  publishChangesLabel,
   queueItemHeading,
   reviewCountLabel,
   reviewDeferredFinishLabel,
@@ -78,6 +79,14 @@ export function headingButtonName(item) {
   return parts.join(", ");
 }
 
+export function reviewActionClass(button = {}) {
+  if (button.equal) return "equal-action";
+  if (button.tone === "accept") return "action-accept";
+  if (button.tone === "edit") return "action-edit";
+  if (button.tone === "reject") return "action-reject";
+  return undefined;
+}
+
 export function reviewActionButtons(item = {}) {
   const defer = {
     id: "defer",
@@ -88,6 +97,7 @@ export function reviewActionButtons(item = {}) {
     equal: false,
     keyboardDefault: false,
     opensForm: false,
+    tone: null,
   };
 
   if (item.kind === "removed") {
@@ -101,6 +111,7 @@ export function reviewActionButtons(item = {}) {
         equal: true,
         keyboardDefault: false,
         opensForm: false,
+        tone: null,
       },
       {
         id: "keep-community",
@@ -111,6 +122,7 @@ export function reviewActionButtons(item = {}) {
         equal: true,
         keyboardDefault: false,
         opensForm: false,
+        tone: null,
       },
       defer,
     ].filter((row) => row.show);
@@ -127,6 +139,7 @@ export function reviewActionButtons(item = {}) {
         equal: false,
         keyboardDefault: false,
         opensForm: false,
+        tone: "accept",
       },
       {
         id: "edit",
@@ -137,6 +150,7 @@ export function reviewActionButtons(item = {}) {
         equal: false,
         keyboardDefault: false,
         opensForm: true,
+        tone: "edit",
       },
       defer,
     ].filter((row) => row.show);
@@ -151,6 +165,7 @@ export function reviewActionButtons(item = {}) {
     equal: false,
     keyboardDefault: false,
     opensForm: false,
+    tone: null,
   };
 
   const edit = {
@@ -162,6 +177,7 @@ export function reviewActionButtons(item = {}) {
     equal: false,
     keyboardDefault: false,
     opensForm: true,
+    tone: "edit",
   };
 
   const reject = {
@@ -173,6 +189,7 @@ export function reviewActionButtons(item = {}) {
     equal: false,
     keyboardDefault: false,
     opensForm: false,
+    tone: "reject",
   };
 
   return [
@@ -185,6 +202,7 @@ export function reviewActionButtons(item = {}) {
       equal: false,
       keyboardDefault: false,
       opensForm: false,
+      tone: "accept",
     },
     keepYours,
     edit,
@@ -229,6 +247,7 @@ export function reviewFinishModel({
       heading: "",
       message: deferredCount ? "" : REVIEW_COPY.emptyNeeds,
       showPublishNow: false,
+      publishLabel: "",
       showKeepReviewingLater: false,
     };
   }
@@ -238,18 +257,21 @@ export function reviewFinishModel({
       heading: reviewCountLabel(activeCount),
       message: "",
       showPublishNow: false,
+      publishLabel: "",
       showKeepReviewingLater: false,
     };
   }
   if (reviewedThisSession > 0) {
     const deferred = Number(deferredCount) || 0;
+    const waiting = Number(unpublishedCount) || reviewedThisSession;
     return {
       kind: "finish",
       heading: deferred
         ? reviewDeferredFinishLabel(deferred)
-        : reviewFinishedLabel(Number(unpublishedCount) || reviewedThisSession),
+        : reviewFinishedLabel(waiting),
       message: "",
       showPublishNow: true,
+      publishLabel: publishChangesLabel(waiting) || REVIEW_COPY.publishNow,
       showKeepReviewingLater: deferred > 0,
     };
   }
@@ -258,6 +280,7 @@ export function reviewFinishModel({
     heading: reviewCountLabel(0),
     message: REVIEW_COPY.empty,
     showPublishNow: false,
+    publishLabel: "",
     showKeepReviewingLater: false,
   };
 }

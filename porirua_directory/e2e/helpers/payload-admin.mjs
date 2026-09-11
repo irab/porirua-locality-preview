@@ -332,6 +332,25 @@ export async function startMockOperations({ port = LOCAL_OPERATIONS_PORT } = {})
         });
         return;
       }
+      if (req.method === "GET" && url.pathname === "/publish-versions") {
+        sendJson(res, 200, {
+          versions: [
+            {
+              version: 13,
+              generatedAt: "2026-09-11T00:42:00.000Z",
+              isCurrent: true,
+              counts: { published: 2 },
+            },
+            {
+              version: 12,
+              generatedAt: "2026-09-04T01:00:00.000Z",
+              isCurrent: false,
+              counts: { published: 1 },
+            },
+          ],
+        });
+        return;
+      }
       if (req.method === "GET" && url.pathname === "/listings") {
         sendJson(res, 200, { listings: [FIXTURE.listing] });
         return;
@@ -346,6 +365,30 @@ export async function startMockOperations({ port = LOCAL_OPERATIONS_PORT } = {})
       }
       if (req.method === "GET" && url.pathname === "/queue") {
         sendJson(res, 200, { items, recent: [] });
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/import-runs") {
+        sendJson(res, 200, {
+          runs: [
+            {
+              id: "run-e2e",
+              source: "fsd",
+              status: "success",
+              startedAt: "2026-09-07T01:00:00+12:00",
+              finishedAt: "2026-09-07T01:02:00+12:00",
+              stats: {
+                totalCsvRows: 18432,
+                includedCount: 412,
+                excludedCount: 18020,
+                queued: 7,
+                new: 3,
+                changed: 2,
+                removed: 1,
+                geocode_flag: 1,
+              },
+            },
+          ],
+        });
         return;
       }
       if (req.method === "GET" && url.pathname === "/geocode") {

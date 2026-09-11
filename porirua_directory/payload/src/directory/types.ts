@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type DirectoryTabId = "needs" | "review" | "listings";
+export type DirectoryTabId = "needs" | "review" | "listings" | "sync";
 
 export type ListingFormValues = {
   name: string;
@@ -48,7 +48,8 @@ export type DirectoryTab = { id: DirectoryTabId; label: string };
 export type StatusBandModel = {
   role: "status";
   review: { count: number; label: string; disabled: boolean };
-  waiting: { count: number; label: string; disabled: boolean };
+  waiting: { count: number; label: string; disabled: boolean; visible: boolean };
+  versions: { visible: boolean; label: string };
   undo: { visible: boolean; label: string };
 };
 
@@ -101,6 +102,8 @@ export type StatusBandProps = {
   onReview?: () => void;
   onPublish?: () => void;
   onUndoPublish?: () => void;
+  onToggleVersions?: () => void;
+  versionsOpen?: boolean;
   onConfirmLargeDelta?: () => void;
   publishing?: boolean;
   undoing?: boolean;
